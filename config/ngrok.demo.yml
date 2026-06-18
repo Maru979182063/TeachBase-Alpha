@@ -1,0 +1,11 @@
+version: "2"
+web_addr: 127.0.0.1:4040
+tunnels:
+  workbench:
+    proto: http
+    addr: 8787
+    inspect: true
+  export_api:
+    proto: http
+    addr: 8790
+    inspect: true

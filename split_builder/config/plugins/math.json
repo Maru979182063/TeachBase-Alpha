@@ -1,0 +1,63 @@
+{
+  "plugin_id": "math_v0_1",
+  "subject": "数学",
+  "supported_structures": [
+    "知识导航",
+    "考点",
+    "例题",
+    "变式",
+    "能力进阶",
+    "课后练习",
+    "答案解析"
+  ],
+  "section_markers": [
+    "考点\\s*\\d+[:：].+",
+    "模块\\s*\\d+[:：].+",
+    "知识点\\s*\\d*[:：].+"
+  ],
+  "question_markers": [
+    "^\\d{1,2}[．.、]\\s*"
+  ],
+  "answer_markers": [
+    "【答案】",
+    "【解析】",
+    "【分析】",
+    "【详解】",
+    "【解答】",
+    "【解题思路】",
+    "【解答过程】",
+    "【点评】"
+  ],
+  "risk_rules": [
+    {
+      "id": "formula_normalization",
+      "label": "公式符号需复核",
+      "patterns": ["[]", "\\\\frac", "√", "≤", "≥"]
+    },
+    {
+      "id": "visual_asset_required",
+      "label": "可能依赖图像/几何图",
+      "patterns": ["如图", "图中", "作图", "几何", "三角形", "圆"]
+    },
+    {
+      "id": "proof_item",
+      "label": "证明题需人工确认分层",
+      "patterns": ["求证", "证明"]
+    }
+  ],
+  "tier_rules": [
+    {
+      "tier": "basic",
+      "description": "直接应用定义、公式、等号成立条件或单步判断。"
+    },
+    {
+      "tier": "standard",
+      "description": "常规变式、配凑、消元、整体化、两步计算或标准证明。"
+    },
+    {
+      "tier": "advanced",
+      "description": "多条件综合、函数最值、参数讨论、隐含条件、证明或远迁移。"
+    }
+  ]
+}
+

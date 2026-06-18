@@ -1,0 +1,73 @@
+{
+  "version": "0.1",
+  "description": "全学科共享的课堂基底结构。具体学科可通过插件重命名或扩展节点，但不能破坏课堂节奏。",
+  "required_phase_order": [
+    "lesson_meta",
+    "learning_objectives",
+    "intro_or_prerequisite",
+    "knowledge_main",
+    "method_path",
+    "example_or_task",
+    "student_practice",
+    "teacher_feedback",
+    "summary_or_transfer"
+  ],
+  "minimum_editable_unit": "teaching_node",
+  "minimum_tiering_unit": "task_item",
+  "visibility_values": [
+    "student_all",
+    "student_basic",
+    "student_standard",
+    "student_advanced",
+    "teacher_only",
+    "audit_only"
+  ],
+  "node_types": [
+    "lesson",
+    "learning_objective",
+    "intro",
+    "knowledge_block",
+    "method_block",
+    "exam_point",
+    "example_item",
+    "practice_item",
+    "answer_block",
+    "explanation_block",
+    "visual_asset",
+    "table_asset",
+    "summary"
+  ],
+  "quality_gates": [
+    {
+      "id": "Q0_pairing",
+      "name": "教师/学生版配对",
+      "required": true
+    },
+    {
+      "id": "Q1_structure",
+      "name": "课堂环节完整",
+      "required": true
+    },
+    {
+      "id": "Q2_visibility",
+      "name": "学生版无答案泄露",
+      "required": true
+    },
+    {
+      "id": "Q3_answer_binding",
+      "name": "题目-答案-解析绑定",
+      "required": true
+    },
+    {
+      "id": "Q4_asset_binding",
+      "name": "图表/公式/文本资产绑定",
+      "required": true
+    },
+    {
+      "id": "Q5_tiering",
+      "name": "基础/普通/培优分层合理",
+      "required": false
+    }
+  ]
+}
+

@@ -1,0 +1,56 @@
+{
+  "subject": "math",
+  "version": "0.1",
+  "asset_root": "assets/component_icons/math",
+  "components": {
+    "course_goal": {
+      "label": "课程目标",
+      "asset": "course_goal.png",
+      "type": "section_banner_large",
+      "source_name": "新 课程目标.png",
+      "recommended_width_pt": 150
+    },
+    "knowledge_outline": {
+      "label": "知识梳理",
+      "asset": "knowledge_outline.png",
+      "type": "section_banner_large",
+      "source_name": "新 知识梳理.png",
+      "recommended_width_pt": 150
+    },
+    "key_quiz": {
+      "label": "要点小测",
+      "asset": "key_quiz.png",
+      "type": "section_banner_large",
+      "source_name": "要点小测.png",
+      "recommended_width_pt": 150
+    },
+    "example_explain": {
+      "label": "例题讲解",
+      "asset": "example_explain.png",
+      "type": "section_banner_large",
+      "source_name": "新 例题讲解.png",
+      "recommended_width_pt": 150
+    },
+    "intensive_training": {
+      "label": "强化训练",
+      "asset": "intensive_training.png",
+      "type": "section_banner_large",
+      "source_name": "新 强化训练.png",
+      "recommended_width_pt": 150
+    },
+    "ability_advance": {
+      "label": "能力进阶",
+      "asset": "ability_advance.png",
+      "type": "section_banner_large",
+      "source_name": "新 能力进阶.png",
+      "recommended_width_pt": 150
+    },
+    "key_review": {
+      "label": "要点回顾",
+      "asset": "key_review.png",
+      "type": "section_banner_small",
+      "source_name": "要点回顾.png",
+      "recommended_width_pt": 100
+    }
+  }
+}

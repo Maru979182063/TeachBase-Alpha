@@ -1,0 +1,72 @@
+﻿meta:
+  owner: "棰樼洰宸ュ巶 Demo"
+  environment: "local-demo"
+  season_scope: "鏆戝亣鏍囧噯璁蹭箟"
+  notes: "妯″瀷銆佹湇鍔°€侀毀閬撲笌鍚姩鑴氭湰缁熶竴鍦ㄨ繖閲岃娴嬨€?
+
+paths:
+  workspace_root: "C:/Users/EDY/Documents/鏁欑爺鍩哄缓"
+  knowledge_map_junior: "outputs/junior_math_knowledge_map"
+  knowledge_map_senior: "outputs/senior_math_knowledge_map"
+  split_outputs: "outputs/ingress_splitter_v0.1"
+  placement_outputs: "outputs/placement_trials"
+  export_runs: "outputs/split_builder/mock_workbench/export_runs"
+
+services:
+  mock_workbench:
+    label: "璁蹭箟宸ヤ綔鍙板墠绔?
+    local_url: "http://127.0.0.1:8787/outputs/split_builder/mock_workbench/index.html"
+    port: 8787
+    status: "running"
+    process: "python_http_server"
+  export_api:
+    label: "瀵煎嚭鏈嶅姟"
+    local_url: "http://127.0.0.1:8790"
+    health_path: "/health"
+    port: 8790
+    status: "running"
+    process: "node_api_server"
+  stack_launcher:
+    label: "涓€閿惎鍔?
+    script_path: "tools/start_demo_stack.ps1"
+    stop_script_path: "tools/stop_demo_stack.ps1"
+    mode: "one_click"
+
+models:
+  placement:
+    provider: "volcengine_ark"
+    endpoint: "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
+    primary_model: "doubao-seed-2-0-pro-260215"
+    api_key_env: "ARK_API_KEY"
+    fallback_mode: "visual_split_then_text_only_placement"
+    current_result_dir: "outputs/placement_trials/junior_g7_12_003_final_node"
+
+tunnels:
+  ngrok:
+    enabled: false
+    binary_path: "C:/Users/EDY/AppData/Local/Microsoft/WinGet/Packages/Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe/ngrok.exe"
+    config_path: "config/ngrok.demo.yml"
+    auth_token_source: "config/runtime_secrets.local.json"
+    auth_token_env: "NGROK_AUTHTOKEN"
+    status: "failed_to_start"
+    public_url: ""
+    local_target: "http://127.0.0.1:8787/outputs/split_builder/mock_workbench/index.html"
+    api_url: "http://127.0.0.1:4040/api/tunnels"
+    notes: "鏈湴 secrets 鏂囦欢鎴栫幆澧冨彉閲忓氨缁悗鍙竴閿媺璧峰澶栧叆鍙ｃ€?
+  export_api_proxy:
+    enabled: false
+    status: "disabled"
+    public_url: ""
+    local_target: "http://127.0.0.1:8790"
+
+startup:
+  launcher_script: "tools/start_demo_stack.ps1"
+  stop_script: "tools/stop_demo_stack.ps1"
+  rebuild_data_script: "tools/build_mock_workbench_data.mjs"
+  browser_entry: "http://127.0.0.1:8787/outputs/split_builder/mock_workbench/index.html"
+
+ops:
+  visual_split_mode: "model_reading_first"
+  placement_mode: "doubao_layered_lesson_routing"
+  export_bundle: "docx_pdf_pptx"
+  review_flow: "visual_gate_then_teacher_review"

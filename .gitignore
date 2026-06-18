@@ -1,0 +1,24 @@
+config/runtime_secrets.local.json
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Node dependencies
+node_modules/
+
+# Local temp and tool caches
+tmp/
+_tmp_pdf_pages/
+.codex-pdf-tools/
+.codex_tmp_pdf/
+codex_tmp_pdf/
+
+# Generated outputs and scratch files
+outputs/
+temp_repo_demo.html
+tmp_script_check.js
+tmp_script_check2.js
+
+# Vendored local binaries
+tools/vendor/

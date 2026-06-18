@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LessonSplit",
+  "type": "object",
+  "required": ["schema_version", "doc_pair", "lesson", "nodes", "tasks", "quality"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "doc_pair": {
+      "type": "object",
+      "required": ["subject", "teacher_path", "student_path", "pair_confidence"],
+      "properties": {
+        "subject": { "type": "string" },
+        "stage": { "type": "string" },
+        "grade": { "type": "string" },
+        "season": { "type": "string" },
+        "lesson_no": { "type": "string" },
+        "teacher_path": { "type": "string" },
+        "student_path": { "type": "string" },
+        "pair_confidence": { "type": "number" }
+      }
+    },
+    "lesson": {
+      "type": "object",
+      "required": ["lesson_id", "title", "phase_order"],
+      "properties": {
+        "lesson_id": { "type": "string" },
+        "title": { "type": "string" },
+        "phase_order": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "learning_goals": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["node_id", "node_type", "phase", "title", "visibility"],
+        "properties": {
+          "node_id": { "type": "string" },
+          "parent_id": { "type": ["string", "null"] },
+          "order_index": { "type": "integer" },
+          "node_type": { "type": "string" },
+          "phase": { "type": "string" },
+          "title": { "type": "string" },
+          "text": { "type": "string" },
+          "page_range": {
+            "type": "array",
+            "items": { "type": "integer" }
+          },
+          "visibility": { "type": "string" },
+          "risk_flags": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["task_id", "section_id", "question_no", "student_stem", "visibility"],
+        "properties": {
+          "task_id": { "type": "string" },
+          "section_id": { "type": "string" },
+          "question_no": { "type": "string" },
+          "student_stem": { "type": "string" },
+          "teacher_stem": { "type": "string" },
+          "answer": { "type": "string" },
+          "answer_raw": { "type": "string" },
+          "answer_status": {
+            "type": "string",
+            "enum": ["explicit_answer", "solution_only", "missing_or_unrecognized"]
+          },
+          "explanation": { "type": "string" },
+          "source_pages": {
+            "type": "object",
+            "properties": {
+              "student": { "type": "array", "items": { "type": "integer" } },
+              "teacher": { "type": "array", "items": { "type": "integer" } }
+            }
+          },
+          "difficulty_tier": { "type": "string" },
+          "support_level": { "type": "string" },
+          "transfer_level": { "type": "string" },
+          "visibility": { "type": "string" },
+          "alignment_status": { "type": "string" },
+          "risk_flags": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "properties": {
+        "teacher_pages": { "type": "integer" },
+        "student_pages": { "type": "integer" },
+        "section_count": { "type": "integer" },
+        "task_count": { "type": "integer" },
+        "aligned_task_count": { "type": "integer" },
+        "unmatched_teacher_tasks": { "type": "array", "items": { "type": "string" } },
+        "unmatched_student_tasks": { "type": "array", "items": { "type": "string" } },
+        "audit_notes": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}
