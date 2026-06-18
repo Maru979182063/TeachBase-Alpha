@@ -18,7 +18,8 @@ fs.mkdirSync(tmpRoot, { recursive: true });
 function readHistory() {
   if (!fs.existsSync(historyPath)) return [];
   try {
-    return JSON.parse(fs.readFileSync(historyPath, "utf8"));
+    const raw = fs.readFileSync(historyPath, "utf8").replace(/^\uFEFF/, "");
+    return JSON.parse(raw);
   } catch {
     return [];
   }
