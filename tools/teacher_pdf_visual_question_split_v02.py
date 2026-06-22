@@ -4,9 +4,15 @@ import json
 import math
 import os
 import re
+import sys
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
+
+THIS_DIR = Path(__file__).resolve().parent
+VENDOR_DIR = THIS_DIR / "vendor"
+if VENDOR_DIR.exists():
+    sys.path.insert(0, str(VENDOR_DIR))
 
 import fitz
 import numpy as np
@@ -82,6 +88,9 @@ class QuestionSlice:
     crop_path: str = ""
     review_status: str = "VISUAL_REVIEWED_V02"
     review_note: str = ""
+    text_preview_pdf: str = ""
+    text_preview_ocr: str = ""
+    text_preview_source: str = "pdf_text_layer"
 
 
 def load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -96,6 +105,91 @@ def load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
         except Exception:
             pass
     return ImageFont.load_default()
+
+
+OCR_ENGINE = None
+OCR_UNAVAILABLE = False
+SUMMARY_STOP_TOKENS = (
+    "\u3010\u7b54\u6848",
+    "\u7b54\u6848",
+    "\u3010\u5206\u6790",
+    "\u5206\u6790",
+    "\u3010\u89e3\u7b54",
+    "\u89e3\u7b54",
+    "\u70b9\u8bc4",
+)
+
+
+def normalize_preview_text(text: str) -> str:
+    return re.sub(r"\s+", " ", str(text or "")).strip()
+
+
+def looks_noisy_preview(text: str) -> bool:
+    clean = normalize_preview_text(text)
+    if not clean:
+        return True
+    cjk_count = len(re.findall(r"[\u4e00-\u9fff]", clean))
+    latin_count = len(re.findall(r"[A-Za-z]", clean))
+    digit_count = len(re.findall(r"\d", clean))
+    math_symbol_count = len(re.findall(r"[=+\-*/^<>≤≥(){}\[\]|_]", clean))
+    private_use_count = len(re.findall(r"[\uE000-\uF8FF]", clean))
+    symbol_count = len(clean) - cjk_count - latin_count - digit_count
+    noisy_hits = sum(clean.count(token) for token in ("\uFFFD",))
+    sparse_readable = cjk_count <= 8 and len(clean) >= 24
+    symbol_heavy = len(clean) >= 32 and symbol_count / max(len(clean), 1) > 0.24 and cjk_count < 20
+    formula_noise = len(clean) >= 48 and math_symbol_count >= 7 and cjk_count < 48
+    return noisy_hits >= 1 or private_use_count >= 1 or sparse_readable or symbol_heavy or formula_noise
+
+
+def get_ocr_engine():
+    global OCR_ENGINE, OCR_UNAVAILABLE
+    if OCR_UNAVAILABLE:
+        return None
+    if OCR_ENGINE is not None:
+        return OCR_ENGINE
+    try:
+        from rapidocr_onnxruntime import RapidOCR
+
+        OCR_ENGINE = RapidOCR()
+        return OCR_ENGINE
+    except Exception:
+        OCR_UNAVAILABLE = True
+        return None
+
+
+def trim_summary_tail(text: str) -> str:
+    clean = normalize_preview_text(text)
+    if not clean:
+        return ""
+    cut_index = len(clean)
+    for token in SUMMARY_STOP_TOKENS:
+        index = clean.find(token)
+        if index > 0 and index < cut_index:
+            cut_index = index
+    clean = clean[:cut_index].strip()
+    clean = re.sub(r"[\s,.;:，。；：、]+$", "", clean)
+    return clean
+
+
+def should_stop_ocr_summary(clean: str, text_count: int, y_ratio: float) -> bool:
+    if not clean:
+        return False
+    if any(token in clean for token in SUMMARY_STOP_TOKENS):
+        return text_count > 0
+    if y_ratio > 0.72 and text_count > 0:
+        return True
+    return False
+
+
+def trim_summary_head(text: str) -> str:
+    clean = normalize_preview_text(text)
+    if not clean:
+        return ""
+    match = re.search(r"\d+\s*[．.]", clean)
+    if match and match.start() <= 80:
+        clean = clean[match.start():]
+    clean = re.sub(r"\b\d{1,3}\s*$", "", clean).strip()
+    return clean
 
 
 def render_pdf(pdf_path: str, pages_dir: Path) -> list[Path]:
@@ -539,22 +633,25 @@ def split_group(group: ComponentGroup, lines_by_page: dict[int, list[Line]], nex
     return questions, next_q
 
 
-def stitch_question(q: QuestionSlice, page_images: dict[int, Image.Image], out_path: Path) -> None:
+def build_question_canvas(q: QuestionSlice, page_images: dict[int, Image.Image], with_labels: bool = True) -> Image.Image | None:
     font = load_font(20)
     parts: list[Image.Image] = []
     for frag in q.fragments:
         page_img = page_images[frag["page"]]
         x0, y0, x1, y1 = [int(v) for v in frag["bbox_image"]]
         crop = page_img.crop((x0, y0, x1, y1)).convert("RGB")
-        label_h = 32
-        labeled = Image.new("RGB", (crop.width, crop.height + label_h), "white")
-        draw = ImageDraw.Draw(labeled)
-        draw.rectangle([0, 0, crop.width, label_h], fill=(235, 242, 255))
-        draw.text((8, 5), f"{q.question_id} p{frag['page']} {q.checkpoint} / {q.component_label} Q{q.local_number}", fill=(25, 65, 130), font=font)
-        labeled.paste(crop, (0, label_h))
-        parts.append(labeled)
+        if with_labels:
+            label_h = 32
+            labeled = Image.new("RGB", (crop.width, crop.height + label_h), "white")
+            draw = ImageDraw.Draw(labeled)
+            draw.rectangle([0, 0, crop.width, label_h], fill=(235, 242, 255))
+            draw.text((8, 5), f"{q.question_id} p{frag['page']} {q.checkpoint} / {q.component_label} Q{q.local_number}", fill=(25, 65, 130), font=font)
+            labeled.paste(crop, (0, label_h))
+            parts.append(labeled)
+        else:
+            parts.append(crop)
     if not parts:
-        return
+        return None
     width = max(p.width for p in parts)
     height = sum(p.height for p in parts) + (len(parts) - 1) * 12
     canvas = Image.new("RGB", (width, height), "white")
@@ -562,9 +659,51 @@ def stitch_question(q: QuestionSlice, page_images: dict[int, Image.Image], out_p
     for part in parts:
         canvas.paste(part, ((width - part.width) // 2, y))
         y += part.height + 12
+    return canvas
+
+
+def stitch_question(q: QuestionSlice, page_images: dict[int, Image.Image], out_path: Path) -> None:
+    canvas = build_question_canvas(q, page_images, with_labels=True)
+    if canvas is None:
+        return
     out_path.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(out_path)
     q.crop_path = str(out_path)
+
+
+def ocr_preview_text(q: QuestionSlice, page_images: dict[int, Image.Image], limit: int = 220) -> str:
+    engine = get_ocr_engine()
+    if engine is None:
+        return ""
+    canvas = build_question_canvas(q, page_images, with_labels=False)
+    if canvas is None:
+        return ""
+    try:
+        result, _ = engine(canvas)
+    except Exception:
+        return ""
+    if not result:
+        return ""
+    ordered = sorted(result, key=lambda item: ((item[0][0][1] + item[0][2][1]) / 2, (item[0][0][0] + item[0][1][0]) / 2))
+    texts: list[str] = []
+    canvas_height = max(canvas.height, 1)
+    for item in ordered:
+        if len(item) < 3:
+            continue
+        box, text, score = item
+        if score < 0.55:
+            continue
+        clean = normalize_preview_text(text)
+        if not clean:
+            continue
+        if clean.lower().startswith("tq_"):
+            continue
+        center_y = (box[0][1] + box[2][1]) / 2
+        if should_stop_ocr_summary(clean, len(texts), center_y / canvas_height):
+            break
+        texts.append(clean)
+    summary = trim_summary_head(trim_summary_tail(" ".join(texts)))
+    return summary[:limit]
 
 
 def question_contact_sheet(questions: list[QuestionSlice], out_path: Path) -> None:
@@ -679,8 +818,17 @@ def main() -> None:
 
     page_images = {i + 1: Image.open(path).convert("RGB") for i, path in enumerate(page_paths)}
     for q in questions:
+        q.text_preview_pdf = q.text_preview
         out = question_dir / f"{q.question_id}_{safe_name(q.checkpoint)}_{safe_name(q.component_label)}_Q{q.local_number}.png"
         stitch_question(q, page_images, out)
+        if looks_noisy_preview(q.text_preview):
+            ocr_preview = ocr_preview_text(q, page_images)
+            q.text_preview_ocr = ocr_preview
+            if ocr_preview:
+                q.text_preview = ocr_preview
+                q.text_preview_source = "ocr_fallback"
+            else:
+                q.text_preview_source = "pdf_text_layer_noisy"
     question_contact_sheet(questions, out_dir / "question_crops_contact_sheet.jpg")
     write_outputs(pdf_path, anchors, segments, questions, out_dir)
     zip_path = out_dir.parent / f"{out_name}_package.zip"

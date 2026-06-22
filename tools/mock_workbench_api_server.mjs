@@ -3,6 +3,20 @@ import http from "http";
 import path from "path";
 import { spawnSync } from "child_process";
 import { fileURLToPath } from "url";
+import {
+  ensureSeededState,
+  getArtifactLineage,
+  getLessonDetail,
+  getRunDetail,
+  getSummary as getRuntimeSummary,
+  listLessons,
+  loadState,
+  registerExportRun,
+  reseedState,
+  rerunLesson,
+  saveState,
+  updateReviewTaskStatus,
+} from "./runtime_backbone_store.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,6 +28,7 @@ const tmpRoot = path.join(exportRoot, "_tmp");
 
 fs.mkdirSync(exportRoot, { recursive: true });
 fs.mkdirSync(tmpRoot, { recursive: true });
+ensureSeededState();
 
 function readHistory() {
   if (!fs.existsSync(historyPath)) return [];
@@ -48,6 +63,23 @@ function sendJson(res, status, body) {
     "Access-Control-Allow-Headers": "Content-Type",
   });
   res.end(JSON.stringify(body));
+}
+
+function matchPath(pathname, pattern) {
+  const actual = pathname.split("/").filter(Boolean);
+  const expected = pattern.split("/").filter(Boolean);
+  if (actual.length !== expected.length) return null;
+  const params = {};
+  for (let i = 0; i < expected.length; i += 1) {
+    const exp = expected[i];
+    const act = actual[i];
+    if (exp.startsWith(":")) {
+      params[exp.slice(1)] = decodeURIComponent(act);
+      continue;
+    }
+    if (exp !== act) return null;
+  }
+  return params;
 }
 
 function parseBody(req) {
@@ -157,6 +189,11 @@ function runExport(payload) {
   const history = readHistory();
   history.unshift(historyItem);
   writeHistory(history);
+
+  const runtimeState = loadState();
+  const runtime = registerExportRun(runtimeState, payload, historyItem);
+  saveState(runtimeState);
+  historyItem.runtime = runtime;
   return historyItem;
 }
 
@@ -171,17 +208,26 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (req.url === "/health") {
-    sendJson(res, 200, { ok: true, historyCount: readHistory().length, exportRoot: toRelative(exportRoot) });
+  const requestUrl = new URL(req.url || "/", "http://127.0.0.1");
+  const pathname = requestUrl.pathname;
+
+  if (pathname === "/health") {
+    const runtimeState = loadState();
+    sendJson(res, 200, {
+      ok: true,
+      historyCount: readHistory().length,
+      exportRoot: toRelative(exportRoot),
+      runtime: getRuntimeSummary(runtimeState),
+    });
     return;
   }
 
-  if (req.url === "/api/export/history" && req.method === "GET") {
+  if (pathname === "/api/export/history" && req.method === "GET") {
     sendJson(res, 200, { items: readHistory() });
     return;
   }
 
-  if (req.url === "/api/export/generate" && req.method === "POST") {
+  if (pathname === "/api/export/generate" && req.method === "POST") {
     try {
       const body = await parseBody(req);
       const payload = buildPayload(body);
@@ -199,6 +245,119 @@ const server = http.createServer(async (req, res) => {
       });
       return;
     }
+  }
+
+  if (pathname === "/api/runtime/bootstrap" && req.method === "POST") {
+    const state = reseedState();
+    sendJson(res, 200, { ok: true, summary: getRuntimeSummary(state) });
+    return;
+  }
+
+  if (pathname === "/api/runtime/summary" && req.method === "GET") {
+    sendJson(res, 200, { ok: true, summary: getRuntimeSummary(loadState()) });
+    return;
+  }
+
+  if (pathname === "/api/runtime/lessons" && req.method === "GET") {
+    sendJson(res, 200, { ok: true, items: listLessons(loadState()) });
+    return;
+  }
+
+  const lessonParams = matchPath(pathname, "/api/runtime/lessons/:lessonId");
+  if (lessonParams && req.method === "GET") {
+    const detail = getLessonDetail(loadState(), lessonParams.lessonId);
+    if (!detail) {
+      sendJson(res, 404, { ok: false, error: "lesson_not_found" });
+      return;
+    }
+    sendJson(res, 200, { ok: true, detail });
+    return;
+  }
+
+  const rerunParams = matchPath(pathname, "/api/runtime/lessons/:lessonId/rerun");
+  if (rerunParams && req.method === "POST") {
+    try {
+      const body = await parseBody(req);
+      const state = loadState();
+      const result = rerunLesson(state, rerunParams.lessonId, body.actor || "manual_rerun");
+      saveState(state);
+      sendJson(res, 200, { ok: true, result, lesson: getLessonDetail(state, rerunParams.lessonId) });
+      return;
+    } catch (error) {
+      sendJson(res, 500, { ok: false, error: String(error?.message || error) });
+      return;
+    }
+  }
+
+  if (pathname === "/api/runtime/runs" && req.method === "GET") {
+    const state = loadState();
+    sendJson(res, 200, { ok: true, items: state.runs });
+    return;
+  }
+
+  const runParams = matchPath(pathname, "/api/runtime/runs/:runId");
+  if (runParams && req.method === "GET") {
+    const detail = getRunDetail(loadState(), runParams.runId);
+    if (!detail) {
+      sendJson(res, 404, { ok: false, error: "run_not_found" });
+      return;
+    }
+    sendJson(res, 200, { ok: true, detail });
+    return;
+  }
+
+  if (pathname === "/api/runtime/review-tasks" && req.method === "GET") {
+    const state = loadState();
+    const status = requestUrl.searchParams.get("status");
+    const items = status ? state.reviewTasks.filter((item) => item.status === status) : state.reviewTasks;
+    sendJson(res, 200, { ok: true, items });
+    return;
+  }
+
+  const approveParams = matchPath(pathname, "/api/runtime/review-tasks/:reviewTaskId/approve");
+  if (approveParams && req.method === "POST") {
+    try {
+      const body = await parseBody(req);
+      const state = loadState();
+      const result = updateReviewTaskStatus(state, approveParams.reviewTaskId, "approve", body.actor || "reviewer");
+      saveState(state);
+      sendJson(res, 200, { ok: true, result });
+      return;
+    } catch (error) {
+      sendJson(res, 500, { ok: false, error: String(error?.message || error) });
+      return;
+    }
+  }
+
+  const changesParams = matchPath(pathname, "/api/runtime/review-tasks/:reviewTaskId/request-changes");
+  if (changesParams && req.method === "POST") {
+    try {
+      const body = await parseBody(req);
+      const state = loadState();
+      const result = updateReviewTaskStatus(
+        state,
+        changesParams.reviewTaskId,
+        "request_changes",
+        body.actor || "reviewer"
+      );
+      saveState(state);
+      sendJson(res, 200, { ok: true, result });
+      return;
+    } catch (error) {
+      sendJson(res, 500, { ok: false, error: String(error?.message || error) });
+      return;
+    }
+  }
+
+  const artifactParams = matchPath(pathname, "/api/runtime/artifacts/:artifactId/lineage");
+  if (artifactParams && req.method === "GET") {
+    const detail = getArtifactLineage(loadState(), artifactParams.artifactId);
+    if (!detail) {
+      sendJson(res, 404, { ok: false, error: "artifact_not_found" });
+      return;
+    }
+    sendJson(res, 200, { ok: true, detail });
+    return;
   }
 
   sendJson(res, 404, { ok: false, error: "not_found" });

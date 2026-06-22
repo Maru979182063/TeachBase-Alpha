@@ -115,14 +115,15 @@ function clipOcrText(text, max = 480) {
   return clean.length > max ? `${clean.slice(0, max)}...` : clean;
 }
 
+const excerptStopMarkers = ["【答案】", "【分析】", "【解答】", "【点评】", "答案：", "分析：", "解："];
+
 function extractTrustedExcerpt(text) {
   const clean = normalizePreviewText(text);
   if (!clean) return "";
 
-  const markers = ["【答案】", "【分析】", "【解答】", "【点评】", "答案：", "分析：", "解："];
   let cutIndex = clean.length;
 
-  markers.forEach((marker) => {
+  excerptStopMarkers.forEach((marker) => {
     const index = clean.indexOf(marker);
     if (index > 0 && index < cutIndex) cutIndex = index;
   });
@@ -133,11 +134,69 @@ function extractTrustedExcerpt(text) {
     .trim();
 }
 
+function preprocessPreviewCandidate(text) {
+  let clean = normalizePreviewText(text)
+    .replace(/[\uE000-\uF8FF]/g, " ")
+    .replace(/[•◆◇■□]/g, " ")
+    .trim();
+
+  clean = extractTrustedExcerpt(clean);
+  if (!clean) return "";
+
+  const questionLead = clean.match(/\d+\s*[．.]/);
+  if (questionLead && questionLead.index !== undefined && questionLead.index <= 80) {
+    clean = clean.slice(questionLead.index);
+  }
+
+  clean = clean
+    .replace(/\s+([，。；：！？）】》])/g, "$1")
+    .replace(/([（【《])\s+/g, "$1")
+    .replace(/\s+([A-D])\s*[．.]/g, " $1．")
+    .replace(/\b\d{1,3}\s*$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return clean;
+}
+
+function isReadableQuestionExcerpt(text, sourceHint = "") {
+  const stats = previewSignalStats(text);
+  if (!stats.length) return false;
+
+  const hasQuestionLead = /^\d+\s*[．.]/.test(stats.clean);
+  const hasStemCue = /(已知|如图|下列|则|求|设|若|满足|函数|方程|不等式|向量|中点|共面)/.test(stats.clean);
+  const hasChoiceCue = /A[．.]/.test(stats.clean) || /（\s*.*\s*）/.test(stats.clean);
+  const readableCore = stats.noisyHits === 0 && stats.privateUseCount === 0;
+  const denseEnough = stats.length >= 20 && stats.cjkCount >= 8;
+  const ocrDenseEnough = sourceHint === "ocr_fallback" && stats.length >= 18 && stats.cjkCount >= 6;
+
+  return readableCore && (denseEnough || ocrDenseEnough) && (hasQuestionLead || hasStemCue || hasChoiceCue);
+}
+
+function previewCandidateScore(text, sourceHint = "") {
+  const stats = previewSignalStats(text);
+  let score = 0;
+
+  score += Math.min(stats.length, 140);
+  score += stats.cjkCount * 3;
+  score -= stats.noisyHits * 80;
+  score -= stats.privateUseCount * 120;
+  score -= Math.max(stats.mathSymbolCount - 18, 0) * 2;
+
+  if (/^\d+\s*[．.]/.test(stats.clean)) score += 24;
+  if (/(已知|如图|下列|则|求|设|若|满足|函数|方程|不等式|向量|中点|共面)/.test(stats.clean)) score += 20;
+  if (sourceHint === "pdf_text_layer") score += 6;
+  if (sourceHint === "ocr_fallback") score += 4;
+
+  return score;
+}
+
 function previewSignalStats(text) {
   const clean = normalizePreviewText(text);
   const cjkCount = (clean.match(/[\u4e00-\u9fff]/g) || []).length;
   const latinCount = (clean.match(/[A-Za-z]/g) || []).length;
   const digitCount = (clean.match(/\d/g) || []).length;
+  const privateUseCount = (clean.match(/[\uE000-\uF8FF]/g) || []).length;
   const mathSymbolCount = (clean.match(/[=+\-*/^<>≤≥(){}\[\]|_]/g) || []).length;
   const symbolCount = clean.length - cjkCount - latinCount - digitCount;
   const optionMarkerCount = (clean.match(/[A-D][．.、]/g) || []).length;
@@ -150,6 +209,7 @@ function previewSignalStats(text) {
     cjkCount,
     latinCount,
     digitCount,
+    privateUseCount,
     mathSymbolCount,
     symbolCount,
     optionMarkerCount,
@@ -165,11 +225,12 @@ function looksNoisyPreview(text) {
   const symbolHeavy =
     stats.length >= 32 && stats.symbolCount / Math.max(stats.length, 1) > 0.24 && stats.cjkCount < 20;
   const formulaNoise = stats.length >= 48 && stats.mathSymbolCount >= 7 && stats.cjkCount < 48;
+  const privateUseNoise = stats.privateUseCount >= 1;
   const optionBurst = stats.optionMarkerCount >= 3 && stats.mathSymbolCount >= 6 && stats.cjkCount < 48;
   const optionFormulaMix = stats.optionMarkerCount >= 2 && stats.mathSymbolCount >= 4 && stats.cjkCount < 56;
   const tooShort = stats.length < 10;
 
-  return stats.noisyHits >= 1 || sparseReadable || symbolHeavy || formulaNoise || optionBurst || optionFormulaMix || tooShort;
+  return stats.noisyHits >= 1 || privateUseNoise || sparseReadable || symbolHeavy || formulaNoise || optionBurst || optionFormulaMix || tooShort;
 }
 
 function buildStructuredFallback({ checkpoint, componentLabel, localNumber, page }) {
@@ -178,24 +239,38 @@ function buildStructuredFallback({ checkpoint, componentLabel, localNumber, page
   return `${checkpoint}｜${componentLabel}${localPart}｜${pagePart}。当前以题图为准，文字层待复核。`;
 }
 
-function buildStoredPreview({ rawText, checkpoint, componentLabel, localNumber, page }) {
+function buildStoredPreview({ rawText, pdfText, ocrText, sourceHint, checkpoint, componentLabel, localNumber, page }) {
   const normalizedRaw = normalizePreviewText(rawText);
-  const trustedExcerpt = extractTrustedExcerpt(normalizedRaw);
-  const trustedStats = previewSignalStats(trustedExcerpt);
-  const trusted =
-    Boolean(trustedExcerpt) &&
-    !looksNoisyPreview(trustedExcerpt) &&
-    trustedStats.length >= 14 &&
-    trustedStats.cjkCount >= 10;
+  const normalizedPdf = normalizePreviewText(pdfText);
+  const normalizedOcr = normalizePreviewText(ocrText);
+  const candidates = [
+    { source: sourceHint || "raw_text", text: normalizedRaw },
+    { source: "pdf_text_layer", text: normalizedPdf },
+    { source: "ocr_fallback", text: normalizedOcr },
+  ]
+    .map((candidate) => ({
+      ...candidate,
+      clean: preprocessPreviewCandidate(candidate.text),
+    }))
+    .filter((candidate) => candidate.clean);
 
-  if (trusted) {
+  candidates.sort((a, b) => previewCandidateScore(b.clean, b.source) - previewCandidateScore(a.clean, a.source));
+  const trustedCandidate = candidates.find((candidate) => isReadableQuestionExcerpt(candidate.clean, candidate.source));
+  const trustedExcerpt = trustedCandidate?.clean || "";
+
+  if (trustedExcerpt) {
     return {
       previewText: trustedExcerpt,
       previewShort: shortPreview(trustedExcerpt),
       trustedText: trustedExcerpt,
-      ocrTextRaw: clipOcrText(normalizedRaw),
+      ocrTextRaw: clipOcrText([normalizedPdf, normalizedOcr, normalizedRaw].filter(Boolean).join(" | ")),
       textStorageMode: "trusted_excerpt",
-      storageNote: "当前展示为清洗后的题干摘录，答案与解析未直接进入主展示层。",
+      storageNote:
+        trustedCandidate?.source === "pdf_text_layer"
+          ? "当前展示为从 PDF 文字层恢复并清洗后的题干摘录，答案与解析未直接进入主展示层。"
+          : trustedCandidate?.source === "ocr_fallback"
+            ? "当前展示为 OCR 补全后清洗的题干摘录，答案与解析未直接进入主展示层。"
+            : "当前展示为清洗后的题干摘录，答案与解析未直接进入主展示层。",
     };
   }
 
@@ -204,10 +279,10 @@ function buildStoredPreview({ rawText, checkpoint, componentLabel, localNumber, 
     previewText: fallback,
     previewShort: shortPreview(fallback),
     trustedText: "",
-    ocrTextRaw: clipOcrText(normalizedRaw),
+    ocrTextRaw: clipOcrText([normalizedPdf, normalizedOcr, normalizedRaw].filter(Boolean).join(" | ")),
     textStorageMode: "ocr_reference_only",
-    storageNote: normalizedRaw
-      ? "当前题块以题图为主，文字层存在公式或 OCR 噪声，已降级为内部参考。"
+    storageNote: (normalizedPdf || normalizedOcr || normalizedRaw)
+      ? "当前题块仍以题图为准，文字层存在公式噪声或抽取缺口，暂降级为内部参考。"
       : "当前题块暂未抽到稳定文字，先以题图为主。",
   };
 }
@@ -233,6 +308,9 @@ function normalizeQuestions(questions, auditsById) {
     const page = question.fragments?.[0]?.page || question.visual_pages?.[0] || "";
     const storedPreview = buildStoredPreview({
       rawText: previewRaw,
+      pdfText: question.text_preview_pdf || "",
+      ocrText: question.text_preview_ocr || "",
+      sourceHint: question.text_preview_source || "",
       checkpoint: checkpointKey,
       componentLabel,
       localNumber,

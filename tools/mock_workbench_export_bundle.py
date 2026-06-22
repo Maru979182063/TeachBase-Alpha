@@ -36,6 +36,9 @@ VERSION_ORDER = ["基础版", "常用版", "进阶版"]
 AUDIENCE_ORDER = ["学生版", "教师版"]
 
 
+PUA_RE = re.compile(r"[\ue000-\uf8ff]")
+
+
 def safe_name(text: str) -> str:
     text = str(text or "").strip()
     text = re.sub(r'[\\/:*?"<>|]+', "_", text)
@@ -60,6 +63,46 @@ def set_default_style(document: Document) -> None:
     section.bottom_margin = Inches(0.6)
     section.left_margin = Inches(0.72)
     section.right_margin = Inches(0.72)
+
+
+def normalize_preview_text(text: str) -> str:
+    return re.sub(r"\s+", " ", str(text or "")).strip()
+
+
+def preview_looks_noisy(text: str) -> bool:
+    normalized = normalize_preview_text(text)
+    if not normalized:
+        return True
+
+    cjk_count = len(re.findall(r"[\u4e00-\u9fff]", normalized))
+    latin_count = len(re.findall(r"[A-Za-z]", normalized))
+    digit_count = len(re.findall(r"\d", normalized))
+    math_symbol_count = len(re.findall(r"[=+\-*/^<>]", normalized))
+    private_use_count = len(PUA_RE.findall(normalized))
+    symbol_count = len(normalized) - cjk_count - latin_count - digit_count
+    spaced_operator_runs = len(
+        re.findall(r"(?:[=+\-*/^(){}\[\]<>_.,:;|\\]+(?:\s+|$)){6,}", normalized)
+    )
+    sparse_readable = cjk_count <= 8 and latin_count + digit_count + symbol_count > 40
+    symbol_heavy = len(normalized) >= 48 and symbol_count / max(len(normalized), 1) > 0.42 and cjk_count < 16
+    formula_noise = len(normalized) >= 72 and math_symbol_count >= 10 and cjk_count <= 36
+    return private_use_count >= 1 or spaced_operator_runs >= 1 or sparse_readable or symbol_heavy or formula_noise
+
+
+def export_preview_text(question: dict) -> str:
+    preview = normalize_preview_text(question.get("previewText", ""))
+    storage_mode = str(question.get("textStorageMode") or "")
+    if preview and storage_mode != "ocr_reference_only" and not preview_looks_noisy(preview):
+        return preview
+
+    checkpoint = str(question.get("checkpoint") or "\u5f53\u524d\u9898\u5757")
+    component = str(question.get("componentLabel") or "\u9898\u56fe\u9884\u89c8")
+    source_page = question.get("sourcePage")
+    source_page_label = f"P{source_page}" if source_page else "\u9875\u7801\u5f85\u590d\u6838"
+    return (
+        f"{checkpoint}\uff5c{component}\uff5c{source_page_label}"
+        "\u3002\u5f53\u524d\u4ee5\u9898\u56fe\u4e3a\u51c6\uff0c\u6587\u5b57\u5c42\u5f85\u590d\u6838\u3002"
+    )
 
 
 def make_docx(payload: dict, target_path: Path) -> None:
@@ -145,7 +188,7 @@ def make_docx(payload: dict, target_path: Path) -> None:
         if audience == "教师版":
             prompt = document.add_paragraph()
             prompt.add_run("题块摘要：").bold = True
-            prompt.add_run(question.get("previewText", ""))
+            prompt.add_run(export_preview_text(question))
             review = document.add_paragraph()
             review.add_run("视觉备注：").bold = True
             review.add_run(question.get("reviewNote", ""))
@@ -259,7 +302,7 @@ def make_pdf(payload: dict, target_path: Path) -> None:
             story.append(image)
         if audience == "教师版":
             story.append(Spacer(1, 2 * mm))
-            story.append(Paragraph(f"题块摘要：{question.get('previewText', '')}", body_style))
+            story.append(Paragraph(f"题块摘要：{export_preview_text(question)}", body_style))
             story.append(Paragraph(f"视觉备注：{question.get('reviewNote', '')}", meta_style))
             if question.get("riskIssues"):
                 story.append(Paragraph(f"风险提示：{'；'.join(question['riskIssues'])}", meta_style))
