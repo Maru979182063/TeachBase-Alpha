@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Packages leader demo assets into a distributable folder with patched local URLs.
+ * - Use this file when the demo must run outside the development workspace layout.
+ */
+
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";

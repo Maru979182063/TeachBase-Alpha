@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Calls the Doubao model to place visual lesson material into candidate curriculum buckets.
+ * - Keep request shaping and result packaging together here so prompt changes are auditable.
+ */
+
 import fs from "node:fs/promises";
 import path from "node:path";
 

@@ -1,3 +1,7 @@
+# Purpose:
+# - Evaluates curated minimum-knowledge-point answers against model predictions.
+# - Exported workbook summaries from this file are meant for teacher-facing quality review.
+
 from __future__ import annotations
 
 import json

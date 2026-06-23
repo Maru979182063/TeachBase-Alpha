@@ -1,3 +1,7 @@
+# Purpose:
+# - Cleans coverage outputs into a stable spreadsheet shape for manual review.
+# - This file should stay focused on output hygiene rather than content discovery.
+
 from __future__ import annotations
 
 import json

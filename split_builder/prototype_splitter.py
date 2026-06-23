@@ -1,3 +1,7 @@
+# Purpose:
+# - Provides the early full-document splitter for lesson structure, goals, and answers.
+# - Later pipelines still rely on the heuristics prototyped here, so keep behavior notes close.
+
 import argparse
 import json
 import re
@@ -80,6 +84,7 @@ def flush_task(current: Optional[ParsedTask], current_section: Optional[ParsedSe
         current_section.tasks.append(current)
 
 
+# Parsing stage: converts PDF text into sections and tasks while preserving page provenance.
 def parse_doc(pdf_path: Path) -> ParsedDoc:
     page_count, rows = extract_lines(pdf_path)
     intro_lines: List[str] = []
@@ -214,6 +219,7 @@ def task_map(doc: ParsedDoc) -> Dict[str, ParsedTask]:
     return {task.key: task for section in doc.sections for task in section.tasks}
 
 
+# Assembly stage: merges teacher and student views into the canonical split JSON shape.
 def build_split(teacher_doc: ParsedDoc, student_doc: ParsedDoc, args: argparse.Namespace) -> Dict:
     teacher_tasks = task_map(teacher_doc)
     student_tasks = task_map(student_doc)
@@ -405,6 +411,7 @@ def build_split(teacher_doc: ParsedDoc, student_doc: ParsedDoc, args: argparse.N
     }
 
 
+# Review stage: writes a human-readable markdown summary of the parsed split.
 def write_review(split: Dict, output_path: Path) -> None:
     lines: List[str] = []
     lesson = split["lesson"]

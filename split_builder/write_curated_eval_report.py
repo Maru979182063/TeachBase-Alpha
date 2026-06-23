@@ -1,3 +1,7 @@
+# Purpose:
+# - Creates a concise report from curated evaluation outputs.
+# - Keep the file small and report-oriented so review messaging stays consistent.
+
 from __future__ import annotations
 
 import json

@@ -1,3 +1,7 @@
+# Purpose:
+# - Backfills missing gold coverage by locating likely source pages and slicing question images.
+# - Use this when the evaluation catalog is incomplete but the source PDFs still exist.
+
 from __future__ import annotations
 
 import json

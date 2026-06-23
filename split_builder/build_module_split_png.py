@@ -1,3 +1,7 @@
+# Purpose:
+# - Renders module split results into PNG review cards.
+# - Keep this file focused on visual presentation rather than parsing logic.
+
 import json
 from pathlib import Path
 

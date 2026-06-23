@@ -1,3 +1,7 @@
+# Purpose:
+# - Builds preview sheets for icon assets so downstream PDF builders can verify visual labels quickly.
+# - Use this file when icon manifests or badge visuals need a fast human review step.
+
 import json
 from pathlib import Path
 

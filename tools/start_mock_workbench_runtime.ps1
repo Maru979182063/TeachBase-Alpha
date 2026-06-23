@@ -1,3 +1,9 @@
+<#
+Purpose:
+- Starts the lightweight mock workbench runtime with the pinned local Node binary.
+- This launcher exists so the demo can run predictably on a shared workstation.
+#>
+
 $node = "C:\Users\EDY\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"
 $root = "C:\Users\EDY\Documents\教研基建"
 $server = Join-Path $root "tools\mock_workbench_api_server.mjs"

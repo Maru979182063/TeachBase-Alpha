@@ -1,3 +1,7 @@
+# Purpose:
+# - Renders DOCX flow outputs into image cards and review galleries for visual QA.
+# - It exists to make Word-based deliverables reviewable with the same visual rhythm as PDF flows.
+
 from __future__ import annotations
 
 import html

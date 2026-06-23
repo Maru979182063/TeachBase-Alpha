@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Runs a focused consistency audit against runtime backbone state and projections.
+ * - This script is meant for operator verification rather than day-to-day app flows.
+ */
+
 import { createRuntimeBackboneStore } from "./runtime_backbone_store_interface.mjs";
 
 async function main() {

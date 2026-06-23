@@ -1,3 +1,9 @@
+<#
+Purpose:
+- Starts the runtime backbone API or demo process in a controlled local shell.
+- Use the paired stop script to cleanly tear down whatever this launcher brings up.
+#>
+
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot

@@ -1,3 +1,7 @@
+# Purpose:
+# - Draws the backend and runtime architecture diagram used in BRD or review materials.
+# - Diagram content is code-driven here so structural updates can be versioned alongside implementation.
+
 from __future__ import annotations
 
 from pathlib import Path

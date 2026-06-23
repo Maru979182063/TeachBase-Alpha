@@ -1,3 +1,7 @@
+# Purpose:
+# - Merges replenished and existing gold coverage into a final workbook report.
+# - This is the final reporting step after discovery and replenishment have already run.
+
 from __future__ import annotations
 
 import json

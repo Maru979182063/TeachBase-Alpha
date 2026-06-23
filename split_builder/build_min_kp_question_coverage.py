@@ -1,3 +1,7 @@
+# Purpose:
+# - Scores PDF pages against minimum knowledge points and extracts candidate question blocks.
+# - This is the bridge between curriculum labels and the concrete question evidence humans review.
+
 from __future__ import annotations
 
 import json

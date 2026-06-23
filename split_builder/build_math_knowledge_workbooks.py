@@ -1,3 +1,7 @@
+# Purpose:
+# - Transforms math knowledge-map inputs and source PDFs into workbook-style review artifacts.
+# - Lesson goals, exam points, and first-question context are assembled here for curriculum audits.
+
 import json
 import math
 import re

@@ -1,3 +1,7 @@
+-- Purpose:
+-- - Preserves an earlier backend schema draft for design reference and historical comparison.
+-- - Treat this file as documentation, not as an executable migration source of truth.
+
 -- 后端数据库草案 v0.1
 -- 目标：把 v0.3 设计中的核心对象落到可审阅的 PostgreSQL 表结构草案
 -- 说明：这是评审稿，不是最终迁移文件。字段与索引以“先把边界定住”为目标。

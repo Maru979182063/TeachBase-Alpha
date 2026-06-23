@@ -1,3 +1,7 @@
+# Purpose:
+# - Runs the teacher handout OCR and splitting runtime end-to-end and stages intermediate artifacts.
+# - This is the operational version of the extraction flow, so debugging breadcrumbs are intentionally preserved here.
+
 from __future__ import annotations
 
 import json
@@ -98,6 +102,7 @@ def load_json(path: Path, default=None):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+# Runtime breadcrumb helper: records progress after each expensive stage for resumable debugging.
 def stage_state(state_path: Path, **updates) -> dict:
     state = load_json(state_path, default={}) or {}
     state.update(updates)
@@ -222,6 +227,7 @@ def detect_component_anchors(ocr_pages_map: dict[int, list[OcrLine]]) -> list[tu
     return deduped
 
 
+# Component stage: uses OCR anchors to identify broad lesson sections before question extraction.
 def build_component_blocks(page_paths: list[Path], ocr_pages_map: dict[int, list[OcrLine]]) -> list[Block]:
     anchors = detect_component_anchors(ocr_pages_map)
     blocks: list[Block] = []
@@ -322,6 +328,7 @@ def detect_question_starts(ocr_pages_map: dict[int, list[OcrLine]], question_reg
     return deduped
 
 
+# Question stage: narrows component regions into individual student-facing question blocks.
 def build_question_blocks(ocr_pages_map: dict[int, list[OcrLine]], question_regions: list[Block]) -> list[Block]:
     starts = detect_question_starts(ocr_pages_map, question_regions)
     questions: list[Block] = []
@@ -517,6 +524,7 @@ def write_preview_html(components: list[Block], questions: list[Block], out_path
     out_path.write_text(html, encoding="utf-8")
 
 
+# Publish stage: copies the completed work directory into the stable output location.
 def publish_results(work_dir: Path, publish_dir: Path) -> None:
     if publish_dir.exists():
         shutil.rmtree(publish_dir)
@@ -530,6 +538,7 @@ def package_dir(source_dir: Path, zip_path: Path) -> None:
                 zf.write(path, path.relative_to(source_dir.parent))
 
 
+# CLI orchestration: render, OCR, detect blocks, crop artifacts, preview, publish, and package.
 def main() -> None:
     source_pdf = Path(os.environ.get("SOURCE_PDF_ASCII", r"C:\codex_tmp\english_narrative_teacher.pdf"))
     run_name = os.environ.get("RUN_NAME", "english_teacher_runtime_v01")

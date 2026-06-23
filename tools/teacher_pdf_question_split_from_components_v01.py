@@ -1,3 +1,7 @@
+# Purpose:
+# - Splits teacher PDF question images from precomputed visual components and assembles review sheets.
+# - Use this file when component detection has already happened and only question slicing remains.
+
 from __future__ import annotations
 
 import json

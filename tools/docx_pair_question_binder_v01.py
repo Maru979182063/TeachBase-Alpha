@@ -1,3 +1,7 @@
+# Purpose:
+# - Binds paired question text into a DOCX structure that reviewers can read sequentially.
+# - Text grouping rules belong here so downstream exports can stay format-specific.
+
 from __future__ import annotations
 
 import json

@@ -1,3 +1,9 @@
+<#
+Purpose:
+- Starts the local demo stack and coordinating helper processes for the workbench preview.
+- Launch sequencing, port setup, and process bookkeeping are intentionally kept in one place.
+#>
+
 param(
   [switch]$OpenBrowser,
   [string]$NgrokAuthtoken = ""

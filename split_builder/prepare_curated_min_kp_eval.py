@@ -1,3 +1,7 @@
+# Purpose:
+# - Packages curated gold data into batchable evaluation payloads.
+# - Keep batching logic here so model runners can stay stateless.
+
 from __future__ import annotations
 
 import json

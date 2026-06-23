@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Serves static preview assets from a local folder for quick visual inspection.
+ * - Keep this server intentionally tiny so preview hosting stays easy to debug.
+ */
+
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";

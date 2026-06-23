@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Thin CLI wrapper that runs the soak suite.
+ * - Keep long-running soak orchestration lightweight here and detailed scenarios in the tests.
+ */
+
 import { runProductionReadiness } from "./runtime_backbone_production_readiness.mjs";
 
 const report = await runProductionReadiness({

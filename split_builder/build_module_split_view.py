@@ -1,3 +1,7 @@
+# Purpose:
+# - Builds a visual review document for module split structures.
+# - It is the lightweight companion to the PNG builder for quick manual inspection.
+
 import html
 import json
 from pathlib import Path

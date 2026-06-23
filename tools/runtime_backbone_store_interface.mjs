@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Selects and constructs the active runtime store implementation.
+ * - Callers should depend on this interface layer so backend swaps stay localized.
+ */
+
 import {
   addMaterialBuildItems,
   applyComponentPatchDecision,

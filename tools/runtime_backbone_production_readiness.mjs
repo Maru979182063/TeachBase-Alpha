@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Orchestrates selected readiness suites and renders machine-readable summaries such as JUnit.
+ * - This file is the reporting shell around lower-level readiness checks.
+ */
+
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";

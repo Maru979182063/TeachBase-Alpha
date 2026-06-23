@@ -1,3 +1,7 @@
+# Purpose:
+# - Generates manual review packets for senior-stage placement or audit work.
+# - This file is the human-review packaging step after automated extraction has already run.
+
 from __future__ import annotations
 
 import json

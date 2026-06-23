@@ -1,3 +1,7 @@
+# Purpose:
+# - Creates contact sheets and HTML galleries for split-review image outputs.
+# - Keep presentation tweaks here instead of scattering gallery rules across extraction scripts.
+
 from __future__ import annotations
 
 import html

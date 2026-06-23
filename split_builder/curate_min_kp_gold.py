@@ -1,3 +1,7 @@
+# Purpose:
+# - Turns predicted minimum-knowledge-point matches into curator-friendly gold sheets.
+# - Noise filtering for objectives, navigation, and weak matches is centralized here.
+
 from __future__ import annotations
 
 import json

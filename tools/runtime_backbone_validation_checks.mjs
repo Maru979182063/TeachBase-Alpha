@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Executes end-to-end runtime validation checks and reports pass or fail details.
+ * - This file is the operator-readable entry point for the validation stack.
+ */
+
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";

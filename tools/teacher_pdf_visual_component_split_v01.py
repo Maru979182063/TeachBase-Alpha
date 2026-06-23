@@ -1,3 +1,7 @@
+# Purpose:
+# - Detects visual anchors and components in teacher PDFs and crops them into structured segments.
+# - Anchor and segmentation heuristics belong here so later stages can stay composition-focused.
+
 from __future__ import annotations
 
 import json

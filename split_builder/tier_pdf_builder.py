@@ -1,3 +1,7 @@
+# Purpose:
+# - Builds tiered PDF pages by cropping source markers and reassembling them into printable pages.
+# - Cropping and pagination assumptions are centralized here for easier tuning.
+
 import json
 import re
 import shutil

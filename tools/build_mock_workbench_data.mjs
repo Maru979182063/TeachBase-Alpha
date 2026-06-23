@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Builds mock workbench datasets by merging OCR previews, YAML metadata, and trusted excerpts.
+ * - Most of the demo data normalization rules live here so the UI can stay lightweight.
+ */
+
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -239,6 +245,10 @@ function buildStructuredFallback({ checkpoint, componentLabel, localNumber, page
   return `${checkpoint}｜${componentLabel}${localPart}｜${pagePart}。当前以题图为准，文字层待复核。`;
 }
 
+/**
+ * Chooses the preview text stored with a question.
+ * The order matters: trusted excerpts beat OCR, while structured fallbacks keep noisy pages readable.
+ */
 function buildStoredPreview({ rawText, pdfText, ocrText, sourceHint, checkpoint, componentLabel, localNumber, page }) {
   const normalizedRaw = normalizePreviewText(rawText);
   const normalizedPdf = normalizePreviewText(pdfText);
@@ -287,6 +297,10 @@ function buildStoredPreview({ rawText, pdfText, ocrText, sourceHint, checkpoint,
   };
 }
 
+/**
+ * Converts raw question records into the stable demo schema used by the workbench UI.
+ * Audit metadata is merged here so front-end filters do not need to understand source files.
+ */
 function normalizeQuestions(questions, auditsById) {
   const seenInCheckpoint = new Map();
 
@@ -365,6 +379,10 @@ function normalizeQuestions(questions, auditsById) {
   });
 }
 
+/**
+ * Builds subject-grade knowledge trees from flat point records.
+ * The UI reads this hierarchy directly, so IDs and ordering should remain deterministic.
+ */
 function buildKnowledgeTrees(knowledgePoints) {
   const treeMap = {};
 
@@ -406,6 +424,10 @@ function summarizeByVersion(questions) {
   return stats;
 }
 
+/**
+ * Creates the operator review queue shown in the mock workbench.
+ * Keep queue entries compact; drill-down detail should stay on the linked lesson/question records.
+ */
 function buildReviewQueue(splitLessons) {
   const allQuestions = Object.values(splitLessons).flatMap((lesson) =>
     lesson.questions.map((question) => ({

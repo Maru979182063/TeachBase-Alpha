@@ -1,3 +1,9 @@
+<#
+Purpose:
+- Stops the local demo stack processes started by the companion launcher script.
+- Cleanup rules live here so operators do not need to hunt for stray processes by hand.
+#>
+
 $ErrorActionPreference = "SilentlyContinue"
 
 $targets = @(

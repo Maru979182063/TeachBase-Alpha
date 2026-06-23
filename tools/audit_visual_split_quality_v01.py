@@ -1,3 +1,7 @@
+# Purpose:
+# - Audits extracted question crops for whitespace balance and visual quality.
+# - The exported workbook and HTML outputs from this file are meant for fast human QA, not model training.
+
 from __future__ import annotations
 
 import html

@@ -1,3 +1,7 @@
+# Purpose:
+# - Composes teacher-facing template PDFs with banners, icons, grouped split data, and layout rules.
+# - Visual consistency changes should usually start here instead of scattered downstream scripts.
+
 import html
 import json
 import re
@@ -214,6 +218,7 @@ def load_icon_manifest() -> Dict:
     return {"components": {}}
 
 
+# Visual identity helper: resolves component icons into reusable PDF banner images.
 def component_banner(component_id: str, width_pt: float = None) -> RLImage:
     manifest = load_icon_manifest()
     meta = manifest.get("components", {}).get(component_id)
@@ -343,6 +348,7 @@ def group_keys(keys: List[str]) -> Dict[str, List[str]]:
     return grouped
 
 
+# Layout stage: turns one task record into the flowables used by ReportLab pages.
 def build_question_block(task: Dict, display_no: int, styles: Dict[str, ParagraphStyle]) -> List:
     story: List = []
     stem = task.get("teacher_stem") or task.get("student_stem") or ""
@@ -370,6 +376,7 @@ def strip_original_number(text: str) -> str:
     return text
 
 
+# PDF assembly stage: groups tasks by tier and writes the final teacher-facing document.
 def build_pdf(tier_name: str, keys: List[str], output_pdf: Path, split: Dict) -> None:
     styles = make_styles()
     task_map = {task["task_id"]: task for task in split["tasks"]}

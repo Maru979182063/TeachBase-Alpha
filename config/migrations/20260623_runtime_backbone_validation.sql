@@ -1,3 +1,7 @@
+-- Purpose:
+-- - Creates validation, audit, and fuzzy-match structures used by runtime backbone integrity checks.
+-- - Update this file together with the readiness checks whenever the runtime data model changes.
+
 -- Validation-scope schema for the runtime backbone.
 -- This keeps the same facts that FileStore already exposes, while reserving
 -- enough normalized tables for import, search, publication, material build,

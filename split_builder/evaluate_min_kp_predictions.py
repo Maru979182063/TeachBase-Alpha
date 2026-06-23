@@ -1,3 +1,7 @@
+# Purpose:
+# - Computes baseline evaluation metrics for minimum-knowledge-point predictions.
+# - Use this when you need a quick score pass before deeper manual curation.
+
 from __future__ import annotations
 
 import json

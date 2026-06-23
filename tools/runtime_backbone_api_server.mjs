@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Exposes runtime backbone store operations over a small local HTTP API.
+ * - This is the bridge between automated checks, demos, and the runtime store implementations.
+ */
+
 import http from "http";
 import { URL } from "url";
 import {

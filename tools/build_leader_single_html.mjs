@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Packs the leader demo web assets into a single self-contained HTML file for easy sharing.
+ * - Use this when the demo must travel without a supporting asset directory.
+ */
+
 import fs from "node:fs";
 import path from "node:path";
 

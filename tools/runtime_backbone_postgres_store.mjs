@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Implements the Postgres-backed runtime store, including migrations, repository wiring, and lifecycle helpers.
+ * - Backend-specific persistence rules belong here; shared semantics belong in the store interface and contract tests.
+ */
+
 import fs from "fs";
 import path from "path";
 import { Pool } from "pg";

@@ -1,3 +1,7 @@
+# Purpose:
+# - Runs a dual-pass English teacher PDF extractor that separates examples and questions.
+# - OCR cleanup, range finding, and crop orchestration are intentionally centralized here.
+
 from __future__ import annotations
 
 import json

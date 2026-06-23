@@ -1,3 +1,7 @@
+# Purpose:
+# - Parses teacher handout text into lesson, task, and module nodes.
+# - Risk flags emitted here help maintainers spot where rule-based splitting may be fragile.
+
 import argparse
 import json
 import re

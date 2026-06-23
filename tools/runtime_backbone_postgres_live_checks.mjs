@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Runs live Postgres validation checks against the current runtime environment.
+ * - Keep operator-facing diagnostics here so they can be reused outside the test harness.
+ */
+
 import {
   createHarness,
 } from "../tests/helpers/runtime_testkit.mjs";

@@ -1,3 +1,9 @@
+/**
+ * Purpose:
+ * - Generates a leadership-friendly summary compass from mock workbench demo data.
+ * - This script is presentation-focused and should stay separate from raw demo data assembly.
+ */
+
 import fs from "fs";
 import path from "path";
 import { createRequire } from "module";

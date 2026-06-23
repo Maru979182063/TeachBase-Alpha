@@ -1,3 +1,7 @@
+# Purpose:
+# - Python companion for Doubao-based visual lesson placement and markdown summary export.
+# - This version is useful when OCR/image preprocessing is easier to express in Python utilities.
+
 from __future__ import annotations
 
 import argparse

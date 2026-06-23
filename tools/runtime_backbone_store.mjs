@@ -427,6 +427,10 @@ function createPageAsset(state, documentId, pageNo) {
   return pageAsset;
 }
 
+/**
+ * Builds the initial lesson graph from split outputs: lesson revision, tasks, components, and review queue links.
+ * This is the seed path that later mutation flows assume already exists.
+ */
 function buildLessonSeed(state, splitLesson, reviewQueue) {
   const lessonId = splitLesson.lesson_id;
   const documentSourceId = makeId("source");
@@ -1183,6 +1187,10 @@ function markArtifactChainStale(state, lessonId, artifactTypes) {
   }
 }
 
+/**
+ * Simulates a lesson-level rerun while preserving the existing review and publication history.
+ * The stale-marking step keeps old derived artifacts visible but no longer trusted.
+ */
 export function rerunLesson(state, lessonId, actor = "manual_rerun") {
   const lesson = state.lessons.find((item) => item.lesson_id === lessonId);
   if (!lesson) {

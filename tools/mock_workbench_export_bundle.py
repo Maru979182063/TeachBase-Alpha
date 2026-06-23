@@ -1,3 +1,7 @@
+# Purpose:
+# - Exports the mock workbench demo into DOCX, PDF, PPT, and preview payload bundles.
+# - Document-format branching belongs here so source demo data can stay format-agnostic.
+
 import argparse
 import json
 import os
@@ -105,6 +109,7 @@ def export_preview_text(question: dict) -> str:
     )
 
 
+# DOCX export stage: builds the reviewer-facing handout with tables, summaries, and question previews.
 def make_docx(payload: dict, target_path: Path) -> None:
     lesson = payload["lesson"]
     questions = payload["questions"]
@@ -203,6 +208,7 @@ def make_docx(payload: dict, target_path: Path) -> None:
     document.save(str(target_path))
 
 
+# PDF export stage: mirrors the DOCX content with print-friendly layout choices.
 def make_pdf(payload: dict, target_path: Path) -> None:
     lesson = payload["lesson"]
     questions = payload["questions"]
@@ -358,6 +364,7 @@ def add_ppt_card(slide, left: float, top: float, width: float, height: float, ti
     add_ppt_text(slide, str(value), left + 0.14, top + 0.42, width - 0.2, 0.3, 22, True, color)
 
 
+# PPT export stage: turns the same payload into a leadership overview deck.
 def make_compass_ppt(payload: dict, target_path: Path) -> None:
     lesson = payload["lesson"]
     split_lesson = payload["splitLesson"]
@@ -442,6 +449,7 @@ def make_compass_ppt(payload: dict, target_path: Path) -> None:
     prs.save(str(target_path))
 
 
+# CLI orchestration: read normalized payloads, write requested formats, and emit artifact metadata.
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--payload", required=True)

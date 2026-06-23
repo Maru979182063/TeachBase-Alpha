@@ -1,3 +1,7 @@
+# Purpose:
+# - Early visual question splitter that turns OCR lines into annotated question fragments and review outputs.
+# - Keep this file as the simpler reference pipeline when comparing newer split strategies.
+
 from __future__ import annotations
 
 import json

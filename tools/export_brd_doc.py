@@ -1,3 +1,7 @@
+# Purpose:
+# - Exports BRD-style documents with images and cleaned inline text blocks.
+# - This is the last-mile formatter for turning repo artifacts into stakeholder-readable documents.
+
 from __future__ import annotations
 
 import re

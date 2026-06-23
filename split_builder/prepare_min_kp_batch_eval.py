@@ -1,3 +1,7 @@
+# Purpose:
+# - Chunks compact minimum-knowledge-point catalog data for batch evaluation.
+# - This script exists to make large evaluation jobs easy to replay.
+
 from __future__ import annotations
 
 import json
