@@ -19,6 +19,14 @@ outputs/
 temp_repo_demo.html
 tmp_script_check.js
 tmp_script_check2.js
+.tmp_check_working_copy.js
+tmp_preview_check.js
+
+# Local preview and backup artifacts
+.codex_assets/
+.codex_previews/
+_backup_*/
+*.bak
 
 # Vendored local binaries
 tools/vendor/

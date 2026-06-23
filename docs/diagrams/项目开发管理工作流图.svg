@@ -1,0 +1,46 @@
+<svg width="2200" height="1280" viewBox="0 0 2200 1280" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font: 700 52px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #0F172A; }
+      .subtitle { font: 400 24px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #475569; }
+      .stage-tag { font: 700 30px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #0F172A; }
+      .flow { font: 400 27px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #111827; }
+      .note-title { font: 700 28px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #0F172A; }
+      .note { font: 400 24px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #334155; }
+      .foot { font: 400 23px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #475569; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="2200" height="1280" fill="#F8FAFC"/>
+
+  <text x="120" y="110" class="title">项目开发管理工作流</text>
+  <text x="120" y="154" class="subtitle">以样例验证为起点，逐步完成能力开发、工程化准备和阶段交付</text>
+
+  <rect x="100" y="210" width="2000" height="930" rx="28" fill="#FFFFFF" stroke="#D7DEE8" stroke-width="2"/>
+
+  <rect x="140" y="270" width="1920" height="170" rx="20" fill="#F2FBF5" stroke="#9BD2AE" stroke-width="2"/>
+  <rect x="170" y="246" width="260" height="54" rx="12" fill="#FFFFFF" stroke="#6FBE87" stroke-width="2"/>
+  <text x="195" y="283" class="stage-tag">1 需求与设计</text>
+  <text x="185" y="354" class="flow">确认需求范围与样例 → 整理样例数据</text>
+  <text x="185" y="398" class="flow">→ 明确数据结构与表设计 → 完成首轮模型/规则样例测试</text>
+
+  <rect x="140" y="500" width="1920" height="170" rx="20" fill="#F2F7FF" stroke="#9BB9F1" stroke-width="2"/>
+  <rect x="170" y="476" width="360" height="54" rx="12" fill="#FFFFFF" stroke="#6A95E6" stroke-width="2"/>
+  <text x="195" y="513" class="stage-tag">2 能力开发与验证</text>
+  <text x="185" y="564" class="flow">调优提示词与模型策略 → 实现拆题、挂接、审核与导出</text>
+  <text x="185" y="608" class="flow">→ 搭建可追踪、可恢复的任务运行底座（Runtime） → 完成数据落库与过程留痕</text>
+
+  <rect x="140" y="730" width="1920" height="170" rx="20" fill="#FFF8EF" stroke="#F0C78A" stroke-width="2"/>
+  <rect x="170" y="706" width="390" height="54" rx="12" fill="#FFFFFF" stroke="#E6A74A" stroke-width="2"/>
+  <text x="195" y="743" class="stage-tag">3 工程化上线准备</text>
+  <text x="185" y="794" class="flow">完成试用环境部署与配置 → 联调回放与结果校验</text>
+  <text x="185" y="838" class="flow">→ 执行并发与批处理压力测试 → 问题修正迭代 → 演示交付与模块沉淀</text>
+
+  <rect x="140" y="940" width="1920" height="190" rx="18" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
+  <text x="175" y="995" class="note-title">说明：</text>
+  <text x="270" y="995" class="note">审核结果会回到模型策略继续优化，压测结果会回到任务运行底座与资源评估继续调整，因此排期不仅包含页面开发，也包含数据、模型、运行和部署工作。</text>
+  <text x="270" y="1038" class="note">Codex 用于代码实现与联调，Promptfoo 等评测工具用于提示词与模型策略回放验证。</text>
+  <text x="270" y="1081" class="note">排期建议按 6 周主开发周期推进，另预留 1 周弹性时间，用于联调回归、压力测试、Bug 修正和结果收口。</text>
+
+  <text x="120" y="1215" class="foot">初期环境建议：VPS + Docker Compose + Postgres + Worker + Cloudflare Access/Tunnel；本地 4核8G 主要用于开发、小样例和低并发验证。</text>
+</svg>
