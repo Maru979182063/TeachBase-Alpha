@@ -1,0 +1,20 @@
+{
+  "name": "jiaoyan-jijian-runtime-backbone",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:production-readiness": "node tools/runtime_backbone_production_readiness.mjs",
+    "test:failure-injection": "node tools/runtime_backbone_failure_injection_checks.mjs",
+    "test:backup-restore": "node tools/runtime_backbone_backup_restore.mjs",
+    "test:load": "node tools/runtime_backbone_load_smoke.mjs",
+    "test:soak": "node tools/runtime_backbone_soak.mjs",
+    "test:postgres-live": "node tools/runtime_backbone_postgres_live_checks.mjs",
+    "test:consistency": "node tools/runtime_backbone_consistency_check.mjs"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "embedded-postgres": "^18.4.0-beta.17"
+  }
+}
