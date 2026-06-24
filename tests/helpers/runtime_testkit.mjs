@@ -110,12 +110,14 @@ export async function listFiles(rootDir, predicate) {
 
 export async function runProcess(command, args = [], options = {}) {
   return new Promise((resolve) => {
+    const needsShell = process.platform === "win32" && /\.(cmd|bat)$/i.test(String(command));
     const child = spawn(command, args, {
       cwd: options.cwd || workspaceRoot,
       env: {
         ...process.env,
         ...(options.env || {}),
       },
+      shell: needsShell,
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
