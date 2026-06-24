@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Generates a leadership-friendly summary compass from mock workbench demo data.
- * - This script is presentation-focused and should stay separate from raw demo data assembly.
+ * 用途：
+ * - 根据 mock 工作台演示数据生成面向管理层的摘要罗盘。
+ * - 这个脚本专注展示，不应和原始演示数据组装混在一起。
  */
 
 import fs from "fs";

@@ -1,6 +1,6 @@
-# Purpose:
-# - Splits teacher PDF question images from precomputed visual components and assembles review sheets.
-# - Use this file when component detection has already happened and only question slicing remains.
+# 用途：
+# - 基于预先计算的视觉组件切分教师版 PDF 题图，并组装审阅表。
+# - 组件检测已经完成、只剩题目切分时使用这个文件。
 
 from __future__ import annotations
 

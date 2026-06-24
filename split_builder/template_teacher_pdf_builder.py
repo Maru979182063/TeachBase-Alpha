@@ -1,6 +1,6 @@
-# Purpose:
-# - Composes teacher-facing template PDFs with banners, icons, grouped split data, and layout rules.
-# - Visual consistency changes should usually start here instead of scattered downstream scripts.
+# 用途：
+# - 用横幅、图标、分组拆分数据和排版规则生成面向教师的模板 PDF。
+# - 视觉一致性调整通常应从这里入手，而不是散落到下游脚本里。
 
 import html
 import json
@@ -218,7 +218,7 @@ def load_icon_manifest() -> Dict:
     return {"components": {}}
 
 
-# Visual identity helper: resolves component icons into reusable PDF banner images.
+# 视觉识别辅助函数：把组件图标解析成可复用的 PDF 横幅图。
 def component_banner(component_id: str, width_pt: float = None) -> RLImage:
     manifest = load_icon_manifest()
     meta = manifest.get("components", {}).get(component_id)
@@ -348,7 +348,7 @@ def group_keys(keys: List[str]) -> Dict[str, List[str]]:
     return grouped
 
 
-# Layout stage: turns one task record into the flowables used by ReportLab pages.
+# 排版阶段：把单个任务记录转成 ReportLab 页面使用的 flowable。
 def build_question_block(task: Dict, display_no: int, styles: Dict[str, ParagraphStyle]) -> List:
     story: List = []
     stem = task.get("teacher_stem") or task.get("student_stem") or ""
@@ -376,7 +376,7 @@ def strip_original_number(text: str) -> str:
     return text
 
 
-# PDF assembly stage: groups tasks by tier and writes the final teacher-facing document.
+# PDF 组装阶段：按层级分组任务，并写出最终面向教师的文档。
 def build_pdf(tier_name: str, keys: List[str], output_pdf: Path, split: Dict) -> None:
     styles = make_styles()
     task_map = {task["task_id"]: task for task in split["tasks"]}

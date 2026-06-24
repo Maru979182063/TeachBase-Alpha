@@ -1,6 +1,6 @@
-# Purpose:
-# - Packages curated gold data into batchable evaluation payloads.
-# - Keep batching logic here so model runners can stay stateless.
+# 用途：
+# - 把整理好的 gold 数据打包成可批量评估的 payload。
+# - 批处理逻辑集中在这里，让模型运行器保持无状态。
 
 from __future__ import annotations
 

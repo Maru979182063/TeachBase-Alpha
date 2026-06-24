@@ -1,6 +1,6 @@
-# Purpose:
-# - Renders module split results into PNG review cards.
-# - Keep this file focused on visual presentation rather than parsing logic.
+# 用途：
+# - 把模块拆分结果渲染成 PNG 审阅卡片。
+# - 这个文件只关注视觉呈现，不承载解析逻辑。
 
 import json
 from pathlib import Path

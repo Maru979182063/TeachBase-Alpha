@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Packs the leader demo web assets into a single self-contained HTML file for easy sharing.
- * - Use this when the demo must travel without a supporting asset directory.
+ * 用途：
+ * - 把领导演示网页素材打包成单个自包含 HTML，便于分享。
+ * - 演示需要脱离素材目录单独分发时使用。
  */
 
 import fs from "node:fs";

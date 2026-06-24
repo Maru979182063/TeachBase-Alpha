@@ -1,6 +1,6 @@
-# Purpose:
-# - Full visual question-splitting pipeline that combines OCR, anchor detection, grouping, and stitched outputs.
-# - This is the most integrated splitter in the repo, so orchestration comments matter more than micro-optimizations.
+# 用途：
+# - 完整视觉切题流水线，组合 OCR、锚点检测、分组和拼接输出。
+# - 这是仓库里集成度最高的切题器，因此流程说明比微优化更重要。
 
 from __future__ import annotations
 
@@ -795,7 +795,7 @@ def zip_outputs(out_dir: Path, zip_path: Path) -> None:
                 zf.write(path, path.relative_to(out_dir.parent))
 
 
-# CLI orchestration: render pages, detect structure, slice questions, then package review artifacts.
+# CLI 编排：渲染页面、检测结构、切分题目，然后打包审阅产物。
 def main() -> None:
     pdf_path = os.environ["PDF_TEACHER"]
     out_name = os.environ.get("SPLIT_OUT_NAME", "teacher_visual_question_split_v02")

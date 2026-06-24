@@ -1,6 +1,6 @@
-# Purpose:
-# - Builds preview sheets for icon assets so downstream PDF builders can verify visual labels quickly.
-# - Use this file when icon manifests or badge visuals need a fast human review step.
+# 用途：
+# - 为图标素材生成预览页，便于下游 PDF 构建器快速核对视觉标签。
+# - 图标清单或徽标视觉需要快速人工审阅时使用这个脚本。
 
 import json
 from pathlib import Path

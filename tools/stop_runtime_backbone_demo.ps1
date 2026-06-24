@@ -1,7 +1,7 @@
 <#
-Purpose:
-- Stops the runtime backbone demo process started by the companion launcher script.
-- Pair this with the start script when running iterative local backend demos.
+用途：
+- 停止配套启动脚本拉起的运行时主干演示进程。
+- 迭代运行本地后端演示时，应和启动脚本配套使用。
 #>
 
 $ErrorActionPreference = "Stop"

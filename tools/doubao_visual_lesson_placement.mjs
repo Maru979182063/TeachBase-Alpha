@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Calls the Doubao model to place visual lesson material into candidate curriculum buckets.
- * - Keep request shaping and result packaging together here so prompt changes are auditable.
+ * 用途：
+ * - 调用豆包模型，把视觉课时材料放入候选课程桶。
+ * - 请求组装和结果打包集中在这里，方便审计 prompt 变化。
  */
 
 import fs from "node:fs/promises";

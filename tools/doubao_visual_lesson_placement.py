@@ -1,6 +1,6 @@
-# Purpose:
-# - Python companion for Doubao-based visual lesson placement and markdown summary export.
-# - This version is useful when OCR/image preprocessing is easier to express in Python utilities.
+# 用途：
+# - 豆包视觉课时定位和 Markdown 摘要导出的 Python 配套脚本。
+# - 当 OCR 或图像预处理更适合用 Python 工具表达时使用这一版。
 
 from __future__ import annotations
 

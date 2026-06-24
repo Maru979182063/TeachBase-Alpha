@@ -1,6 +1,6 @@
-# Purpose:
-# - Scores PDF pages against minimum knowledge points and extracts candidate question blocks.
-# - This is the bridge between curriculum labels and the concrete question evidence humans review.
+# 用途：
+# - 按最小知识点给 PDF 页面打分，并提取候选题块。
+# - 它连接课程标签和人工审阅所需的具体题目证据。
 
 from __future__ import annotations
 

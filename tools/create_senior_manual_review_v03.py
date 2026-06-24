@@ -1,6 +1,6 @@
-# Purpose:
-# - Generates manual review packets for senior-stage placement or audit work.
-# - This file is the human-review packaging step after automated extraction has already run.
+# 用途：
+# - 为高中阶段定位或审计工作生成手动复核包。
+# - 这是自动抽取完成后的人工复核打包步骤。
 
 from __future__ import annotations
 

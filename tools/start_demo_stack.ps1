@@ -1,7 +1,7 @@
 <#
-Purpose:
-- Starts the local demo stack and coordinating helper processes for the workbench preview.
-- Launch sequencing, port setup, and process bookkeeping are intentionally kept in one place.
+用途：
+- 启动工作台预览所需的本地演示栈和配套辅助进程。
+- 启动顺序、端口设置和进程记录有意集中在一个地方。
 #>
 
 param(

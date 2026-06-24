@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Runs live Postgres validation checks against the current runtime environment.
- * - Keep operator-facing diagnostics here so they can be reused outside the test harness.
+ * 用途：
+ * - 针对当前运行时环境执行在线 Postgres 校验检查。
+ * - 面向操作者的诊断集中在这里，便于脱离测试框架复用。
  */
 
 import {

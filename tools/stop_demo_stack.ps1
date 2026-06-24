@@ -1,7 +1,7 @@
 <#
-Purpose:
-- Stops the local demo stack processes started by the companion launcher script.
-- Cleanup rules live here so operators do not need to hunt for stray processes by hand.
+用途：
+- 停止配套启动脚本拉起的本地演示栈进程。
+- 清理规则集中在这里，操作者不用手动寻找残留进程。
 #>
 
 $ErrorActionPreference = "SilentlyContinue"

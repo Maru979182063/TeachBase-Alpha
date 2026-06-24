@@ -1,6 +1,6 @@
-# Purpose:
-# - Computes baseline evaluation metrics for minimum-knowledge-point predictions.
-# - Use this when you need a quick score pass before deeper manual curation.
+# 用途：
+# - 计算最小知识点预测的基线评估指标。
+# - 在深入人工整理前，需要快速跑一轮分数时使用。
 
 from __future__ import annotations
 

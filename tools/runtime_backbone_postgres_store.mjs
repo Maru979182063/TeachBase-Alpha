@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Implements the Postgres-backed runtime store, including migrations, repository wiring, and lifecycle helpers.
- * - Backend-specific persistence rules belong here; shared semantics belong in the store interface and contract tests.
+ * 用途：
+ * - 实现 Postgres 支撑的运行时存储，包括迁移、仓库接线和生命周期辅助。
+ * - 后端特定持久化规则放在这里，共享语义放在存储接口和契约测试中。
  */
 
 import fs from "fs";

@@ -1,6 +1,6 @@
-# Purpose:
-# - Evaluates curated minimum-knowledge-point answers against model predictions.
-# - Exported workbook summaries from this file are meant for teacher-facing quality review.
+# 用途：
+# - 用人工整理后的最小知识点答案评估模型预测结果。
+# - 这个文件导出的工作簿摘要用于面向教师的质量复核。
 
 from __future__ import annotations
 

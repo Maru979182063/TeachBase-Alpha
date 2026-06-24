@@ -1,6 +1,6 @@
-# Purpose:
-# - Parses teacher handout text into lesson, task, and module nodes.
-# - Risk flags emitted here help maintainers spot where rule-based splitting may be fragile.
+# 用途：
+# - 把教师版讲义文本解析成课时、任务和模块节点。
+# - 这里输出的风险标记能帮助维护者发现规则拆分容易脆弱的位置。
 
 import argparse
 import json

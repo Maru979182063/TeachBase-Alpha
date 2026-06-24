@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Executes end-to-end runtime validation checks and reports pass or fail details.
- * - This file is the operator-readable entry point for the validation stack.
+ * 用途：
+ * - 执行端到端运行时校验检查，并报告通过或失败细节。
+ * - 这是校验栈面向操作者的入口。
  */
 
 import fs from "fs";

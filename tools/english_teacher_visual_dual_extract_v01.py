@@ -1,6 +1,6 @@
-# Purpose:
-# - Runs a dual-pass English teacher PDF extractor that separates examples and questions.
-# - OCR cleanup, range finding, and crop orchestration are intentionally centralized here.
+# 用途：
+# - 运行双通道英语教师版 PDF 抽取器，区分例题和问题。
+# - OCR 清洗、范围查找和裁图调度有意集中在这里。
 
 from __future__ import annotations
 

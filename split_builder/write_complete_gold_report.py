@@ -1,6 +1,6 @@
-# Purpose:
-# - Merges replenished and existing gold coverage into a final workbook report.
-# - This is the final reporting step after discovery and replenishment have already run.
+# 用途：
+# - 把补齐后的覆盖数据和既有 gold 覆盖合并为最终工作簿报告。
+# - 这是发现和补齐流程完成后的最终报告步骤。
 
 from __future__ import annotations
 

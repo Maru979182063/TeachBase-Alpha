@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Orchestrates selected readiness suites and renders machine-readable summaries such as JUnit.
- * - This file is the reporting shell around lower-level readiness checks.
+ * 用途：
+ * - 编排选定的就绪检查套件，并渲染 JUnit 等机器可读摘要。
+ * - 这个文件是低层就绪检查外面的报告外壳。
  */
 
 import fs from "node:fs/promises";

@@ -1,6 +1,6 @@
-# Purpose:
-# - Cleans coverage outputs into a stable spreadsheet shape for manual review.
-# - This file should stay focused on output hygiene rather than content discovery.
+# 用途：
+# - 把覆盖率输出清洗成稳定的表格形态，供人工复核。
+# - 这个文件只负责输出清洁，不负责内容发现。
 
 from __future__ import annotations
 

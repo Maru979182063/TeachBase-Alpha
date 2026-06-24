@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Thin CLI wrapper that runs the soak suite.
- * - Keep long-running soak orchestration lightweight here and detailed scenarios in the tests.
+ * 用途：
+ * - 运行 soak 套件的轻量 CLI 包装器。
+ * - 长时间 soak 调度在这里保持轻量，详细场景留在测试中。
  */
 
 import { runProductionReadiness } from "./runtime_backbone_production_readiness.mjs";

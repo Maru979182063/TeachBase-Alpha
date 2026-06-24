@@ -1,6 +1,6 @@
-# Purpose:
-# - Draws the backend and runtime architecture diagram used in BRD or review materials.
-# - Diagram content is code-driven here so structural updates can be versioned alongside implementation.
+# 用途：
+# - 绘制 BRD 或评审材料中使用的后端与运行时架构图。
+# - 图内容由代码驱动，便于结构更新和实现一起版本化。
 
 from __future__ import annotations
 

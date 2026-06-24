@@ -1,6 +1,6 @@
-# Purpose:
-# - Creates a concise report from curated evaluation outputs.
-# - Keep the file small and report-oriented so review messaging stays consistent.
+# 用途：
+# - 根据人工整理后的评估输出生成简明报告。
+# - 保持文件小而聚焦报告输出，让审阅信息保持一致。
 
 from __future__ import annotations
 

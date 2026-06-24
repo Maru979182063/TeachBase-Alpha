@@ -1,6 +1,6 @@
-# Purpose:
-# - Backfills missing gold coverage by locating likely source pages and slicing question images.
-# - Use this when the evaluation catalog is incomplete but the source PDFs still exist.
+# 用途：
+# - 通过定位可能的源页面并切分题图，补齐缺失的 gold 覆盖。
+# - 评估目录不完整但源 PDF 仍在时使用这个脚本。
 
 from __future__ import annotations
 

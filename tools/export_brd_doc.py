@@ -1,6 +1,6 @@
-# Purpose:
-# - Exports BRD-style documents with images and cleaned inline text blocks.
-# - This is the last-mile formatter for turning repo artifacts into stakeholder-readable documents.
+# 用途：
+# - 导出带图片和清洗后行内文本块的 BRD 风格文档。
+# - 这是把仓库产物转成干系人可读文档的最后一公里格式化器。
 
 from __future__ import annotations
 

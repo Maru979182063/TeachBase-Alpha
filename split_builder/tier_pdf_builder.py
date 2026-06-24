@@ -1,6 +1,6 @@
-# Purpose:
-# - Builds tiered PDF pages by cropping source markers and reassembling them into printable pages.
-# - Cropping and pagination assumptions are centralized here for easier tuning.
+# 用途：
+# - 通过裁剪源标记并重新组装，生成分层可打印 PDF 页面。
+# - 裁剪和分页假设集中在这里，方便后续调参。
 
 import json
 import re

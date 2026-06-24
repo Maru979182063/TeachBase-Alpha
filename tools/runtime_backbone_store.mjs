@@ -428,8 +428,8 @@ function createPageAsset(state, documentId, pageNo) {
 }
 
 /**
- * Builds the initial lesson graph from split outputs: lesson revision, tasks, components, and review queue links.
- * This is the seed path that later mutation flows assume already exists.
+ * 根据拆分输出构建初始课时图：课时版本、任务、组件和审阅队列链接。
+ * 这是后续变更流程默认已存在的播种路径。
  */
 function buildLessonSeed(state, splitLesson, reviewQueue) {
   const lessonId = splitLesson.lesson_id;
@@ -1188,8 +1188,8 @@ function markArtifactChainStale(state, lessonId, artifactTypes) {
 }
 
 /**
- * Simulates a lesson-level rerun while preserving the existing review and publication history.
- * The stale-marking step keeps old derived artifacts visible but no longer trusted.
+ * 模拟课时级重跑，同时保留已有审阅和发布历史。
+ * 过期标记让旧派生产物仍可见，但不再被信任。
  */
 export function rerunLesson(state, lessonId, actor = "manual_rerun") {
   const lesson = state.lessons.find((item) => item.lesson_id === lessonId);

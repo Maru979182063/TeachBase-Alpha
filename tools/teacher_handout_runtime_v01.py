@@ -1,6 +1,6 @@
-# Purpose:
-# - Runs the teacher handout OCR and splitting runtime end-to-end and stages intermediate artifacts.
-# - This is the operational version of the extraction flow, so debugging breadcrumbs are intentionally preserved here.
+# 用途：
+# - 端到端运行教师版讲义 OCR 与拆分运行时，并阶段性保存中间产物。
+# - 这是抽取流程的运行版，所以有意保留调试线索。
 
 from __future__ import annotations
 
@@ -102,7 +102,7 @@ def load_json(path: Path, default=None):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-# Runtime breadcrumb helper: records progress after each expensive stage for resumable debugging.
+# 运行时面包屑辅助函数：在每个昂贵阶段后记录进度，便于可恢复调试。
 def stage_state(state_path: Path, **updates) -> dict:
     state = load_json(state_path, default={}) or {}
     state.update(updates)
@@ -227,7 +227,7 @@ def detect_component_anchors(ocr_pages_map: dict[int, list[OcrLine]]) -> list[tu
     return deduped
 
 
-# Component stage: uses OCR anchors to identify broad lesson sections before question extraction.
+# 组件阶段：在抽题前用 OCR 锚点识别大的课时区段。
 def build_component_blocks(page_paths: list[Path], ocr_pages_map: dict[int, list[OcrLine]]) -> list[Block]:
     anchors = detect_component_anchors(ocr_pages_map)
     blocks: list[Block] = []
@@ -328,7 +328,7 @@ def detect_question_starts(ocr_pages_map: dict[int, list[OcrLine]], question_reg
     return deduped
 
 
-# Question stage: narrows component regions into individual student-facing question blocks.
+# 题目阶段：把组件区域细分成面向学生的单题块。
 def build_question_blocks(ocr_pages_map: dict[int, list[OcrLine]], question_regions: list[Block]) -> list[Block]:
     starts = detect_question_starts(ocr_pages_map, question_regions)
     questions: list[Block] = []
@@ -524,7 +524,7 @@ def write_preview_html(components: list[Block], questions: list[Block], out_path
     out_path.write_text(html, encoding="utf-8")
 
 
-# Publish stage: copies the completed work directory into the stable output location.
+# 发布阶段：把完成的工作目录复制到稳定输出位置。
 def publish_results(work_dir: Path, publish_dir: Path) -> None:
     if publish_dir.exists():
         shutil.rmtree(publish_dir)
@@ -538,7 +538,7 @@ def package_dir(source_dir: Path, zip_path: Path) -> None:
                 zf.write(path, path.relative_to(source_dir.parent))
 
 
-# CLI orchestration: render, OCR, detect blocks, crop artifacts, preview, publish, and package.
+# CLI 编排：渲染、OCR、检测块、裁剪产物、预览、发布并打包。
 def main() -> None:
     source_pdf = Path(os.environ.get("SOURCE_PDF_ASCII", r"C:\codex_tmp\english_narrative_teacher.pdf"))
     run_name = os.environ.get("RUN_NAME", "english_teacher_runtime_v01")

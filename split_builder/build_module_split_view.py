@@ -1,6 +1,6 @@
-# Purpose:
-# - Builds a visual review document for module split structures.
-# - It is the lightweight companion to the PNG builder for quick manual inspection.
+# 用途：
+# - 为模块拆分结构生成可视化审阅文档。
+# - 它是 PNG 构建器的轻量配套工具，用于快速人工检查。
 
 import html
 import json

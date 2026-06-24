@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Selects and constructs the active runtime store implementation.
- * - Callers should depend on this interface layer so backend swaps stay localized.
+ * 用途：
+ * - 选择并构造当前启用的运行时存储实现。
+ * - 调用方应依赖这个接口层，让后端切换保持局部化。
  */
 
 import {

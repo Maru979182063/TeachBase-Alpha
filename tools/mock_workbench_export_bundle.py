@@ -1,6 +1,6 @@
-# Purpose:
-# - Exports the mock workbench demo into DOCX, PDF, PPT, and preview payload bundles.
-# - Document-format branching belongs here so source demo data can stay format-agnostic.
+# 用途：
+# - 把 mock 工作台演示导出为 DOCX、PDF、PPT 和预览 payload 包。
+# - 文档格式分支集中在这里，让源演示数据保持格式无关。
 
 import argparse
 import json
@@ -109,7 +109,7 @@ def export_preview_text(question: dict) -> str:
     )
 
 
-# DOCX export stage: builds the reviewer-facing handout with tables, summaries, and question previews.
+# DOCX 导出阶段：生成面向审阅者的讲义，包含表格、摘要和题目预览。
 def make_docx(payload: dict, target_path: Path) -> None:
     lesson = payload["lesson"]
     questions = payload["questions"]
@@ -208,7 +208,7 @@ def make_docx(payload: dict, target_path: Path) -> None:
     document.save(str(target_path))
 
 
-# PDF export stage: mirrors the DOCX content with print-friendly layout choices.
+# PDF 导出阶段：用适合打印的布局复刻 DOCX 内容。
 def make_pdf(payload: dict, target_path: Path) -> None:
     lesson = payload["lesson"]
     questions = payload["questions"]
@@ -364,7 +364,7 @@ def add_ppt_card(slide, left: float, top: float, width: float, height: float, ti
     add_ppt_text(slide, str(value), left + 0.14, top + 0.42, width - 0.2, 0.3, 22, True, color)
 
 
-# PPT export stage: turns the same payload into a leadership overview deck.
+# PPT 导出阶段：把同一份 payload 转成管理层概览演示稿。
 def make_compass_ppt(payload: dict, target_path: Path) -> None:
     lesson = payload["lesson"]
     split_lesson = payload["splitLesson"]
@@ -449,7 +449,7 @@ def make_compass_ppt(payload: dict, target_path: Path) -> None:
     prs.save(str(target_path))
 
 
-# CLI orchestration: read normalized payloads, write requested formats, and emit artifact metadata.
+# CLI 编排：读取归一化 payload、写出所需格式，并输出产物元数据。
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--payload", required=True)

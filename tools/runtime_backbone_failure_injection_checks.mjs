@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Thin CLI wrapper that runs failure-injection checks.
- * - The wrapper keeps invocation ergonomics simple while leaving scenarios in the shared tests.
+ * 用途：
+ * - 运行故障注入检查的轻量 CLI 包装器。
+ * - 包装器让调用更简单，具体场景仍留在共享测试中。
  */
 
 import { runProductionReadiness } from "./runtime_backbone_production_readiness.mjs";

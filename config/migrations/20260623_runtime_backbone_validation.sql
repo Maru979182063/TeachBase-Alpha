@@ -1,6 +1,6 @@
--- Purpose:
--- - Creates validation, audit, and fuzzy-match structures used by runtime backbone integrity checks.
--- - Update this file together with the readiness checks whenever the runtime data model changes.
+-- 用途：
+-- - 创建运行时主干完整性检查所需的校验、审计和模糊匹配结构。
+-- - 运行时数据模型变化时，这个文件需要和就绪检查一起更新。
 
 -- Validation-scope schema for the runtime backbone.
 -- This keeps the same facts that FileStore already exposes, while reserving

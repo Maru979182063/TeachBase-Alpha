@@ -1,7 +1,7 @@
 <#
-Purpose:
-- Starts the lightweight mock workbench runtime with the pinned local Node binary.
-- This launcher exists so the demo can run predictably on a shared workstation.
+用途：
+- 用固定的本地 Node 二进制启动轻量 mock 工作台运行时。
+- 这个启动器用于让演示在共享工作站上稳定运行。
 #>
 
 $node = "C:\Users\EDY\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"

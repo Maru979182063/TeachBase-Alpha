@@ -1,7 +1,7 @@
 <#
-Purpose:
-- Starts the runtime backbone API or demo process in a controlled local shell.
-- Use the paired stop script to cleanly tear down whatever this launcher brings up.
+用途：
+- 在受控本地 shell 中启动运行时主干 API 或演示进程。
+- 使用配套停止脚本清理这个启动器拉起的进程。
 #>
 
 $ErrorActionPreference = "Stop"

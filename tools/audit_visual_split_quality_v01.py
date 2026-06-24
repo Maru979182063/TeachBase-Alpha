@@ -1,6 +1,6 @@
-# Purpose:
-# - Audits extracted question crops for whitespace balance and visual quality.
-# - The exported workbook and HTML outputs from this file are meant for fast human QA, not model training.
+# 用途：
+# - 审计抽取出的题目裁图，检查留白平衡和视觉质量。
+# - 这个文件导出的工作簿和 HTML 用于快速人工 QA，不用于模型训练。
 
 from __future__ import annotations
 

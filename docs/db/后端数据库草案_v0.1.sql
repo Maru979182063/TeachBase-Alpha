@@ -1,6 +1,6 @@
--- Purpose:
--- - Preserves an earlier backend schema draft for design reference and historical comparison.
--- - Treat this file as documentation, not as an executable migration source of truth.
+-- 用途：
+-- - 保留早期后端 schema 草案，方便设计回看和历史对比。
+-- - 把这个文件视作文档资料，不要当作可执行迁移的权威来源。
 
 -- 后端数据库草案 v0.1
 -- 目标：把 v0.3 设计中的核心对象落到可审阅的 PostgreSQL 表结构草案

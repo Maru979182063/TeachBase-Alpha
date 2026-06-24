@@ -1,6 +1,6 @@
-# Purpose:
-# - Creates contact sheets and HTML galleries for split-review image outputs.
-# - Keep presentation tweaks here instead of scattering gallery rules across extraction scripts.
+# 用途：
+# - 为拆分审阅图片生成联系表和 HTML 图廊。
+# - 展示层调整集中在这里，不要把图廊规则散到抽取脚本里。
 
 from __future__ import annotations
 

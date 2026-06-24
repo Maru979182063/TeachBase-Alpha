@@ -1,6 +1,6 @@
-# Purpose:
-# - Chunks compact minimum-knowledge-point catalog data for batch evaluation.
-# - This script exists to make large evaluation jobs easy to replay.
+# 用途：
+# - 把压缩后的最小知识点目录切分成批量评估块。
+# - 这个脚本用于让大型评估任务更容易复跑。
 
 from __future__ import annotations
 

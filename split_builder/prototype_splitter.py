@@ -1,6 +1,6 @@
-# Purpose:
-# - Provides the early full-document splitter for lesson structure, goals, and answers.
-# - Later pipelines still rely on the heuristics prototyped here, so keep behavior notes close.
+# 用途：
+# - 提供早期的整篇文档拆分器，用于抽取课时结构、目标和答案。
+# - 后续流水线仍依赖这里验证过的启发式规则，所以行为说明要贴近代码保留。
 
 import argparse
 import json
@@ -84,7 +84,7 @@ def flush_task(current: Optional[ParsedTask], current_section: Optional[ParsedSe
         current_section.tasks.append(current)
 
 
-# Parsing stage: converts PDF text into sections and tasks while preserving page provenance.
+# 解析阶段：把 PDF 文本转成章节和任务，同时保留页码来源。
 def parse_doc(pdf_path: Path) -> ParsedDoc:
     page_count, rows = extract_lines(pdf_path)
     intro_lines: List[str] = []
@@ -219,7 +219,7 @@ def task_map(doc: ParsedDoc) -> Dict[str, ParsedTask]:
     return {task.key: task for section in doc.sections for task in section.tasks}
 
 
-# Assembly stage: merges teacher and student views into the canonical split JSON shape.
+# 组装阶段：把教师版和学生版视图合并成标准拆分 JSON 形态。
 def build_split(teacher_doc: ParsedDoc, student_doc: ParsedDoc, args: argparse.Namespace) -> Dict:
     teacher_tasks = task_map(teacher_doc)
     student_tasks = task_map(student_doc)
@@ -411,7 +411,7 @@ def build_split(teacher_doc: ParsedDoc, student_doc: ParsedDoc, args: argparse.N
     }
 
 
-# Review stage: writes a human-readable markdown summary of the parsed split.
+# 审阅阶段：写出解析结果的人类可读 Markdown 摘要。
 def write_review(split: Dict, output_path: Path) -> None:
     lines: List[str] = []
     lesson = split["lesson"]

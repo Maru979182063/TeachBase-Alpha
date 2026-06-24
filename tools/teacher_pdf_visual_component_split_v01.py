@@ -1,6 +1,6 @@
-# Purpose:
-# - Detects visual anchors and components in teacher PDFs and crops them into structured segments.
-# - Anchor and segmentation heuristics belong here so later stages can stay composition-focused.
+# 用途：
+# - 在教师版 PDF 中检测视觉锚点和组件，并裁成结构化片段。
+# - 锚点和分段启发式规则放在这里，让后续阶段专注组装。
 
 from __future__ import annotations
 

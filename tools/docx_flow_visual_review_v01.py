@@ -1,6 +1,6 @@
-# Purpose:
-# - Renders DOCX flow outputs into image cards and review galleries for visual QA.
-# - It exists to make Word-based deliverables reviewable with the same visual rhythm as PDF flows.
+# 用途：
+# - 把 DOCX 流程输出渲染成图片卡片和审阅图廊，供视觉 QA 使用。
+# - 它让基于 Word 的交付物也能按 PDF 流程的视觉节奏审阅。
 
 from __future__ import annotations
 

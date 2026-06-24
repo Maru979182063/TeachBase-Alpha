@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Serves static preview assets from a local folder for quick visual inspection.
- * - Keep this server intentionally tiny so preview hosting stays easy to debug.
+ * 用途：
+ * - 从本地文件夹提供静态预览资源，方便快速视觉检查。
+ * - 这个服务器刻意保持很小，让预览托管容易调试。
  */
 
 import fs from "node:fs";

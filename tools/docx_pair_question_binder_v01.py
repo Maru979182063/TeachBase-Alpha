@@ -1,6 +1,6 @@
-# Purpose:
-# - Binds paired question text into a DOCX structure that reviewers can read sequentially.
-# - Text grouping rules belong here so downstream exports can stay format-specific.
+# 用途：
+# - 把成对题目文本绑定成便于审阅者顺序阅读的 DOCX 结构。
+# - 文本分组规则放在这里，让下游导出只关注格式。
 
 from __future__ import annotations
 

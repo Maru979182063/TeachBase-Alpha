@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Exposes runtime backbone store operations over a small local HTTP API.
- * - This is the bridge between automated checks, demos, and the runtime store implementations.
+ * 用途：
+ * - 通过一个小型本地 HTTP API 暴露运行时主干存储操作。
+ * - 它连接自动化检查、演示和运行时存储实现。
  */
 
 import http from "http";

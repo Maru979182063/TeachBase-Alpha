@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Packages leader demo assets into a distributable folder with patched local URLs.
- * - Use this file when the demo must run outside the development workspace layout.
+ * 用途：
+ * - 把领导演示素材打包到可分发目录，并修补本地 URL。
+ * - 演示需要脱离开发工作区结构运行时使用这个文件。
  */
 
 import fs from "node:fs";

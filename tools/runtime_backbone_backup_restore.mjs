@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Thin CLI wrapper that runs the backup and restore test suite.
- * - Keep wrappers like this minimal so the real test logic stays inside the shared test tree.
+ * 用途：
+ * - 运行备份与恢复测试套件的轻量 CLI 包装器。
+ * - 这类包装器应保持最小化，让真正测试逻辑留在共享测试树中。
  */
 
 import { runProductionReadiness } from "./runtime_backbone_production_readiness.mjs";

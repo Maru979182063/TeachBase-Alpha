@@ -1,6 +1,6 @@
-# Purpose:
-# - Early visual question splitter that turns OCR lines into annotated question fragments and review outputs.
-# - Keep this file as the simpler reference pipeline when comparing newer split strategies.
+# 用途：
+# - 早期视觉切题器，把 OCR 行转成带标注的题目片段和审阅输出。
+# - 比较新切分策略时，把这个文件作为更简单的参考流水线。
 
 from __future__ import annotations
 

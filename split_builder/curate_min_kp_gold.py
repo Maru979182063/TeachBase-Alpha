@@ -1,6 +1,6 @@
-# Purpose:
-# - Turns predicted minimum-knowledge-point matches into curator-friendly gold sheets.
-# - Noise filtering for objectives, navigation, and weak matches is centralized here.
+# 用途：
+# - 把预测出的最小知识点匹配结果转成便于标注人员处理的 gold 表。
+# - 目标、导航信息和弱匹配的噪声过滤集中在这里。
 
 from __future__ import annotations
 

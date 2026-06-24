@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Runs a focused consistency audit against runtime backbone state and projections.
- * - This script is meant for operator verification rather than day-to-day app flows.
+ * 用途：
+ * - 针对运行时主干状态和投影执行聚焦的一致性审计。
+ * - 这个脚本面向操作者验证，不属于日常应用流程。
  */
 
 import { createRuntimeBackboneStore } from "./runtime_backbone_store_interface.mjs";

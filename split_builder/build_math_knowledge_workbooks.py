@@ -1,6 +1,6 @@
-# Purpose:
-# - Transforms math knowledge-map inputs and source PDFs into workbook-style review artifacts.
-# - Lesson goals, exam points, and first-question context are assembled here for curriculum audits.
+# 用途：
+# - 把数学知识图谱输入和源 PDF 转成工作簿式审阅产物。
+# - 课程审计所需的课时目标、考点和首题上下文都在这里组装。
 
 import json
 import math

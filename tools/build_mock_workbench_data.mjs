@@ -1,7 +1,7 @@
 /**
- * Purpose:
- * - Builds mock workbench datasets by merging OCR previews, YAML metadata, and trusted excerpts.
- * - Most of the demo data normalization rules live here so the UI can stay lightweight.
+ * 用途：
+ * - 通过合并 OCR 预览、YAML 元数据和可信摘录构建 mock 工作台数据集。
+ * - 大部分演示数据归一化规则集中在这里，让 UI 保持轻量。
  */
 
 import fs from "node:fs/promises";
@@ -246,8 +246,8 @@ function buildStructuredFallback({ checkpoint, componentLabel, localNumber, page
 }
 
 /**
- * Chooses the preview text stored with a question.
- * The order matters: trusted excerpts beat OCR, while structured fallbacks keep noisy pages readable.
+ * 选择题目记录中存放的预览文本。
+ * 顺序很重要：可信摘录优先于 OCR，结构化兜底让噪声页面仍可读。
  */
 function buildStoredPreview({ rawText, pdfText, ocrText, sourceHint, checkpoint, componentLabel, localNumber, page }) {
   const normalizedRaw = normalizePreviewText(rawText);
@@ -298,8 +298,8 @@ function buildStoredPreview({ rawText, pdfText, ocrText, sourceHint, checkpoint,
 }
 
 /**
- * Converts raw question records into the stable demo schema used by the workbench UI.
- * Audit metadata is merged here so front-end filters do not need to understand source files.
+ * 把原始题目记录转成工作台 UI 使用的稳定演示 schema。
+ * 审计元数据在这里合并，让前端过滤器不用理解源文件。
  */
 function normalizeQuestions(questions, auditsById) {
   const seenInCheckpoint = new Map();
@@ -380,8 +380,8 @@ function normalizeQuestions(questions, auditsById) {
 }
 
 /**
- * Builds subject-grade knowledge trees from flat point records.
- * The UI reads this hierarchy directly, so IDs and ordering should remain deterministic.
+ * 根据扁平知识点记录构建学科年级知识树。
+ * UI 会直接读取这棵层级树，因此 ID 和排序必须保持确定性。
  */
 function buildKnowledgeTrees(knowledgePoints) {
   const treeMap = {};
@@ -425,8 +425,8 @@ function summarizeByVersion(questions) {
 }
 
 /**
- * Creates the operator review queue shown in the mock workbench.
- * Keep queue entries compact; drill-down detail should stay on the linked lesson/question records.
+ * 创建 mock 工作台展示给操作者的审阅队列。
+ * 队列项应保持紧凑，详情留在链接的课时/题目记录上。
  */
 function buildReviewQueue(splitLessons) {
   const allQuestions = Object.values(splitLessons).flatMap((lesson) =>
