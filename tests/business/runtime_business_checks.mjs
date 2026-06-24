@@ -63,49 +63,68 @@ export function registerTests(register) {
   register({
     id: "GOLDEN-01",
     suite: "business",
-    title: "Math and Chinese validation fixtures remain searchable with stable task ids after publish",
+    title: "Three-track validation fixtures remain isolated and searchable with stable task ids after publish",
     required: true,
     async run({ harness }) {
-      const mathBundle = await readJsonFixture("math", "minimal_bundle.json");
-      const chineseBundle = await readJsonFixture("chinese", "minimal_bundle.json");
+      const juniorMathBundle = await readJsonFixture("three_track", "math_junior_bundle.json");
+      const seniorMathBundle = await readJsonFixture("three_track", "math_senior_bundle.json");
+      const seniorEnglishBundle = await readJsonFixture("three_track", "english_senior_bundle.json");
       const server = await harness.startPostgresServer("business_golden_test");
       await importAndPublish(
         server,
         {
-          ...mathBundle,
-          bundle_id: `${mathBundle.bundle_id}_golden`,
-          lesson_id: `${mathBundle.lesson_id}_golden`,
+          ...juniorMathBundle,
+          bundle_id: `${juniorMathBundle.bundle_id}_golden`,
+          lesson_id: `${juniorMathBundle.lesson_id}_golden`,
         },
-        "golden_math"
+        "golden_math_junior"
       );
       await importAndPublish(
         server,
         {
-          ...chineseBundle,
-          bundle_id: `${chineseBundle.bundle_id}_golden`,
-          lesson_id: `${chineseBundle.lesson_id}_golden`,
+          ...seniorMathBundle,
+          bundle_id: `${seniorMathBundle.bundle_id}_golden`,
+          lesson_id: `${seniorMathBundle.lesson_id}_golden`,
         },
-        "golden_chinese"
+        "golden_math_senior"
+      );
+      await importAndPublish(
+        server,
+        {
+          ...seniorEnglishBundle,
+          bundle_id: `${seniorEnglishBundle.bundle_id}_golden`,
+          lesson_id: `${seniorEnglishBundle.lesson_id}_golden`,
+        },
+        "golden_english_senior"
       );
       const mathSearch = await server.request(
-        `/api/runtime/task-projections/search?subject=${encodeURIComponent("数学")}&publishedOnly=true`
+        `/api/runtime/task-projections/search?subject=${encodeURIComponent("数学")}&trackCode=math_junior&publishedOnly=true`
       );
-      const chineseSearch = await server.request(
-        `/api/runtime/task-projections/search?subject=${encodeURIComponent("语文")}&publishedOnly=true`
+      const seniorMathSearch = await server.request(
+        `/api/runtime/task-projections/search?subject=${encodeURIComponent("数学")}&trackCode=math_senior&publishedOnly=true`
+      );
+      const englishSearch = await server.request(
+        `/api/runtime/task-projections/search?subject=${encodeURIComponent("英语")}&trackCode=english_senior&publishedOnly=true`
       );
       const mathLocalTaskIds = mathSearch.data.items
-        .filter((item) => item.lesson_id === `${mathBundle.lesson_id}_golden`)
+        .filter((item) => item.lesson_id === `${juniorMathBundle.lesson_id}_golden`)
         .map((item) => item.local_task_id)
         .sort();
-      const chineseLocalTaskIds = chineseSearch.data.items
-        .filter((item) => item.lesson_id === `${chineseBundle.lesson_id}_golden`)
+      const seniorMathLocalTaskIds = seniorMathSearch.data.items
+        .filter((item) => item.lesson_id === `${seniorMathBundle.lesson_id}_golden`)
         .map((item) => item.local_task_id)
         .sort();
-      expectEqual(mathLocalTaskIds, ["M-001", "M-002"], "math_golden_task_ids_changed");
-      expectEqual(chineseLocalTaskIds, ["C-001", "C-002"], "chinese_golden_task_ids_changed");
+      const englishLocalTaskIds = englishSearch.data.items
+        .filter((item) => item.lesson_id === `${seniorEnglishBundle.lesson_id}_golden`)
+        .map((item) => item.local_task_id)
+        .sort();
+      expectEqual(mathLocalTaskIds, ["MJ-001", "MJ-002"], "math_junior_golden_task_ids_changed");
+      expectEqual(seniorMathLocalTaskIds, ["MS-001", "MS-002"], "math_senior_golden_task_ids_changed");
+      expectEqual(englishLocalTaskIds, ["ES-001", "ES-002"], "english_senior_golden_task_ids_changed");
       return {
         mathLocalTaskIds,
-        chineseLocalTaskIds,
+        seniorMathLocalTaskIds,
+        englishLocalTaskIds,
       };
     },
   });

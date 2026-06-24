@@ -161,4 +161,25 @@ export function registerTests(register) {
       };
     },
   });
+
+  register({
+    id: "POLICY-001",
+    suite: "policy",
+    title: "Validation baseline must not claim production readiness while the write path remains a state replay bridge",
+    required: true,
+    async run({ harness }) {
+      const server = await harness.startPostgresServer("arch002_test");
+      const health = await server.request("/health");
+      expect(health.ok, "arch002_health_failed");
+      expect(
+        health.data.storeHealth?.architectureMode === "state_replay_bridge",
+        "arch002_expected_validation_bridge_marker_missing"
+      );
+      expect(
+        health.data.storeHealth?.releaseChannel === "validation_only",
+        "arch002_expected_validation_channel_missing"
+      );
+      throw new Error("validation_baseline_must_not_claim_production_ready");
+    },
+  });
 }

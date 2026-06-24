@@ -5,6 +5,7 @@
  */
 
 import path from "node:path";
+import fs from "node:fs/promises";
 import {
   expect,
   listFiles,
@@ -116,6 +117,123 @@ export function registerTests(register) {
       );
       return {
         exitCode: result.code,
+      };
+    },
+  });
+
+  register({
+    id: "A09",
+    suite: "static",
+    title: "8790 stays on the store interface and 8792 is only a deprecated forwarding shim",
+    required: true,
+    async run() {
+      const runtimeSource = await fs.readFile(
+        path.join(workspaceRoot, "tools", "mock_workbench_api_server.mjs"),
+        "utf8"
+      );
+      const compatSource = await fs.readFile(
+        path.join(workspaceRoot, "tools", "runtime_backbone_api_server.mjs"),
+        "utf8"
+      );
+      const startScript = await fs.readFile(
+        path.join(workspaceRoot, "tools", "start_runtime_backbone_demo.ps1"),
+        "utf8"
+      );
+
+      expect(
+        runtimeSource.includes("createRuntimeBackboneStore"),
+        "runtime_api_should_use_store_interface"
+      );
+      expect(
+        !runtimeSource.includes("loadState(") && !runtimeSource.includes("saveState("),
+        "runtime_api_should_not_call_legacy_file_state_directly"
+      );
+      expect(
+        compatSource.includes("RUNTIME_BACKBONE_COMPAT_TARGET") &&
+          compatSource.includes("X-Runtime-Deprecated"),
+        "compat_server_should_forward_to_8790"
+      );
+      expect(
+        !compatSource.includes("loadState(") && !compatSource.includes("saveState("),
+        "compat_server_should_not_touch_state_store"
+      );
+      expect(
+        startScript.includes("start_mock_workbench_runtime.ps1") &&
+          startScript.includes("8790"),
+        "legacy_start_script_should_delegate_to_8790"
+      );
+      return {
+        officialPort: 8790,
+        deprecatedPort: 8792,
+      };
+    },
+  });
+
+  register({
+    id: "A10",
+    suite: "static",
+    title: "Core runtime and demo scripts do not hardcode one local workspace path",
+    required: true,
+    async run() {
+      const targets = [
+        path.join(workspaceRoot, "tools", "build_mock_workbench_data.mjs"),
+        path.join(workspaceRoot, "tools", "start_demo_stack.ps1"),
+        path.join(workspaceRoot, "tools", "start_mock_workbench_runtime.ps1"),
+        path.join(workspaceRoot, "config", "runtime_observability.yaml"),
+      ];
+      const forbidden = ["C:/Users/EDY/Documents/教研基建", "C:\\Users\\EDY\\Documents\\教研基建"];
+      const hits = [];
+      for (const filePath of targets) {
+        const source = await fs.readFile(filePath, "utf8");
+        for (const pattern of forbidden) {
+          if (source.includes(pattern)) {
+            hits.push({
+              file: path.relative(workspaceRoot, filePath),
+              pattern,
+            });
+          }
+        }
+      }
+      expect(hits.length === 0, `hardcoded_local_workspace_path_hits:${JSON.stringify(hits)}`);
+      return {
+        checkedFiles: targets.length,
+      };
+    },
+  });
+
+  register({
+    id: "A11",
+    suite: "static",
+    title: "Docs keep the production policy gate honest and describe the LessonDraftBundle boundary",
+    required: true,
+    async run() {
+      const policyDocs = [
+        path.join(workspaceRoot, "docs", "production_readiness_audit.md"),
+        path.join(workspaceRoot, "docs", "production_readiness_defects.md"),
+        path.join(workspaceRoot, "docs", "production_readiness_final_report.md"),
+        path.join(workspaceRoot, "docs", "three_track_known_limitations.md"),
+      ];
+      const bundleDocs = [
+        path.join(workspaceRoot, "docs", "README.md"),
+        path.join(workspaceRoot, "docs", "three_track_validation_baseline_report.md"),
+        path.join(workspaceRoot, "docs", "three_track_validation_release_notes.md"),
+        path.join(workspaceRoot, "docs", "three_track_known_limitations.md"),
+      ];
+
+      for (const filePath of policyDocs) {
+        const source = await fs.readFile(filePath, "utf8");
+        expect(source.includes("POLICY-001"), `policy_gate_marker_missing:${path.basename(filePath)}`);
+        expect(!source.includes("ARCH-002"), `legacy_arch002_reference_still_present:${path.basename(filePath)}`);
+      }
+
+      for (const filePath of bundleDocs) {
+        const source = await fs.readFile(filePath, "utf8");
+        expect(source.includes("LessonDraftBundle"), `bundle_boundary_marker_missing:${path.basename(filePath)}`);
+      }
+
+      return {
+        policyDocs: policyDocs.length,
+        bundleDocs: bundleDocs.length,
       };
     },
   });

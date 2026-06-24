@@ -9,6 +9,11 @@ import path from "path";
 import vm from "vm";
 import { createHash, randomUUID } from "crypto";
 import { fileURLToPath } from "url";
+import {
+  normalizeDifficultyPayload,
+  resolveTrackProfile,
+  validateTrackProfile,
+} from "./runtime_subject_tracks.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,6 +89,129 @@ function parseCheckpointName(text) {
     .replace(/^考点\s*\d+\s*/u, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function normalizeCheckpointCodes(values) {
+  return [...new Set((values || []).map((value) => parseCheckpointName(value)).filter(Boolean))];
+}
+
+function normalizeTrackScope(input = {}) {
+  const trackProfile = validateTrackProfile(input);
+  return {
+    trackProfile,
+    subject: trackProfile.subject,
+    stage: trackProfile.stage,
+    track_code: trackProfile.track_code,
+  };
+}
+
+function safeTrackScope(input = {}) {
+  try {
+    return normalizeTrackScope(input);
+  } catch {
+    return null;
+  }
+}
+
+function buildDifficultyPayload(input, trackProfile, options = {}) {
+  return normalizeDifficultyPayload(input, {
+    defaultLevel: options.defaultLevel ?? 3,
+    defaultScheme: options.defaultScheme || trackProfile?.difficulty_scheme,
+    defaultSource: options.defaultSource || "manual",
+    defaultConfidence: options.defaultConfidence ?? 0.8,
+  });
+}
+
+function parseDifficultyFilter(value) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  return buildDifficultyPayload({ difficulty_level: value }, null, { defaultLevel: 3 }).difficulty_level;
+}
+
+function findSourceNodeRevision(state, sourceNodeRevisionId) {
+  return state.sourceNodeRevisions.find((item) => item.source_node_revision_id === sourceNodeRevisionId) || null;
+}
+
+function getDefaultCheckpointCodesForSourceNodeRevision(state, sourceNodeRevisionId) {
+  return normalizeCheckpointCodes(
+    state.sourceNodeCheckpointLinks
+      .filter(
+        (item) =>
+          item.source_node_revision_id === sourceNodeRevisionId &&
+          (item.relation_type || "default") === "default"
+      )
+      .map((item) => state.checkpointNodes.find((node) => node.checkpoint_node_id === item.checkpoint_node_id)?.code)
+  );
+}
+
+function buildTaskCheckpointPlan(defaultCheckpointCodes, task = {}) {
+  const explicitOverride =
+    task.checkpoint_override ||
+    task.checkpointOverride ||
+    (task.checkpoint_override_mode || task.checkpointOverrideMode
+      ? {
+          mode: task.checkpoint_override_mode || task.checkpointOverrideMode,
+          checkpoint_codes:
+            task.checkpoint_override_codes || task.checkpointOverrideCodes || task.checkpoint_codes || [],
+        }
+      : null);
+
+  if (explicitOverride) {
+    return {
+      mode: String(explicitOverride.mode || "replace").toLowerCase(),
+      checkpoint_codes: normalizeCheckpointCodes(explicitOverride.checkpoint_codes || []),
+    };
+  }
+
+  const legacyCheckpointCodes = normalizeCheckpointCodes(task.checkpoint_codes || []);
+  if (legacyCheckpointCodes.length === 0) {
+    return null;
+  }
+  if (JSON.stringify(legacyCheckpointCodes) === JSON.stringify(defaultCheckpointCodes)) {
+    return null;
+  }
+  return {
+    mode: "replace",
+    checkpoint_codes: legacyCheckpointCodes,
+  };
+}
+
+function writeTaskCheckpointOverrides(
+  state,
+  catalogVersionId,
+  taskRevisionId,
+  defaultCheckpointCodes,
+  task
+) {
+  const plan = buildTaskCheckpointPlan(defaultCheckpointCodes, task);
+  if (!plan) {
+    return;
+  }
+
+  const relationType = new Set(["add", "remove", "replace"]).has(plan.mode)
+    ? plan.mode
+    : "replace";
+  const checkpointCodes =
+    relationType === "remove" && plan.checkpoint_codes.length === 0
+      ? defaultCheckpointCodes
+      : plan.checkpoint_codes;
+
+  for (const checkpointCode of checkpointCodes) {
+    const checkpointNode = ensureCheckpointNode(state, catalogVersionId, checkpointCode, 0);
+    state.taskCheckpointOverrides.push({
+      override_id: makeId("task_checkpoint_override"),
+      task_revision_id: taskRevisionId,
+      checkpoint_node_id: checkpointNode.checkpoint_node_id,
+      relation_type: relationType,
+      confidence: relationType === "remove" ? 0.92 : 0.9,
+      mapping_source: task.checkpoint_override || task.checkpointOverride
+        ? "bundle_task_checkpoint_override"
+        : "bundle_task_checkpoint_legacy",
+      reason: checkpointCode,
+      created_at: new Date().toISOString(),
+    });
+  }
 }
 
 function toRelativePath(filePath) {
@@ -180,6 +308,12 @@ export function normalizeState(state) {
   }
 
   for (const lesson of normalized.lessons) {
+    const lessonTrackScope = safeTrackScope(lesson);
+    if (lessonTrackScope) {
+      lesson.subject = lessonTrackScope.subject;
+      lesson.stage = lessonTrackScope.stage;
+      lesson.track_code = lessonTrackScope.track_code;
+    }
     if (!lesson.published_revision_id) {
       const publishedPublication = normalized.publications.find(
         (item) => item.lesson_id === lesson.lesson_id && item.status === "published"
@@ -195,6 +329,58 @@ export function normalizeState(state) {
     if (!Object.prototype.hasOwnProperty.call(lessonRevision, "bundle_jsonb")) {
       lessonRevision.bundle_jsonb = null;
     }
+  }
+
+  const lessonById = new Map(normalized.lessons.map((item) => [item.lesson_id, item]));
+
+  for (const taskSubjectExt of normalized.taskSubjectExt) {
+    const taskRevision = normalized.taskRevisions.find(
+      (item) => item.task_revision_id === taskSubjectExt.task_revision_id
+    );
+    const lessonRevision = normalized.lessonRevisions.find(
+      (item) => item.lesson_revision_id === taskRevision?.lesson_revision_id
+    );
+    const lesson = lessonRevision ? lessonById.get(lessonRevision.lesson_id) : null;
+    const trackScope = safeTrackScope({
+      track_code: taskSubjectExt.track_code || taskSubjectExt.payload_json?.track_code || lesson?.track_code,
+      subject: taskSubjectExt.subject || lesson?.subject,
+      stage: taskSubjectExt.stage || lesson?.stage,
+      grade: lesson?.grade,
+    });
+    const difficulty = buildDifficultyPayload(
+      taskSubjectExt.payload_json || {},
+      trackScope?.trackProfile,
+      {
+        defaultSource: "state_normalizer",
+      }
+    );
+    taskSubjectExt.subject = trackScope?.subject || taskSubjectExt.subject || lesson?.subject || null;
+    taskSubjectExt.stage = trackScope?.stage || taskSubjectExt.stage || lesson?.stage || null;
+    taskSubjectExt.track_code = trackScope?.track_code || taskSubjectExt.track_code || lesson?.track_code || null;
+    taskSubjectExt.plugin_id =
+      taskSubjectExt.plugin_id || trackScope?.trackProfile?.plugin_id || "subject.validation.generic.v1";
+    taskSubjectExt.payload_json = {
+      ...(taskSubjectExt.payload_json || {}),
+      track_code: taskSubjectExt.track_code,
+      ...difficulty,
+    };
+  }
+
+  for (const projection of normalized.taskProjections) {
+    const lesson = lessonById.get(projection.lesson_id);
+    const trackScope = safeTrackScope({
+      track_code: projection.track_code || lesson?.track_code,
+      subject: projection.subject || lesson?.subject,
+      stage: projection.stage || lesson?.stage,
+      grade: projection.grade || lesson?.grade,
+    });
+    const difficulty = buildDifficultyPayload(projection, trackScope?.trackProfile, {
+      defaultSource: "state_normalizer",
+    });
+    projection.subject = trackScope?.subject || projection.subject || lesson?.subject || null;
+    projection.stage = trackScope?.stage || projection.stage || lesson?.stage || null;
+    projection.track_code = trackScope?.track_code || projection.track_code || lesson?.track_code || null;
+    Object.assign(projection, difficulty);
   }
 
   for (const component of normalized.components) {
@@ -593,12 +779,14 @@ function createPageAsset(state, documentId, pageNo) {
  * 这是后续变更流程默认已存在的播种路径。
  */
 function buildLessonSeed(state, splitLesson, reviewQueue) {
+  const trackScope = normalizeTrackScope(splitLesson);
+  const { trackProfile } = trackScope;
   const lessonId = splitLesson.lesson_id;
   const documentSourceId = makeId("source");
   state.documentSources.push({
     source_id: documentSourceId,
     source_type: "mock_workbench_seed",
-    subject: splitLesson.subject,
+    subject: trackScope.subject,
     owner_id: "codex",
     import_batch_id: "runtime_backbone_seed",
     metadata_json: {
@@ -612,8 +800,8 @@ function buildLessonSeed(state, splitLesson, reviewQueue) {
   state.documents.push({
     document_id: documentId,
     source_id: documentSourceId,
-    subject: splitLesson.subject,
-    stage: splitLesson.stage,
+    subject: trackScope.subject,
+    stage: trackScope.stage,
     grade: splitLesson.grade,
     season: splitLesson.season,
     doc_role: "teacher_handout",
@@ -631,7 +819,7 @@ function buildLessonSeed(state, splitLesson, reviewQueue) {
   });
   state.documentGroups.push({
     document_group_id: documentGroupId,
-    subject: splitLesson.subject,
+    subject: trackScope.subject,
     group_type: "lesson_source_set",
     label: splitLesson.lesson_title,
     status: "active",
@@ -653,8 +841,9 @@ function buildLessonSeed(state, splitLesson, reviewQueue) {
   const lesson = {
     lesson_id: lessonId,
     document_group_id: documentGroupId,
-    subject: splitLesson.subject,
-    stage: splitLesson.stage,
+    subject: trackScope.subject,
+    stage: trackScope.stage,
+    track_code: trackScope.track_code,
     grade: splitLesson.grade,
     season: splitLesson.season,
     title: splitLesson.lesson_title,
@@ -678,7 +867,11 @@ function buildLessonSeed(state, splitLesson, reviewQueue) {
     created_at: new Date().toISOString(),
   });
 
-  const { catalog, version } = ensureCatalog(state, splitLesson);
+  const { version } = ensureCatalog(state, {
+    subject: trackScope.subject,
+    stage: trackScope.stage,
+    grade: splitLesson.grade,
+  });
   const rootCatalogNode = ensureCheckpointNode(
     state,
     version.catalog_version_id,
@@ -842,6 +1035,18 @@ function buildLessonSeed(state, splitLesson, reviewQueue) {
   for (const question of splitLesson.questions || []) {
     const checkpointName = parseCheckpointName(question.checkpoint);
     const sourceNodeRevisionId = sourceNodeByCheckpoint.get(checkpointName) || rootSourceNodeRevisionId;
+    const difficulty = buildDifficultyPayload(
+      {
+        difficulty_level: question.risk,
+        difficulty_source: "visual_seed",
+        difficulty_confidence:
+          question.risk === "低风险" ? 0.9 : question.risk === "中风险" ? 0.75 : 0.6,
+      },
+      trackProfile,
+      {
+        defaultSource: "visual_seed",
+      }
+    );
     const taskId = `${lessonId}:task:${question.id}`;
     const taskRevisionId = `${taskId}:rev:1`;
     state.tasks.push({
@@ -881,11 +1086,14 @@ function buildLessonSeed(state, splitLesson, reviewQueue) {
 
     state.taskSubjectExt.push({
       task_revision_id: taskRevisionId,
-      subject: splitLesson.subject,
-      plugin_id: "subject.math.seed",
+      subject: trackScope.subject,
+      stage: trackScope.stage,
+      track_code: trackScope.track_code,
+      plugin_id: trackProfile.plugin_id,
       plugin_version: "0.1",
       schema_version: "0.1",
       payload_json: {
+        track_code: trackScope.track_code,
         checkpoint: question.checkpoint,
         component_kind: question.componentKind,
         component_label: question.componentLabel,
@@ -895,32 +1103,13 @@ function buildLessonSeed(state, splitLesson, reviewQueue) {
         review_status: question.reviewStatus,
         risk: question.risk,
         tags: question.versionTags || [],
-        difficulty_level: question.risk || "unknown",
-        difficulty_scheme: "seed_risk",
-        difficulty_source: "visual_seed",
-        difficulty_confidence: question.risk === "低风险" ? 0.9 : question.risk === "中风险" ? 0.75 : 0.6,
+        ...difficulty,
         visual_stats: question.visualStats || {},
       },
       risk_flags: question.riskIssues || [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
-
-    const checkpointNode = state.checkpointNodes.find(
-      (item) => item.catalog_version_id === version.catalog_version_id && item.name === checkpointName
-    );
-    if (checkpointNode) {
-      state.taskCheckpointOverrides.push({
-        override_id: makeId("task_checkpoint_override"),
-        task_revision_id: taskRevisionId,
-        checkpoint_node_id: checkpointNode.checkpoint_node_id,
-        relation_type: "main",
-        confidence: question.risk === "高风险" ? 0.74 : question.risk === "中风险" ? 0.88 : 0.96,
-        mapping_source: "seed_question_checkpoint",
-        reason: question.checkpoint,
-        created_at: new Date().toISOString(),
-      });
-    }
 
     const queueItem = reviewQueue.find((item) => item.questionId === question.id);
     if (queueItem || question.risk !== "低风险") {
@@ -1014,10 +1203,86 @@ function buildLessonSeed(state, splitLesson, reviewQueue) {
 }
 
 function getCheckpointCodesForTaskRevision(state, taskRevisionId) {
-  return state.taskCheckpointOverrides
-    .filter((item) => item.task_revision_id === taskRevisionId)
-    .map((item) => state.checkpointNodes.find((node) => node.checkpoint_node_id === item.checkpoint_node_id)?.code)
-    .filter(Boolean);
+  const taskRevision = state.taskRevisions.find((item) => item.task_revision_id === taskRevisionId);
+  const inherited = new Set(
+    taskRevision
+      ? getDefaultCheckpointCodesForSourceNodeRevision(state, taskRevision.source_node_revision_id)
+      : []
+  );
+  const overrides = state.taskCheckpointOverrides.filter((item) => item.task_revision_id === taskRevisionId);
+
+  const replaceCodes = normalizeCheckpointCodes(
+    overrides
+      .filter((item) => ["replace", "main"].includes(item.relation_type || "replace"))
+      .map((item) => state.checkpointNodes.find((node) => node.checkpoint_node_id === item.checkpoint_node_id)?.code)
+  );
+  if (replaceCodes.length > 0) {
+    return replaceCodes;
+  }
+
+  const addCodes = normalizeCheckpointCodes(
+    overrides
+      .filter((item) => (item.relation_type || "replace") === "add")
+      .map((item) => state.checkpointNodes.find((node) => node.checkpoint_node_id === item.checkpoint_node_id)?.code)
+  );
+  for (const code of addCodes) {
+    inherited.add(code);
+  }
+
+  const removeCodes = normalizeCheckpointCodes(
+    overrides
+      .filter((item) => (item.relation_type || "replace") === "remove")
+      .map((item) => state.checkpointNodes.find((node) => node.checkpoint_node_id === item.checkpoint_node_id)?.code)
+  );
+  for (const code of removeCodes) {
+    inherited.delete(code);
+  }
+
+  return [...inherited];
+}
+
+function buildCheckpointOverridePayloadForTaskRevision(state, taskRevisionId) {
+  const overrides = state.taskCheckpointOverrides.filter((item) => item.task_revision_id === taskRevisionId);
+  if (!overrides.length) {
+    return null;
+  }
+
+  const replaceCodes = normalizeCheckpointCodes(
+    overrides
+      .filter((item) => ["replace", "main"].includes(item.relation_type || "replace"))
+      .map((item) => state.checkpointNodes.find((node) => node.checkpoint_node_id === item.checkpoint_node_id)?.code)
+  );
+  if (replaceCodes.length > 0) {
+    return {
+      mode: "replace",
+      checkpoint_codes: replaceCodes,
+    };
+  }
+
+  const addCodes = normalizeCheckpointCodes(
+    overrides
+      .filter((item) => (item.relation_type || "replace") === "add")
+      .map((item) => state.checkpointNodes.find((node) => node.checkpoint_node_id === item.checkpoint_node_id)?.code)
+  );
+  if (addCodes.length > 0) {
+    return {
+      mode: "add",
+      checkpoint_codes: addCodes,
+    };
+  }
+
+  const removeCodes = normalizeCheckpointCodes(
+    overrides
+      .filter((item) => (item.relation_type || "replace") === "remove")
+      .map((item) => state.checkpointNodes.find((node) => node.checkpoint_node_id === item.checkpoint_node_id)?.code)
+  );
+  if (removeCodes.length > 0) {
+    return {
+      mode: "remove",
+      checkpoint_codes: removeCodes,
+    };
+  }
+  return null;
 }
 
 function buildLessonDraftBundle(state, lessonRevisionId) {
@@ -1055,6 +1320,13 @@ function buildLessonDraftBundle(state, lessonRevisionId) {
     );
     const component = componentLink ? componentById.get(componentLink.component_id) : null;
     const pageAsset = component ? pageAssetById.get(component.page_asset_id) : null;
+    const difficulty = buildDifficultyPayload(
+      taskSubjectExt?.payload_json || {},
+      safeTrackScope(lesson)?.trackProfile || null,
+      {
+        defaultSource: "bundle_export",
+      }
+    );
     return {
       local_task_id: task?.stable_question_no || taskRevision.task_id,
       task_revision_id: taskRevision.task_revision_id,
@@ -1065,11 +1337,12 @@ function buildLessonDraftBundle(state, lessonRevisionId) {
       stem: taskRevision.student_stem || taskRevision.teacher_stem || "",
       answer: taskRevision.answer || "",
       explanation: taskRevision.explanation || "",
-      difficulty_level: taskSubjectExt?.payload_json?.difficulty_level || taskSubjectExt?.payload_json?.risk || "unknown",
-      difficulty_scheme: taskSubjectExt?.payload_json?.difficulty_scheme || "seed_risk",
-      difficulty_source: taskSubjectExt?.payload_json?.difficulty_source || "seed_payload",
-      difficulty_confidence: taskSubjectExt?.payload_json?.difficulty_confidence || 0.6,
+      ...difficulty,
       checkpoint_codes: getCheckpointCodesForTaskRevision(state, taskRevision.task_revision_id),
+      checkpoint_override: buildCheckpointOverridePayloadForTaskRevision(
+        state,
+        taskRevision.task_revision_id
+      ),
       subject_tags: taskSubjectExt?.payload_json?.tags || [],
       source_refs_json: {
         component_id: component?.component_id || null,
@@ -1105,6 +1378,7 @@ function buildLessonDraftBundle(state, lessonRevisionId) {
     lesson_revision_id: lessonRevisionId,
     subject: lesson.subject,
     stage: lesson.stage,
+    track_code: lesson.track_code || null,
     grade: lesson.grade,
     season: lesson.season,
     title: lesson.title,
@@ -1116,6 +1390,10 @@ function buildLessonDraftBundle(state, lessonRevisionId) {
       phase: item.phase,
       title: item.title,
       order_index: item.order_index,
+      checkpoint_codes: getDefaultCheckpointCodesForSourceNodeRevision(
+        state,
+        item.source_node_revision_id
+      ),
     })),
     tasks,
     components,
@@ -1173,6 +1451,9 @@ function syncTaskProjectionForRevision(state, lessonRevisionId) {
   );
 
   for (const task of bundle?.tasks || []) {
+    const difficulty = buildDifficultyPayload(task, safeTrackScope(lesson)?.trackProfile || null, {
+      defaultSource: "task_projection_sync",
+    });
     const searchText = [
       task.stem,
       task.answer,
@@ -1189,15 +1470,14 @@ function syncTaskProjectionForRevision(state, lessonRevisionId) {
       local_task_id: task.local_task_id,
       source_node_local_id: task.source_node_local_id,
       subject: lesson.subject,
+      stage: lesson.stage,
+      track_code: lesson.track_code || null,
       grade: lesson.grade,
       question_type: task.question_type,
       stem: task.stem,
       answer: task.answer,
       explanation: task.explanation,
-      difficulty_level: task.difficulty_level,
-      difficulty_scheme: task.difficulty_scheme,
-      difficulty_source: task.difficulty_source,
-      difficulty_confidence: task.difficulty_confidence,
+      ...difficulty,
       checkpoint_codes: task.checkpoint_codes || [],
       subject_tags: task.subject_tags || [],
       source_refs_json: task.source_refs_json || {},
@@ -1991,6 +2271,7 @@ function validateLessonDraftBundle(bundle) {
   if (!Array.isArray(bundle.tasks)) {
     throw new Error("invalid_bundle_tasks");
   }
+  validateTrackProfile(bundle);
   const localTaskIds = new Set();
   const sourceNodeIds = new Set(
     Array.isArray(bundle.source_tree)
@@ -2009,6 +2290,12 @@ function validateLessonDraftBundle(bundle) {
       throw new Error("duplicate_local_task_id");
     }
     localTaskIds.add(task.local_task_id);
+    if (
+      task.checkpoint_override?.mode &&
+      !["add", "remove", "replace"].includes(String(task.checkpoint_override.mode).toLowerCase())
+    ) {
+      throw new Error("invalid_bundle_task_checkpoint_override_mode");
+    }
     if (task.source_node_local_id && !sourceNodeIds.has(task.source_node_local_id)) {
       throw new Error("task_source_node_not_found");
     }
@@ -2103,6 +2390,8 @@ export function publishLessonRevision(state, lessonId, actor = "publisher", opti
   lesson.updated_at = publication.published_at;
   lessonRevision.status = "published";
   lessonRevision.approval_status = "approved";
+  syncLessonRevisionBundle(state, lessonRevisionId);
+  syncTaskProjectionForRevision(state, lessonRevisionId);
 
   return {
     lesson,
@@ -2112,14 +2401,29 @@ export function publishLessonRevision(state, lessonId, actor = "publisher", opti
 }
 
 export function searchTaskProjections(state, filters = {}) {
+  return {
+    items: filterTaskProjectionItems(state, state.taskProjections || [], filters),
+    projectionCoverage: inspectTaskProjectionCoverage(state, filters),
+  };
+}
+
+function filterTaskProjectionItems(state, projections, filters = {}) {
   const publishedRevisionIds = getPublishedRevisionIdSet(state);
   const keyword = String(filters.q || "").trim().toLowerCase();
+  const difficultyLevel = parseDifficultyFilter(filters.difficultyLevel);
+  const trackCode = filters.trackCode || filters.track_code || "";
 
-  return state.taskProjections.filter((item) => {
+  return projections.filter((item) => {
     if (filters.publishedOnly && !publishedRevisionIds.has(item.lesson_revision_id)) {
       return false;
     }
     if (filters.subject && item.subject !== filters.subject) {
+      return false;
+    }
+    if (filters.stage && item.stage !== filters.stage) {
+      return false;
+    }
+    if (trackCode && item.track_code !== trackCode) {
       return false;
     }
     if (filters.grade && item.grade !== filters.grade) {
@@ -2128,7 +2432,10 @@ export function searchTaskProjections(state, filters = {}) {
     if (filters.questionType && item.question_type !== filters.questionType) {
       return false;
     }
-    if (filters.difficultyLevel && item.difficulty_level !== filters.difficultyLevel) {
+    if (difficultyLevel !== null && item.difficulty_level !== difficultyLevel) {
+      return false;
+    }
+    if (filters.difficultyScheme && item.difficulty_scheme !== filters.difficultyScheme) {
       return false;
     }
     if (filters.checkpointCode && !(item.checkpoint_codes || []).includes(filters.checkpointCode)) {
@@ -2146,9 +2453,102 @@ export function searchTaskProjections(state, filters = {}) {
   });
 }
 
+function inspectTaskProjectionCoverage(state, filters = {}) {
+  const expectedState = JSON.parse(JSON.stringify(state || createEmptyState()));
+  rebuildDerivedState(expectedState);
+
+  const actualItems = filterTaskProjectionItems(state, state.taskProjections || [], filters);
+  const expectedItems = filterTaskProjectionItems(
+    expectedState,
+    expectedState.taskProjections || [],
+    filters
+  );
+  const actualMap = new Map(
+    actualItems.map((item) => [item.task_projection_id, item.content_hash || computeHash(item)])
+  );
+  const expectedMap = new Map(
+    expectedItems.map((item) => [item.task_projection_id, item.content_hash || computeHash(item)])
+  );
+  const missingProjectionIds = [];
+  const staleProjectionIds = [];
+  const extraProjectionIds = [];
+
+  for (const [projectionId, expectedHash] of expectedMap.entries()) {
+    if (!actualMap.has(projectionId)) {
+      missingProjectionIds.push(projectionId);
+      continue;
+    }
+    if (actualMap.get(projectionId) !== expectedHash) {
+      staleProjectionIds.push(projectionId);
+    }
+  }
+  for (const projectionId of actualMap.keys()) {
+    if (!expectedMap.has(projectionId)) {
+      extraProjectionIds.push(projectionId);
+    }
+  }
+
+  return {
+    status:
+      missingProjectionIds.length || staleProjectionIds.length || extraProjectionIds.length
+        ? "degraded"
+        : "ok",
+    needsRebuild:
+      missingProjectionIds.length > 0 ||
+      staleProjectionIds.length > 0 ||
+      extraProjectionIds.length > 0,
+    actualCount: actualItems.length,
+    expectedCount: expectedItems.length,
+    missingProjectionIds,
+    staleProjectionIds,
+    extraProjectionIds,
+  };
+}
+
+function collectScopedLessonRevisionIds(state, scope = {}) {
+  const lessonId = scope.lessonId || scope.lesson_id || null;
+  const lessonRevisionId = scope.lessonRevisionId || scope.lesson_revision_id || null;
+
+  if (lessonRevisionId) {
+    return state.lessonRevisions
+      .filter((item) => item.lesson_revision_id === lessonRevisionId)
+      .map((item) => item.lesson_revision_id);
+  }
+  if (lessonId) {
+    return state.lessonRevisions
+      .filter((item) => item.lesson_id === lessonId)
+      .map((item) => item.lesson_revision_id);
+  }
+  return state.lessonRevisions.map((item) => item.lesson_revision_id);
+}
+
+export function rebuildTaskProjections(state, scope = {}) {
+  normalizeState(state);
+  const lessonRevisionIds = collectScopedLessonRevisionIds(state, scope);
+  const beforeCount = state.taskProjections.length;
+
+  for (const currentLessonRevisionId of lessonRevisionIds) {
+    syncLessonRevisionBundle(state, currentLessonRevisionId);
+    syncTaskProjectionForRevision(state, currentLessonRevisionId);
+  }
+
+  const afterCount = state.taskProjections.length;
+  return {
+    rebuiltLessonRevisionIds: lessonRevisionIds,
+    rebuiltLessonRevisionCount: lessonRevisionIds.length,
+    beforeCount,
+    afterCount,
+    deltaCount: afterCount - beforeCount,
+  };
+}
+
 function buildQuestionBankRevisionPayload(source, existingItemId = null) {
   const itemId = existingItemId || makeId("qb_item");
   const revisionId = makeId("qb_rev");
+  const trackScope = normalizeTrackScope(source);
+  const difficulty = buildDifficultyPayload(source, trackScope.trackProfile, {
+    defaultSource: source.created_by === "question_bank_ingest" ? "question_bank_projection" : "question_bank_manual",
+  });
   const searchText = [
     source.stem,
     source.answer,
@@ -2161,7 +2561,9 @@ function buildQuestionBankRevisionPayload(source, existingItemId = null) {
   return {
     item: {
       question_bank_item_id: itemId,
-      subject: source.subject || null,
+      subject: trackScope.subject,
+      stage: trackScope.stage,
+      track_code: trackScope.track_code,
       grade: source.grade || null,
       current_revision_id: revisionId,
       status: "active",
@@ -2171,14 +2573,14 @@ function buildQuestionBankRevisionPayload(source, existingItemId = null) {
     revision: {
       question_bank_item_revision_id: revisionId,
       question_bank_item_id: itemId,
+      subject: trackScope.subject,
+      stage: trackScope.stage,
+      track_code: trackScope.track_code,
       stem: source.stem || "",
       answer: source.answer || "",
       explanation: source.explanation || "",
       question_type: source.question_type || "question",
-      difficulty_level: source.difficulty_level || "unknown",
-      difficulty_scheme: source.difficulty_scheme || "manual",
-      difficulty_source: source.difficulty_source || "manual",
-      difficulty_confidence: source.difficulty_confidence || 0.8,
+      ...difficulty,
       checkpoint_codes: source.checkpoint_codes || [],
       subject_tags: source.subject_tags || [],
       source_refs_json: source.source_refs_json || {},
@@ -2222,6 +2624,10 @@ export function createQuestionBankItem(state, payload = {}) {
   if (!existingItem) {
     state.questionBankItems.push(built.item);
   } else {
+    existingItem.subject = built.item.subject;
+    existingItem.stage = built.item.stage;
+    existingItem.track_code = built.item.track_code;
+    existingItem.grade = built.item.grade;
     existingItem.current_revision_id = built.revision.question_bank_item_revision_id;
     existingItem.updated_at = built.item.updated_at;
   }
@@ -2248,6 +2654,8 @@ export function createQuestionBankItem(state, payload = {}) {
 
 export function searchQuestionBank(state, filters = {}) {
   const keyword = String(filters.q || "").trim().toLowerCase();
+  const difficultyLevel = parseDifficultyFilter(filters.difficultyLevel);
+  const trackCode = filters.trackCode || filters.track_code || "";
   const latestRevisionIds = new Set(
     state.questionBankItems.map((item) => item.current_revision_id).filter(Boolean)
   );
@@ -2262,13 +2670,22 @@ export function searchQuestionBank(state, filters = {}) {
       if (filters.subject && owner?.subject !== filters.subject) {
         return false;
       }
+      if (filters.stage && owner?.stage !== filters.stage) {
+        return false;
+      }
+      if (trackCode && owner?.track_code !== trackCode) {
+        return false;
+      }
       if (filters.grade && owner?.grade !== filters.grade) {
         return false;
       }
       if (filters.questionType && item.question_type !== filters.questionType) {
         return false;
       }
-      if (filters.difficultyLevel && item.difficulty_level !== filters.difficultyLevel) {
+      if (difficultyLevel !== null && item.difficulty_level !== difficultyLevel) {
+        return false;
+      }
+      if (filters.difficultyScheme && item.difficulty_scheme !== filters.difficultyScheme) {
         return false;
       }
       if (
@@ -2356,6 +2773,13 @@ function ensureLessonContainers(state, bundle, actor = "import_api") {
   const lessonId = bundle.lesson_id || bundle.lesson?.lesson_id || makeId("lesson");
   let lesson = state.lessons.find((item) => item.lesson_id === lessonId);
   if (lesson) {
+    lesson.subject = bundle.subject || lesson.subject || null;
+    lesson.stage = bundle.stage || lesson.stage || null;
+    lesson.track_code = bundle.track_code || bundle.trackCode || lesson.track_code || null;
+    lesson.grade = bundle.grade || lesson.grade || null;
+    lesson.season = bundle.season || lesson.season || null;
+    lesson.title = bundle.title || lesson.title || lessonId;
+    lesson.updated_at = new Date().toISOString();
     const documentId = state.documentGroupMembers.find(
       (item) => item.document_group_id === lesson.document_group_id
     )?.document_id;
@@ -2417,6 +2841,7 @@ function ensureLessonContainers(state, bundle, actor = "import_api") {
     document_group_id: documentGroupId,
     subject: bundle.subject || bundle.lesson?.subject || null,
     stage: bundle.stage || bundle.lesson?.stage || null,
+    track_code: bundle.track_code || bundle.trackCode || null,
     grade: bundle.grade || bundle.lesson?.grade || null,
     season: bundle.season || bundle.lesson?.season || null,
     title: bundle.title || bundle.lesson?.title || lessonId,
@@ -2428,6 +2853,44 @@ function ensureLessonContainers(state, bundle, actor = "import_api") {
   };
   state.lessons.push(lesson);
   return { lesson, documentId };
+}
+
+function inferSourceNodeCheckpointDefaults(sourceTree, tasks = []) {
+  const taskBuckets = new Map();
+  for (const task of tasks) {
+    const localId = task.source_node_local_id || "root";
+    if (!taskBuckets.has(localId)) {
+      taskBuckets.set(localId, []);
+    }
+    taskBuckets.get(localId).push(task);
+  }
+
+  const defaults = new Map();
+  for (const node of sourceTree) {
+    const localId = node.source_node_local_id || slug(node.title || "node");
+    const explicitCodes = normalizeCheckpointCodes(node.checkpoint_codes || []);
+    if (explicitCodes.length > 0) {
+      defaults.set(localId, explicitCodes);
+      continue;
+    }
+
+    const seen = new Map();
+    for (const task of taskBuckets.get(localId) || []) {
+      if (task.checkpoint_override || task.checkpointOverride) {
+        continue;
+      }
+      const taskCodes = normalizeCheckpointCodes(task.checkpoint_codes || []);
+      if (taskCodes.length === 0) {
+        continue;
+      }
+      const key = JSON.stringify(taskCodes);
+      seen.set(key, (seen.get(key) || 0) + 1);
+    }
+
+    const best = [...seen.entries()].sort((left, right) => right[1] - left[1])[0];
+    defaults.set(localId, best ? JSON.parse(best[0]) : []);
+  }
+  return defaults;
 }
 
 function hydrateRevisionFromBundle(state, lesson, documentId, lessonRevisionId, bundle, actor = "import_api") {
@@ -2451,6 +2914,7 @@ function hydrateRevisionFromBundle(state, lesson, documentId, lessonRevisionId, 
           order_index: 0,
         },
       ];
+  const defaultCheckpointCodesByLocalId = inferSourceNodeCheckpointDefaults(sourceTree, bundle.tasks || []);
 
   for (const node of sourceTree) {
     const localId = node.source_node_local_id || slug(node.title || "node");
@@ -2495,12 +2959,40 @@ function hydrateRevisionFromBundle(state, lesson, documentId, lessonRevisionId, 
     currentRevision.parent_node_revision_id = parentLocalId
       ? sourceNodeRevisionIdByLocalId.get(parentLocalId) || null
       : null;
+    for (const checkpointCode of defaultCheckpointCodesByLocalId.get(localId) || []) {
+      const checkpointNode = ensureCheckpointNode(state, version.catalog_version_id, checkpointCode, 0);
+      state.sourceNodeCheckpointLinks.push({
+        link_id: makeId("checkpoint_link"),
+        source_node_revision_id: currentRevision.source_node_revision_id,
+        checkpoint_node_id: checkpointNode.checkpoint_node_id,
+        relation_type: "default",
+        confidence: 0.95,
+        mapping_source: "lesson_draft_bundle_node_default",
+        created_at: new Date().toISOString(),
+      });
+    }
   }
 
   const pageAssetByPageNo = new Map();
+  const trackProfile = safeTrackScope(lesson)?.trackProfile || resolveTrackProfile(bundle);
   for (const task of bundle.tasks || []) {
     const taskId = `${lesson.lesson_id}:task:${task.local_task_id}`;
     const taskRevisionId = `${taskId}:rev:${state.lessonRevisions.find((item) => item.lesson_revision_id === lessonRevisionId)?.revision_no || 1}`;
+    const sourceNodeLocalId =
+      task.source_node_local_id ||
+      sourceTree[0]?.source_node_local_id ||
+      "root";
+    const sourceNodeRevisionId =
+      sourceNodeRevisionIdByLocalId.get(sourceNodeLocalId) ||
+      [...sourceNodeRevisionIdByLocalId.values()][0] ||
+      null;
+    const defaultCheckpointCodes = getDefaultCheckpointCodesForSourceNodeRevision(
+      state,
+      sourceNodeRevisionId
+    );
+    const difficulty = buildDifficultyPayload(task, trackProfile, {
+      defaultSource: "lesson_draft_bundle",
+    });
     if (!state.tasks.some((item) => item.task_id === taskId)) {
       state.tasks.push({
         task_id: taskId,
@@ -2516,10 +3008,7 @@ function hydrateRevisionFromBundle(state, lesson, documentId, lessonRevisionId, 
       task_revision_id: taskRevisionId,
       task_id: taskId,
       lesson_revision_id: lessonRevisionId,
-      source_node_revision_id:
-        sourceNodeRevisionIdByLocalId.get(task.source_node_local_id) ||
-        [...sourceNodeRevisionIdByLocalId.values()][0] ||
-        null,
+      source_node_revision_id: sourceNodeRevisionId,
       student_stem: task.stem || "",
       teacher_stem: task.stem || "",
       answer: task.answer || "",
@@ -2534,34 +3023,28 @@ function hydrateRevisionFromBundle(state, lesson, documentId, lessonRevisionId, 
     state.taskSubjectExt.push({
       task_revision_id: taskRevisionId,
       subject: lesson.subject,
-      plugin_id: "lesson_draft_bundle_import",
+      stage: lesson.stage,
+      track_code: lesson.track_code || trackProfile.track_code,
+      plugin_id: trackProfile.plugin_id,
       plugin_version: "0.1",
       schema_version: "0.1",
       payload_json: {
+        track_code: lesson.track_code || trackProfile.track_code,
         component_kind: task.question_type || "question",
         tags: task.subject_tags || [],
-        difficulty_level: task.difficulty_level || "unknown",
-        difficulty_scheme: task.difficulty_scheme || "bundle",
-        difficulty_source: task.difficulty_source || "bundle",
-        difficulty_confidence: task.difficulty_confidence || 0.8,
+        ...difficulty,
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
 
-    for (const checkpointCode of task.checkpoint_codes || []) {
-      const checkpointNode = ensureCheckpointNode(state, version.catalog_version_id, checkpointCode, 0);
-      state.taskCheckpointOverrides.push({
-        override_id: makeId("task_checkpoint_override"),
-        task_revision_id: taskRevisionId,
-        checkpoint_node_id: checkpointNode.checkpoint_node_id,
-        relation_type: "main",
-        confidence: 0.9,
-        mapping_source: "lesson_draft_bundle",
-        reason: checkpointCode,
-        created_at: new Date().toISOString(),
-      });
-    }
+    writeTaskCheckpointOverrides(
+      state,
+      version.catalog_version_id,
+      taskRevisionId,
+      defaultCheckpointCodes,
+      task
+    );
 
     const pageNo = task.source_refs_json?.page_no || 1;
     if (!pageAssetByPageNo.has(pageNo)) {
@@ -2630,6 +3113,10 @@ export function importLessonDraftBundle(state, payload = {}) {
   bundle.stage = bundle.stage || bundle.lesson?.stage || null;
   bundle.grade = bundle.grade || bundle.lesson?.grade || null;
   bundle.season = bundle.season || bundle.lesson?.season || null;
+  const trackScope = normalizeTrackScope(bundle);
+  bundle.subject = trackScope.subject;
+  bundle.stage = trackScope.stage;
+  bundle.track_code = trackScope.track_code;
   validateLessonDraftBundle(bundle);
   const contentHash = computeHash(bundle);
 
@@ -2788,9 +3275,21 @@ export function importLessonDraftBundle(state, payload = {}) {
 }
 
 export function createMaterialBuild(state, payload = {}) {
+  const lesson = payload.lessonId
+    ? state.lessons.find((item) => item.lesson_id === payload.lessonId)
+    : null;
+  const trackScope = normalizeTrackScope({
+    track_code: payload.trackCode || payload.track_code || lesson?.track_code,
+    subject: payload.subject || lesson?.subject,
+    stage: payload.stage || lesson?.stage,
+    grade: payload.grade || lesson?.grade,
+  });
   const materialBuild = {
     material_build_id: makeId("material_build"),
     lesson_id: payload.lessonId || null,
+    subject: trackScope.subject,
+    stage: trackScope.stage,
+    track_code: trackScope.track_code,
     teacher_name: payload.teacherName || null,
     build_name: payload.buildName || "未命名讲义",
     section_schema: payload.sectionSchema || [],
@@ -2817,6 +3316,16 @@ export function addMaterialBuildItems(state, materialBuildId, payload = {}) {
     );
     if (!revision) {
       throw new Error("question_bank_item_revision_not_found");
+    }
+    const owner = state.questionBankItems.find(
+      (row) => row.question_bank_item_id === revision.question_bank_item_id
+    );
+    if (
+      materialBuild.track_code &&
+      owner?.track_code &&
+      materialBuild.track_code !== owner.track_code
+    ) {
+      throw new Error("material_build_track_mismatch");
     }
     const materialItem = {
       material_item_id: makeId("material_item"),
@@ -2855,7 +3364,7 @@ export function exportMaterialBuild(state, materialBuildId, payload = {}) {
     runType: "material_build_export",
     rootTargetType: "material_build",
     rootTargetId: materialBuildId,
-    subject: lesson?.subject || null,
+    subject: lesson?.subject || materialBuild.subject || null,
     jobType: "material_build_export",
     capability: "export",
     idempotencyKey: `${materialBuildId}:export:${payload.actor || "material_builder"}`,

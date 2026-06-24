@@ -137,6 +137,48 @@ export async function runProcess(command, args = [], options = {}) {
   });
 }
 
+async function forceTerminateChild(child) {
+  if (!child?.pid || child.exitCode !== null) {
+    return;
+  }
+  if (process.platform === "win32") {
+    await runProcess("taskkill", ["/PID", String(child.pid), "/T", "/F"], {
+      cwd: workspaceRoot,
+    });
+    return;
+  }
+  child.kill("SIGKILL");
+}
+
+async function stopChildProcess(child) {
+  if (!child || child.exitCode !== null) {
+    return;
+  }
+  child.kill("SIGTERM");
+  await new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(forceTimer);
+      clearTimeout(resolveTimer);
+      resolve();
+    };
+    const forceTimer = setTimeout(() => {
+      forceTerminateChild(child)
+        .catch(() => undefined)
+        .finally(() => {
+          setTimeout(finish, 1000);
+        });
+    }, 5_000);
+    const resolveTimer = setTimeout(finish, 15_000);
+    child.once("close", finish);
+    child.once("exit", finish);
+  });
+}
+
 /**
  * 为需要真实数据库行为的套件启动隔离的一次性 Postgres 集群。
  * 下面的数据库名称断言刻意严格，避免误碰开发者数据。
@@ -302,21 +344,96 @@ export async function startRuntimeServer(options = {}) {
       });
     },
     async stop() {
-      if (child.exitCode !== null) {
-        return;
+      await stopChildProcess(child);
+    },
+  };
+}
+
+export async function startCompatRuntimeServer(options = {}) {
+  const port = options.port || (await reservePort());
+  const targetPort = options.targetPort || 8790;
+  const env = {
+    ...process.env,
+    RUNTIME_BACKBONE_API_PORT: String(port),
+    MOCK_WORKBENCH_API_PORT: String(targetPort),
+    ...(options.env || {}),
+  };
+  const child = spawn(
+    process.execPath,
+    [path.join(workspaceRoot, "tools", "runtime_backbone_api_server.mjs")],
+    {
+      cwd: workspaceRoot,
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+    }
+  );
+  const stdout = [];
+  const stderr = [];
+  child.stdout.on("data", (chunk) => stdout.push(String(chunk)));
+  child.stderr.on("data", (chunk) => stderr.push(String(chunk)));
+  const baseUrl = `http://127.0.0.1:${port}`;
+
+  const waitForCompatAvailability = async () => {
+    const startedAt = Date.now();
+    let lastError = null;
+    while (Date.now() - startedAt < (options.timeoutMs || 30_000)) {
+      try {
+        const result = await fetchJson(`${baseUrl}/health`);
+        if (result.ok && result.data?.ok) {
+          return;
+        }
+        if (
+          options.allowUnavailableHealth &&
+          result.status === 503 &&
+          result.data?.error === "runtime_backbone_compat_target_unavailable"
+        ) {
+          return;
+        }
+        lastError = new Error(`health_not_ready:${result.status}`);
+      } catch (error) {
+        lastError = error;
       }
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    throw lastError || new Error("health_timeout");
+  };
+
+  if ((options.env || {}).RUNTIME_BACKBONE_COMPAT_ENABLED === "false") {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    return {
+      baseUrl,
+      port,
+      stdout,
+      stderr,
+      child,
+      async request(pathname, requestOptions = {}) {
+        return fetchJson(`${baseUrl}${pathname}`, requestOptions);
+      },
+      async stop() {
+        await stopChildProcess(child);
+      },
+    };
+  }
+
+  try {
+    await waitForCompatAvailability();
+  } catch (error) {
+    if (child.exitCode === null) {
       child.kill("SIGTERM");
-      await new Promise((resolve) => {
-        const timer = setTimeout(() => {
-          if (child.exitCode === null) {
-            child.kill("SIGKILL");
-          }
-        }, 5_000);
-        child.once("close", () => {
-          clearTimeout(timer);
-          resolve();
-        });
-      });
+    }
+    throw new Error(`${error.message}\n${stderr.join("") || stdout.join("")}`.trim());
+  }
+  return {
+    baseUrl,
+    port,
+    stdout,
+    stderr,
+    child,
+    async request(pathname, requestOptions = {}) {
+      return fetchJson(`${baseUrl}${pathname}`, requestOptions);
+    },
+    async stop() {
+      await stopChildProcess(child);
     },
   };
 }
@@ -401,6 +518,16 @@ export class RuntimeHarness {
       ...server,
       database,
     };
+  }
+
+  async startCompatServer(options = {}) {
+    const normalized =
+      typeof options === "string"
+        ? { targetPort: Number(options) }
+        : options;
+    const server = await startCompatRuntimeServer(normalized);
+    this.cleanupTasks.push(async () => server.stop());
+    return server;
   }
 
   async dispose() {

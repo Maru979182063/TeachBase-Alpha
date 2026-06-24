@@ -196,7 +196,7 @@ export function registerTests(register) {
     title: "Approve and publish semantics stay aligned between file and postgres modes",
     required: true,
     async run({ harness }) {
-      const baseBundle = await readJsonFixture("chinese", "minimal_bundle.json");
+      const baseBundle = await readJsonFixture("english", "minimal_bundle.json");
       const fileServer = await harness.startFileServer("contract_file_publish");
       const postgresServer = await harness.startPostgresServer("contract_publish_test");
       const fileFlow = await importApprovePublish(fileServer, {

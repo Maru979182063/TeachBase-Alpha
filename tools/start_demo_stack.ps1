@@ -12,8 +12,30 @@ param(
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
-$python = "C:\Users\EDY\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
-$node = "C:\Users\EDY\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"
+$preferredPython = if ($env:RUNTIME_BACKBONE_PYTHON) {
+  $env:RUNTIME_BACKBONE_PYTHON
+} elseif ($env:USERPROFILE) {
+  Join-Path $env:USERPROFILE ".cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
+} else {
+  ""
+}
+$preferredNode = if ($env:RUNTIME_BACKBONE_NODE) {
+  $env:RUNTIME_BACKBONE_NODE
+} elseif ($env:USERPROFILE) {
+  Join-Path $env:USERPROFILE ".cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"
+} else {
+  ""
+}
+$python = if ($preferredPython -and (Test-Path $preferredPython)) {
+  $preferredPython
+} else {
+  (Get-Command python -ErrorAction Stop).Source
+}
+$node = if ($preferredNode -and (Test-Path $preferredNode)) {
+  $preferredNode
+} else {
+  (Get-Command node -ErrorAction Stop).Source
+}
 $apiScript = Join-Path $root "tools\mock_workbench_api_server.mjs"
 $buildScript = Join-Path $root "tools\build_mock_workbench_data.mjs"
 $runtimeYaml = Join-Path $root "config\runtime_observability.yaml"
@@ -57,15 +79,14 @@ function Start-BackgroundProcess {
     [string]$StdErrPath
   )
 
-  $argString = [string]::Join(" ", ($ArgumentList | ForEach-Object {
-    if ($_ -match '\s') {
-      '"' + ($_.Replace('"', '\"')) + '"'
-    } else {
-      $_
-    }
-  }))
-  $cmdArgs = "/c start `"`" /b `"$FilePath`" $argString"
-  Start-Process -FilePath "cmd.exe" -ArgumentList $cmdArgs -WorkingDirectory $WorkingDirectory | Out-Null
+  # Start the helper directly so logs and portability do not depend on a shell wrapper.
+  Start-Process `
+    -FilePath $FilePath `
+    -ArgumentList $ArgumentList `
+    -WorkingDirectory $WorkingDirectory `
+    -WindowStyle Hidden `
+    -RedirectStandardOutput $StdOutPath `
+    -RedirectStandardError $StdErrPath | Out-Null
 }
 
 function Ensure-FrontendServer {
@@ -136,10 +157,10 @@ function Find-NgrokExe {
 
   $candidates = @(
     (Join-Path $root "tools\vendor\ngrok.exe"),
-    "C:\Users\EDY\AppData\Local\Microsoft\WinGet\Packages\Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\ngrok.exe",
-    "C:\Users\EDY\ngrok.exe",
-    "C:\Users\EDY\Downloads\ngrok.exe",
-    "C:\Users\EDY\Desktop\ngrok.exe",
+    (if ($env:USERPROFILE) { Join-Path $env:USERPROFILE "AppData\Local\Microsoft\WinGet\Packages\Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\ngrok.exe" }),
+    (if ($env:USERPROFILE) { Join-Path $env:USERPROFILE "ngrok.exe" }),
+    (if ($env:USERPROFILE) { Join-Path $env:USERPROFILE "Downloads\ngrok.exe" }),
+    (if ($env:USERPROFILE) { Join-Path $env:USERPROFILE "Desktop\ngrok.exe" }),
     "C:\Program Files\ngrok\ngrok.exe",
     "C:\Program Files (x86)\ngrok\ngrok.exe"
   )
@@ -273,6 +294,8 @@ function Write-RuntimeYaml {
   $exportPublicUrl = $NgrokState.exportProxyUrl
   $exportProxyEnabled = if ($exportPublicUrl) { "true" } else { "false" }
   $exportProxyStatus = if ($exportPublicUrl) { "running" } else { "disabled" }
+  # Persist the current workspace path without hardcoding a specific machine root into the script.
+  $workspaceRootDisplay = ($root -replace "\\", "/")
 
   $yaml = @"
 meta:
@@ -282,7 +305,7 @@ meta:
   notes: "模型、服务、隧道与启动脚本统一在这里观测。"
 
 paths:
-  workspace_root: "C:/Users/EDY/Documents/教研基建"
+  workspace_root: "$workspaceRootDisplay"
   knowledge_map_junior: "outputs/junior_math_knowledge_map"
   knowledge_map_senior: "outputs/senior_math_knowledge_map"
   split_outputs: "outputs/ingress_splitter_v0.1"

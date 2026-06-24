@@ -1,0 +1,35 @@
+{
+  "version": "20260624_three_track_validation_v1",
+  "tracks": {
+    "math_junior": {
+      "track_code": "math_junior",
+      "subject": "数学",
+      "subject_aliases": ["数学", "math"],
+      "stage": "junior",
+      "stage_aliases": ["junior", "初中"],
+      "grade_aliases": ["g7", "g8", "g9", "7", "8", "9", "初一", "初二", "初三"],
+      "plugin_id": "subject.math.junior.v1",
+      "difficulty_scheme": "difficulty.math.junior.v1"
+    },
+    "math_senior": {
+      "track_code": "math_senior",
+      "subject": "数学",
+      "subject_aliases": ["数学", "math"],
+      "stage": "senior",
+      "stage_aliases": ["senior", "高中"],
+      "grade_aliases": ["g10", "g11", "g12", "10", "11", "12", "高一", "高二", "高三"],
+      "plugin_id": "subject.math.senior.v1",
+      "difficulty_scheme": "difficulty.math.senior.v1"
+    },
+    "english_senior": {
+      "track_code": "english_senior",
+      "subject": "英语",
+      "subject_aliases": ["英语", "english"],
+      "stage": "senior",
+      "stage_aliases": ["senior", "高中"],
+      "grade_aliases": ["g10", "g11", "g12", "10", "11", "12", "高一", "高二", "高三"],
+      "plugin_id": "subject.english.senior.v1",
+      "difficulty_scheme": "difficulty.english.senior.v1"
+    }
+  }
+}

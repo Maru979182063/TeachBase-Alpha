@@ -1,113 +1,69 @@
 # Production Readiness Final Report
 
-更新日期：2026-06-23
+Updated: 2026-06-24
 
-## 最终结论
+## Current Status
 
-当前状态：`READY`
+Current result: `NOT_READY`
 
-本轮已经关闭 `ARCH-001 postgres_snapshot_still_primary_source`。  
-Postgres 模式现在以归一化业务表作为唯一正式事实源，`runtime_state_snapshot` 已降级为调试快照能力，默认不参与正式读写链路。
+This repository now has a verified three-track validation baseline, but it is not being declared production-ready in this round.
+The validated input boundary remains `LessonDraftBundle`, not OCR/PDF-to-`LessonDraftBundle` accuracy.
 
-## 本轮结果
+## Latest Production Readiness Run
 
-- `npm run test:production-readiness`：`27 / 27` 通过，`0` 失败，`0` 跳过
-- 最终状态：`READY`
-- 最新报告目录：
-  - `outputs/production_readiness/production_readiness_2026-06-23T11-28-45-167Z_a95d6b0f`
-- 最新 JSON 报告：
-  - `outputs/production_readiness/production_readiness_2026-06-23T11-28-45-167Z_a95d6b0f/production_readiness_report.json`
-- 最新 Markdown 摘要：
-  - `outputs/production_readiness/production_readiness_2026-06-23T11-28-45-167Z_a95d6b0f/production_readiness_summary.md`
+- Command: `npm run test:production-readiness`
+- Run ID: `production_readiness_2026-06-24T09-45-01-130Z_a8598fab`
+- Report directory: `outputs/production_readiness/production_readiness_2026-06-24T09-45-01-130Z_a8598fab`
+- PostgreSQL: `PostgreSQL 18.4 on x86_64-windows, compiled by msvc-19.44.35226, 64-bit`
+- Total: `30`
+- Passed: `29`
+- Failed: `1`
+- Skipped: `0`
+- Final status: `NOT_READY`
 
-## 已完成的关键架构收口
+## Blocking Gate
 
-### 1. Postgres 正式切到表为准
+The only blocking gate in the latest production readiness run is:
 
-- `tools/runtime_backbone_postgres_store.mjs` 不再从 `runtime_state_snapshot` 读取主状态
-- 正式业务查询统一从归一化表还原运行态
-- 正式业务写入统一从归一化表读取当前事实、执行纯业务变更、再按主键增量落库
-- `POSTGRES_SOLE_SOURCE=true` 成为 Postgres 模式的正式语义
+- `POLICY-001`
+  - Title: `Validation baseline must not claim production readiness while the write path remains a state replay bridge`
+  - Error: `validation_baseline_must_not_claim_production_ready`
 
-### 2. 补齐了验证阶段所需的事实表
+This gate is intentional for the current round. It prevents the validation baseline from being mislabeled as a production release.
 
-新增迁移：
+## What Passed
 
-- `config/migrations/20260623_postgres_sole_source.sql`
+The following key gates passed in the latest production readiness run:
 
-新增覆盖的事实域包括：
+- `ARCH-001`: Postgres normalized tables are the sole business source of truth
+- `PGSS-01` and `PGSS-02`: Postgres read path remains resilient without depending on snapshot rows
+- `A09`: port `8790` is the official runtime API and `8792` is only a deprecated forwarding shim
+- `B08`: three-track alignment migration is present and validated
+- `GOLDEN-01`: junior math, senior math, and senior English remain isolated after publish
+- `N01-N04`: backup and restore continue to pass
+- `PERF-SMOKE`: smoke latency stayed within the current threshold
 
-- runtime metadata
-- document source / group / member / relation
-- lesson import
-- job dependency / outbox event
-- component link
-- source node / source node revision
-- task / task revision
-- checkpoint catalog / version / node
-- source node checkpoint link
-- task checkpoint override
-- task subject ext
-- quality evaluation
+## Why It Is Still Not Production-Ready
 
-### 3. snapshot 已降级为调试角色
+This round intentionally stopped at a validation baseline boundary:
 
-- 正式业务事务默认不再写 debug snapshot
-- 即使存在损坏或过期 snapshot，也不会污染 lesson/detail/search/publish 结果
-- consistency checker 的基准已改为“归一化表内部一致性”，而不是“表必须永远和 snapshot 完全相同”
+- The runtime health model now reports `releaseChannel = validation_only`
+- The runtime architecture still reports `architectureMode = state_replay_bridge`
+- `task_projection` is treated as a rebuildable projection, not a primary fact source
+- The compatibility port `8792` is still retained as a deprecated bridge for migration safety
+- The validated upstream input boundary is `LessonDraftBundle`, not raw OCR or PDF decomposition quality
+- This round did not attempt a full final-state production architecture declaration
 
-### 4. 新增了真实行为门禁
+## Related Validation Baseline
 
-新增或增强测试：
+The validation baseline itself passed:
 
-- `tests/audit/runtime_architecture_gate.mjs`
-- `tests/postgres-sole-source/runtime_postgres_sole_source.mjs`
+- Command: `npm run test:three-track-baseline`
+- Run ID: `three_track_validation_baseline_2026-06-24T09-42-07-194Z_d63ff3ae`
+- Final status: `VALIDATION_BASELINE_READY`
 
-已验证：
+See also:
 
-- 无 snapshot 行也能启动
-- 有损坏 snapshot 行也能正常 import / approve / publish
-- 同库二次启动仍能从归一化表读回真实 lesson
-- 业务写入不会刷新 debug snapshot
-
-## 关键测试结论
-
-核心套件全部通过：
-
-- audit
-- postgres-sole-source
-- static
-- migrations
-- store-contract
-- api
-- business
-- concurrency
-- failure-injection
-- security
-- performance
-- backup-restore
-
-重点结论：
-
-- `ARCH-001`：已通过
-- `S0 = 0`
-- `S1 = 0`
-- 备份恢复 `N01-N04`：已通过
-- smoke 性能仍在阈值内
-
-## 当前残余风险
-
-以下项已不再阻塞当前 `READY` 结论，但仍建议作为下一阶段优化：
-
-1. 当前验证版仓储仍会在写事务里还原整份表状态，再执行纯函数变更；这已经不再依赖 snapshot，但长期仍建议继续拆分热点领域仓储。
-2. 当前还不是最终目标版 ERD；本轮是“Postgres sole source 验证版”，不是终局数据建模版。
-3. 如果后续要承接更高并发或更大题库体量，建议继续推进：
-   - lesson / review / publication 专项仓储
-   - task / artifact / lineage 专项查询
-   - 更长时间的 soak 与更高强度压测
-
-## 相关文档
-
-- 迁移说明：`docs/postgres_sole_source_migration_plan.md`
-- 测试总报告：`docs/production_readiness_final_report.md`
-- 缺陷状态：`docs/production_readiness_defects.md`
+- `docs/three_track_validation_baseline_report.md`
+- `docs/three_track_known_limitations.md`
+- `docs/three_track_validation_release_notes.md`

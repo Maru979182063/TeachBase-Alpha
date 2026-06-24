@@ -1,0 +1,60 @@
+{
+  "bundle_id": "three_track_math_senior_bundle",
+  "lesson_id": "three_track_math_senior_lesson",
+  "title": "高中数学 三轨验证样本",
+  "track_code": "math_senior",
+  "subject": "数学",
+  "stage": "senior",
+  "grade": "g11",
+  "season": "autumn",
+  "source_tree": [
+    {
+      "source_node_local_id": "root",
+      "node_type": "lesson",
+      "phase": "knowledge_main",
+      "title": "函数专题"
+    },
+    {
+      "source_node_local_id": "derivative_block",
+      "parent_source_node_local_id": "root",
+      "node_type": "knowledge_block",
+      "phase": "knowledge_main",
+      "title": "导数应用",
+      "checkpoint_codes": ["导数单调性"]
+    }
+  ],
+  "tasks": [
+    {
+      "local_task_id": "MS-001",
+      "source_node_local_id": "derivative_block",
+      "question_type": "analysis",
+      "stem": "判断函数在给定区间上的单调性。",
+      "answer": "先求导，再结合导函数符号判断。",
+      "explanation": "导数大于零时函数递增。",
+      "difficulty_level": 4,
+      "difficulty_confidence": 0.93,
+      "subject_tags": ["函数"],
+      "source_refs_json": {
+        "page_no": 3
+      }
+    },
+    {
+      "local_task_id": "MS-002",
+      "source_node_local_id": "derivative_block",
+      "question_type": "short_answer",
+      "stem": "写出递推数列求通项的关键步骤。",
+      "answer": "构造辅助数列并化简。",
+      "explanation": "核心是把递推关系转成可求和形式。",
+      "difficulty_level": 5,
+      "difficulty_confidence": 0.89,
+      "checkpoint_override": {
+        "mode": "replace",
+        "checkpoint_codes": ["数列递推"]
+      },
+      "subject_tags": ["数列"],
+      "source_refs_json": {
+        "page_no": 3
+      }
+    }
+  ]
+}

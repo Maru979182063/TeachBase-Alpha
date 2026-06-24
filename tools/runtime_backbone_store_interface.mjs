@@ -21,6 +21,7 @@ import {
   listLessons,
   loadState,
   publishLessonRevision,
+  rebuildTaskProjections,
   recoverJobs,
   registerExportRun,
   reseedState,
@@ -38,14 +39,16 @@ class FileRuntimeBackboneStore {
     this.migrationVersion = "file-store";
   }
 
-  readState() {
+  readState(options = {}) {
     const state = loadState();
-    recoverJobs(state);
+    if (options.autoRecover !== false) {
+      recoverJobs(state);
+    }
     return state;
   }
 
-  writeState(mutator) {
-    const state = this.readState();
+  writeState(mutator, options = {}) {
+    const state = this.readState(options);
     const result = mutator(state);
     saveState(state);
     return result;
@@ -162,7 +165,13 @@ class FileRuntimeBackboneStore {
   }
 
   recoverJobs(actor) {
-    return this.writeState((state) => recoverJobs(state, actor));
+    // The explicit recovery endpoint should report the jobs it recovers instead of
+    // hiding the change inside the default pre-read auto-recovery path.
+    return this.writeState((state) => recoverJobs(state, actor), { autoRecover: false });
+  }
+
+  rebuildTaskProjections(scope = {}) {
+    return this.writeState((state) => rebuildTaskProjections(state, scope));
   }
 
   getDebugState() {
@@ -172,6 +181,8 @@ class FileRuntimeBackboneStore {
   getHealth() {
     return {
       runtimeMode: this.mode,
+      releaseChannel: "validation_only",
+      architectureMode: "state_replay_bridge",
       database: {
         status: "not_applicable",
         engine: "json_file",

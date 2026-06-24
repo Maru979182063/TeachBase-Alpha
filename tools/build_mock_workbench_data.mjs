@@ -6,8 +6,10 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const projectRoot = path.resolve("C:/Users/EDY/Documents/教研基建");
+// Derive the workspace root from the script location so clean clones stay portable.
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outputPath = path.join(projectRoot, "outputs/split_builder/mock_workbench/workbench_data.js");
 
 const readJson = async (relativePath) => {

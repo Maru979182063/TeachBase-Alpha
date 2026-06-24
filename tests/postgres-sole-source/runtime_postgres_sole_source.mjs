@@ -61,7 +61,7 @@ export function registerTests(register) {
     title: "Corrupt snapshot rows do not block published reads after restart",
     required: true,
     async run({ harness }) {
-      const bundle = await readJsonFixture("chinese", "minimal_bundle.json");
+      const bundle = await readJsonFixture("english", "minimal_bundle.json");
       const lessonId = `${bundle.lesson_id}_pgss_restart`;
       const database = await harness.createPostgresDatabase("pgss_restart_test");
       const firstServer = await harness.startPostgresServer({

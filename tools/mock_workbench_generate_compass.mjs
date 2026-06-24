@@ -7,9 +7,13 @@
 import fs from "fs";
 import path from "path";
 import { createRequire } from "module";
+import { resolveBundledNodeModulesPath } from "./runtime_dependency_paths.mjs";
 
-const require = createRequire("C:/Users/EDY/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/");
-const PptxGenJS = require("pptxgenjs");
+const bundledNodeModules = resolveBundledNodeModulesPath();
+const runtimeRequire = bundledNodeModules
+  ? createRequire(path.join(bundledNodeModules, "package.json"))
+  : createRequire(import.meta.url);
+const PptxGenJS = runtimeRequire("pptxgenjs");
 
 const payloadArgIndex = process.argv.indexOf("--payload");
 const outputArgIndex = process.argv.indexOf("--output");

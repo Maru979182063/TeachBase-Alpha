@@ -24,6 +24,8 @@ import {
   importLessonDraftBundle,
   listLessons,
   publishLessonRevision,
+  rebuildTaskProjections,
+  rebuildDerivedState,
   recoverJobs,
   registerExportRun,
   rerunComponent,
@@ -61,6 +63,18 @@ const migrationPaths = [
     "config",
     "migrations",
     "20260623_postgres_sole_source.sql"
+  ),
+  path.join(
+    workspaceRoot,
+    "config",
+    "migrations",
+    "20260624_three_track_validation_alignment.sql"
+  ),
+  path.join(
+    workspaceRoot,
+    "config",
+    "migrations",
+    "20260624_three_track_final_review_hardening.sql"
   ),
 ];
 
@@ -105,7 +119,7 @@ export class PostgresRuntimeBackboneStore {
       false
     );
     this.pool = null;
-    this.migrationVersion = "20260623_postgres_sole_source.sql";
+    this.migrationVersion = "20260624_three_track_final_review_hardening.sql";
     this.lastConsistencyReport = null;
     this.lastSnapshotStatus = {
       status: this.debugSnapshotEnabled ? "idle" : "disabled",
@@ -153,13 +167,15 @@ export class PostgresRuntimeBackboneStore {
     return this.lastSnapshotStatus;
   }
 
-  async readState() {
+  async readState(options = {}) {
     const state = await loadRuntimeState(this.pool, this.snapshotKey);
-    recoverJobs(state);
+    if (options.autoRecover !== false) {
+      recoverJobs(state);
+    }
     return state;
   }
 
-  async mutateState(mutator) {
+  async mutateState(mutator, options = {}) {
     const client = await this.pool.connect();
     let nextState = null;
     try {
@@ -169,7 +185,9 @@ export class PostgresRuntimeBackboneStore {
       await client.query("select pg_advisory_xact_lock(hashtext($1))", [this.snapshotKey]);
       const previousState = await loadRuntimeState(client, this.snapshotKey);
       nextState = cloneRuntimeState(previousState);
-      recoverJobs(nextState);
+      if (options.autoRecover !== false) {
+        recoverJobs(nextState);
+      }
       const result = await mutator(nextState);
       nextState.meta.generatedAt =
         nextState.meta.generatedAt || previousState.meta.generatedAt || new Date().toISOString();
@@ -276,7 +294,12 @@ export class PostgresRuntimeBackboneStore {
   }
 
   async createQuestionBankItem(payload) {
-    return this.mutateState(async (state) => createQuestionBankItem(state, payload));
+    return this.mutateState(async (state) => {
+      if (payload.taskProjectionId) {
+        rebuildDerivedState(state);
+      }
+      return createQuestionBankItem(state, payload);
+    });
   }
 
   async createMaterialBuild(payload) {
@@ -316,7 +339,15 @@ export class PostgresRuntimeBackboneStore {
   }
 
   async recoverJobs(actor) {
-    return this.mutateState(async (state) => recoverJobs(state, actor));
+    // Skip the default pre-recovery so the explicit API returns the recovered jobs
+    // that this call actually transitioned.
+    return this.mutateState(async (state) => recoverJobs(state, actor), {
+      autoRecover: false,
+    });
+  }
+
+  async rebuildTaskProjections(scope = {}) {
+    return this.mutateState(async (state) => rebuildTaskProjections(state, scope));
   }
 
   async getDebugState() {
@@ -393,6 +424,8 @@ export class PostgresRuntimeBackboneStore {
   async getHealth() {
     const status = {
       runtimeMode: this.mode,
+      releaseChannel: "validation_only",
+      architectureMode: "state_replay_bridge",
       database: {
         status: "connected",
         engine: "postgres",

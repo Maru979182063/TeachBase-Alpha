@@ -2,6 +2,7 @@
   "bundle_id": "invalid_duplicate_bundle",
   "lesson_id": "invalid_duplicate_lesson",
   "title": "非法重复题号样本",
+  "track_code": "math_junior",
   "subject": "数学",
   "stage": "junior",
   "grade": "g7",
@@ -22,7 +23,7 @@
       "stem": "第一题",
       "answer": "A",
       "explanation": "示例",
-      "difficulty_level": "1",
+      "difficulty_level": 1,
       "checkpoint_codes": ["重复校验"],
       "source_refs_json": {
         "page_no": 1
@@ -35,7 +36,7 @@
       "stem": "第二题",
       "answer": "B",
       "explanation": "示例",
-      "difficulty_level": "1",
+      "difficulty_level": 1,
       "checkpoint_codes": ["重复校验"],
       "source_refs_json": {
         "page_no": 1

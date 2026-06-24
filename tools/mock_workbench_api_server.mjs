@@ -11,11 +11,12 @@ import { spawnSync } from "child_process";
 import { randomUUID } from "crypto";
 import { fileURLToPath } from "url";
 import { createRuntimeBackboneStore } from "./runtime_backbone_store_interface.mjs";
+import { resolveBundledPythonPath } from "./runtime_dependency_paths.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const workspaceRoot = path.resolve(__dirname, "..");
-const pythonExe = "C:\\Users\\EDY\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe";
+const pythonExe = resolveBundledPythonPath() || process.env.PYTHON || "python";
 const exportRoot = path.join(workspaceRoot, "outputs", "split_builder", "mock_workbench", "export_runs");
 const historyPath = path.join(exportRoot, "export_history.json");
 const tmpRoot = path.join(exportRoot, "_tmp");
@@ -82,7 +83,9 @@ function toSafeError(error) {
     ["invalid_bundle_payload", 400],
     ["invalid_bundle_tasks", 400],
     ["invalid_bundle_task_entry", 400],
+    ["invalid_bundle_task_checkpoint_override_mode", 400],
     ["missing_local_task_id", 400],
+    ["material_build_track_mismatch", 409],
     ["component_patch_not_pending", 409],
     ["component_patch_conflict", 409],
   ]);
@@ -93,6 +96,9 @@ function toSafeError(error) {
     };
   }
   if (message.startsWith("unsupported_runtime_store:")) {
+    return { status: 400, error: message };
+  }
+  if (message.startsWith("track_profile_") || message.startsWith("track_subject_") || message.startsWith("track_stage_")) {
     return { status: 400, error: message };
   }
   if (message.startsWith("failpoint:")) {
@@ -276,7 +282,7 @@ async function runExport(payload) {
     { cwd: workspaceRoot, encoding: "utf8" }
   );
   if (pythonRun.status !== 0) {
-    throw new Error(pythonRun.stderr || pythonRun.stdout || "python_export_failed");
+    throw new Error(pythonRun.stderr || pythonRun.stdout || pythonRun.error?.message || "python_export_failed");
   }
 
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
@@ -468,17 +474,45 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === "/api/runtime/task-projections/search" && req.method === "GET") {
-    const items = await runtimeStore.searchTaskProjections({
+    const searchResult = await runtimeStore.searchTaskProjections({
       q: requestUrl.searchParams.get("q") || "",
       subject: requestUrl.searchParams.get("subject") || "",
+      stage: requestUrl.searchParams.get("stage") || "",
+      trackCode: requestUrl.searchParams.get("trackCode") || "",
       grade: requestUrl.searchParams.get("grade") || "",
       questionType: requestUrl.searchParams.get("questionType") || "",
       difficultyLevel: requestUrl.searchParams.get("difficultyLevel") || "",
+      difficultyScheme: requestUrl.searchParams.get("difficultyScheme") || "",
       checkpointCode: requestUrl.searchParams.get("checkpointCode") || "",
       publishedOnly: requestUrl.searchParams.get("publishedOnly") === "true",
     });
-    sendJson(res, 200, { ok: true, requestId, items }, { "X-Request-Id": requestId });
+    sendJson(
+      res,
+      200,
+      {
+        ok: true,
+        requestId,
+        items: searchResult.items || [],
+        projectionCoverage: searchResult.projectionCoverage || { status: "unknown", needsRebuild: false },
+      },
+      { "X-Request-Id": requestId }
+    );
     return;
+  }
+
+  if (pathname === "/api/runtime/internal/task-projections/rebuild" && req.method === "POST") {
+    try {
+      const body = await parseBody(req);
+      const result = await runtimeStore.rebuildTaskProjections({
+        lessonId: body.lessonId,
+        lessonRevisionId: body.lessonRevisionId,
+      });
+      sendJson(res, 200, { ok: true, requestId, result }, { "X-Request-Id": requestId });
+      return;
+    } catch (error) {
+      handleRouteError(res, error, requestId);
+      return;
+    }
   }
 
   if (pathname === "/api/runtime/runs" && req.method === "GET") {
@@ -618,9 +652,12 @@ const server = http.createServer(async (req, res) => {
     const items = await runtimeStore.searchQuestionBank({
       q: requestUrl.searchParams.get("q") || "",
       subject: requestUrl.searchParams.get("subject") || "",
+      stage: requestUrl.searchParams.get("stage") || "",
+      trackCode: requestUrl.searchParams.get("trackCode") || "",
       grade: requestUrl.searchParams.get("grade") || "",
       questionType: requestUrl.searchParams.get("questionType") || "",
       difficultyLevel: requestUrl.searchParams.get("difficultyLevel") || "",
+      difficultyScheme: requestUrl.searchParams.get("difficultyScheme") || "",
       checkpointCode: requestUrl.searchParams.get("checkpointCode") || "",
       latestOnly: requestUrl.searchParams.get("latestOnly") !== "false",
     });

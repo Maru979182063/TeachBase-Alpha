@@ -55,7 +55,7 @@ export function registerTests(register) {
     title: "Publish failpoint rolls back publication pointer changes",
     required: true,
     async run({ harness }) {
-      const bundle = await readJsonFixture("chinese", "minimal_bundle.json");
+      const bundle = await readJsonFixture("english", "minimal_bundle.json");
       const server = await harness.startPostgresServer({
         prefix: "failure_publish_test",
         env: {

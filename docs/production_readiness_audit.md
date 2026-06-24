@@ -1,70 +1,62 @@
 # Production Readiness Audit
 
-更新日期：2026-06-23
+Updated: 2026-06-24
 
-## 本轮审计范围
+## Audit Scope
+
+This audit reflects the current validation-baseline branch:
 
 - `tools/runtime_backbone_postgres_store.mjs`
 - `tools/runtime_backbone_store.mjs`
 - `tools/runtime_backbone_store_interface.mjs`
 - `tools/mock_workbench_api_server.mjs`
-- `config/migrations/20260623_runtime_backbone_validation.sql`
-- `config/migrations/20260623_postgres_sole_source.sql`
+- `tools/runtime_backbone_api_server.mjs`
+- `tools/runtime_subject_tracks.mjs`
+- `config/migrations/20260624_three_track_validation_alignment.sql`
 - `runtime/postgres/`
 - `tests/`
 
-## 审计结论
+## Audit Result
 
-### 1. ARCH-001 已关闭
+### 1. `ARCH-001` is no longer the blocker
 
-Postgres 正式链路已不再把 `runtime_state_snapshot` 当作主状态来源。
+The current Postgres business path no longer depends on snapshot rows as a formal business truth source.
+The latest production readiness run shows `ARCH-001` as passed.
 
-当前正式语义：
+### 2. Three-track validation scope is now closed
 
-- 业务读：从归一化表还原状态
-- 业务写：从归一化表读取当前事实，执行纯业务变更，再按主键增量落库
-- snapshot：仅保留为 debug-only 能力，默认不参与正式业务
+The current branch verifies the required isolation and lifecycle for:
 
-### 2. 归一化表覆盖面已补齐到验证版可闭环
+- junior math
+- senior math
+- senior English
 
-本轮新增了验证阶段必需的事实表，使现有 lesson / review / publication / task / component / job / artifact 相关业务逻辑可以脱离 snapshot 独立运行。
+That includes publish, search, question bank, material build, export, and component rerun checks.
 
-### 3. consistency 基准已切换
+### 3. Runtime entry has been narrowed
 
-一致性检查不再要求：
+- `8790` is the official runtime API entry
+- `8792` is now only a deprecated compatibility forwarder
 
-- “表必须永远等于 snapshot”
+### 4. Projection semantics are explicit
 
-而是检查：
+`task_projection` is treated as a rebuildable projection layer.
+The test baseline now verifies that it can be deleted and rebuilt from fact-backed lesson state.
 
-- 归一化表内部序列化 / 反序列化是否自洽
-- 业务表哈希与表还原态是否一致
+## Remaining Audit Conclusion
 
-### 4. 架构门禁已具备真实行为验证
+The repository should currently be described as:
 
-已补充真实行为测试验证：
+- `VALIDATION_BASELINE_READY`
+- not `READY` for production
 
-- 无 snapshot 行也能启动
-- 损坏 snapshot 行不会污染 lesson/detail/list/search
-- 业务写入不会刷新 debug snapshot
-- 同库新实例仍可从业务表恢复事实
+The production readiness gate remains intentionally blocked by `POLICY-001`, because the runtime still reports:
 
-## 当前架构形态
+- `releaseChannel = validation_only`
+- `architectureMode = state_replay_bridge`
 
-### 已完成
+## Final Assessment
 
-- sole-source 验证版
-- 表事实读写主链路
-- debug snapshot 降级
-- 回归门禁补齐
-
-### 尚未作为本轮目标处理
-
-- 最终版全学科终局 ERD
-- 热点路径的领域级 SQL 仓储彻底拆分
-- 更大体量数据下的专门索引 / 分区 / 长时压测策略
-
-## 结论
-
-从本轮“生产前究极测试与缺陷修复阶段”的唯一主目标来看，`ARCH-001 postgres_snapshot_still_primary_source` 已经实质关闭。  
-结合最新 `production readiness` 总回归 `27/27` 通过，当前可判定为：`READY`。
+This round successfully closed the requested three-track validation baseline starting from `LessonDraftBundle`.
+It does not claim that OCR/PDF-to-`LessonDraftBundle` accuracy is already production-ready.
+It did not complete a final production architecture declaration, so the correct production readiness conclusion remains `NOT_READY`.
