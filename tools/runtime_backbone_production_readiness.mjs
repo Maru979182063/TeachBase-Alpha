@@ -20,6 +20,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const modulePaths = [
+  path.join(workspaceRoot, "tests", "audit", "runtime_architecture_gate.mjs"),
+  path.join(workspaceRoot, "tests", "postgres-sole-source", "runtime_postgres_sole_source.mjs"),
   path.join(workspaceRoot, "tests", "unit", "static_checks.mjs"),
   path.join(workspaceRoot, "tests", "migrations", "postgres_migration_checks.mjs"),
   path.join(workspaceRoot, "tests", "store-contract", "file_and_postgres_contracts.mjs"),

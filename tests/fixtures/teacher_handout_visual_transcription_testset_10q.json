@@ -1,0 +1,64 @@
+{
+  "items": [
+    {
+      "sample_id": "senior_tq_002",
+      "source_transcription_json": "outputs/ingress_splitter_v0.1/codex_profile_senior_math_transcription_v03_20260624/teacher_visual_question_transcription_v0.1.json",
+      "question_id": "tq_002",
+      "tag": "senior_math"
+    },
+    {
+      "sample_id": "senior_tq_003",
+      "source_transcription_json": "outputs/ingress_splitter_v0.1/codex_profile_senior_math_transcription_v03_20260624/teacher_visual_question_transcription_v0.1.json",
+      "question_id": "tq_003",
+      "tag": "senior_math"
+    },
+    {
+      "sample_id": "senior_tq_010",
+      "source_transcription_json": "outputs/ingress_splitter_v0.1/codex_profile_senior_math_transcription_v03_20260624/teacher_visual_question_transcription_v0.1.json",
+      "question_id": "tq_010",
+      "tag": "senior_math"
+    },
+    {
+      "sample_id": "senior_tq_018",
+      "source_transcription_json": "outputs/ingress_splitter_v0.1/codex_profile_senior_math_transcription_v03_20260624/teacher_visual_question_transcription_v0.1.json",
+      "question_id": "tq_018",
+      "tag": "senior_math"
+    },
+    {
+      "sample_id": "senior_tq_025",
+      "source_transcription_json": "outputs/ingress_splitter_v0.1/codex_profile_senior_math_transcription_v03_20260624/teacher_visual_question_transcription_v0.1.json",
+      "question_id": "tq_025",
+      "tag": "senior_math"
+    },
+    {
+      "sample_id": "junior_tq_002",
+      "source_transcription_json": "outputs/ingress_splitter_v0.1/codex_profile_junior_geometry_transcription_v02_20260624/teacher_visual_question_transcription_v0.1.json",
+      "question_id": "tq_002",
+      "tag": "junior_geometry"
+    },
+    {
+      "sample_id": "junior_tq_004",
+      "source_transcription_json": "outputs/ingress_splitter_v0.1/codex_profile_junior_geometry_transcription_v02_20260624/teacher_visual_question_transcription_v0.1.json",
+      "question_id": "tq_004",
+      "tag": "junior_geometry"
+    },
+    {
+      "sample_id": "junior_tq_009",
+      "source_transcription_json": "outputs/ingress_splitter_v0.1/codex_profile_junior_geometry_transcription_v02_20260624/teacher_visual_question_transcription_v0.1.json",
+      "question_id": "tq_009",
+      "tag": "junior_geometry"
+    },
+    {
+      "sample_id": "junior_tq_021",
+      "source_transcription_json": "outputs/ingress_splitter_v0.1/codex_profile_junior_geometry_transcription_v02_20260624/teacher_visual_question_transcription_v0.1.json",
+      "question_id": "tq_021",
+      "tag": "junior_geometry"
+    },
+    {
+      "sample_id": "junior_tq_030",
+      "source_transcription_json": "outputs/ingress_splitter_v0.1/codex_profile_junior_geometry_transcription_v02_20260624/teacher_visual_question_transcription_v0.1.json",
+      "question_id": "tq_030",
+      "tag": "junior_geometry"
+    }
+  ]
+}

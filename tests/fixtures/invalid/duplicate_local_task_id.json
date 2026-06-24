@@ -1,0 +1,45 @@
+{
+  "bundle_id": "invalid_duplicate_bundle",
+  "lesson_id": "invalid_duplicate_lesson",
+  "title": "非法重复题号样本",
+  "subject": "数学",
+  "stage": "junior",
+  "grade": "g7",
+  "season": "summer",
+  "source_tree": [
+    {
+      "source_node_local_id": "root",
+      "node_type": "lesson",
+      "phase": "knowledge_main",
+      "title": "重复题号"
+    }
+  ],
+  "tasks": [
+    {
+      "local_task_id": "DUP-001",
+      "source_node_local_id": "root",
+      "question_type": "single_choice",
+      "stem": "第一题",
+      "answer": "A",
+      "explanation": "示例",
+      "difficulty_level": "1",
+      "checkpoint_codes": ["重复校验"],
+      "source_refs_json": {
+        "page_no": 1
+      }
+    },
+    {
+      "local_task_id": "DUP-001",
+      "source_node_local_id": "root",
+      "question_type": "single_choice",
+      "stem": "第二题",
+      "answer": "B",
+      "explanation": "示例",
+      "difficulty_level": "1",
+      "checkpoint_codes": ["重复校验"],
+      "source_refs_json": {
+        "page_no": 1
+      }
+    }
+  ]
+}

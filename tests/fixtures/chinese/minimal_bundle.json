@@ -1,0 +1,65 @@
+{
+  "bundle_id": "chinese_validation_bundle",
+  "lesson_id": "chinese_validation_lesson",
+  "title": "八年级语文 阅读验证样本",
+  "subject": "语文",
+  "stage": "junior",
+  "grade": "g8",
+  "season": "autumn",
+  "source_tree": [
+    {
+      "source_node_local_id": "root",
+      "node_type": "lesson",
+      "phase": "reading_main",
+      "title": "现代文阅读"
+    }
+  ],
+  "tasks": [
+    {
+      "local_task_id": "C-001",
+      "source_node_local_id": "root",
+      "question_type": "short_answer",
+      "stem": "请概括文章中“我”心情变化的两个阶段。",
+      "answer": "先紧张，后释然。",
+      "explanation": "结合首尾情绪描写可判断前后情绪变化。",
+      "difficulty_level": "3",
+      "difficulty_scheme": "teacher_v1",
+      "difficulty_source": "manual_seed",
+      "difficulty_confidence": 0.92,
+      "checkpoint_codes": ["现代文阅读概括"],
+      "subject_tags": ["阅读"],
+      "source_refs_json": {
+        "page_no": 2,
+        "bbox": {
+          "x": 20,
+          "y": 40,
+          "width": 220,
+          "height": 90
+        }
+      }
+    },
+    {
+      "local_task_id": "C-002",
+      "source_node_local_id": "root",
+      "question_type": "analysis",
+      "stem": "“风停了，树却还在轻轻发抖”一句有何表达效果？",
+      "answer": "运用拟人，突出人物余悸未消。",
+      "explanation": "景物描写映衬人物心理，形成情景交融。",
+      "difficulty_level": "4",
+      "difficulty_scheme": "teacher_v1",
+      "difficulty_source": "manual_seed",
+      "difficulty_confidence": 0.88,
+      "checkpoint_codes": ["句子赏析"],
+      "subject_tags": ["阅读", "表达效果"],
+      "source_refs_json": {
+        "page_no": 2,
+        "bbox": {
+          "x": 20,
+          "y": 150,
+          "width": 220,
+          "height": 90
+        }
+      }
+    }
+  ]
+}

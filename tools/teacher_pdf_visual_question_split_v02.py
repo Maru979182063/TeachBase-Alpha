@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import zipfile
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -28,6 +29,53 @@ from PIL import Image, ImageDraw, ImageFont
 SCALE = float(os.environ.get("PDF_RENDER_SCALE", "1.6"))
 QUESTION_KINDS = {"example", "practice", "advanced", "after_class"}
 QUESTION_START = re.compile(r"^\s*(\d{1,2})\s*[．.、]\s*")
+PROFILE_AUTO = "auto"
+PROFILE_ENGLISH = "english_reading_teacher"
+PROFILE_SENIOR_MATH = "senior_math_teacher"
+PROFILE_JUNIOR_GEOMETRY = "junior_geometry_teacher"
+VALID_PROFILES = {
+    PROFILE_AUTO,
+    PROFILE_ENGLISH,
+    PROFILE_SENIOR_MATH,
+    PROFILE_JUNIOR_GEOMETRY,
+}
+ENGLISH_COMPONENT_MAP = {
+    "课程目标": ("course_goal", "课程目标"),
+    "知识梳理": ("knowledge", "知识梳理"),
+    "阅读解题思路": ("knowledge", "阅读解题思路"),
+    "例题讲解": ("example", "例题讲解"),
+    "强化训练": ("practice", "强化训练"),
+    "能力进阶": ("advanced", "能力进阶"),
+    "课后落实": ("after_class", "课后落实"),
+}
+NON_QUESTION_HINTS = (
+    "知识梳理",
+    "知识导入",
+    "知识导航",
+    "要点回顾",
+    "阅读解题思路",
+    "课程目标",
+)
+PDF_SYMBOL_MAP = {
+    "\uF044": "△",
+    "\uF051": "∵",
+    "\uF05C": "∴",
+    "\uF040": "≌",
+    "\uF0D0": "∠",
+    "\uF03C": "<",
+    "\uF03D": "=",
+    "\uF03E": ">",
+    "\uF02B": "+",
+    "\uF02D": "-",
+    "\uF070": "π",
+    "\uF0B4": "×",
+}
+CHOICE_ANSWER_RE = re.compile(r"^[A-D]$")
+SHORT_MATH_TOKEN_RE = re.compile(r"^[A-D0-9π√/\-+=<>]+$")
+PURE_DIAGRAM_LABEL_RE = re.compile(r"^[A-Z](?:\s+[A-Z]){0,5}$")
+GENERIC_NEXT_QUESTION_RE = re.compile(
+    r"^\s*(?:\d{1,2}\s*[．.、]|【例\s*\d+】|【变式\s*[\d-]+】|课后练习\s*\d+)"
+)
 
 
 @dataclass
@@ -85,7 +133,7 @@ class QuestionSlice:
     checkpoint: str
     component_kind: str
     component_label: str
-    local_number: int
+    local_number: str
     visual_pages: list[int]
     fragments: list[dict]
     text_preview: str
@@ -95,6 +143,17 @@ class QuestionSlice:
     text_preview_pdf: str = ""
     text_preview_ocr: str = ""
     text_preview_source: str = "pdf_text_layer"
+    stem_text: str = ""
+    stem_image_path: str = ""
+    answer_text: str = ""
+    analysis_text: str = ""
+    analysis_image_path: str = ""
+    transcription_text: str = ""
+    transcription_pdf: str = ""
+    transcription_ocr: str = ""
+    transcription_source: str = ""
+    transcription_confidence: str = "missing"
+    transcription_note: str = ""
 
 
 def load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -122,10 +181,25 @@ SUMMARY_STOP_TOKENS = (
     "\u89e3\u7b54",
     "\u70b9\u8bc4",
 )
+SECTION_LABEL_PATTERNS = {
+    "answer": [
+        re.compile(r"(^|\n)\s*[【\[]?\s*答案\s*[】\]]?\s*[:：]?", re.MULTILINE),
+    ],
+    "analysis": [
+        re.compile(r"(^|\n)\s*[【\[]?\s*解析\s*[】\]]?\s*[:：]?", re.MULTILINE),
+        re.compile(r"(^|\n)\s*[【\[]?\s*解答\s*[】\]]?\s*[:：]?", re.MULTILINE),
+        re.compile(r"(^|\n)\s*[【\[]?\s*点评\s*[】\]]?\s*[:：]?", re.MULTILINE),
+    ],
+}
 
 
 def normalize_preview_text(text: str) -> str:
-    return re.sub(r"\s+", " ", str(text or "")).strip()
+    clean = str(text or "")
+    for src, dst in PDF_SYMBOL_MAP.items():
+        clean = clean.replace(src, dst)
+    clean = clean.replace("•", "·")
+    clean = re.sub(r"\s+", " ", clean)
+    return clean.strip()
 
 
 def looks_noisy_preview(text: str) -> bool:
@@ -196,11 +270,46 @@ def trim_summary_head(text: str) -> str:
     return clean
 
 
+def resolve_profile(pdf_path: str, lines_by_page: dict[int, list[Line]]) -> str:
+    forced = os.environ.get("TEACHER_SPLIT_PROFILE", PROFILE_AUTO).strip() or PROFILE_AUTO
+    if forced not in VALID_PROFILES:
+        raise ValueError(f"Unsupported TEACHER_SPLIT_PROFILE: {forced}")
+    if forced != PROFILE_AUTO:
+        return forced
+
+    source_text = pdf_path.replace("\\", "/")
+    first_pages = []
+    for page in sorted(lines_by_page)[:8]:
+        first_pages.extend(line.text for line in lines_by_page.get(page, [])[:120])
+    joined = " ".join(first_pages)
+
+    if (
+        "阅读理解" in source_text
+        or "记叙文" in source_text
+        or ("阅读解题思路" in joined and len(re.findall(r"[A-Za-z]", joined)) > 120)
+    ):
+        return PROFILE_ENGLISH
+    if (
+        "初中数学" in source_text
+        or any(tag in source_text for tag in ("初一", "初二", "初三"))
+        or "【例" in joined
+        or "【变式" in joined
+        or "课后练习" in joined
+    ):
+        return PROFILE_JUNIOR_GEOMETRY
+    if "高中数学" in source_text or any(tag in source_text for tag in ("高一", "高二", "高三")):
+        return PROFILE_SENIOR_MATH
+    return PROFILE_SENIOR_MATH
+
+
 def render_pdf(pdf_path: str, pages_dir: Path) -> list[Path]:
     pages_dir.mkdir(parents=True, exist_ok=True)
     doc = fitz.open(pdf_path)
     paths: list[Path] = []
+    max_pages = int(os.environ.get("TEACHER_SPLIT_MAX_PAGES", "0") or 0)
     for idx, page in enumerate(doc, start=1):
+        if max_pages and idx > max_pages:
+            break
         out = pages_dir / f"page_{idx:03d}.png"
         pix = page.get_pixmap(matrix=fitz.Matrix(SCALE, SCALE), alpha=False)
         pix.save(str(out))
@@ -208,10 +317,14 @@ def render_pdf(pdf_path: str, pages_dir: Path) -> list[Path]:
     return paths
 
 
+# 文本抽取阶段：优先使用 PDF 内嵌文本，不足时再回退到 OCR。
 def extract_lines(pdf_path: str) -> dict[int, list[Line]]:
     doc = fitz.open(pdf_path)
     by_page: dict[int, list[Line]] = {}
+    max_pages = int(os.environ.get("TEACHER_SPLIT_MAX_PAGES", "0") or 0)
     for pi, page in enumerate(doc, start=1):
+        if max_pages and pi > max_pages:
+            break
         lines: list[Line] = []
         for block in page.get_text("dict")["blocks"]:
             if block.get("type") != 0:
@@ -225,6 +338,67 @@ def extract_lines(pdf_path: str) -> dict[int, list[Line]]:
                 lines.append(Line(pi, x0 * SCALE, y0 * SCALE, x1 * SCALE, y1 * SCALE, text))
         by_page[pi] = sorted(lines, key=lambda line: (line.y0, line.x0))
     return by_page
+
+
+def merge_ocr_lines(lines: list[Line], row_gap: float = 14.0, x_gap: float = 28.0) -> list[Line]:
+    merged: list[Line] = []
+    for line in sorted(lines, key=lambda item: (item.y0, item.x0)):
+        if not merged:
+            merged.append(line)
+            continue
+        prev = merged[-1]
+        same_row = abs(line.y0 - prev.y0) <= row_gap and line.x0 <= prev.x1 + x_gap
+        if same_row and line.page == prev.page:
+            spacer = "" if re.match(r"^[,.;:)\]]", line.text) else " "
+            prev.text = f"{prev.text}{spacer}{line.text}".strip()
+            prev.x1 = max(prev.x1, line.x1)
+            prev.y1 = max(prev.y1, line.y1)
+        else:
+            merged.append(line)
+    return merged
+
+
+# OCR 回退阶段：把渲染后的页面图像转成 Line 对象，并用置信度过滤。
+def extract_lines_from_ocr(page_paths: list[Path], score_threshold: float = 0.45) -> dict[int, list[Line]]:
+    engine = get_ocr_engine()
+    if engine is None:
+        return {}
+
+    by_page: dict[int, list[Line]] = {}
+    for page_no, path in enumerate(page_paths, start=1):
+        img = Image.open(path).convert("RGB")
+        try:
+            result, _ = engine(img)
+        except Exception:
+            result = []
+        lines: list[Line] = []
+        for item in result or []:
+            if len(item) < 3:
+                continue
+            box, text, score = item
+            if score < score_threshold:
+                continue
+            clean = normalize_preview_text(text)
+            if not clean:
+                continue
+            xs = [pt[0] for pt in box]
+            ys = [pt[1] for pt in box]
+            lines.append(Line(page_no, min(xs), min(ys), max(xs), max(ys), clean))
+        by_page[page_no] = merge_ocr_lines(lines)
+    return by_page
+
+
+def total_line_count(lines_by_page: dict[int, list[Line]]) -> int:
+    return sum(len(lines) for lines in lines_by_page.values())
+
+
+def preview_ocr_enabled(profile: str) -> bool:
+    forced = (os.environ.get("TEACHER_SPLIT_ENABLE_PREVIEW_OCR", "") or "").strip().lower()
+    if forced in {"1", "true", "yes"}:
+        return True
+    if forced in {"0", "false", "no"}:
+        return False
+    return profile != PROFILE_ENGLISH
 
 
 def blue_components(image: Image.Image) -> list[tuple[int, int, int, int, int]]:
@@ -292,11 +466,13 @@ def page_content_bounds(path: Path) -> tuple[int, int] | None:
     return max(80, int(ys.min()) + 115), min(img.height - 70, int(ys.max()) + 145)
 
 
-def checkpoint_anchors(lines_by_page: dict[int, list[Line]]) -> list[Anchor]:
+def checkpoint_anchors(lines_by_page: dict[int, list[Line]], profile: str) -> list[Anchor]:
     anchors: list[Anchor] = []
+    if profile == PROFILE_ENGLISH:
+        return anchors
     for page, lines in lines_by_page.items():
         for line in lines:
-            if line.text.startswith("考点"):
+            if re.match(r"^考点\d+", line.text):
                 anchors.append(
                     Anchor(
                         page=page,
@@ -312,6 +488,74 @@ def checkpoint_anchors(lines_by_page: dict[int, list[Line]]) -> list[Anchor]:
                     )
                 )
     return anchors
+
+
+def text_component_anchors(lines_by_page: dict[int, list[Line]], profile: str) -> list[Anchor]:
+    anchors: list[Anchor] = []
+    for page, lines in lines_by_page.items():
+        for line in lines:
+            text = normalize_preview_text(line.text)
+            if not text:
+                continue
+            kind = ""
+            label = ""
+            note = ""
+
+            if profile == PROFILE_ENGLISH:
+                for title, (mapped_kind, mapped_label) in ENGLISH_COMPONENT_MAP.items():
+                    if title in text:
+                        kind = mapped_kind
+                        label = mapped_label
+                        note = f"英语组件文本锚点：{text}"
+                        break
+            elif profile == PROFILE_JUNIOR_GEOMETRY:
+                if text.startswith("【例"):
+                    kind, label = "example", "例题讲解"
+                    note = f"初中几何例题文本锚点：{text}"
+                elif text.startswith("【变式"):
+                    kind, label = "practice", "强化训练"
+                    note = f"初中几何变式文本锚点：{text}"
+                elif text.startswith("课后练习"):
+                    kind, label = "after_class", "课后落实"
+                    note = f"初中几何课后练习文本锚点：{text}"
+                elif "能力进阶" in text or text.startswith("【进阶"):
+                    kind, label = "advanced", "能力进阶"
+                    note = f"初中几何进阶文本锚点：{text}"
+
+            if not kind:
+                continue
+            anchors.append(
+                Anchor(
+                    page=page,
+                    kind=kind,
+                    label=label,
+                    y=max(0, int(line.y0) - 10),
+                    x0=max(0, int(line.x0) - 10),
+                    y0=max(0, int(line.y0) - 10),
+                    x1=int(line.x1) + 10,
+                    y1=int(line.y1) + 16,
+                    source="text_component_visual_row_anchor",
+                    note=note,
+                )
+            )
+    return anchors
+
+
+def dedupe_anchors(anchors: list[Anchor]) -> list[Anchor]:
+    deduped: list[Anchor] = []
+    for anchor in sorted(anchors, key=lambda a: (a.page, a.y, a.x0)):
+        duplicate = False
+        for existing in reversed(deduped):
+            if existing.page != anchor.page:
+                break
+            if existing.kind != anchor.kind:
+                continue
+            if abs(existing.y - anchor.y) <= 18 and abs(existing.x0 - anchor.x0) <= 120:
+                duplicate = True
+                break
+        if not duplicate:
+            deduped.append(anchor)
+    return deduped
 
 
 def blue_anchors(page_paths: list[Path], checkpoint_pages: set[int]) -> list[Anchor]:
@@ -362,13 +606,14 @@ def blue_anchors(page_paths: list[Path], checkpoint_pages: set[int]) -> list[Anc
     return anchors
 
 
-def detect_anchors(page_paths: list[Path], lines_by_page: dict[int, list[Line]]) -> list[Anchor]:
-    checkpoints = checkpoint_anchors(lines_by_page)
-    anchors = blue_anchors(page_paths, {a.page for a in checkpoints}) + checkpoints
-    anchors.sort(key=lambda a: (a.page, a.y, a.x0))
-    return anchors
+# 锚点检测阶段：合并文本检查点、组件标签和视觉蓝色标记。
+def detect_anchors(page_paths: list[Path], lines_by_page: dict[int, list[Line]], profile: str) -> list[Anchor]:
+    checkpoints = checkpoint_anchors(lines_by_page, profile)
+    anchors = blue_anchors(page_paths, {a.page for a in checkpoints}) + checkpoints + text_component_anchors(lines_by_page, profile)
+    return dedupe_anchors(anchors)
 
 
+# 片段构建阶段：把有序锚点转成可裁剪、可审阅的页面区间。
 def make_segments(page_paths: list[Path], anchors: list[Anchor]) -> list[Segment]:
     usable = [a for a in anchors if a.kind != "header_logo"]
     usable.sort(key=lambda a: (a.page, a.y, a.x0))
@@ -486,12 +731,16 @@ def base_label(label: str) -> str:
     return label.replace("（续）", "")
 
 
-def build_groups(segments: list[Segment]) -> list[ComponentGroup]:
+# 分组阶段：在切题前，把相关片段收拢到稳定组件标签下。
+def build_groups(segments: list[Segment], profile: str) -> list[ComponentGroup]:
     groups: list[ComponentGroup] = []
     current: ComponentGroup | None = None
     counter = 1
     for seg in segments:
         if seg.kind not in QUESTION_KINDS:
+            current = None
+            continue
+        if profile != PROFILE_ENGLISH and not seg.checkpoint and seg.kind != "after_class":
             current = None
             continue
         is_continuation = "（续）" in seg.label
@@ -510,26 +759,88 @@ def build_groups(segments: list[Segment]) -> list[ComponentGroup]:
     return groups
 
 
+def synthesize_checkpoint_fallback_groups(
+    segments: list[Segment],
+    lines_by_page: dict[int, list[Line]],
+    profile: str,
+) -> list[ComponentGroup]:
+    groups: list[ComponentGroup] = []
+    current: ComponentGroup | None = None
+    counter = 1
+    for seg in segments:
+        if seg.kind != "checkpoint":
+            current = None
+            continue
+        if profile != PROFILE_ENGLISH and not seg.checkpoint:
+            current = None
+            continue
+        probe = ComponentGroup(
+            group_id="cg_probe",
+            kind="example",
+            label="题目区回退",
+            checkpoint=seg.checkpoint,
+            segments=[seg],
+        )
+        has_starts = bool(question_start_candidates(probe, lines_by_page, profile))
+        same_checkpoint = current is not None and current.checkpoint == seg.checkpoint
+        if has_starts:
+            if not same_checkpoint:
+                current = ComponentGroup(
+                    group_id=f"cg_fallback_{counter:03d}",
+                    kind="example",
+                    label="题目区回退",
+                    checkpoint=seg.checkpoint,
+                    segments=[],
+                )
+                groups.append(current)
+                counter += 1
+            current.segments.append(seg)
+            continue
+        if same_checkpoint:
+            current.segments.append(seg)
+            continue
+        current = None
+    return groups
+
+
 def line_overlaps(line: Line, seg: Segment) -> bool:
     return line.y1 >= seg.y0 and line.y0 <= seg.y1 and line.x1 >= seg.x0 and line.x0 <= seg.x1
 
 
-def question_start_candidates(group: ComponentGroup, lines_by_page: dict[int, list[Line]]) -> list[dict]:
+def parse_question_start(text: str, profile: str) -> tuple[str, int, str] | None:
+    match = QUESTION_START.match(text)
+    if match:
+        return match.group(1), match.end(), text[match.end():].strip()
+
+    if profile == PROFILE_JUNIOR_GEOMETRY:
+        match = re.match(r"^【例\s*(\d+)】", text)
+        if match:
+            return f"例{match.group(1)}", match.end(), text[match.end():].strip()
+        match = re.match(r"^【变式\s*([\d-]+)】", text)
+        if match:
+            return f"变式{match.group(1)}", match.end(), text[match.end():].strip()
+        match = re.match(r"^课后练习\s*(\d+)", text)
+        if match:
+            return f"课后{match.group(1)}", match.end(), text[match.end():].strip()
+    return None
+
+
+def question_start_candidates(group: ComponentGroup, lines_by_page: dict[int, list[Line]], profile: str) -> list[dict]:
     starts: list[dict] = []
     for seg_idx, seg in enumerate(group.segments):
         for line in lines_by_page.get(seg.page, []):
             if not line_overlaps(line, seg):
                 continue
-            match = QUESTION_START.match(line.text)
-            if not match:
+            parsed = parse_question_start(line.text, profile)
+            if not parsed:
                 continue
-            tail = line.text[match.end():].strip()
+            number, end_pos, tail = parsed
             # A denominator like "12．" or a formula fragment can sit in the
             # same left gutter as a real question number. Keep only starts that
             # visibly continue into a question stem. Some math PDFs split one
             # visual row into many text fragments, so look rightward on the same
             # row before rejecting a short tail such as "4．设".
-            if len(tail) < 4:
+            if number.isdigit() and len(tail) < 4:
                 row_tail = "".join(
                     other.text
                     for other in lines_by_page.get(seg.page, [])
@@ -546,7 +857,7 @@ def question_start_candidates(group: ComponentGroup, lines_by_page: dict[int, li
                     "page": seg.page,
                     "seg_idx": seg_idx,
                     "y": max(seg.y0, int(line.y0) - 12),
-                    "number": int(match.group(1)),
+                    "number": number,
                     "text": line.text,
                 }
             )
@@ -567,8 +878,76 @@ def preview_text(lines_by_page: dict[int, list[Line]], fragment: dict, limit: in
     return " ".join(texts).strip()[:limit]
 
 
-def split_group(group: ComponentGroup, lines_by_page: dict[int, list[Line]], next_q: int) -> tuple[list[QuestionSlice], int]:
-    starts = question_start_candidates(group, lines_by_page)
+def normalize_transcription_block(text: str) -> str:
+    lines: list[str] = []
+    for raw in re.split(r"\n+", str(text or "")):
+        clean = normalize_preview_text(raw)
+        if not clean:
+            continue
+        if lines and clean == lines[-1]:
+            continue
+        lines.append(clean)
+    return "\n".join(lines).strip()
+
+
+def find_section_marker_match(text: str, kind: str):
+    for pattern in SECTION_LABEL_PATTERNS.get(kind, []):
+        match = pattern.search(text or "")
+        if match:
+            return match
+    return None
+
+
+def strip_section_marker(text: str, kind: str) -> str:
+    clean = str(text or "")
+    for pattern in SECTION_LABEL_PATTERNS.get(kind, []):
+        clean = pattern.sub("", clean, count=1)
+    return normalize_transcription_block(clean)
+
+
+def transcription_quality_score(text: str, source: str) -> int:
+    clean = normalize_transcription_block(text)
+    if not clean:
+        return -9
+    score = 0
+    if len(clean) >= 80:
+        score += 2
+    if len(clean) >= 180:
+        score += 1
+    if not looks_noisy_preview(clean):
+        score += 2
+    if find_section_marker_match(clean, "answer"):
+        score += 1
+    if find_section_marker_match(clean, "analysis"):
+        score += 1
+    private_use_count = len(re.findall(r"[\uE000-\uF8FF]", clean))
+    if private_use_count:
+        score -= 2
+    if source == "pdf_text_layer" and private_use_count == 0:
+        score += 2
+    if source == "ocr_full_text" and len(re.findall(r"(?:\b[ZL][A-Z]{2,}\b|≤△|=△)", clean)) >= 1:
+        score -= 2
+    return score
+
+
+def summarize_transcription_text(text: str, limit: int = 220) -> str:
+    summary = trim_summary_head(trim_summary_tail(str(text or "").replace("\n", " ")))
+    return summary[:limit]
+
+
+def should_skip_questionless_group(group: ComponentGroup, preview: str, profile: str) -> bool:
+    clean = normalize_preview_text(preview)
+    joined = " ".join(filter(None, [group.label, group.checkpoint, clean]))
+    if any(token in joined for token in NON_QUESTION_HINTS):
+        return True
+    if profile == PROFILE_JUNIOR_GEOMETRY and group.kind in {"example", "practice"} and "定义" in clean and "【答案】" not in clean:
+        return True
+    return False
+
+
+# 切题阶段：用检测到的题目起点，把一个组件组切成有序题目片段。
+def split_group(group: ComponentGroup, lines_by_page: dict[int, list[Line]], next_q: int, profile: str) -> tuple[list[QuestionSlice], int]:
+    starts = question_start_candidates(group, lines_by_page, profile)
     if not starts:
         fragments = [
             {
@@ -579,6 +958,9 @@ def split_group(group: ComponentGroup, lines_by_page: dict[int, list[Line]], nex
             }
             for seg in group.segments
         ]
+        preview = preview_text(lines_by_page, fragments[0]) if fragments else ""
+        if should_skip_questionless_group(group, preview, profile):
+            return [], next_q
         return [
             QuestionSlice(
                 question_id=f"tq_{next_q:03d}",
@@ -586,10 +968,10 @@ def split_group(group: ComponentGroup, lines_by_page: dict[int, list[Line]], nex
                 checkpoint=group.checkpoint,
                 component_kind=group.kind,
                 component_label=group.label,
-                local_number=0,
+                local_number="0",
                 visual_pages=sorted({f["page"] for f in fragments}),
                 fragments=fragments,
-                text_preview=preview_text(lines_by_page, fragments[0]) if fragments else "",
+                text_preview=preview,
                 review_status="NEEDS_MANUAL_REVIEW",
                 review_note="该组件没有清晰题号，保留整块给人工看。",
             )
@@ -635,6 +1017,319 @@ def split_group(group: ComponentGroup, lines_by_page: dict[int, list[Line]], nex
         )
         next_q += 1
     return questions, next_q
+
+
+def build_pdf_canvas_lines(q: QuestionSlice, lines_by_page: dict[int, list[Line]]) -> list[Line]:
+    canvas_lines: list[Line] = []
+    y_offset = 0.0
+    for frag in q.fragments:
+        x0, y0, x1, y1 = [float(v) for v in frag["bbox_image"]]
+        frag_h = max(y1 - y0, 1.0)
+        frag_w = max(x1 - x0, 1.0)
+        for line in lines_by_page.get(frag["page"], []):
+            if line.y1 < y0 or line.y0 > y1 or line.x1 < x0 or line.x0 > x1:
+                continue
+            clean = normalize_preview_text(line.text)
+            if not clean:
+                continue
+            local_x0 = max(0.0, line.x0 - x0)
+            local_y0 = y_offset + max(0.0, line.y0 - y0)
+            local_x1 = min(frag_w, line.x1 - x0)
+            local_y1 = y_offset + min(frag_h, line.y1 - y0)
+            if local_x1 <= local_x0 or local_y1 <= local_y0:
+                continue
+            canvas_lines.append(Line(1, local_x0, local_y0, local_x1, local_y1, clean))
+        y_offset += frag_h + 12.0
+    return sorted(canvas_lines, key=lambda line: (line.y0, line.x0))
+
+
+def text_from_canvas_lines(lines: list[Line]) -> str:
+    return normalize_transcription_block("\n".join(line.text for line in lines))
+
+
+def is_probably_diagram_label_text(text: str) -> bool:
+    clean = normalize_preview_text(text)
+    if not clean:
+        return True
+    if re.match(r"^[A-D][.．、]\s*\S+", clean):
+        return False
+    return bool(PURE_DIAGRAM_LABEL_RE.fullmatch(clean))
+
+
+def is_probably_page_number_text(text: str, y0: float, max_y: float) -> bool:
+    clean = normalize_preview_text(text)
+    return bool(clean and re.fullmatch(r"\d{1,3}", clean) and y0 >= max_y * 0.78)
+
+
+def trim_cross_question_lines(lines: list[Line], current_local_number: str) -> list[Line]:
+    if not lines:
+        return []
+    current = str(current_local_number or "").strip()
+    trimmed: list[Line] = []
+    for idx, line in enumerate(lines):
+        clean = normalize_preview_text(line.text)
+        embedded_match = re.search(r"(?<!^)\b(\d{1,2})\s*[．.、]\s*", clean)
+        if embedded_match and current and embedded_match.group(1) != current:
+            head = normalize_preview_text(clean[: embedded_match.start()])
+            if head:
+                trimmed.append(Line(line.page, line.x0, line.y0, line.x1, line.y1, head))
+            break
+        if idx > 0 and GENERIC_NEXT_QUESTION_RE.match(clean):
+            next_number = ""
+            numeric_match = QUESTION_START.match(clean)
+            if numeric_match:
+                next_number = numeric_match.group(1)
+            if next_number and current and next_number != current:
+                break
+            if not next_number and current:
+                break
+        trimmed.append(Line(line.page, line.x0, line.y0, line.x1, line.y1, clean))
+    return trimmed
+
+
+def sanitize_canvas_lines(lines: list[Line], current_local_number: str) -> list[Line]:
+    trimmed = trim_cross_question_lines(lines, current_local_number)
+    if not trimmed:
+        return []
+    max_y = max(line.y1 for line in trimmed)
+    cleaned: list[Line] = []
+    for line in trimmed:
+        clean = normalize_preview_text(line.text)
+        if not clean:
+            continue
+        if is_probably_diagram_label_text(clean):
+            continue
+        if is_probably_page_number_text(clean, line.y0, max_y):
+            continue
+        cleaned.append(Line(line.page, line.x0, line.y0, line.x1, line.y1, clean))
+    return cleaned
+
+
+def ocr_canvas_lines(canvas: Image.Image, score_threshold: float = 0.55) -> list[Line]:
+    engine = get_ocr_engine()
+    if engine is None:
+        return []
+    try:
+        result, _ = engine(canvas)
+    except Exception:
+        return []
+    lines: list[Line] = []
+    for item in result or []:
+        if len(item) < 3:
+            continue
+        box, text, score = item
+        if score < score_threshold:
+            continue
+        clean = normalize_preview_text(text)
+        if not clean:
+            continue
+        xs = [pt[0] for pt in box]
+        ys = [pt[1] for pt in box]
+        lines.append(Line(1, min(xs), min(ys), max(xs), max(ys), clean))
+    return merge_ocr_lines(lines, row_gap=18.0, x_gap=28.0)
+
+
+def pick_transcription_source(pdf_text: str, ocr_text: str) -> str:
+    pdf_score = transcription_quality_score(pdf_text, "pdf_text_layer")
+    ocr_score = transcription_quality_score(ocr_text, "ocr_full_text")
+    if pdf_score < 0 and ocr_score < 0:
+        return ""
+    if pdf_score >= 0 and ocr_score <= pdf_score + 3:
+        return "pdf_text_layer"
+    if ocr_score > pdf_score + 3:
+        return "ocr_full_text"
+    return "pdf_text_layer"
+
+
+def split_transcription_sections(lines: list[Line]) -> tuple[str, str, str, int | None, int | None]:
+    if not lines:
+        return "", "", "", None, None
+    answer_idx: int | None = None
+    analysis_idx: int | None = None
+    for idx, line in enumerate(lines):
+        if answer_idx is None and find_section_marker_match(line.text, "answer"):
+            answer_idx = idx
+        if analysis_idx is None and find_section_marker_match(line.text, "analysis"):
+            analysis_idx = idx
+
+    cut_idx = min([idx for idx in (answer_idx, analysis_idx) if idx is not None], default=len(lines))
+    stem_text = normalize_transcription_block("\n".join(line.text for line in lines[:cut_idx]))
+
+    answer_lines: list[Line] = []
+    if answer_idx is not None:
+        answer_end = analysis_idx if analysis_idx is not None and analysis_idx > answer_idx else len(lines)
+        answer_lines = lines[answer_idx:answer_end]
+
+    analysis_lines: list[Line] = []
+    if analysis_idx is not None:
+        analysis_lines = lines[analysis_idx:]
+
+    answer_text = strip_section_marker("\n".join(line.text for line in answer_lines), "answer") if answer_lines else ""
+    analysis_raw = "\n".join(line.text for line in analysis_lines)
+    analysis_text = analysis_raw
+    if analysis_text:
+        analysis_text = strip_section_marker(analysis_text, "analysis")
+    return stem_text, answer_text, analysis_text, answer_idx, analysis_idx
+
+
+def split_transcription_text_by_markers(text: str) -> tuple[str, str, str]:
+    clean = normalize_transcription_block(text)
+    if not clean:
+        return "", "", ""
+    answer_match = find_section_marker_match(clean, "answer")
+    analysis_match = find_section_marker_match(clean, "analysis")
+    cut_points = [match.start() for match in (answer_match, analysis_match) if match]
+    stem_text = normalize_transcription_block(clean[: min(cut_points)] if cut_points else clean)
+    answer_text = ""
+    analysis_text = ""
+    if answer_match:
+        answer_end = analysis_match.start() if analysis_match and analysis_match.start() > answer_match.start() else len(clean)
+        answer_text = strip_section_marker(clean[answer_match.start():answer_end], "answer")
+    if analysis_match:
+        analysis_text = strip_section_marker(clean[analysis_match.start():], "analysis")
+    return stem_text, answer_text, analysis_text
+
+
+def infer_answer_text(answer_text: str, analysis_text: str, transcription_text: str) -> str:
+    clean_answer = normalize_transcription_block(answer_text)
+    if clean_answer:
+        return clean_answer
+    joined = normalize_transcription_block("\n".join(part for part in [analysis_text, transcription_text] if part))
+    stacked_match = re.search(
+        r"(?:答案|故答案为|答案为|答案[:：])\s*([0-9A-Za-zπ√]+)\s+([0-9A-Za-zπ√]+)",
+        joined,
+    )
+    if stacked_match:
+        return f"{normalize_preview_text(stacked_match.group(1))}/{normalize_preview_text(stacked_match.group(2))}"
+    patterns = [
+        re.compile(r"(?:故选|故答案为|答案为|答案[:：])\s*([A-D])"),
+        re.compile(r"(?:故选|故答案为|答案为|答案[:：])\s*([0-9π√/\-+]+)"),
+    ]
+    for pattern in patterns:
+        match = pattern.search(joined)
+        if match:
+            return normalize_preview_text(match.group(1))
+    return ""
+
+
+def repair_short_answer_text(answer_text: str) -> str:
+    clean = normalize_transcription_block(answer_text)
+    if not clean:
+        return ""
+    parts = [normalize_preview_text(part).rstrip("．。. ") for part in clean.splitlines() if normalize_preview_text(part)]
+    if len(parts) == 2 and all(SHORT_MATH_TOKEN_RE.fullmatch(part) for part in parts):
+        return f"{parts[0]}/{parts[1]}"
+    if len(parts) == 1:
+        return parts[0]
+    return clean
+
+
+def choose_answer_text(primary: str, secondary: str, analysis_text: str, transcription_text: str) -> str:
+    primary_clean = repair_short_answer_text(primary)
+    secondary_clean = repair_short_answer_text(secondary)
+    for candidate in (primary_clean, secondary_clean):
+        if CHOICE_ANSWER_RE.fullmatch(candidate):
+            return candidate
+    for candidate in (primary_clean, secondary_clean):
+        if candidate and len(candidate) <= 24:
+            return candidate
+    inferred = infer_answer_text(primary_clean, analysis_text, transcription_text)
+    return repair_short_answer_text(inferred)
+
+
+def save_vertical_slice(image: Image.Image, y0: int, y1: int, out_path: Path) -> str:
+    top = max(0, min(image.height, int(y0)))
+    bottom = max(top, min(image.height, int(y1)))
+    if bottom - top < 40:
+        return ""
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    image.crop((0, top, image.width, bottom)).save(out_path)
+    return str(out_path)
+
+
+def fill_transcription_fields(
+    q: QuestionSlice,
+    lines_by_page: dict[int, list[Line]],
+    page_images: dict[int, Image.Image],
+    stem_dir: Path,
+    analysis_dir: Path,
+) -> None:
+    canvas = build_question_canvas(q, page_images, with_labels=False)
+    if canvas is None:
+        q.transcription_note = "missing_question_canvas"
+        return
+
+    pdf_lines = sanitize_canvas_lines(build_pdf_canvas_lines(q, lines_by_page), q.local_number)
+    pdf_text = text_from_canvas_lines(pdf_lines)
+    q.transcription_pdf = pdf_text
+
+    ocr_lines = sanitize_canvas_lines(ocr_canvas_lines(canvas), q.local_number)
+    ocr_text = text_from_canvas_lines(ocr_lines)
+    q.transcription_ocr = ocr_text
+
+    source = pick_transcription_source(pdf_text, ocr_text)
+    q.transcription_source = source or "missing"
+    chosen_lines = pdf_lines if source == "pdf_text_layer" else ocr_lines
+    q.transcription_text = text_from_canvas_lines(chosen_lines)
+
+    stem_text, answer_text, analysis_text, answer_idx, analysis_idx = split_transcription_sections(chosen_lines)
+    alt_lines = ocr_lines if source == "pdf_text_layer" else pdf_lines
+    alt_stem, alt_answer, alt_analysis, _alt_answer_idx, _alt_analysis_idx = split_transcription_sections(alt_lines)
+    if not answer_text or not analysis_text:
+        fallback_stem, fallback_answer, fallback_analysis = split_transcription_text_by_markers(q.transcription_text)
+        if fallback_stem and len(fallback_stem) >= len(stem_text):
+            stem_text = fallback_stem
+        if fallback_answer and not answer_text:
+            answer_text = fallback_answer
+        if fallback_analysis and not analysis_text:
+            analysis_text = fallback_analysis
+    if not stem_text and alt_stem:
+        stem_text = alt_stem
+    if not analysis_text and alt_analysis:
+        analysis_text = alt_analysis
+    answer_text = choose_answer_text(
+        answer_text,
+        alt_answer,
+        "\n".join(part for part in [analysis_text, alt_analysis] if part),
+        "\n".join(part for part in [q.transcription_text, pdf_text, ocr_text, analysis_text, alt_analysis] if part),
+    )
+    q.stem_text = stem_text
+    q.answer_text = answer_text
+    q.analysis_text = analysis_text
+
+    confidence = "low"
+    if q.transcription_text:
+        confidence = "medium"
+        if source == "pdf_text_layer" and not looks_noisy_preview(q.transcription_text):
+            confidence = "high"
+        if q.review_status == "NEEDS_MANUAL_REVIEW":
+            confidence = "low"
+    q.transcription_confidence = confidence if q.transcription_text else "missing"
+
+    q.stem_image_path = save_vertical_slice(
+        canvas,
+        0,
+        int(chosen_lines[answer_idx].y0) if answer_idx is not None and answer_idx < len(chosen_lines) else canvas.height,
+        stem_dir / f"{q.question_id}_stem.png",
+    )
+    if analysis_idx is not None and analysis_idx < len(chosen_lines):
+        q.analysis_image_path = save_vertical_slice(
+            canvas,
+            int(chosen_lines[analysis_idx].y0),
+            canvas.height,
+            analysis_dir / f"{q.question_id}_analysis.png",
+        )
+    else:
+        q.analysis_image_path = ""
+
+    note_bits: list[str] = []
+    if source == "ocr_full_text":
+        note_bits.append("formula_transcription_relies_on_ocr")
+    if not q.answer_text:
+        note_bits.append("answer_marker_missing")
+    if not q.analysis_text:
+        note_bits.append("analysis_marker_missing")
+    q.transcription_note = ",".join(note_bits)
 
 
 def build_question_canvas(q: QuestionSlice, page_images: dict[int, Image.Image], with_labels: bool = True) -> Image.Image | None:
@@ -734,8 +1429,11 @@ def question_contact_sheet(questions: list[QuestionSlice], out_path: Path) -> No
     sheet.save(out_path, quality=92)
 
 
-def write_outputs(pdf_path: str, anchors: list[Anchor], segments: list[Segment], questions: list[QuestionSlice], out_dir: Path) -> None:
+# 输出阶段：写出机器可读清单，并生成供人工 QA 的联系表。
+def write_outputs(profile: str, line_source: str, pdf_path: str, anchors: list[Anchor], segments: list[Segment], questions: list[QuestionSlice], out_dir: Path) -> None:
     data = {
+        "profile": profile,
+        "line_source": line_source,
         "source_pdf": pdf_path,
         "principle": "visual-first: blue component anchors and rendered page layout define components; question numbers only assist starts inside those visual components",
         "anchor_count": len(anchors),
@@ -750,21 +1448,116 @@ def write_outputs(pdf_path: str, anchors: list[Anchor], segments: list[Segment],
     wb = Workbook()
     ws = wb.active
     ws.title = "题目切片"
-    headers = ["题目ID", "考点", "父组件", "组件类型", "题号", "页码", "状态", "题干预览", "切片路径"]
+    headers = ["题目ID", "考点", "父组件", "组件类型", "题号", "页码", "状态", "题干预览", "转录来源", "转录置信度", "切片路径"]
     ws.append(headers)
     for cell in ws[1]:
         cell.fill = PatternFill("solid", fgColor="1F4E78")
         cell.font = Font(color="FFFFFF", bold=True)
         cell.alignment = Alignment(horizontal="center", vertical="center")
     for q in questions:
-        ws.append([q.question_id, q.checkpoint, q.component_label, q.component_kind, q.local_number, ",".join(map(str, q.visual_pages)), q.review_status, q.text_preview, q.crop_path])
-    for idx, width in enumerate([12, 30, 14, 14, 8, 10, 22, 78, 90], start=1):
+        ws.append([
+            q.question_id,
+            q.checkpoint,
+            q.component_label,
+            q.component_kind,
+            q.local_number,
+            ",".join(map(str, q.visual_pages)),
+            q.review_status,
+            q.text_preview,
+            q.transcription_source,
+            q.transcription_confidence,
+            q.crop_path,
+        ])
+    for idx, width in enumerate([12, 30, 14, 14, 8, 10, 22, 64, 18, 14, 90], start=1):
         ws.column_dimensions[chr(64 + idx)].width = width
     for row in ws.iter_rows(min_row=2):
         for cell in row:
             cell.alignment = Alignment(vertical="top", wrap_text=True)
     ws.freeze_panes = "A2"
     wb.save(out_dir / "teacher_visual_question_split_v0.2.xlsx")
+
+    transcription_source_counts = Counter(q.transcription_source or "missing" for q in questions)
+    transcription_confidence_counts = Counter(q.transcription_confidence or "missing" for q in questions)
+    transcription_data = {
+        "source_pdf": pdf_path,
+        "profile": profile,
+        "line_source": line_source,
+        "question_count": len(questions),
+        "transcription_source_counts": dict(transcription_source_counts),
+        "transcription_confidence_counts": dict(transcription_confidence_counts),
+        "questions": [
+            {
+                "question_id": q.question_id,
+                "checkpoint": q.checkpoint,
+                "component_label": q.component_label,
+                "local_number": q.local_number,
+                "visual_pages": q.visual_pages,
+                "question_image": q.crop_path,
+                "stem_image": q.stem_image_path,
+                "analysis_image": q.analysis_image_path,
+                "stem_text": q.stem_text,
+                "answer_text": q.answer_text,
+                "analysis_text": q.analysis_text,
+                "transcription_text": q.transcription_text,
+                "transcription_pdf": q.transcription_pdf,
+                "transcription_ocr": q.transcription_ocr,
+                "transcription_source": q.transcription_source,
+                "transcription_confidence": q.transcription_confidence,
+                "transcription_note": q.transcription_note,
+            }
+            for q in questions
+        ],
+    }
+    (out_dir / "teacher_visual_question_transcription_v0.1.json").write_text(
+        json.dumps(transcription_data, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    twb = Workbook()
+    tws = twb.active
+    tws.title = "question_transcription"
+    tws.append([
+        "question_id",
+        "checkpoint",
+        "component_label",
+        "local_number",
+        "visual_pages",
+        "transcription_source",
+        "transcription_confidence",
+        "stem_text",
+        "answer_text",
+        "analysis_text",
+        "question_image",
+        "stem_image",
+        "analysis_image",
+    ])
+    for cell in tws[1]:
+        cell.fill = PatternFill("solid", fgColor="3B6EA5")
+        cell.font = Font(color="FFFFFF", bold=True)
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+    for q in questions:
+        tws.append([
+            q.question_id,
+            q.checkpoint,
+            q.component_label,
+            q.local_number,
+            ",".join(map(str, q.visual_pages)),
+            q.transcription_source,
+            q.transcription_confidence,
+            q.stem_text,
+            q.answer_text,
+            q.analysis_text,
+            q.crop_path,
+            q.stem_image_path,
+            q.analysis_image_path,
+        ])
+    for idx, width in enumerate([12, 28, 16, 10, 12, 18, 14, 70, 28, 72, 90, 90, 90], start=1):
+        tws.column_dimensions[chr(64 + idx)].width = width
+    for row in tws.iter_rows(min_row=2):
+        for cell in row:
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+    tws.freeze_panes = "A2"
+    twb.save(out_dir / "teacher_visual_question_transcription_v0.1.xlsx")
 
     counts: dict[str, int] = {}
     for q in questions:
@@ -773,10 +1566,18 @@ def write_outputs(pdf_path: str, anchors: list[Anchor], segments: list[Segment],
 
     md = ["# 教师版 PDF 视觉切题 v0.2\n\n"]
     md.append(f"源文件：`{pdf_path}`\n\n")
+    md.append(f"- profile：`{profile}`\n")
+    md.append(f"- line_source：`{line_source}`\n\n")
     md.append("## 结果概览\n\n")
     md.append(f"- 视觉锚点：{len(anchors)}\n")
     md.append(f"- 组件片段：{len(segments)}\n")
     md.append(f"- 题目切片：{len(questions)}\n\n")
+    md.append("## 转录概览\n\n")
+    for key, value in sorted(transcription_source_counts.items()):
+        md.append(f"- transcription_source `{key}`: {value}\n")
+    for key, value in sorted(transcription_confidence_counts.items()):
+        md.append(f"- transcription_confidence `{key}`: {value}\n")
+    md.append("\n")
     md.append("## 挂件统计\n\n")
     md.append("| 考点 / 组件 | 题目数 |\n|---|---:|\n")
     for key, value in counts.items():
@@ -803,42 +1604,64 @@ def main() -> None:
     pages_dir = out_dir / "pages"
     segment_dir = out_dir / "component_crops"
     question_dir = out_dir / "question_crops"
+    stem_dir = out_dir / "stem_images"
+    analysis_dir = out_dir / "analysis_images"
     annotated_dir = out_dir / "annotated_pages"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     page_paths = render_pdf(pdf_path, pages_dir)
     lines_by_page = extract_lines(pdf_path)
-    anchors = detect_anchors(page_paths, lines_by_page)
+    profile = resolve_profile(pdf_path, lines_by_page)
+    line_source = "pdf_text_layer"
+    if profile == PROFILE_ENGLISH and total_line_count(lines_by_page) < 20:
+        ocr_lines_by_page = extract_lines_from_ocr(page_paths)
+        if total_line_count(ocr_lines_by_page) > max(20, total_line_count(lines_by_page) * 2):
+            lines_by_page = ocr_lines_by_page
+            line_source = "ocr_page_lines_fallback"
+    anchors = detect_anchors(page_paths, lines_by_page, profile)
     segments = make_segments(page_paths, anchors)
     crop_segments(page_paths, segments, segment_dir)
     annotated_paths = annotate_pages(page_paths, segments, annotated_dir)
     contact_sheet(annotated_paths, out_dir / "component_annotated_contact_sheet.jpg")
 
-    groups = build_groups(segments)
+    groups = build_groups(segments, profile)
+    if not groups:
+        groups = synthesize_checkpoint_fallback_groups(segments, lines_by_page, profile)
     questions: list[QuestionSlice] = []
     counter = 1
     for group in groups:
-        group_questions, counter = split_group(group, lines_by_page, counter)
+        group_questions, counter = split_group(group, lines_by_page, counter, profile)
         questions.extend(group_questions)
 
     page_images = {i + 1: Image.open(path).convert("RGB") for i, path in enumerate(page_paths)}
     for q in questions:
-        q.text_preview_pdf = q.text_preview
         out = question_dir / f"{q.question_id}_{safe_name(q.checkpoint)}_{safe_name(q.component_label)}_Q{q.local_number}.png"
         stitch_question(q, page_images, out)
-        if looks_noisy_preview(q.text_preview):
-            ocr_preview = ocr_preview_text(q, page_images)
-            q.text_preview_ocr = ocr_preview
-            if ocr_preview:
-                q.text_preview = ocr_preview
-                q.text_preview_source = "ocr_fallback"
+        fill_transcription_fields(q, lines_by_page, page_images, stem_dir, analysis_dir)
+        q.text_preview_pdf = summarize_transcription_text(q.transcription_pdf or q.text_preview)
+        q.text_preview_ocr = summarize_transcription_text(q.transcription_ocr)
+        if q.transcription_text:
+            q.text_preview = summarize_transcription_text(q.transcription_text)
+            q.text_preview_source = q.transcription_source or "transcription_summary"
+        elif looks_noisy_preview(q.text_preview):
+            enable_preview_ocr = preview_ocr_enabled(profile)
+            if enable_preview_ocr:
+                ocr_preview = ocr_preview_text(q, page_images)
+                q.text_preview_ocr = ocr_preview or q.text_preview_ocr
+                if ocr_preview:
+                    q.text_preview = ocr_preview
+                    q.text_preview_source = "ocr_fallback"
+                else:
+                    q.text_preview_source = "pdf_text_layer_noisy"
             else:
-                q.text_preview_source = "pdf_text_layer_noisy"
+                q.text_preview_source = "pdf_text_layer_noisy_retained"
     question_contact_sheet(questions, out_dir / "question_crops_contact_sheet.jpg")
-    write_outputs(pdf_path, anchors, segments, questions, out_dir)
+    write_outputs(profile, line_source, pdf_path, anchors, segments, questions, out_dir)
     zip_path = out_dir.parent / f"{out_name}_package.zip"
     zip_outputs(out_dir, zip_path)
     print(json.dumps({
+        "profile": profile,
+        "line_source": line_source,
         "out_dir": str(out_dir),
         "zip": str(zip_path),
         "anchors": len(anchors),
@@ -847,8 +1670,10 @@ def main() -> None:
         "component_contact_sheet": str(out_dir / "component_annotated_contact_sheet.jpg"),
         "question_contact_sheet": str(out_dir / "question_crops_contact_sheet.jpg"),
         "xlsx": str(out_dir / "teacher_visual_question_split_v0.2.xlsx"),
+        "transcription_xlsx": str(out_dir / "teacher_visual_question_transcription_v0.1.xlsx"),
         "report": str(out_dir / "teacher_visual_question_split_v0.2.md"),
         "json": str(out_dir / "teacher_visual_question_split_v0.2.json"),
+        "transcription_json": str(out_dir / "teacher_visual_question_transcription_v0.1.json"),
     }, ensure_ascii=False, indent=2))
 
 
