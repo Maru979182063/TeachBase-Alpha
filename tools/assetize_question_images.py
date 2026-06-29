@@ -773,7 +773,7 @@ def write_html(out_path: Path, payload: dict[str, Any]) -> None:
             "<div class='grid'>"
             "<div>"
             "<h3>落库结构版</h3>"
-            f"{render_display_blocks_html(record)}"
+            f"{render_display_blocks_html_v2(record)}"
             "</div>"
             "<div>"
             "<h3>审核复写版</h3>"
