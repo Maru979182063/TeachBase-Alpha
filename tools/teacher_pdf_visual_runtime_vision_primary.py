@@ -11,6 +11,8 @@ from pathlib import Path
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 SPLIT_SCRIPT = WORKSPACE_ROOT / "tools" / "teacher_pdf_visual_question_split_v02.py"
 TRANSCRIBE_SCRIPT = WORKSPACE_ROOT / "tools" / "teacher_handout_visual_transcribe_doubao.py"
+ASSETIZE_SCRIPT = WORKSPACE_ROOT / "tools" / "assetize_question_images.py"
+PREPARE_OPTION_SOURCE_SCRIPT = WORKSPACE_ROOT / "tools" / "prepare_option_visual_source.py"
 
 
 def env_flag(name: str, default: bool = False) -> bool:
@@ -170,9 +172,61 @@ def run_visual_transcribe_stage(
     return result
 
 
+def run_prepare_option_source_stage(
+    env: dict[str, str],
+    source_json_path: Path,
+    split_out_dir: Path | None,
+) -> dict:
+    out_dir = split_out_dir or source_json_path.parent
+    prepared_path = out_dir / "teacher_visual_question_transcription_optionprep_v1.1.json"
+    command = [
+        sys.executable,
+        str(PREPARE_OPTION_SOURCE_SCRIPT),
+        "--source-json",
+        str(source_json_path),
+        "--out-json",
+        str(prepared_path),
+        "--option-anchor-mode",
+        str(os.environ.get("OPTION_ANCHOR_MODE", "") or "auto"),
+        "--model",
+        str(os.environ.get("OPTION_ANCHOR_MODEL", "") or "doubao-seed-2-0-lite-260428"),
+    ]
+    api_key = str(os.environ.get("ARK_API_KEY", "") or "").strip()
+    if api_key:
+        command.extend(["--api-key", api_key])
+    result = run_subprocess(command, env=env)
+    result["prepared_source_json"] = str(prepared_path)
+    return result
+
+
+def run_assetize_stage(
+    env: dict[str, str],
+    source_json_path: Path,
+    visual_result_path: Path | None,
+    split_out_dir: Path | None,
+) -> dict:
+    explicit_out_dir = str(os.environ.get("QUESTION_ASSET_OUT_DIR", "") or "").strip()
+    out_name = str(os.environ.get("QUESTION_ASSET_OUT_NAME", "") or "").strip() or "question_asset_bundle_v0.1"
+    out_dir = resolve_workspace_path(explicit_out_dir) if explicit_out_dir else (
+        (split_out_dir or source_json_path.parent) / out_name
+    )
+    command = [
+        sys.executable,
+        str(ASSETIZE_SCRIPT),
+        "--source-json",
+        str(source_json_path),
+        "--out-dir",
+        str(out_dir),
+    ]
+    if visual_result_path is not None and visual_result_path.exists():
+        command.extend(["--visual-results", str(visual_result_path)])
+    return run_subprocess(command, env=env)
+
+
 def main() -> None:
     transcribe_only = env_flag("VISUAL_TRANSCRIBE_ONLY", default=False)
     transcribe_enable = env_flag("VISUAL_TRANSCRIBE_ENABLE", default=False) or transcribe_only
+    assetize_enable = env_flag("QUESTION_ASSETIZE_ENABLE", default=True)
 
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
@@ -182,35 +236,68 @@ def main() -> None:
         "timestamp": datetime.now().isoformat(timespec="seconds"),
         "transcribe_only": transcribe_only,
         "transcribe_enable": transcribe_enable,
+        "assetize_enable": assetize_enable,
     }
 
     split_result: dict | None = None
     split_out_dir: Path | None = None
     source_json_path: Path | None = None
+    prepared_source_json_path: Path | None = None
 
     if not transcribe_only:
         split_result = run_split_stage(env)
         split_out_dir = Path(split_result["out_dir"])
         source_json_path = Path(split_result["transcription_json"])
         summary["split_stage"] = split_result
+        prepare_result = run_prepare_option_source_stage(env, source_json_path, split_out_dir)
+        prepared_source_json_path = Path(prepare_result["prepared_source_json"])
+        summary["option_prepare_stage"] = prepare_result
+    else:
+        source_json_raw = str(os.environ.get("VISUAL_TRANSCRIBE_SOURCE_JSON", "") or "").strip()
+        if source_json_raw:
+            source_json_path = resolve_workspace_path(source_json_raw)
+            prepare_result = run_prepare_option_source_stage(env, source_json_path, source_json_path.parent)
+            prepared_source_json_path = Path(prepare_result["prepared_source_json"])
+            summary["option_prepare_stage"] = prepare_result
 
     if transcribe_enable:
         if source_json_path is None:
             source_json_raw = str(os.environ.get("VISUAL_TRANSCRIBE_SOURCE_JSON", "") or "").strip()
             if source_json_raw:
                 source_json_path = resolve_workspace_path(source_json_raw)
+        effective_transcribe_source = prepared_source_json_path or source_json_path
+        if effective_transcribe_source is not None:
+            env["VISUAL_TRANSCRIBE_SOURCE_JSON"] = str(effective_transcribe_source)
         transcribe_result = run_visual_transcribe_stage(
             env=env,
-            source_json_path=source_json_path,
+            source_json_path=effective_transcribe_source,
             split_out_dir=split_out_dir,
         )
         summary["visual_transcribe_stage"] = transcribe_result
         summary_path = Path(transcribe_result["out_dir"]) / "vision_primary_runtime_summary.json"
+        visual_result_path = Path(transcribe_result["out_dir"]) / "visual_transcription_results.json"
     else:
+        visual_result_path = None
         if split_out_dir is None:
             summary_path = WORKSPACE_ROOT / "outputs" / "visual_transcription_v0.1" / "vision_primary_runtime_summary.json"
         else:
             summary_path = split_out_dir / "vision_primary_runtime_summary.json"
+
+    if assetize_enable:
+        if prepared_source_json_path is None and source_json_path is None:
+            source_json_raw = str(os.environ.get("VISUAL_TRANSCRIBE_SOURCE_JSON", "") or "").strip()
+            if source_json_raw:
+                source_json_path = resolve_workspace_path(source_json_raw)
+        effective_asset_source = prepared_source_json_path or source_json_path
+        if effective_asset_source is None:
+            raise RuntimeError("missing_question_asset_source_json")
+        assetize_result = run_assetize_stage(
+            env=env,
+            source_json_path=effective_asset_source,
+            visual_result_path=visual_result_path,
+            split_out_dir=split_out_dir,
+        )
+        summary["question_asset_stage"] = assetize_result
 
     ensure_dir(summary_path.parent)
     write_json(summary_path, summary)

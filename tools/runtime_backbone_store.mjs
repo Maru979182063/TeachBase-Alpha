@@ -30,6 +30,11 @@ const workbenchDataPath = path.join(
   "mock_workbench",
   "workbench_data.js"
 );
+const threeTrackSeedFixturePaths = [
+  path.join(workspaceRoot, "tests", "fixtures", "three_track", "math_junior_bundle.json"),
+  path.join(workspaceRoot, "tests", "fixtures", "three_track", "math_senior_bundle.json"),
+  path.join(workspaceRoot, "tests", "fixtures", "three_track", "english_senior_bundle.json"),
+];
 const stateCollectionKeys = [
   "documentSources",
   "documents",
@@ -444,11 +449,45 @@ export function createEmptyState() {
 }
 
 function loadWorkbenchData() {
+  if (!fs.existsSync(workbenchDataPath)) {
+    return null;
+  }
   const code = fs.readFileSync(workbenchDataPath, "utf8");
   const sandbox = { window: {} };
   vm.createContext(sandbox);
   vm.runInContext(code, sandbox);
   return sandbox.window.WORKBENCH_DATA;
+}
+
+function loadThreeTrackSeedBundles() {
+  return threeTrackSeedFixturePaths.map((fixturePath) => {
+    const bundle = safeReadJson(fixturePath, null);
+    if (!bundle) {
+      throw new Error(`seed_fixture_missing:${path.relative(workspaceRoot, fixturePath).replace(/\\/g, "/")}`);
+    }
+    return {
+      ...deepClone(bundle),
+      bundle_id: `seed_${bundle.track_code}_bundle`,
+      lesson_id: `seed_${bundle.track_code}_lesson`,
+      title: `${bundle.title || bundle.lesson_id} [seed]`,
+    };
+  });
+}
+
+function buildFixtureSeedState(state) {
+  // Clean clones do not carry local outputs/, so the runtime must be able to
+  // bootstrap from committed validation fixtures instead of demo-only artifacts.
+  for (const bundle of loadThreeTrackSeedBundles()) {
+    const imported = importLessonDraftBundle(state, {
+      actor: "seed_loader",
+      bundle,
+    });
+    updateReviewTaskStatus(state, imported.reviewTaskId, "approve", "seed_reviewer");
+    publishLessonRevision(state, imported.lessonId, "seed_publisher", {
+      lessonRevisionId: imported.lessonRevisionId,
+    });
+  }
+  return state;
 }
 
 function buildCatalogNodeIndex(state) {
@@ -1566,20 +1605,24 @@ export function rebuildDerivedState(state) {
 }
 
 export function buildSeedState() {
-  const data = loadWorkbenchData();
   const state = createEmptyState();
-  state.meta.generatedAt = data.generatedAt || new Date().toISOString();
+  const data = loadWorkbenchData();
+  state.meta.generatedAt = data?.generatedAt || new Date().toISOString();
   state.meta.updatedAt = new Date().toISOString();
-  state.meta.source = "workbench_data_seed";
+  state.meta.source = data ? "workbench_data_seed" : "three_track_fixture_seed";
 
-  const splitLessons = Object.values(data.splitLessons || {});
-  const reviewQueue = data.reviewQueue || [];
-  for (const splitLesson of splitLessons) {
-    buildLessonSeed(
-      state,
-      splitLesson,
-      reviewQueue.filter((item) => item.lessonId === splitLesson.lesson_id)
-    );
+  if (data) {
+    const splitLessons = Object.values(data.splitLessons || {});
+    const reviewQueue = data.reviewQueue || [];
+    for (const splitLesson of splitLessons) {
+      buildLessonSeed(
+        state,
+        splitLesson,
+        reviewQueue.filter((item) => item.lessonId === splitLesson.lesson_id)
+      );
+    }
+  } else {
+    buildFixtureSeedState(state);
   }
   return rebuildDerivedState(state);
 }

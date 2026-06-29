@@ -586,6 +586,7 @@ const data = {
 };
 
 const bundle = `window.WORKBENCH_DATA = ${JSON.stringify(data, null, 2)};\n`;
+await fs.mkdir(path.dirname(outputPath), { recursive: true });
 await fs.writeFile(outputPath, bundle, "utf8");
 
 console.log(`Mock workbench data written to ${outputPath}`);

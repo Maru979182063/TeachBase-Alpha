@@ -12,9 +12,15 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+import visual_transcription_core as vision_core
+import visual_transcription_strict_eval_adapter as strict_eval_adapter
+import vision_prompt_store
+
 
 API_URL = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
 DEFAULT_MODEL = "doubao-seed-2-0-pro-260215"
+ACTIVE_TRANSCRIPTION_PROMPT = vision_prompt_store.get_transcription_prompt_bundle()
+PROMPT_VERSION = ACTIVE_TRANSCRIPTION_PROMPT["prompt_version"]
 
 
 def ensure_dir(path: Path) -> None:
@@ -22,7 +28,7 @@ def ensure_dir(path: Path) -> None:
 
 
 def read_json(path: Path) -> dict | list:
-    return json.loads(path.read_text(encoding="utf-8"))
+    return json.loads(path.read_text(encoding="utf-8-sig"))
 
 
 def write_json(path: Path, payload: object) -> None:
@@ -220,6 +226,103 @@ def extract_json_block(text: str) -> dict:
     raise ValueError("json_object_not_closed")
 
 
+INLINE_MATH_RE = re.compile(r"\$\$(.+?)\$\$|\$(.+?)\$", re.DOTALL)
+MATH_PUNCT_TRANSLATION = str.maketrans(
+    {
+        "，": ",",
+        "（": "(",
+        "）": ")",
+        "【": "[",
+        "】": "]",
+        "：": ":",
+        "；": ";",
+        "＜": "<",
+        "＞": ">",
+        "－": "-",
+        "＝": "=",
+    }
+)
+
+
+def normalize_math_punctuation(text: object) -> object:
+    if not isinstance(text, str):
+        return text
+
+    def _replace(match: re.Match[str]) -> str:
+        block_body = match.group(1)
+        inline_body = match.group(2)
+        if block_body is not None:
+            return "$$" + block_body.translate(MATH_PUNCT_TRANSLATION) + "$$"
+        return "$" + inline_body.translate(MATH_PUNCT_TRANSLATION) + "$"
+
+    return INLINE_MATH_RE.sub(_replace, text)
+
+
+def normalize_math_delimiters(text: object) -> object:
+    if not isinstance(text, str):
+        return text
+    normalized = text.replace("\\[", "$$").replace("\\]", "$$")
+    normalized = normalized.replace("\\(", "$").replace("\\)", "$")
+    return normalized
+
+
+def normalize_common_notation(text: object) -> object:
+    if not isinstance(text, str):
+        return text
+    normalized = text
+    normalized = normalized.replace("\\neq", "\\ne")
+    normalized = normalized.replace("$\\therefore$", "∴")
+    normalized = normalized.replace("$\\because$", "∵")
+    normalized = normalized.replace("\\therefore", "∴")
+    normalized = normalized.replace("\\because", "∵")
+    normalized = normalized.replace("[解答]", "【解答】")
+    normalized = normalized.replace("[分析]", "【分析】")
+    normalized = normalized.replace("[证明]", "【证明】")
+    normalized = normalized.replace("[点评]", "【点评】")
+    normalized = normalized.replace("[答案]", "【答案】")
+    return normalized
+
+
+def normalize_transcription_fields(parsed: dict) -> dict:
+    normalized = dict(parsed)
+    for field in ("stem_text_md", "answer_text_md", "analysis_text_md", "handwriting_text_md"):
+        value = normalized.get(field, "")
+        value = normalize_math_delimiters(value)
+        value = normalize_math_punctuation(value)
+        value = normalize_common_notation(value)
+        normalized[field] = value
+
+    normalized["stem_requires_image"] = bool(normalized.get("stem_requires_image", False))
+    normalized["analysis_requires_image"] = bool(normalized.get("analysis_requires_image", False))
+    normalized["handwriting_requires_review"] = bool(normalized.get("handwriting_requires_review", False))
+    if not isinstance(normalized.get("handwriting_consistency"), dict):
+        normalized["handwriting_consistency"] = {}
+    uncertain_spans = normalized.get("uncertain_spans", []) or []
+    normalized["uncertain_spans"] = uncertain_spans
+
+    for span in uncertain_spans:
+        if not isinstance(span, dict):
+            continue
+        field = str(span.get("field", "") or "").strip().lower()
+        reason = normalize_text(span.get("reason", ""))
+        text = normalize_text(span.get("text", ""))
+        if field == "stem":
+            normalized["stem_requires_image"] = True
+        if field == "analysis":
+            normalized["analysis_requires_image"] = True
+        high_risk_text = f"{reason} {text}".lower()
+        high_risk = any(
+            marker in high_risk_text
+            for marker in ("cut off", "incomplete", "truncated", "diagram", "figure", "table")
+        )
+        if field == "stem" and high_risk:
+            normalized["stem_requires_image"] = True
+        if field == "analysis" and high_risk:
+            normalized["analysis_requires_image"] = True
+
+    return normalized
+
+
 def derive_record_id(item: dict, source_json_path: Path) -> str:
     explicit = str(item.get("sample_id", "") or item.get("record_id", "")).strip()
     if explicit:
@@ -230,6 +333,44 @@ def derive_record_id(item: dict, source_json_path: Path) -> str:
         safe_slug(item.get("question_id", "")),
     ]
     return "_".join(part for part in parts if part)
+
+
+def _build_prompt_blocks(question: dict, record_id: str) -> tuple[str, str]:
+    context_lines = [f"- record_id: {record_id}", f"- question_id: {question.get('question_id', '')}"]
+    for label, value in (
+        ("checkpoint", clean_hint_text(question.get("checkpoint", ""))),
+        ("component_label", clean_hint_text(question.get("component_label", ""))),
+        ("local_number", clean_hint_text(question.get("local_number", ""))),
+    ):
+        if value:
+            context_lines.append(f"- {label}: {value}")
+
+    hint_lines = []
+    for label, value in (
+        ("auto_stem_text", clean_hint_text(question.get("stem_text", ""))),
+        ("auto_answer_text", clean_hint_text(question.get("answer_text", ""))),
+        ("auto_analysis_text", clean_hint_text(question.get("analysis_text", ""))),
+    ):
+        if value:
+            hint_lines.append(f"- {label}: {value}")
+
+    return "\n".join(context_lines), "\n".join(hint_lines) if hint_lines else "- none"
+
+
+def _render_transcription_prompt(question: dict, record_id: str, variant: str) -> str:
+    bundle = vision_prompt_store.get_transcription_prompt_bundle(variant)
+    context_block, hint_block = _build_prompt_blocks(question, record_id)
+    return vision_prompt_store.render_template(
+        bundle["user_template"],
+        {
+            "CONTEXT_LINES": context_block,
+            "HINT_LINES": hint_block,
+        },
+    )
+
+
+def build_active_prompt(question: dict, record_id: str) -> str:
+    return _render_transcription_prompt(question, record_id, ACTIVE_TRANSCRIPTION_PROMPT["variant"])
 
 
 def build_prompt(question: dict, record_id: str) -> str:
@@ -263,9 +404,9 @@ def build_prompt(question: dict, record_id: str) -> str:
         "Rules:\n"
         "1. Preserve visible wording as faithfully as possible.\n"
         "2. Use Markdown for prose.\n"
-        "3. Use standard LaTeX for math. Use $...$ for inline math and $$...$$ for display math when needed.\n"
+        "3. Use standard LaTeX for math. Use $...$ for inline math and $$...$$ for display math when needed. Inside math, use ASCII punctuation such as , () [] : ; < > = - instead of full-width Chinese punctuation.\n"
         "4. Do not invent unreadable text. If uncertain, keep the readable part and list the uncertain span.\n"
-        "5. If the stem or analysis depends on a diagram, table, or figure, still transcribe visible text and set the matching *_requires_image field to true.\n"
+        "5. If the stem or analysis depends on a diagram, table, figure, or a cropped / incomplete image, still transcribe visible text and set the matching *_requires_image field to true.\n"
         "6. analysis_text_md must preserve every teacher-side explanation block that belongs to this question, including labels such as 分析, 解答, 证明, 思路, 点评, 结论. Merge them into one field in reading order. Do not drop one block just because another explanation block is present.\n"
         "7. For objective answers, keep only the answer content, such as A, C, $\\frac{3}{4}$, or $\\sqrt{2}$.\n"
         "8. If there is no standalone answer field, use an empty string for answer_text_md.\n"
@@ -290,20 +431,183 @@ def build_prompt(question: dict, record_id: str) -> str:
     )
 
 
+def build_prompt_v2(question: dict, record_id: str) -> str:
+    context_lines = [f"- record_id: {record_id}", f"- question_id: {question.get('question_id', '')}"]
+    for label, value in (
+        ("checkpoint", clean_hint_text(question.get("checkpoint", ""))),
+        ("component_label", clean_hint_text(question.get("component_label", ""))),
+        ("local_number", clean_hint_text(question.get("local_number", ""))),
+    ):
+        if value:
+            context_lines.append(f"- {label}: {value}")
+
+    hint_lines = []
+    for label, value in (
+        ("auto_stem_text", clean_hint_text(question.get("stem_text", ""))),
+        ("auto_answer_text", clean_hint_text(question.get("answer_text", ""))),
+        ("auto_analysis_text", clean_hint_text(question.get("analysis_text", ""))),
+    ):
+        if value:
+            hint_lines.append(f"- {label}: {value}")
+
+    return (
+        "You are a strict K12 teacher-handout transcription assistant.\n"
+        "Task: transcribe one question from images into structured fields.\n"
+        "The images are the source of truth. The auto text hints are noisy and may be wrong.\n"
+        "Literal-copy mode is required: copy visible text, symbols, and line order faithfully.\n"
+        "Return JSON only. Do not add commentary or markdown fences.\n\n"
+        "You may receive up to three images in this order:\n"
+        "1. question_image: the full question crop\n"
+        "2. stem_image: the stem-focused crop when available\n"
+        "3. analysis_image: the answer/analysis-focused crop when available\n\n"
+        "Rules:\n"
+        "1. Preserve visible wording as faithfully as possible. Do not summarize, rewrite, explain, or convert visible content into your own wording.\n"
+        "2. Use Markdown for prose.\n"
+        "3. Use standard LaTeX for math. Always use $...$ for inline math and $$...$$ for display math. Never use \\(...\\) or \\[...\\].\n"
+        "4. Inside math, use ASCII punctuation such as , () [] : ; < > = - instead of full-width Chinese punctuation.\n"
+        "5. Keep special visible labels and symbols when they are readable, such as 【例1】, 【分析】, 【解答】, 【证明】, ∵, ∴, ⊙, △, ▱, and option labels like A. B. C. D.\n"
+        "6. Do not invent unreadable or missing text. If the crop starts mid-sentence, ends early, or hides part of a field, transcribe only the visible fragment. Do not infer, and do not add notes like 'only visible options' or 'image missing text' inside the field.\n"
+        "7. If a field is not explicitly visible, leave that field as an empty string. In particular, if there is no standalone answer region, answer_text_md must be empty even if the answer can be inferred from analysis.\n"
+        "8. If the stem or analysis depends on a diagram, table, figure, or a cropped / incomplete image, still transcribe visible text and set the matching *_requires_image field to true.\n"
+        "9. analysis_text_md must preserve every teacher-side explanation block that belongs to this question, including labels such as 分析, 解答, 证明, 思路, 点评, 结论. Merge them into one field in reading order. Do not drop one block just because another explanation block is present.\n"
+        "10. Keep line structure close to the source. For systems, grouped equations, or proof conditions, preserve the original grouping. When needed, use $$\\begin{cases} ... \\\\ ... \\end{cases}$$.\n"
+        "11. For geometry or figure-dependent answers, do not describe the picture in natural language unless those words are already visible in the source. If the source only says '如图', keep '如图'.\n"
+        "12. For objective answers, keep only the answer content, such as A, C, $\\frac{3}{4}$, or $\\sqrt{2}$.\n"
+        "13. If a diagram is the main evidence and text alone is insufficient, do not hallucinate the missing geometry conditions.\n\n"
+        "Context:\n"
+        f"{chr(10).join(context_lines)}\n\n"
+        "Optional helper hints. Ignore them when they conflict with the image:\n"
+        f"{chr(10).join(hint_lines) if hint_lines else '- none'}\n\n"
+        "Output schema:\n"
+        "{\n"
+        '  "record_id": "...",\n'
+        '  "question_id": "...",\n'
+        '  "stem_text_md": "...",\n'
+        '  "answer_text_md": "...",\n'
+        '  "analysis_text_md": "...",\n'
+        '  "stem_requires_image": true,\n'
+        '  "analysis_requires_image": true,\n'
+        '  "uncertain_spans": [\n'
+        '    {"field": "stem|answer|analysis", "text": "...", "reason": "formula|symbol|diagram|table|other"}\n'
+        "  ]\n"
+        "}\n"
+    )
+
+
+def build_prompt_v3(question: dict, record_id: str) -> str:
+    context_lines = [f"- record_id: {record_id}", f"- question_id: {question.get('question_id', '')}"]
+    for label, value in (
+        ("checkpoint", clean_hint_text(question.get("checkpoint", ""))),
+        ("component_label", clean_hint_text(question.get("component_label", ""))),
+        ("local_number", clean_hint_text(question.get("local_number", ""))),
+    ):
+        if value:
+            context_lines.append(f"- {label}: {value}")
+
+    hint_lines = []
+    for label, value in (
+        ("auto_stem_text", clean_hint_text(question.get("stem_text", ""))),
+        ("auto_answer_text", clean_hint_text(question.get("answer_text", ""))),
+        ("auto_analysis_text", clean_hint_text(question.get("analysis_text", ""))),
+    ):
+        if value:
+            hint_lines.append(f"- {label}: {value}")
+
+    return (
+        "You are a strict K12 teacher-handout transcription assistant.\n"
+        "Task: transcribe one question from images into structured fields.\n"
+        "The images are the source of truth. The auto text hints are noisy and may be wrong.\n"
+        "Literal-copy mode is required: copy visible text, symbols, and line order faithfully.\n"
+        "Return JSON only. Do not add commentary or markdown fences.\n\n"
+        "You may receive up to three images in this order:\n"
+        "1. question_image: the full question crop\n"
+        "2. stem_image: the stem-focused crop when available\n"
+        "3. analysis_image: the answer/analysis-focused crop when available\n\n"
+        "Rules:\n"
+        "1. Preserve visible wording as faithfully as possible. Do not summarize, rewrite, explain, or convert visible content into your own wording.\n"
+        "2. Use Markdown for prose.\n"
+        "3. Use standard LaTeX for math. Always use $...$ for inline math and $$...$$ for display math. Never use \\(...\\) or \\[...\\].\n"
+        "4. Inside math, use ASCII punctuation such as , () [] : ; < > = - instead of full-width Chinese punctuation.\n"
+        "5. Keep special visible labels and symbols when they are readable, such as example headers, analysis headers, answer headers, proof headers, option labels, circled item markers, and geometry symbols.\n"
+        "6. Do not invent unreadable or missing text. If the crop starts mid-sentence, ends early, or hides part of a field, transcribe only the visible fragment. Do not infer, and do not add notes like 'only visible options' or 'image missing text' inside the field.\n"
+        "7. If a field is not explicitly visible, leave that field as an empty string. In particular, if there is no standalone answer region, answer_text_md must be empty even if the answer can be inferred from analysis.\n"
+        "8. If the stem or analysis depends on a diagram, table, figure, or a cropped / incomplete image, still transcribe visible text and set the matching *_requires_image field to true.\n"
+        "9. analysis_text_md must preserve every teacher-side explanation block that belongs to this question, including labels such as 分析, 解答, 证明, 思路, 点评, 结论. Merge them into one field in reading order. Do not drop one block just because another explanation block is present.\n"
+        "10. Keep line structure close to the source. For options, systems, grouped equations, or proof conditions, preserve the original grouping and line breaks when visible. When needed, use $$\\begin{cases} ... \\\\ ... \\end{cases}$$.\n"
+        "11. For geometry or figure-dependent answers, do not describe the picture in natural language unless those words are already visible in the source. If the source only says '如图', keep '如图'.\n"
+        "12. For objective answers, keep only the answer content, such as A, C, $\\frac{3}{4}$, or $\\sqrt{2}$.\n"
+        "13. answer_text_md must contain only the standalone answer block. Do not copy proof steps, derivations, or long explanation sentences into answer_text_md.\n"
+        "14. If the source has multiple subquestions like (1) (2) (3), preserve the visible subquestion indexes in answer_text_md and analysis_text_md. Do not drop an earlier subquestion answer while keeping a later one.\n"
+        "15. Never drop visible math object labels or geometry point names such as A, B, C, D, E, F, G, M, N, P, Q, or vector / angle labels.\n"
+        "16. If answer_text_md already captures the standalone answer, do not repeat a leading 答案 header inside analysis_text_md. Keep the explanation blocks only.\n"
+        "17. If a diagram is the main evidence and text alone is insufficient, do not hallucinate the missing geometry conditions.\n\n"
+        "Context:\n"
+        f"{chr(10).join(context_lines)}\n\n"
+        "Optional helper hints. Ignore them when they conflict with the image:\n"
+        f"{chr(10).join(hint_lines) if hint_lines else '- none'}\n\n"
+        "Output schema:\n"
+        "{\n"
+        '  "record_id": "...",\n'
+        '  "question_id": "...",\n'
+        '  "stem_text_md": "...",\n'
+        '  "answer_text_md": "...",\n'
+        '  "analysis_text_md": "...",\n'
+        '  "stem_requires_image": true,\n'
+        '  "analysis_requires_image": true,\n'
+        '  "uncertain_spans": [\n'
+        '    {"field": "stem|answer|analysis", "text": "...", "reason": "formula|symbol|diagram|table|other"}\n'
+        "  ]\n"
+        "}\n"
+    )
+
+
+def build_prompt(question: dict, record_id: str) -> str:
+    return _render_transcription_prompt(question, record_id, "v1")
+
+
+def build_prompt_v2(question: dict, record_id: str) -> str:
+    return _render_transcription_prompt(question, record_id, "v2")
+
+
+def build_prompt_v3(question: dict, record_id: str) -> str:
+    return _render_transcription_prompt(question, record_id, "v3")
+
+
+def safe_normalize_transcription_fields(
+    parsed: dict,
+    *,
+    record_id: str = "",
+    question_id: str = "",
+    visual_refs: dict | None = None,
+    prompt_version: str = "",
+    model_name: str = "",
+) -> dict:
+    return vision_core.safe_normalize_transcription_payload(
+        parsed,
+        record_id=record_id,
+        question_id=question_id,
+        visual_refs=visual_refs,
+        prompt_version=prompt_version,
+        model_name=model_name,
+    )
+
+
+def normalize_transcription_fields(parsed: dict) -> dict:
+    return strict_eval_adapter.normalize_transcription_fields(parsed)
+
+
 def call_model(api_key: str, model: str, prompt: str, image_paths: list[Path]) -> dict:
+    system_prompt = ACTIVE_TRANSCRIPTION_PROMPT["system_prompt"]
     user_content: list[dict] = [{"type": "text", "text": prompt}]
     for image_path in image_paths:
         user_content.append({"type": "image_url", "image_url": {"url": image_to_data_url(image_path)}})
     body = {
         "model": model,
-        "temperature": 0.1,
+        "temperature": 0.0,
         "messages": [
             {
                 "role": "system",
-                "content": (
-                    "You transcribe K12 handout questions from images. "
-                    "Images are primary evidence, helper text is noisy, output must be one JSON object."
-                ),
+                "content": system_prompt,
             },
             {
                 "role": "user",
@@ -408,6 +712,9 @@ def summarize_record(item: dict, status: str, parsed: dict | None = None, error:
                 "stem_text_md": parsed.get("stem_text_md", ""),
                 "answer_text_md": parsed.get("answer_text_md", ""),
                 "analysis_text_md": parsed.get("analysis_text_md", ""),
+                "handwriting_text_md": parsed.get("handwriting_text_md", ""),
+                "handwriting_requires_review": parsed.get("handwriting_requires_review", False),
+                "handwriting_consistency": parsed.get("handwriting_consistency", {}),
                 "stem_requires_image": parsed.get("stem_requires_image", False),
                 "analysis_requires_image": parsed.get("analysis_requires_image", False),
                 "uncertain_span_count": len(parsed.get("uncertain_spans", []) or []),
@@ -542,7 +849,7 @@ def main() -> None:
             )
             continue
 
-        prompt = build_prompt(question, record_id)
+        prompt = build_active_prompt(question, record_id)
         prepared = {
             "record_id": record_id,
             "question_id": item["question_id"],
@@ -550,8 +857,14 @@ def main() -> None:
             "question_image": question.get("question_image", ""),
             "stem_image": question.get("stem_image", ""),
             "analysis_image": question.get("analysis_image", ""),
+            "question_uid": question.get("question_uid", ""),
+            "gating_result": question.get("gating_result", {}),
+            "option_visual_blocks": question.get("option_visual_blocks", []),
+            "staged_visual_assets": question.get("staged_visual_assets", []),
             "image_count": len(image_paths),
             "prompt": prompt,
+            "prompt_version": PROMPT_VERSION,
+            "model_name": args.model,
             "tag": item.get("tag", ""),
         }
         write_json(raw_dir / f"{record_id}.prepared.json", prepared)
@@ -595,10 +908,19 @@ def main() -> None:
                 encoding="utf-8",
             )
             parsed = extract_json_block(result["raw_content"])
-            if "record_id" not in parsed:
-                parsed["record_id"] = record_id
-            if "question_id" not in parsed:
-                parsed["question_id"] = item["question_id"]
+            parsed = vision_core.safe_normalize_transcription_payload(
+                parsed,
+                record_id=record_id,
+                question_id=item["question_id"],
+                visual_refs={
+                    "question_image": question.get("question_image", ""),
+                    "stem_image": question.get("stem_image", ""),
+                    "analysis_image": question.get("analysis_image", ""),
+                },
+                prompt_version=PROMPT_VERSION,
+                model_name=args.model,
+                question_context=question,
+            )
             records.append(
                 {
                     "record_id": record_id,
@@ -643,21 +965,32 @@ def main() -> None:
         time.sleep(max(args.sleep_seconds, 0.0))
 
     ok_records = [item for item in records if item["status"] == "ok"]
+    gate_decisions = [
+        ((item.get("transcription", {}) or {}).get("quality_gate", {}) or {}).get("ingest_decision", "allow")
+        for item in ok_records
+    ]
     summary = {
         "model": args.model,
+        "prompt_version": PROMPT_VERSION,
+        "runtime_contract": "general_vision_v0.1",
         "question_count": len(records),
         "ok_count": len(ok_records),
         "prepared_count": sum(1 for item in records if item["status"] == "prepared"),
         "failed_count": sum(1 for item in records if item["status"] == "failed"),
-        "usage_totals": aggregate_usage(ok_records),
-        "latency_summary": aggregate_latency(records),
+        "usage_totals": vision_core.aggregate_usage(ok_records),
+        "latency_summary": vision_core.aggregate_latency(records),
+        "ingest_gate_counts": {
+            "allow": sum(1 for item in gate_decisions if item == "allow"),
+            "allow_with_review": sum(1 for item in gate_decisions if item == "allow_with_review"),
+            "block": sum(1 for item in gate_decisions if item == "block"),
+        },
         "records": records,
     }
     write_json(out_dir / "visual_transcription_results.json", summary)
     compact = []
     for item in records:
         compact.append(
-            summarize_record(
+            vision_core.summarize_record(
                 item,
                 status=item["status"],
                 parsed=item.get("transcription"),

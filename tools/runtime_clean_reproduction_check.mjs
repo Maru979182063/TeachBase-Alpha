@@ -311,8 +311,9 @@ async function main() {
 }
 
 main().catch((error) => {
+  // Exit explicitly after stderr flush so review runners cannot misclassify a failed reproduction as pass.
   process.stderr.write(
-    `${JSON.stringify({ ok: false, error: String(error?.message || error) }, null, 2)}\n`
+    `${JSON.stringify({ ok: false, error: String(error?.message || error) }, null, 2)}\n`,
+    () => process.exit(1)
   );
-  process.exitCode = 1;
 });

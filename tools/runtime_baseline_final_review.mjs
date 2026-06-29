@@ -100,6 +100,14 @@ async function latestReportJson(rootDir, prefix, fileName) {
   };
 }
 
+function parseJsonSafely(text) {
+  try {
+    return JSON.parse(String(text || "").trim());
+  } catch {
+    return null;
+  }
+}
+
 async function runCommand(outputDir, name, command, args) {
   const result = await runProcess(command, args, { cwd: workspaceRoot });
   const payload = [
@@ -157,6 +165,65 @@ function evaluateProductionGate(result, reportInfo) {
       finalStatus: report.summary.finalStatus,
       failedGate: failures[0].id,
       runId: report.environment.runId,
+    },
+  };
+}
+
+async function evaluateCleanReproduction(result, summaryDocPath) {
+  const summaryDocExists = await fs
+    .access(summaryDocPath)
+    .then(() => true)
+    .catch(() => false);
+  const summaryInfo = await latestReportJson(
+    path.join(workspaceRoot, "outputs", "final_review"),
+    "clean_reproduction_",
+    "clean_reproduction_summary.json"
+  );
+  const stdoutPayload = parseJsonSafely(result.stdout);
+
+  if (result.code !== 0) {
+    return {
+      ok: false,
+      detail: "clean_reproduction_exit_non_zero",
+    };
+  }
+  if (stdoutPayload?.ok !== true) {
+    return {
+      ok: false,
+      detail: "clean_reproduction_stdout_missing_success_json",
+    };
+  }
+  if (!summaryInfo?.report) {
+    return {
+      ok: false,
+      detail: "clean_reproduction_summary_missing",
+    };
+  }
+  if (summaryInfo.report.baseline?.finalStatus !== "VALIDATION_BASELINE_READY") {
+    return {
+      ok: false,
+      detail: `clean_reproduction_baseline_status_mismatch:${summaryInfo.report.baseline?.finalStatus || "missing"}`,
+    };
+  }
+  if (summaryInfo.report.productionReadiness?.finalStatus !== "NOT_READY") {
+    return {
+      ok: false,
+      detail: `clean_reproduction_production_status_mismatch:${summaryInfo.report.productionReadiness?.finalStatus || "missing"}`,
+    };
+  }
+  if (!summaryDocExists) {
+    return {
+      ok: false,
+      detail: "clean_reproduction_markdown_report_missing",
+    };
+  }
+  return {
+    ok: true,
+    detail: {
+      reportDir: summaryInfo.directory,
+      commit: summaryInfo.report.commit,
+      baselineStatus: summaryInfo.report.baseline.finalStatus,
+      productionStatus: summaryInfo.report.productionReadiness.finalStatus,
     },
   };
 }
@@ -279,11 +346,20 @@ export async function runBaselineFinalReview() {
       "docs",
       "three_track_clean_reproduction_report.md"
     );
+    const cleanReproductionEvaluation = await evaluateCleanReproduction(
+      cleanReproResult,
+      cleanReproductionSummaryPath
+    );
     externalChecks.push({
       name: "clean_reproduction",
       exitCode: cleanReproResult.code,
-      ok: cleanReproResult.code === 0,
-      detail: cleanReproResult.code === 0 ? cleanReproductionSummaryPath : "clean_reproduction_failed",
+      ok: cleanReproductionEvaluation.ok,
+      detail: cleanReproductionEvaluation.ok
+        ? {
+            ...cleanReproductionEvaluation.detail,
+            summaryPath: cleanReproductionSummaryPath,
+          }
+        : cleanReproductionEvaluation.detail,
     });
 
     environment.postgresVersion = harness.postgresCluster?.version || null;
