@@ -77,6 +77,9 @@ REVIEW_FLAGS = [
     "public_analysis_image_detected",
     "cross_option_image_detected",
     "source_refs_merge_conflict",
+    "bbox_audit_suspect",
+    "bbox_audit_invalid",
+    "detector_source_missing",
 ]
 
 

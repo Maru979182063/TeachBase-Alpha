@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import os
 import re
 import shutil
 from datetime import datetime
@@ -16,6 +17,7 @@ from question_visual_structure_contract import SCHEMA_VERSION, normalize_review_
 from source_refs_json_merge import merge_source_refs_json
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
+HTML_ASSETS_CACHE = WORKSPACE_ROOT / "runtime" / "html_assets_cache"
 # Source container images are evidence only. Formal image assets must come from
 # staged_visual_assets so the runtime doesn't confuse whole long crops with
 # semantic in-question figures.
@@ -39,6 +41,24 @@ def read_json(path: Path) -> Any:
 def write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def stage_html_assets(bundle_dir: Path) -> dict[str, str]:
+    asset_dir = bundle_dir / "_html_assets"
+    asset_dir.mkdir(parents=True, exist_ok=True)
+    wanted = {
+        "katex_css": "katex_css.css",
+        "katex_js": "katex_js.js",
+        "auto_render_js": "auto_render_js.js",
+    }
+    refs: dict[str, str] = {}
+    for key, filename in wanted.items():
+        src = HTML_ASSETS_CACHE / filename
+        dst = asset_dir / filename
+        if src.exists():
+            shutil.copy2(src, dst)
+            refs[key] = f"_html_assets/{filename}"
+    return refs
 
 
 def resolve_path(raw: str, base_dir: Path) -> Path:
@@ -166,6 +186,127 @@ def _is_suspicious_crop(image: Image.Image) -> bool:
     if stat.stddev and stat.stddev[0] < 2.0:
         return True
     return False
+
+
+def _foreground_bounds(image: Image.Image, threshold: int = 220) -> tuple[int, int, int, int] | None:
+    gray = image.convert("L")
+    pixels = gray.load()
+    left = right = top = bottom = None
+    for y in range(gray.height):
+        for x in range(gray.width):
+            if pixels[x, y] < threshold:
+                if left is None or x < left:
+                    left = x
+                if right is None or x > right:
+                    right = x
+                if top is None or y < top:
+                    top = y
+                if bottom is None or y > bottom:
+                    bottom = y
+    if None in {left, right, top, bottom}:
+        return None
+    return int(left), int(top), int(right), int(bottom)
+
+
+def _band_dark_ratio(image: Image.Image, *, top: bool, band_px: int = 14, threshold: int = 220) -> float:
+    gray = image.convert("L")
+    if gray.width <= 0 or gray.height <= 0:
+        return 0.0
+    band_px = max(1, min(band_px, gray.height))
+    y_start = 0 if top else gray.height - band_px
+    y_end = min(y_start + band_px, gray.height)
+    pixels = gray.load()
+    dark = 0
+    total = max((y_end - y_start) * gray.width, 1)
+    for y in range(y_start, y_end):
+        for x in range(gray.width):
+            if pixels[x, y] < threshold:
+                dark += 1
+    return dark / total
+
+
+def _audit_materialized_bbox(
+    asset: dict[str, Any],
+    *,
+    source_image: Image.Image,
+    crop: Image.Image,
+    bbox: dict[str, Any],
+) -> dict[str, Any]:
+    x = max(int(bbox.get("x", 0) or 0), 0)
+    y = max(int(bbox.get("y", 0) or 0), 0)
+    w = max(int(bbox.get("w", 0) or 0), 0)
+    h = max(int(bbox.get("h", 0) or 0), 0)
+    source_w, source_h = source_image.size
+    fg = _foreground_bounds(crop)
+    boundary_margin = {
+        "left": None,
+        "top": None,
+        "right": None,
+        "bottom": None,
+    }
+    clip_risk = {
+        "left": False,
+        "top": False,
+        "right": False,
+        "bottom": False,
+    }
+    if fg is not None:
+        fg_left, fg_top, fg_right, fg_bottom = fg
+        boundary_margin = {
+            "left": int(fg_left),
+            "top": int(fg_top),
+            "right": int(crop.width - fg_right - 1),
+            "bottom": int(crop.height - fg_bottom - 1),
+        }
+        clip_risk = {
+            side: int(boundary_margin[side] or 0) <= 1
+            for side in ("left", "top", "right", "bottom")
+        }
+
+    source_edge_touch = {
+        "left": x <= 1,
+        "top": y <= 1,
+        "right": x + w >= source_w - 1,
+        "bottom": y + h >= source_h - 1,
+    }
+    top_band_ratio = round(_band_dark_ratio(crop, top=True), 4)
+    bottom_band_ratio = round(_band_dark_ratio(crop, top=False), 4)
+    text_band_risk = {
+        "top": top_band_ratio >= 0.18 and bool(clip_risk["top"]),
+        "bottom": bottom_band_ratio >= 0.18 and bool(clip_risk["bottom"]),
+    }
+    suspect_reasons: list[str] = []
+    for side in ("left", "top", "right", "bottom"):
+        if clip_risk[side]:
+            suspect_reasons.append(f"{side}_clip_risk")
+        if source_edge_touch[side]:
+            suspect_reasons.append(f"{side}_touches_source_edge")
+    for side in ("top", "bottom"):
+        if text_band_risk[side]:
+            suspect_reasons.append(f"{side}_text_band_risk")
+
+    detector_source = str(asset.get("detector_source", "") or "").strip()
+    if not detector_source or detector_source == "unknown":
+        suspect_reasons.append("detector_source_unknown")
+
+    if crop.width < 24 or crop.height < 24 or fg is None:
+        validity = "invalid"
+    elif suspect_reasons:
+        validity = "suspect"
+    else:
+        validity = "valid"
+
+    return {
+        "validity": validity,
+        "detector_source": detector_source or "unknown",
+        "source_edge_touch": source_edge_touch,
+        "boundary_margin": boundary_margin,
+        "clip_risk": clip_risk,
+        "text_band_risk": text_band_risk,
+        "top_band_dark_ratio": top_band_ratio,
+        "bottom_band_dark_ratio": bottom_band_ratio,
+        "suspect_reasons": suspect_reasons,
+    }
 
 
 def _average_hash(path: Path, size: int = 8) -> str:
@@ -301,6 +442,7 @@ def materialize_staged_asset(
                 asset["file_status"] = "failed"
                 asset["review_flags"] = normalize_review_flags(list(asset.get("review_flags", []) or []) + ["option_asset_suspicious_crop"])
                 return asset
+            bbox_audit = _audit_materialized_bbox(asset, source_image=image, crop=crop, bbox=bbox)
             crop.save(target_path)
     except Exception:
         asset["materialized"] = False
@@ -309,6 +451,15 @@ def materialize_staged_asset(
         return asset
     asset["materialized"] = True
     asset["file_status"] = "materialized"
+    asset["bbox_audit"] = bbox_audit
+    audit_flags: list[str] = []
+    if bbox_audit.get("validity") == "suspect":
+        audit_flags.append("bbox_audit_suspect")
+    elif bbox_audit.get("validity") == "invalid":
+        audit_flags.append("bbox_audit_invalid")
+    if str(asset.get("detector_source", "") or "").strip() in {"", "unknown"}:
+        audit_flags.append("detector_source_missing")
+    asset["review_flags"] = normalize_review_flags(list(asset.get("review_flags", []) or []) + audit_flags)
     if include_debug_paths:
         asset["debug"] = {
             "local_path": str(target_path.resolve()),
@@ -456,7 +607,36 @@ def build_qvs_display_markdown(qvs: dict[str, Any], fallback_record: dict[str, A
 
 def _asset_sort_key(asset: dict[str, Any]) -> tuple[int, int]:
     bbox = asset.get("bbox_json", {}) if isinstance(asset.get("bbox_json"), dict) else {}
-    return int(bbox.get("y", 0) or 0), int(bbox.get("x", 0) or 0)
+    y = int(bbox.get("y", 0) or 0)
+    x = int(bbox.get("x", 0) or 0)
+    return y // 160, x, y
+
+
+def assign_external_labels(assets: list[dict[str, Any]]) -> None:
+    if str(os.environ.get("ASSETIZE_ENABLE_EXTERNAL_LABELS", "") or "").strip() != "1":
+        for asset in assets:
+            asset.pop("external_label_kind", None)
+            asset.pop("external_label_text", None)
+        return
+    for placement, role in (("after_stem", "stem"), ("after_analysis", "analysis")):
+        figure_assets = sorted(
+            [
+                asset
+                for asset in assets
+                if str(asset.get("placement", asset.get("placement_scope", "")) or "") == placement
+                and str(asset.get("asset_role", asset.get("role", "")) or "") == role
+            ],
+            key=_asset_sort_key,
+        )
+        for index, asset in enumerate(figure_assets, start=1):
+            asset["external_label_kind"] = "figure_index"
+            asset["external_label_text"] = f"图{index}"
+
+    for asset in assets:
+        option_key = str(asset.get("option_key", "") or "").strip().upper()
+        if option_key and str(asset.get("placement_scope", "") or "") == "option_inline":
+            asset["external_label_kind"] = "option_key"
+            asset["external_label_text"] = option_key
 
 
 def _split_stem_for_inline_images(text: str) -> tuple[str, str]:
@@ -489,21 +669,192 @@ def _split_numbered_sections(text: str) -> tuple[str, list[str]]:
     return intro, sections
 
 
+def _split_section_for_inline_image(section: str) -> tuple[str, str]:
+    value = str(section or "").strip()
+    if not value:
+        return "", ""
+    lines = [line.strip() for line in value.splitlines() if line.strip()]
+    if len(lines) <= 2:
+        return value, ""
+    split_idx = min(max(2, len(lines) // 4), 5)
+    intro = "\n".join(lines[:split_idx]).strip()
+    rest = "\n".join(lines[split_idx:]).strip()
+    return intro, rest
+
+
+def _split_stem_for_inline_images_v2(text: str) -> tuple[str, str]:
+    value = str(text or "").strip()
+    if not value:
+        return "", ""
+    match = re.search(r"(?:^|\n)\s*(?:（|\()1(?:）|\))", value)
+    if not match:
+        return value, ""
+    split_at = match.start() + (1 if value[match.start()] == "\n" else 0)
+    return value[:split_at].rstrip(), value[split_at:].lstrip()
+
+
+def _split_numbered_sections_v2(text: str) -> tuple[str, list[str]]:
+    value = str(text or "").strip()
+    if not value:
+        return "", []
+    matches = list(re.finditer(r"(?:（|\()(\d+)(?:）|\))", value))
+    if not matches:
+        return value, []
+    intro = value[: matches[0].start()].rstrip()
+    sections: list[str] = []
+    for idx, match in enumerate(matches):
+        start = match.start()
+        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(value)
+        chunk = value[start:end].strip()
+        if chunk:
+            sections.append(chunk)
+    return intro, sections
+
+
+def _split_stem_for_inline_images_v3(text: str) -> tuple[str, str]:
+    value = str(text or "").strip()
+    if not value:
+        return "", ""
+    match = re.search(r"(?:(?<=^)|(?<=\n)|(?<=:)|(?<=\uFF1A))\s*(?:\uFF08|\()1(?:\uFF09|\))", value)
+    if not match:
+        return value, ""
+    split_at = match.start() + (1 if value[match.start()] == "\n" else 0)
+    return value[:split_at].rstrip(), value[split_at:].lstrip()
+
+
+def _split_numbered_sections_v3(text: str) -> tuple[str, list[str]]:
+    value = str(text or "").strip()
+    if not value:
+        return "", []
+    matches = list(
+        re.finditer(
+            r"(?:(?<=^)|(?<=\n)|(?<=:)|(?<=\uFF1A))\s*(?:\uFF08|\()(\d+)(?:\uFF09|\))",
+            value,
+        )
+    )
+    if not matches:
+        return value, []
+    intro = value[: matches[0].start()].rstrip()
+    sections: list[str] = []
+    for idx, match in enumerate(matches):
+        start = match.start()
+        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(value)
+        chunk = value[start:end].strip()
+        if chunk:
+            sections.append(chunk)
+    return intro, sections
+
+
+def _split_stem_option_image_labels(text: str, asset_count: int) -> tuple[str, list[str], str]:
+    value = str(text or "").strip()
+    if asset_count <= 0 or not value:
+        return value, [], ""
+    lines = value.splitlines()
+    option_lines: list[tuple[int, str]] = []
+    for idx, line in enumerate(lines):
+        clean = line.strip()
+        if re.fullmatch(r"[A-D][\.．、]?", clean):
+            option_lines.append((idx, clean if clean.endswith((".", "．", "、")) else f"{clean}."))
+    if len(option_lines) != asset_count:
+        return value, [], ""
+    indexes = [idx for idx, _label in option_lines]
+    if indexes != list(range(indexes[0], indexes[0] + len(indexes))):
+        return value, [], ""
+    prefix = "\n".join(lines[: indexes[0]]).strip()
+    suffix = "\n".join(lines[indexes[-1] + 1 :]).strip()
+    labels = [label for _idx, label in option_lines]
+    return prefix, labels, suffix
+
+
+def _split_stem_option_image_labels(text: str, asset_count: int) -> tuple[str, list[str], str]:
+    value = str(text or "").strip()
+    if asset_count <= 0 or not value:
+        return value, [], ""
+    lines = value.splitlines()
+    option_lines: list[tuple[int, str]] = []
+    for idx, line in enumerate(lines):
+        clean = line.strip()
+        if re.fullmatch(r"[A-D][\.\u3002、]?", clean):
+            option_lines.append((idx, f"{clean[0].upper()}."))
+    if len(option_lines) != asset_count:
+        return value, [], ""
+    indexes = [idx for idx, _label in option_lines]
+    between_non_empty = [line.strip() for line in lines[indexes[0] : indexes[-1] + 1] if line.strip()]
+    labels = [label for _idx, label in option_lines]
+    if between_non_empty != labels:
+        return value, [], ""
+    prefix = "\n".join(lines[: indexes[0]]).strip()
+    suffix = "\n".join(lines[indexes[-1] + 1 :]).strip()
+    return prefix, labels, suffix
+
+
 def build_display_blocks(record: dict[str, Any]) -> list[dict[str, Any]]:
     blocks: list[dict[str, Any]] = []
-    stem_assets = sorted(
-        [a for a in record["assets"] if a["placement"] == "after_stem"],
-        key=_asset_sort_key,
+    option_assets = sorted(
+        [
+            a
+            for a in record["assets"]
+            if str(a.get("placement_scope", "") or a.get("placement", "") or "") == "option_inline"
+            and bool(a.get("materialized", False))
+            and str(a.get("file_status", "") or "") != "failed"
+        ],
+        key=lambda asset: (
+            {"A": 1, "B": 2, "C": 3, "D": 4}.get(str(asset.get("option_key", "") or "").strip().upper(), 99),
+            _asset_sort_key(asset),
+        ),
     )
-    stem_intro, stem_rest = _split_stem_for_inline_images(record["stem_text_md"])
-    if stem_intro:
-        blocks.append({"type": "markdown", "field": "stem", "content": stem_intro})
-    for asset in stem_assets:
-        blocks.append({"type": "image", "field": "stem", "asset_id": asset["asset_id"], "display_ref": asset["display_ref"]})
-    if stem_rest:
-        blocks.append({"type": "markdown", "field": "stem", "content": stem_rest})
-    elif not stem_intro and record["stem_text_md"].strip():
-        blocks.append({"type": "markdown", "field": "stem", "content": record["stem_text_md"]})
+    if option_assets:
+        option_prefix, option_labels, option_suffix = _split_stem_option_image_labels(record["stem_text_md"], len(option_assets))
+        if option_labels:
+            if option_prefix:
+                blocks.append({"type": "markdown", "field": "stem", "content": option_prefix})
+            assets_by_key = {
+                str(asset.get("option_key", "") or "").strip().upper(): asset
+                for asset in option_assets
+                if str(asset.get("option_key", "") or "").strip()
+            }
+            unused_assets = [asset for asset in option_assets if str(asset.get("option_key", "") or "").strip().upper() not in set(option_labels)]
+            for idx, label in enumerate(option_labels):
+                blocks.append({"type": "markdown", "field": "stem", "content": label})
+                asset = assets_by_key.get(str(label).rstrip(".").strip().upper())
+                if asset is None and idx < len(unused_assets):
+                    asset = unused_assets[idx]
+                if asset is not None:
+                    blocks.append({"type": "image", "field": "stem", "asset_id": asset["asset_id"], "display_ref": asset["display_ref"]})
+            if option_suffix:
+                blocks.append({"type": "markdown", "field": "stem", "content": option_suffix})
+        else:
+            if record["stem_text_md"].strip():
+                blocks.append({"type": "markdown", "field": "stem", "content": record["stem_text_md"]})
+            for asset in option_assets:
+                label = str(asset.get("option_key", "") or "").strip().upper()
+                if label:
+                    blocks.append({"type": "markdown", "field": "stem", "content": f"{label}."})
+                blocks.append({"type": "image", "field": "stem", "asset_id": asset["asset_id"], "display_ref": asset["display_ref"]})
+    else:
+        stem_assets = sorted(
+            [a for a in record["assets"] if a["placement"] == "after_stem"],
+            key=_asset_sort_key,
+        )
+        option_prefix, option_labels, option_suffix = _split_stem_option_image_labels(record["stem_text_md"], len(stem_assets))
+        if option_labels:
+            if option_prefix:
+                blocks.append({"type": "markdown", "field": "stem", "content": option_prefix})
+            for label, asset in zip(option_labels, stem_assets):
+                blocks.append({"type": "markdown", "field": "stem", "content": label})
+                blocks.append({"type": "image", "field": "stem", "asset_id": asset["asset_id"], "display_ref": asset["display_ref"]})
+            if option_suffix:
+                blocks.append({"type": "markdown", "field": "stem", "content": option_suffix})
+        else:
+            stem_intro, stem_rest = _split_stem_for_inline_images_v3(record["stem_text_md"])
+            if stem_intro:
+                blocks.append({"type": "markdown", "field": "stem", "content": stem_intro})
+            for asset in stem_assets:
+                blocks.append({"type": "image", "field": "stem", "asset_id": asset["asset_id"], "display_ref": asset["display_ref"]})
+            if stem_rest:
+                blocks.append({"type": "markdown", "field": "stem", "content": stem_rest})
+            elif not stem_intro and record["stem_text_md"].strip():
+                blocks.append({"type": "markdown", "field": "stem", "content": record["stem_text_md"]})
 
     if record["answer_text_md"].strip():
         blocks.append({"type": "markdown", "field": "answer", "content": record["answer_text_md"]})
@@ -512,16 +863,22 @@ def build_display_blocks(record: dict[str, Any]) -> list[dict[str, Any]]:
         [a for a in record["assets"] if a["placement"] == "after_analysis"],
         key=_asset_sort_key,
     )
-    analysis_intro, analysis_sections = _split_numbered_sections(record["analysis_text_md"])
+    analysis_intro, analysis_sections = _split_numbered_sections_v3(record["analysis_text_md"])
     if analysis_assets and analysis_sections:
         if analysis_intro:
             blocks.append({"type": "markdown", "field": "analysis", "content": analysis_intro})
         for idx, section in enumerate(analysis_sections):
-            blocks.append({"type": "markdown", "field": "analysis", "content": section})
             if idx < len(analysis_assets):
+                section_intro, section_rest = _split_section_for_inline_image(section)
+                if section_intro:
+                    blocks.append({"type": "markdown", "field": "analysis", "content": section_intro})
                 asset = analysis_assets[idx]
                 blocks.append({"type": "image", "field": "analysis", "asset_id": asset["asset_id"], "display_ref": asset["display_ref"]})
-        for asset in analysis_assets[len(analysis_sections):]:
+                if section_rest:
+                    blocks.append({"type": "markdown", "field": "analysis", "content": section_rest})
+            else:
+                blocks.append({"type": "markdown", "field": "analysis", "content": section})
+        for asset in sorted(analysis_assets[len(analysis_sections):], key=_asset_sort_key):
             blocks.append({"type": "image", "field": "analysis", "asset_id": asset["asset_id"], "display_ref": asset["display_ref"]})
     else:
         if record["analysis_text_md"].strip():
@@ -566,6 +923,7 @@ def build_records(
         ]
         deduped_staged_assets, removed_duplicate_assets = dedupe_materialized_assets(materialized_staged_assets, out_dir)
         all_assets = assets + deduped_staged_assets
+        assign_external_labels(all_assets)
 
         record = {
             "question_id": question_id,
@@ -601,13 +959,88 @@ def build_records(
 
 
 def render_md(text: str) -> str:
-    escaped = html.escape(str(text or ""))
+    repaired = str(text or "")
+    repaired = repair_latex_for_render(repaired)
+    escaped = html.escape(repaired)
     escaped = re.sub(r"^## (.+)$", r"<h4>\1</h4>", escaped, flags=re.MULTILINE)
     return escaped.replace("\n", "<br>")
 
 
+def repair_latex_for_render(text: str) -> str:
+    repaired = str(text or "")
+    repaired = re.sub(r"(\\langle[^\n]{0,240})\nangle", r"\1\\rangle", repaired)
+    repaired = re.sub(r"\\langle\s*([^$\n<>]{1,180})\n\s*angle", r"\\langle \1 \\rangle", repaired)
+    repaired = re.sub(r"\\cos\\langle\s*([^$\n<>]{1,180})\n\s*angle", r"\\cos\\langle \1 \\rangle", repaired)
+    repaired = re.sub(r"(?<!\\)rangle", r"\\rangle", repaired)
+    repaired = re.sub(
+        r"\$\$(.*?)\$\$",
+        lambda m: "$$" + re.sub(r"\s*\n\s*", " ", m.group(1)) + "$$",
+        repaired,
+        flags=re.S,
+    )
+    repaired = re.sub(
+        r"(?<!\$)\$(?!\$)(.*?)(?<!\$)\$(?!\$)",
+        lambda m: "$" + re.sub(r"\s*\n\s*", " ", m.group(1)) + "$",
+        repaired,
+        flags=re.S,
+    )
+    return repaired
+
+
 def asset_url(asset: dict[str, Any]) -> str:
     return html.escape(asset["storage_key"])
+
+
+def asset_meta_badges(asset: dict[str, Any]) -> str:
+    badges: list[str] = []
+    detector_source = str(asset.get("detector_source", "") or "").strip()
+    if detector_source:
+        badges.append(f"<span class='badge'>{html.escape(detector_source)}</span>")
+    crop_policy = str(asset.get("crop_policy", "") or "").strip()
+    if crop_policy:
+        badges.append(f"<span class='badge'>{html.escape(crop_policy)}</span>")
+    audit = asset.get("bbox_audit", {}) if isinstance(asset.get("bbox_audit"), dict) else {}
+    validity = str(audit.get("validity", "") or "").strip()
+    if validity:
+        badge_class = "badge ok" if validity == "valid" else "badge warn"
+        badges.append(f"<span class='{badge_class}'>{html.escape(validity)}</span>")
+    external_label_kind = str(asset.get("external_label_kind", "") or "").strip()
+    if external_label_kind:
+        badges.append(f"<span class='badge'>{html.escape(external_label_kind)}</span>")
+    external_label_text = str(asset.get("external_label_text", "") or "").strip()
+    if external_label_text:
+        badges.append(f"<span class='badge ok'>{html.escape(external_label_text)}</span>")
+    return "".join(badges)
+
+
+def asset_external_label_html(asset: dict[str, Any]) -> str:
+    label = str(asset.get("external_label_text", "") or "").strip()
+    if not label:
+        return ""
+    kind = str(asset.get("external_label_kind", "") or "").strip()
+    class_name = "asset-label option-label" if kind == "option_key" else "asset-label"
+    return f"<div class='{class_name}'>{html.escape(label)}</div>"
+
+
+def asset_audit_caption(asset: dict[str, Any]) -> str:
+    parts: list[str] = []
+    role = str(asset.get("role", asset.get("asset_role", "")) or "")
+    display_ref = str(asset.get("display_ref", asset.get("asset_id", "")) or "")
+    if role:
+        parts.append(role)
+    if display_ref:
+        parts.append(display_ref)
+    audit = asset.get("bbox_audit", {}) if isinstance(asset.get("bbox_audit"), dict) else {}
+    validity = str(audit.get("validity", "") or "").strip()
+    if validity:
+        parts.append(f"bbox={validity}")
+    detector_source = str(asset.get("detector_source", "") or "").strip()
+    if detector_source:
+        parts.append(f"source={detector_source}")
+    suspect_reasons = audit.get("suspect_reasons", []) if isinstance(audit.get("suspect_reasons"), list) else []
+    if suspect_reasons:
+        parts.append("risk=" + ",".join(str(item) for item in suspect_reasons[:4]))
+    return " | ".join(parts)
 
 
 def render_text_block(text: str) -> str:
@@ -654,8 +1087,10 @@ def render_display_blocks_html(record: dict[str, Any]) -> str:
             parts.append(f"<h4>{html.escape(title)}</h4>")
             parts.append(
                 "<figure>"
+                f"{asset_external_label_html(asset)}"
                 f"<img src='{asset_url(asset)}' alt='{html.escape(asset_id)}'>"
-                f"<figcaption>{html.escape(str(asset.get('asset_role', 'image')))} · {html.escape(str(asset.get('display_ref', '')))}</figcaption>"
+                f"<div class='badges'>{asset_meta_badges(asset)}</div>"
+                f"<figcaption>{html.escape(asset_audit_caption(asset))}</figcaption>"
                 "</figure>"
             )
     return "".join(parts)
@@ -708,8 +1143,10 @@ def render_display_blocks_html_v2(record: dict[str, Any]) -> str:
                 if asset:
                     cards.append(
                         "<figure>"
+                        f"{asset_external_label_html(asset)}"
                         f"<img src='{asset_url(asset)}' alt='{html.escape(asset_id)}'>"
-                        f"<figcaption>{html.escape(str(asset.get('asset_role', 'image')))} 路 {html.escape(str(asset.get('display_ref', '')))}</figcaption>"
+                        f"<div class='badges'>{asset_meta_badges(asset)}</div>"
+                        f"<figcaption>{html.escape(asset_audit_caption(asset))}</figcaption>"
                         "</figure>"
                     )
                 index += 1
@@ -723,6 +1160,22 @@ def render_display_blocks_html_v2(record: dict[str, Any]) -> str:
 
 
 def write_html(out_path: Path, payload: dict[str, Any]) -> None:
+    html_assets = stage_html_assets(out_path.parent)
+    katex_css_link = (
+        f"<link rel=\"stylesheet\" href=\"{html.escape(html_assets['katex_css'])}\" />"
+        if "katex_css" in html_assets
+        else ""
+    )
+    katex_js_script = (
+        f"<script defer src=\"{html.escape(html_assets['katex_js'])}\"></script>"
+        if "katex_js" in html_assets
+        else ""
+    )
+    auto_render_script = (
+        f"<script defer src=\"{html.escape(html_assets['auto_render_js'])}\"></script>"
+        if "auto_render_js" in html_assets
+        else ""
+    )
     rows: list[str] = []
     for record in payload["questions"]:
         evidence_assets = [a for a in record["assets"] if str(a.get("placement", "")) == "evidence_only"]
@@ -751,20 +1204,7 @@ def write_html(out_path: Path, payload: dict[str, Any]) -> None:
                 )
             return "".join(cards)
 
-        review_parts: list[str] = []
-        if str(record.get("stem_text_md", "") or "").strip():
-            review_parts.append("<h4>题干</h4>")
-            review_parts.append(f"<div class='md'>{render_md(record['stem_text_md'])}</div>")
-        if stem_assets or option_assets:
-            review_parts.append(f"<div class='image-row'>{image_cards(stem_assets + option_assets)}</div>")
-        if str(record.get("answer_text_md", "") or "").strip():
-            review_parts.append("<h4>答案</h4>")
-            review_parts.append(f"<div class='md'>{render_md(record['answer_text_md'])}</div>")
-        if str(record.get("analysis_text_md", "") or "").strip():
-            review_parts.append("<h4>解析</h4>")
-            review_parts.append(f"<div class='md'>{render_md(record['analysis_text_md'])}</div>")
-        if analysis_assets:
-            review_parts.append(f"<div class='image-row'>{image_cards(analysis_assets)}</div>")
+        review_html = render_display_blocks_html_v2(record)
 
         rows.append(
             "<section class='card'>"
@@ -777,7 +1217,7 @@ def write_html(out_path: Path, payload: dict[str, Any]) -> None:
             "</div>"
             "<div>"
             "<h3>审核复写版</h3>"
-            f"{''.join(review_parts)}"
+            f"{review_html}"
             "</div>"
             "<div>"
             "<h3>原始证据图</h3>"
@@ -794,6 +1234,7 @@ def write_html(out_path: Path, payload: dict[str, Any]) -> None:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>题目图片资产化审核</title>
+  {katex_css_link}
   <style>
     body {{ margin: 0; background: #f6f7fb; color: #182230; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; }}
     header {{ padding: 24px 32px; background: #172033; color: white; }}
@@ -810,10 +1251,15 @@ def write_html(out_path: Path, payload: dict[str, Any]) -> None:
     .badges {{ margin: 8px 0 12px; }}
     .badge {{ display: inline-block; margin: 0 6px 6px 0; padding: 4px 8px; border-radius: 999px; background: #eef4ff; color: #175cd3; font-size: 12px; }}
     .badge.warn {{ background: #fff1f3; color: #c01048; }}
+    .badge.ok {{ background: #ecfdf3; color: #027a48; }}
+    .asset-label {{ display: inline-block; margin: 0 0 8px; padding: 3px 8px; border-radius: 6px; background: #101828; color: #fff; font-size: 13px; font-weight: 700; }}
+    .option-label {{ background: #175cd3; }}
     .image-row {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 12px; }}
     figure {{ margin: 0 0 12px; padding: 10px; border: 1px solid #e7edf8; border-radius: 12px; background: #fff; }}
     img {{ max-width: 100%; height: auto; display: block; border-radius: 8px; background: #fff; }}
     figcaption {{ margin-top: 8px; color: #667085; font-size: 12px; word-break: break-all; }}
+    .katex {{ font-size: 1.06em; }}
+    .katex-display {{ margin: .6em 0; overflow-x: auto; overflow-y: hidden; }}
     @media (max-width: 900px) {{ .grid {{ grid-template-columns: 1fr; }} .wrap {{ padding: 14px; }} }}
   </style>
 </head>
@@ -825,6 +1271,147 @@ def write_html(out_path: Path, payload: dict[str, Any]) -> None:
   <main class="wrap">
     {body}
   </main>
+  {katex_js_script}
+  {auto_render_script}
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {{
+      if (!window.renderMathInElement) return;
+      window.renderMathInElement(document.body, {{
+        delimiters: [
+          {{ left: '$$', right: '$$', display: true }},
+          {{ left: '$', right: '$', display: false }}
+        ],
+        throwOnError: false
+      }});
+    }});
+  </script>
+</body>
+</html>
+"""
+    out_path.write_text(doc, encoding="utf-8")
+
+
+def write_html_clean(out_path: Path, payload: dict[str, Any]) -> None:
+    html_assets = stage_html_assets(out_path.parent)
+    katex_css_link = (
+        f"<link rel=\"stylesheet\" href=\"{html.escape(html_assets['katex_css'])}\" />"
+        if "katex_css" in html_assets
+        else ""
+    )
+    katex_js_script = (
+        f"<script defer src=\"{html.escape(html_assets['katex_js'])}\"></script>"
+        if "katex_js" in html_assets
+        else ""
+    )
+    auto_render_script = (
+        f"<script defer src=\"{html.escape(html_assets['auto_render_js'])}\"></script>"
+        if "auto_render_js" in html_assets
+        else ""
+    )
+
+    def image_cards(assets: list[dict[str, Any]]) -> str:
+        cards: list[str] = []
+        for asset in assets:
+            cards.append(
+                "<figure>"
+                f"{asset_external_label_html(asset)}"
+                f"<img src='{asset_url(asset)}' alt='{html.escape(str(asset.get('asset_id', '')))}'>"
+                f"<div class='badges'>{asset_meta_badges(asset)}</div>"
+                f"<figcaption>{html.escape(asset_audit_caption(asset))}</figcaption>"
+                "</figure>"
+            )
+        return "".join(cards)
+
+    rows: list[str] = []
+    for record in payload["questions"]:
+        evidence_assets = [a for a in record["assets"] if str(a.get("placement", "")) == "evidence_only"]
+        asset_badges = " ".join(
+            f"<span class='badge'>{html.escape(str(a.get('asset_role', a.get('role', ''))))}: {html.escape(str(a.get('display_ref', '')))}</span>"
+            for a in record["assets"]
+        )
+        missing = " ".join(
+            f"<span class='badge warn'>{html.escape(m['field'])} missing</span>"
+            for m in record["missing_assets"]
+        )
+        rows.append(
+            "<section class='card'>"
+            f"<h2>{html.escape(record['question_id'])} <small>{html.escape(record['component_label'])} Q{html.escape(record['local_number'])}</small></h2>"
+            f"<div class='badges'>{asset_badges}{missing}</div>"
+            "<div class='grid'>"
+            "<div>"
+            "<h3>落库结构版</h3>"
+            f"{render_display_blocks_html_v2(record)}"
+            "</div>"
+            "<div>"
+            "<h3>审核复写版</h3>"
+            f"{render_display_blocks_html_v2(record)}"
+            "</div>"
+            "<div>"
+            "<h3>原始证据图</h3>"
+            f"{image_cards(evidence_assets)}"
+            "</div>"
+            "</div>"
+            "</section>"
+        )
+
+    body = "\n".join(rows)
+    doc = f"""<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>题目图片资产审核页</title>
+  {katex_css_link}
+  <style>
+    body {{ margin: 0; background: #f6f7fb; color: #182230; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; }}
+    header {{ padding: 24px 32px; background: #172033; color: white; }}
+    header h1 {{ margin: 0 0 8px; font-size: 24px; }}
+    header p {{ margin: 0; opacity: .82; }}
+    .wrap {{ padding: 24px; }}
+    .card {{ background: white; border: 1px solid #e3e8f2; border-radius: 16px; padding: 18px; margin: 0 0 18px; box-shadow: 0 8px 24px rgba(18, 31, 55, .06); }}
+    h2 {{ margin: 0 0 10px; color: #0f1d2e; }}
+    h2 small {{ color: #667085; font-weight: 500; margin-left: 8px; }}
+    h3 {{ margin: 14px 0 10px; font-size: 16px; color: #344054; }}
+    h4 {{ margin: 12px 0 6px; color: #101828; }}
+    .grid {{ display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(280px, .8fr); gap: 18px; align-items: start; }}
+    .md {{ background: #fbfcff; border: 1px solid #e7edf8; border-radius: 12px; padding: 14px; line-height: 1.75; white-space: normal; }}
+    .badges {{ margin: 8px 0 12px; }}
+    .badge {{ display: inline-block; margin: 0 6px 6px 0; padding: 4px 8px; border-radius: 999px; background: #eef4ff; color: #175cd3; font-size: 12px; }}
+    .badge.warn {{ background: #fff1f3; color: #c01048; }}
+    .badge.ok {{ background: #ecfdf3; color: #027a48; }}
+    .asset-label {{ display: inline-block; margin: 0 0 8px; padding: 3px 8px; border-radius: 6px; background: #101828; color: #fff; font-size: 13px; font-weight: 700; }}
+    .option-label {{ background: #175cd3; }}
+    .image-row {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 12px; }}
+    figure {{ margin: 0 0 12px; padding: 10px; border: 1px solid #e7edf8; border-radius: 12px; background: #fff; }}
+    img {{ max-width: 100%; height: auto; display: block; border-radius: 8px; background: #fff; }}
+    figcaption {{ margin-top: 8px; color: #667085; font-size: 12px; word-break: break-all; }}
+    .katex {{ font-size: 1.06em; }}
+    .katex-display {{ margin: .6em 0; overflow-x: auto; overflow-y: hidden; }}
+    @media (max-width: 900px) {{ .grid {{ grid-template-columns: 1fr; }} .wrap {{ padding: 14px; }} }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>题目图片资产审核页</h1>
+    <p>生成时间：{html.escape(payload["generated_at"])} | 题目数：{payload["question_count"]} | 图片资产：{payload["asset_count"]}</p>
+  </header>
+  <main class="wrap">
+    {body}
+  </main>
+  {katex_js_script}
+  {auto_render_script}
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {{
+      if (!window.renderMathInElement) return;
+      window.renderMathInElement(document.body, {{
+        delimiters: [
+          {{ left: '$$', right: '$$', display: true }},
+          {{ left: '$', right: '$', display: false }}
+        ],
+        throwOnError: false
+      }});
+    }});
+  </script>
 </body>
 </html>
 """
@@ -865,7 +1452,7 @@ def main() -> None:
         "questions": records,
     }
     write_json(out_dir / "question_asset_manifest_v0.1.json", payload)
-    write_html(out_dir / "question_asset_review.html", payload)
+    write_html_clean(out_dir / "question_asset_review.html", payload)
 
     summary = {
         "out_dir": str(out_dir),
@@ -873,9 +1460,9 @@ def main() -> None:
         "html": str(out_dir / "question_asset_review.html"),
         "question_count": len(records),
         "asset_count": asset_count,
-        "questions_with_stem_image": sum(any(a["role"] == "stem" for a in r["assets"]) for r in records),
-        "questions_with_analysis_image": sum(any(a["role"] == "analysis" for a in r["assets"]) for r in records),
-        "questions_with_option_assets": sum(any(a.get("asset_role") == "option" for a in r["assets"]) for r in records),
+        "questions_with_stem_image": sum(any(str(a.get("role") or a.get("asset_role") or "") == "stem" for a in r["assets"]) for r in records),
+        "questions_with_analysis_image": sum(any(str(a.get("role") or a.get("asset_role") or "") == "analysis" for a in r["assets"]) for r in records),
+        "questions_with_option_assets": sum(any(str(a.get("role") or a.get("asset_role") or "") == "option" for a in r["assets"]) for r in records),
         "questions_with_missing_assets": sum(bool(r["missing_assets"]) for r in records),
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2))

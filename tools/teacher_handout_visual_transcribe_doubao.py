@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import http.client
 import json
 import os
 import re
@@ -13,6 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import visual_transcription_core as vision_core
+import visual_transcription_pipeline as vision_pipeline
 import visual_transcription_strict_eval_adapter as strict_eval_adapter
 import vision_prompt_store
 
@@ -21,6 +23,9 @@ API_URL = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
 DEFAULT_MODEL = "doubao-seed-2-0-pro-260215"
 ACTIVE_TRANSCRIPTION_PROMPT = vision_prompt_store.get_transcription_prompt_bundle()
 PROMPT_VERSION = ACTIVE_TRANSCRIPTION_PROMPT["prompt_version"]
+RAW_BLOCKS_PROMPT = vision_prompt_store.get_raw_blocks_prompt_bundle()
+FIELD_MAPPING_PROMPT = vision_prompt_store.get_field_mapping_prompt_bundle()
+PIPELINE_PROMPT_VERSION = f"{RAW_BLOCKS_PROMPT['prompt_version']}+{FIELD_MAPPING_PROMPT['prompt_version']}"
 
 
 def ensure_dir(path: Path) -> None:
@@ -38,9 +43,9 @@ def write_json(path: Path, payload: object) -> None:
 def restore_latex_control_prefixes(value: object) -> object:
     if isinstance(value, str):
         # Some model outputs use raw LaTeX like \triangle or \because inside JSON strings.
-        # JSON decoders treat \t, \b, \f as control escapes, so we restore them back to
+        # JSON decoders treat \t, \b, \f, \r as control escapes, so we restore them back to
         # literal backslash-prefixed macros before storing the transcription.
-        return value.replace("\t", "\\t").replace("\b", "\\b").replace("\f", "\\f")
+        return value.replace("\t", "\\t").replace("\b", "\\b").replace("\f", "\\f").replace("\r", "\\r")
     if isinstance(value, list):
         return [restore_latex_control_prefixes(item) for item in value]
     if isinstance(value, dict):
@@ -373,6 +378,30 @@ def build_active_prompt(question: dict, record_id: str) -> str:
     return _render_transcription_prompt(question, record_id, ACTIVE_TRANSCRIPTION_PROMPT["variant"])
 
 
+def build_raw_blocks_prompt(question: dict, record_id: str) -> str:
+    context_block, hint_block = _build_prompt_blocks(question, record_id)
+    return vision_prompt_store.render_template(
+        RAW_BLOCKS_PROMPT["user_template"],
+        {
+            "CONTEXT_LINES": context_block,
+            "HINT_LINES": hint_block,
+        },
+    )
+
+
+def build_field_mapping_prompt(question: dict, record_id: str, raw_blocks_payload: dict) -> str:
+    context_block, hint_block = _build_prompt_blocks(question, record_id)
+    raw_blocks_json = json.dumps(raw_blocks_payload, ensure_ascii=False, indent=2)
+    return vision_prompt_store.render_template(
+        FIELD_MAPPING_PROMPT["user_template"],
+        {
+            "CONTEXT_LINES": context_block,
+            "HINT_LINES": hint_block,
+            "RAW_BLOCKS_JSON": raw_blocks_json,
+        },
+    )
+
+
 def build_prompt(question: dict, record_id: str) -> str:
     context_lines = [f"- record_id: {record_id}", f"- question_id: {question.get('question_id', '')}"]
     for label, value in (
@@ -596,8 +625,7 @@ def normalize_transcription_fields(parsed: dict) -> dict:
     return strict_eval_adapter.normalize_transcription_fields(parsed)
 
 
-def call_model(api_key: str, model: str, prompt: str, image_paths: list[Path]) -> dict:
-    system_prompt = ACTIVE_TRANSCRIPTION_PROMPT["system_prompt"]
+def call_model_with_system(api_key: str, model: str, system_prompt: str, prompt: str, image_paths: list[Path]) -> dict:
     user_content: list[dict] = [{"type": "text", "text": prompt}]
     for image_path in image_paths:
         user_content.append({"type": "image_url", "image_url": {"url": image_to_data_url(image_path)}})
@@ -624,14 +652,22 @@ def call_model(api_key: str, model: str, prompt: str, image_paths: list[Path]) -
         },
         method="POST",
     )
-    try:
-        with urllib.request.urlopen(request, timeout=180) as response:
-            raw = response.read().decode("utf-8")
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"http_{exc.code}: {detail}") from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"network_error: {exc}") from exc
+    last_error: Exception | None = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(request, timeout=180) as response:
+                raw = response.read().decode("utf-8")
+            break
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"http_{exc.code}: {detail}") from exc
+        except (urllib.error.URLError, http.client.RemoteDisconnected, ConnectionResetError) as exc:
+            last_error = exc
+            if attempt >= 2:
+                raise RuntimeError(f"network_error: {exc}") from exc
+            time.sleep(1.0 + attempt * 1.5)
+    else:
+        raise RuntimeError(f"network_error: {last_error}")
 
     payload = json.loads(raw)
     content = payload["choices"][0]["message"]["content"]
@@ -640,6 +676,36 @@ def call_model(api_key: str, model: str, prompt: str, image_paths: list[Path]) -
         "raw_content": content,
         "usage": payload.get("usage", {}) or {},
     }
+
+
+def call_model(api_key: str, model: str, prompt: str, image_paths: list[Path]) -> dict:
+    return call_model_with_system(
+        api_key,
+        model,
+        ACTIVE_TRANSCRIPTION_PROMPT["system_prompt"],
+        prompt,
+        image_paths,
+    )
+
+
+def call_raw_blocks_model(api_key: str, model: str, prompt: str, image_paths: list[Path]) -> dict:
+    return call_model_with_system(
+        api_key,
+        model,
+        RAW_BLOCKS_PROMPT["system_prompt"],
+        prompt,
+        image_paths,
+    )
+
+
+def call_field_mapping_model(api_key: str, model: str, prompt: str, image_paths: list[Path]) -> dict:
+    return call_model_with_system(
+        api_key,
+        model,
+        FIELD_MAPPING_PROMPT["system_prompt"],
+        prompt,
+        image_paths,
+    )
 
 
 def load_source_questions(source_json_path: Path) -> dict[str, dict]:
@@ -835,54 +901,7 @@ def main() -> None:
             )
             continue
 
-        image_paths = collect_image_paths(question)
-        if not image_paths:
-            records.append(
-                {
-                    "record_id": record_id,
-                    "question_id": item["question_id"],
-                    "source_transcription_json": str(source_json_path),
-                    "status": "failed",
-                    "error": "no_images_found",
-                    "tag": item.get("tag", ""),
-                }
-            )
-            continue
-
-        prompt = build_active_prompt(question, record_id)
-        prepared = {
-            "record_id": record_id,
-            "question_id": item["question_id"],
-            "source_transcription_json": str(source_json_path),
-            "question_image": question.get("question_image", ""),
-            "stem_image": question.get("stem_image", ""),
-            "analysis_image": question.get("analysis_image", ""),
-            "question_uid": question.get("question_uid", ""),
-            "gating_result": question.get("gating_result", {}),
-            "option_visual_blocks": question.get("option_visual_blocks", []),
-            "staged_visual_assets": question.get("staged_visual_assets", []),
-            "image_count": len(image_paths),
-            "prompt": prompt,
-            "prompt_version": PROMPT_VERSION,
-            "model_name": args.model,
-            "tag": item.get("tag", ""),
-        }
-        write_json(raw_dir / f"{record_id}.prepared.json", prepared)
-
-        if args.prepare_only:
-            records.append(
-                {
-                    "record_id": record_id,
-                    "question_id": item["question_id"],
-                    "source_transcription_json": str(source_json_path),
-                    "status": "prepared",
-                    "tag": item.get("tag", ""),
-                    "image_count": len(image_paths),
-                }
-            )
-            continue
-
-        if not args.api_key:
+        if not args.prepare_only and not args.api_key:
             records.append(
                 {
                     "record_id": record_id,
@@ -895,73 +914,51 @@ def main() -> None:
             )
             continue
 
-        result = None
-        started_at_iso = utc_now_iso()
-        started_perf = time.perf_counter()
-        try:
-            result = call_model(args.api_key, args.model, prompt, image_paths)
-            finished_at_iso = utc_now_iso()
-            latency_seconds = round(time.perf_counter() - started_perf, 3)
-            write_json(raw_dir / f"{record_id}.response.json", result["raw_response"])
-            (raw_dir / f"{record_id}.response.txt").write_text(
-                str(result.get("raw_content", "")),
-                encoding="utf-8",
-            )
-            parsed = extract_json_block(result["raw_content"])
-            parsed = vision_core.safe_normalize_transcription_payload(
-                parsed,
-                record_id=record_id,
-                question_id=item["question_id"],
-                visual_refs={
-                    "question_image": question.get("question_image", ""),
-                    "stem_image": question.get("stem_image", ""),
-                    "analysis_image": question.get("analysis_image", ""),
-                },
-                prompt_version=PROMPT_VERSION,
-                model_name=args.model,
-                question_context=question,
-            )
-            records.append(
-                {
-                    "record_id": record_id,
-                    "question_id": item["question_id"],
-                    "source_transcription_json": str(source_json_path),
-                    "status": "ok",
-                    "tag": item.get("tag", ""),
-                    "question_image": question.get("question_image", ""),
-                    "stem_image": question.get("stem_image", ""),
-                    "analysis_image": question.get("analysis_image", ""),
-                    "request_started_at": started_at_iso,
-                    "request_finished_at": finished_at_iso,
-                    "latency_seconds": latency_seconds,
-                    "usage": result.get("usage", {}) or {},
-                    "transcription": parsed,
-                }
-            )
-        except Exception as exc:  # noqa: BLE001
-            finished_at_iso = utc_now_iso()
-            latency_seconds = round(time.perf_counter() - started_perf, 3)
-            if isinstance(result, dict) and result.get("raw_response"):
-                write_json(raw_dir / f"{record_id}.response_failed_parse.json", result["raw_response"])
-            if isinstance(result, dict) and result.get("raw_content") is not None:
-                (raw_dir / f"{record_id}.response_failed_parse.txt").write_text(
-                    str(result.get("raw_content", "")),
-                    encoding="utf-8",
-                )
-            records.append(
-                {
-                    "record_id": record_id,
-                    "question_id": item["question_id"],
-                    "source_transcription_json": str(source_json_path),
-                    "status": "failed",
-                    "error": str(exc),
-                    "tag": item.get("tag", ""),
-                    "request_started_at": started_at_iso,
-                    "request_finished_at": finished_at_iso,
-                    "latency_seconds": latency_seconds,
-                    "usage": result.get("usage", {}) if isinstance(result, dict) else {},
-                }
-            )
+        pipeline_result = vision_pipeline.run_question_pipeline(
+            item=item,
+            question=question,
+            source_json_path=source_json_path,
+            record_id=record_id,
+            model_name=args.model,
+            prompt_version=PIPELINE_PROMPT_VERSION,
+            api_key=str(args.api_key or ""),
+            prepare_only=bool(args.prepare_only),
+            raw_blocks_prompt_builder=build_raw_blocks_prompt,
+            raw_blocks_call_model_fn=call_raw_blocks_model,
+            field_mapping_prompt_builder=build_field_mapping_prompt,
+            field_mapping_call_model_fn=call_field_mapping_model,
+            extract_json_fn=extract_json_block,
+        )
+
+        prepared_payload = pipeline_result.get("prepared_payload", {}) or {}
+        write_json(raw_dir / f"{record_id}.prepared.json", prepared_payload)
+
+        raw_blocks_response = pipeline_result.get("raw_blocks_response", {}) or {}
+        raw_blocks_content = str(pipeline_result.get("raw_blocks_content", "") or "")
+        field_mapping_response = pipeline_result.get("field_mapping_response", {}) or {}
+        field_mapping_content = str(pipeline_result.get("field_mapping_content", "") or "")
+        record = pipeline_result.get("record", {}) or {}
+        status = str(record.get("status", "") or "")
+
+        if raw_blocks_response:
+            if status == "ok":
+                write_json(raw_dir / f"{record_id}.raw_blocks.response.json", raw_blocks_response)
+            else:
+                write_json(raw_dir / f"{record_id}.raw_blocks.response_failed_parse.json", raw_blocks_response)
+        if raw_blocks_content:
+            target_name = "raw_blocks.response.txt" if status == "ok" else "raw_blocks.response_failed_parse.txt"
+            (raw_dir / f"{record_id}.{target_name}").write_text(raw_blocks_content, encoding="utf-8")
+
+        if field_mapping_response:
+            if status == "ok":
+                write_json(raw_dir / f"{record_id}.field_mapping.response.json", field_mapping_response)
+            else:
+                write_json(raw_dir / f"{record_id}.field_mapping.response_failed_parse.json", field_mapping_response)
+        if field_mapping_content:
+            target_name = "field_mapping.response.txt" if status == "ok" else "field_mapping.response_failed_parse.txt"
+            (raw_dir / f"{record_id}.{target_name}").write_text(field_mapping_content, encoding="utf-8")
+
+        records.append(record)
         time.sleep(max(args.sleep_seconds, 0.0))
 
     ok_records = [item for item in records if item["status"] == "ok"]
@@ -971,8 +968,9 @@ def main() -> None:
     ]
     summary = {
         "model": args.model,
-        "prompt_version": PROMPT_VERSION,
+        "prompt_version": PIPELINE_PROMPT_VERSION,
         "runtime_contract": "general_vision_v0.1",
+        "pipeline_topology": vision_pipeline.PIPELINE_TOPOLOGY,
         "question_count": len(records),
         "ok_count": len(ok_records),
         "prepared_count": sum(1 for item in records if item["status"] == "prepared"),

@@ -25,6 +25,19 @@ INLINE_MATH_RE = re.compile(r"\$\$(.+?)\$\$|\$(.+?)\$", re.DOTALL)
 ANSWER_HEADER_RE = re.compile(r"^\s*(?:\[|【)\s*答案\s*(?:\]|】)\s*[:：]?\s*", re.UNICODE)
 EXPLANATION_HEADER_RE = re.compile(r"(?:\[|【)\s*(?:解答|解析|分析|证明|详解|点评|思路|结论)\s*(?:\]|】)", re.UNICODE)
 SUBQUESTION_MARK_RE = re.compile(r"(?:(?<=^)|(?<=\n)|(?<=\s))(?:\(\d+\)|（\d+）)")
+CIRCLED_SUBQUESTION_VALUES = {
+    "①": 1,
+    "②": 2,
+    "③": 3,
+    "④": 4,
+    "⑤": 5,
+    "⑥": 6,
+    "⑦": 7,
+    "⑧": 8,
+    "⑨": 9,
+    "⑩": 10,
+}
+CIRCLED_SUBQUESTION_RE = re.compile("[" + "".join(CIRCLED_SUBQUESTION_VALUES) + "]")
 REASONING_CUE_RE = re.compile(
     r"(?:\\because|\\therefore|证明|由此|因为|故|所以|可得|解[:：]|解得|分析[:：]|由.+得)",
     re.UNICODE,
@@ -38,6 +51,22 @@ RISK_TOKEN_RULES = (
     ("coordinate", re.compile(r"\([^\n]{0,40},[^\n]{0,40}\)")),
     ("line_segment_ref", re.compile(r"\bP[A-Z]\b|\b[A-Z]{2}\b")),
 )
+COMMAND_PREFIX_LOSS_RE = re.compile(
+    r"(?<![A-Za-z\\])(?:[0-9A-Za-z]\s*)?(?:otin|noti|eq|leq|geq)\s*[A-Za-z0-9]?",
+    re.UNICODE,
+)
+EQUATION_SYSTEM_LAYOUT_LOSS_RE = re.compile(
+    r"(?:联立|方程组|不等式组|解得|则有|可得)[^\n]{0,80}\{[^\n]{0,120}(?:[xyabmnuv]_?\d?|x|y)\s*=",
+    re.UNICODE,
+)
+MULTI_ASSIGNMENT_FLAT_RE = re.compile(
+    r"\{[^\n{}]{0,80}[A-Za-z]_?\d?\s*=\s*[^{}\n]{1,40}\s+[A-Za-z]_?\d?\s*=",
+    re.UNICODE,
+)
+VECTOR_COORDINATE_LAYOUT_LOSS_RE = re.compile(
+    r"(?:向量|坐标|\\overrightarrow|\\vec)[^\n]{0,80}(?:\{[^\n{}]{0,80}[A-Za-z]\s*=|[A-Za-z]\s*,\s*[A-Za-z]\s*,\s*[A-Za-z][^\n]{0,40}=)",
+    re.UNICODE,
+)
 OPTION_LINE_RE = re.compile(r"^\s*(?:[（(]?([A-D])[）)]?[.、]?)\s*(.*)$")
 OPTION_INLINE_RE = re.compile(r"(?:^|[\s\n])(?:[（(]?([A-D])[）)]?[.、])")
 
@@ -47,6 +76,10 @@ VISIBLE_ANSWER_HEADER_RE = re.compile(r"^\s*【\s*答案\s*】\s*")
 VISIBLE_EXPLANATION_HEADER_RE = re.compile(r"【\s*(?:解答|分析|证明|详解|点评|思路|结论)\s*】")
 HANDWRITING_VISUAL_DESCRIPTION_RE = re.compile(
     r"(?:红色|蓝色|紫色|黑色|手写|标注|笔记|空白处|横线处|顶部|左侧|右侧|上方|下方|图片|颜色)",
+    re.UNICODE,
+)
+STANDALONE_FIGURE_CAPTION_LINE_RE = re.compile(
+    r"^\s*(?:图\s*\d+\s*){1,8}[。.;；,，、\s]*$",
     re.UNICODE,
 )
 
@@ -89,7 +122,7 @@ def safe_slug(text: str) -> str:
 
 def restore_latex_control_prefixes(value: object) -> object:
     if isinstance(value, str):
-        return value.replace("\t", "\\t").replace("\b", "\\b").replace("\f", "\\f")
+        return value.replace("\t", "\\t").replace("\b", "\\b").replace("\f", "\\f").replace("\r", "\\r")
     if isinstance(value, list):
         return [restore_latex_control_prefixes(item) for item in value]
     if isinstance(value, dict):
@@ -257,9 +290,6 @@ def _apply_safe_string_normalization(text: str, field: str) -> tuple[str, list[d
         ("strip_bom", "\ufeff", ""),
         ("normalize_crlf", "\r\n", "\n"),
         ("normalize_cr", "\r", "\n"),
-        ("literal_backslash_crlf", "\\r\\n", "\n"),
-        ("literal_backslash_newline", "\\n", "\n"),
-        ("literal_backslash_cr", "\\r", "\n"),
         ("display_math_open_bracket", "\\[", "$$"),
         ("display_math_close_bracket", "\\]", "$$"),
         ("inline_math_open_paren", "\\(", "$"),
@@ -272,6 +302,13 @@ def _apply_safe_string_normalization(text: str, field: str) -> tuple[str, list[d
         if before in current:
             current = current.replace(before, after)
             log.append({"field": field, "op": op})
+
+    literal_linebreak = re.sub(r"\\r\\n", "\n", current)
+    literal_linebreak = re.sub(r"\\n(?![A-Za-z])", "\n", literal_linebreak)
+    literal_linebreak = re.sub(r"\\r(?![A-Za-z])", "\n", literal_linebreak)
+    if literal_linebreak != current:
+        current = literal_linebreak
+        log.append({"field": field, "op": "literal_backslash_linebreak"})
 
     sized_latex = re.sub(r"\\left\s*([()\[\]{}])", r"\1", current)
     sized_latex = re.sub(r"\\right\s*([()\[\]{}])", r"\1", sized_latex)
@@ -290,6 +327,76 @@ def _apply_safe_string_normalization(text: str, field: str) -> tuple[str, list[d
     if collapsed != current:
         current = collapsed
         log.append({"field": field, "op": "collapse_excess_blank_lines"})
+
+    restored_latex_n_command = re.sub(
+        r"(?<=[A-Za-z0-9)}\]])\n(?=(?:e(?:q)?|otin|otsubset|subseteq|subset|supseteq|supset)(?:\s|[A-Za-z0-9<>=(),.;]))",
+        r"\\n",
+        current,
+    )
+    if restored_latex_n_command != current:
+        current = restored_latex_n_command
+        log.append({"field": field, "op": "restore_latex_n_command_prefix"})
+
+    def _normalize_malformed_compare_operators(value: str) -> str:
+        repaired = value
+        # Common malformed not-equal artifacts from vision transcription:
+        # m - 1eq0, m - 1 eq0, m - 1neq0, and m - 11eq0 should all be
+        # interpreted as the visible constraint m - 1 \neq 0.
+        repaired = re.sub(
+            r"(?<=[A-Za-z0-9)}\]])\s*leq\s*(?=[A-Za-z0-9({\\-])",
+            r" \\leq ",
+            repaired,
+        )
+        repaired = re.sub(
+            r"(?<=[A-Za-z0-9)}\]])\s*geq\s*(?=[A-Za-z0-9({\\-])",
+            r" \\geq ",
+            repaired,
+        )
+        repaired = re.sub(
+            r"(?<=[0-9)}\]])\s*(?:n\s*eq|neq|eq)\s*(?=[A-Za-z0-9({\\-])",
+            r" \\neq ",
+            repaired,
+        )
+        repaired = re.sub(
+            r"(?<=[0-9)}\]])\s*(?:n\s*e|ne)\s*(?=[0-9({\\-])",
+            r" \\neq ",
+            repaired,
+        )
+        if not re.search(r"(?:科学[计记]数法|近似数|有效数字|scientific\s+notation|e[-\s]?notation)", repaired, re.IGNORECASE):
+            repaired = re.sub(
+                r"(?<![.\d])([0-9]{1,3})\s*e\s*([0-9]{1,3})(?![.\d])",
+                r"\1 \\neq \2",
+                repaired,
+            )
+            repaired = re.sub(
+                r"(?<![A-Za-z\\])([A-Za-z])\s*e\s*(-?[0-9]{1,3})(?![A-Za-z0-9])",
+                r"\1 \\neq \2",
+                repaired,
+            )
+        repaired = re.sub(
+            r"(?<=[A-Za-z0-9)}\]])\s*(?:≤)\s*(?=[A-Za-z0-9({\\-])",
+            r" \\leq ",
+            repaired,
+        )
+        repaired = re.sub(
+            r"(?<=[A-Za-z0-9)}\]])\s*(?:≥)\s*(?=[A-Za-z0-9({\\-])",
+            r" \\geq ",
+            repaired,
+        )
+        repaired = re.sub(
+            r"(?<=[A-Za-z0-9)}\]])\s*(?:≠|!=|！=)\s*(?=[A-Za-z0-9({\\-])",
+            r" \\neq ",
+            repaired,
+        )
+        repaired = re.sub(r"\\neq\s*0\b", r"\\neq 0", repaired)
+        repaired = re.sub(r"\\leq\s*0\b", r"\\leq 0", repaired)
+        repaired = re.sub(r"\\geq\s*0\b", r"\\geq 0", repaired)
+        return repaired
+
+    compare_fixed = _normalize_malformed_compare_operators(current)
+    if compare_fixed != current:
+        current = compare_fixed
+        log.append({"field": field, "op": "normalize_malformed_compare_operator"})
 
     return current, log
 
@@ -376,6 +483,26 @@ def _strip_template_noise_lines(text: str, field: str) -> tuple[str, list[dict],
                 )
                 log.append({"field": field, "op": "strip_template_noise_line"})
                 continue
+        kept_lines.append(line)
+    return "\n".join(kept_lines).strip(), flags, log
+
+
+def _strip_standalone_figure_caption_lines(text: str, field: str) -> tuple[str, list[dict], list[dict]]:
+    current = str(text or "")
+    kept_lines: list[str] = []
+    flags: list[dict] = []
+    log: list[dict] = []
+    for line in current.split("\n"):
+        if STANDALONE_FIGURE_CAPTION_LINE_RE.match(line):
+            flags.append(
+                {
+                    "field": FIELD_TO_SHORT.get(field, field),
+                    "code": "standalone_figure_caption_removed",
+                    "detail": normalize_text(line)[:120],
+                }
+            )
+            log.append({"field": field, "op": "strip_standalone_figure_caption_line"})
+            continue
         kept_lines.append(line)
     return "\n".join(kept_lines).strip(), flags, log
 
@@ -469,6 +596,27 @@ def _count_subquestion_markers(text: str) -> int:
     return len(markers)
 
 
+def _circled_subquestion_values(text: str) -> set[int]:
+    return {
+        CIRCLED_SUBQUESTION_VALUES[marker]
+        for marker in CIRCLED_SUBQUESTION_RE.findall(str(text or ""))
+        if marker in CIRCLED_SUBQUESTION_VALUES
+    }
+
+
+def _missing_circled_answer_markers(stem_text: str, answer_text: str) -> list[int]:
+    stem_values = _circled_subquestion_values(stem_text)
+    answer_values = _circled_subquestion_values(answer_text)
+    if not stem_values or not answer_values:
+        return []
+    max_answer = max(answer_values)
+    return [
+        value
+        for value in sorted(stem_values)
+        if value < max_answer and value not in answer_values
+    ]
+
+
 def sanitize_field_boundaries(display_fields: dict[str, str]) -> tuple[dict[str, str], list[dict], list[dict]]:
     sanitized = dict(display_fields)
     flags: list[dict] = []
@@ -484,6 +632,12 @@ def sanitize_field_boundaries(display_fields: dict[str, str]) -> tuple[dict[str,
         log.extend(stem_noise_log)
     flags.extend(stem_noise_flags)
 
+    stem_text, stem_caption_flags, stem_caption_log = _strip_standalone_figure_caption_lines(stem_text, "stem_text_md")
+    if stem_caption_log:
+        sanitized["stem_text_md"] = stem_text
+        log.extend(stem_caption_log)
+    flags.extend(stem_caption_flags)
+
     answer_text, answer_noise_flags, answer_noise_log = _strip_template_noise_lines(answer_text, "answer_text_md")
     if answer_noise_log:
         sanitized["answer_text_md"] = answer_text
@@ -495,6 +649,15 @@ def sanitize_field_boundaries(display_fields: dict[str, str]) -> tuple[dict[str,
         sanitized["analysis_text_md"] = analysis_text
         log.extend(analysis_noise_log)
     flags.extend(analysis_noise_flags)
+
+    analysis_text, analysis_caption_flags, analysis_caption_log = _strip_standalone_figure_caption_lines(
+        analysis_text,
+        "analysis_text_md",
+    )
+    if analysis_caption_log:
+        sanitized["analysis_text_md"] = analysis_text
+        log.extend(analysis_caption_log)
+    flags.extend(analysis_caption_flags)
 
     stripped_answer = VISIBLE_ANSWER_HEADER_RE.sub("", answer_text, count=1)
     stripped_answer = ANSWER_HEADER_RE.sub("", stripped_answer, count=1).lstrip()
@@ -559,6 +722,16 @@ def sanitize_field_boundaries(display_fields: dict[str, str]) -> tuple[dict[str,
                 "field": "answer",
                 "code": "answer_subquestion_count_mismatch",
                 "detail": f"stem={stem_subquestions},answer={answer_subquestions}",
+            }
+        )
+
+    missing_circled = _missing_circled_answer_markers(stem_text, answer_text)
+    if missing_circled:
+        flags.append(
+            {
+                "field": "answer",
+                "code": "answer_circled_subquestion_sequence_gap",
+                "detail": "missing=" + ",".join(str(value) for value in missing_circled),
             }
         )
 
@@ -1057,7 +1230,30 @@ def detect_risk_spans(
 
     for field_key, text in display_fields.items():
         short_field = FIELD_TO_SHORT[field_key]
-        for match in INLINE_MATH_RE.finditer(str(text or "")):
+        compare_pattern = re.compile(r"\\(?:ne|neq|leq|geq)|[<>≤≥≠]|(?<=[0-9)}\]])\s*e\s*(?=[0-9({\\-])")
+        for match in compare_pattern.finditer(str(text or "")):
+            start = max(match.start() - 24, 0)
+            end = min(match.end() + 24, len(str(text or "")))
+            _append(short_field, str(text or "")[start:end], "compare_operator", "auto_high_risk")
+        text_value = str(text or "")
+        for rule_name, pattern in (
+            ("math_command_prefix_loss", COMMAND_PREFIX_LOSS_RE),
+            ("equation_system_layout_loss", EQUATION_SYSTEM_LAYOUT_LOSS_RE),
+            ("equation_system_layout_loss", MULTI_ASSIGNMENT_FLAT_RE),
+            ("vector_coordinate_layout_loss", VECTOR_COORDINATE_LAYOUT_LOSS_RE),
+        ):
+            for match in pattern.finditer(text_value):
+                start = max(match.start() - 36, 0)
+                end = min(match.end() + 36, len(text_value))
+                candidate = text_value[start:end]
+                if rule_name == "equation_system_layout_loss":
+                    if "\\begin{cases}" in candidate:
+                        continue
+                    compact_candidate = re.sub(r"\s+", "", candidate)
+                    if not any(token in compact_candidate for token in ("{x=", "{y=", "{m=", "{n=", "{x_1=", "{x_2=", "{y_1=", "{y_2=")):
+                        continue
+                _append(short_field, candidate, rule_name, "auto_layout_check")
+        for match in INLINE_MATH_RE.finditer(text_value):
             math_text = match.group(1) if match.group(1) is not None else match.group(2) or ""
             for reason, pattern in RISK_TOKEN_RULES:
                 if pattern.search(math_text):
@@ -1086,7 +1282,11 @@ def build_quality_gate(
     for flag in boundary_flags:
         code = str(flag.get("code", "") or "")
         detail = str(flag.get("detail", "") or "")
-        if code in {"answer_contains_reasoning", "answer_subquestion_count_mismatch"}:
+        if code in {
+            "answer_contains_reasoning",
+            "answer_subquestion_count_mismatch",
+            "answer_circled_subquestion_sequence_gap",
+        }:
             _push("block", code, detail)
         elif code in {"template_noise_line_removed", "analysis_leading_non_analysis_stripped"}:
             _push("review", code, detail)
@@ -1103,6 +1303,16 @@ def build_quality_gate(
     proof_like = bool(re.search(r"(?:证明|\\because|\\therefore|∵|∴)", analysis_text))
     if proof_like and len(geometry_risks) >= 4:
         _push("block", "geometry_proof_dense_risk", f"geometry_risk_spans={len(geometry_risks)}")
+
+    layout_check_risks = [
+        item
+        for item in risk_spans
+        if str(item.get("reason", "") or "")
+        in {"math_command_prefix_loss", "equation_system_layout_loss", "vector_coordinate_layout_loss"}
+    ]
+    for reason in sorted({str(item.get("reason", "") or "") for item in layout_check_risks}):
+        count = sum(1 for item in layout_check_risks if str(item.get("reason", "") or "") == reason)
+        _push("review", reason, f"risk_spans={count}")
 
     if answer_text.strip() and not analysis_text.strip() and len(answer_text.strip()) >= 80:
         _push("review", "answer_only_long_text", answer_text[:120])

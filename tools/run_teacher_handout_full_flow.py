@@ -145,6 +145,7 @@ def main() -> None:
         "transcribe_question_count": transcribe_stage.get("question_count", 0),
         "transcribe_ok_count": transcribe_stage.get("ok_count", 0),
         "transcribe_failed_count": transcribe_stage.get("failed_count", 0),
+        "pipeline_topology": transcribe_stage.get("pipeline_topology", {}),
         "question_asset_out_dir": asset_stage.get("out_dir", ""),
         "question_asset_manifest": asset_stage.get("manifest", ""),
         "question_asset_review_html": asset_stage.get("html", ""),

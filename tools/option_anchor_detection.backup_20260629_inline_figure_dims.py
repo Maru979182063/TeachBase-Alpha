@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import base64
-import io
 import json
 import os
 import re
@@ -45,12 +44,6 @@ def _image_to_data_url(path: Path) -> str:
     return f"data:{mime};base64,{base64.b64encode(path.read_bytes()).decode('ascii')}"
 
 
-def _pil_image_to_data_url(image: Image.Image) -> str:
-    buffer = io.BytesIO()
-    image.convert("RGB").save(buffer, format="PNG")
-    return f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode('ascii')}"
-
-
 def _extract_json_block(text: str) -> dict:
     clean = str(text or "").strip()
     if clean.startswith("```"):
@@ -74,96 +67,23 @@ def _normalize_bbox(value: object) -> dict:
     }
 
 
-def _option_bbox_coordinate_mode(block: dict, image_width: int, image_height: int) -> str:
-    raw_boxes: list[dict] = []
-    for key in ("label_bbox", "option_bbox", "text_bbox"):
-        value = block.get(key)
-        if isinstance(value, dict):
-            raw_boxes.append(_normalize_bbox(value))
-    for value in block.get("image_bboxes", []) or []:
-        if isinstance(value, dict):
-            raw_boxes.append(_normalize_bbox(value))
-    if not raw_boxes:
-        return "pixel"
-
-    declared_w = int(block.get("image_width", 0) or 0)
-    declared_h = int(block.get("image_height", 0) or 0)
-    if declared_w == 1000 or declared_h == 1000:
-        return "normalized_1000"
-
-    max_right = max(item["x"] + item["w"] for item in raw_boxes)
-    max_bottom = max(item["y"] + item["h"] for item in raw_boxes)
-    # Doubao-style grounding often comes back in a 0-1000 canvas even when the
-    # prompt asks for pixels. If any option bbox exceeds the real image bounds,
-    # use the normalized interpretation instead of letting C/D vanish at crop time.
-    if (max_right > image_width or max_bottom > image_height) and max(max_right, max_bottom) <= 1100:
-        return "normalized_1000"
-    return "pixel"
-
-
-def _normalize_option_bbox(value: object, *, mode: str, image_width: int, image_height: int) -> dict:
-    raw = _normalize_bbox(value)
-    if mode == "normalized_1000":
-        x = int(round(raw["x"] * image_width / 1000.0))
-        y = int(round(raw["y"] * image_height / 1000.0))
-        w = int(round(raw["w"] * image_width / 1000.0))
-        h = int(round(raw["h"] * image_height / 1000.0))
-    else:
-        x, y, w, h = raw["x"], raw["y"], raw["w"], raw["h"]
-
-    result = {
-        "x": max(x, 0),
-        "y": max(y, 0),
-        "w": max(w, 0),
-        "h": max(h, 0),
-    }
-    if isinstance(value, dict):
-        flags = normalize_review_flags(value.get("review_flags", []) or [])
-        if mode == "normalized_1000":
-            flags = normalize_review_flags(flags + ["model_bbox_normalized_1000"])
-            result["raw_model_bbox_json"] = raw
-            result["bbox_coordinate_mode"] = mode
-        confidence = value.get("confidence")
-        if confidence is not None:
-            result["confidence"] = round(float(confidence or 0.0), 4)
-        detector_source = str(value.get("detector_source", "") or "").strip()
-        result["detector_source"] = detector_source or "vision_model_option"
-        result["review_flags"] = flags
-    return result
-
-
-def _normalize_option_block(
-    block: dict,
-    bbox_space: str,
-    image_width: int,
-    image_height: int,
-    *,
-    force_coordinate_mode: str | None = None,
-) -> dict:
+def _normalize_option_block(block: dict, bbox_space: str, image_width: int, image_height: int) -> dict:
     review_flags = normalize_review_flags(block.get("review_flags", []) or [])
     confidence = float(block.get("confidence", 0.0) or 0.0)
-    coordinate_mode = force_coordinate_mode or _option_bbox_coordinate_mode(block, image_width, image_height)
-    if coordinate_mode == "normalized_1000":
-        review_flags = normalize_review_flags(review_flags + ["option_bbox_normalized_1000"])
     if confidence < OPTION_ATTACH_CONFIDENCE_THRESHOLD and "option_anchor_low_confidence" not in review_flags:
         review_flags.append("option_anchor_low_confidence")
     return {
         "option_key": str(block.get("option_key", "") or "").upper(),
         "option_order": int(block.get("option_order", 0) or 0),
-        "label_bbox": _normalize_option_bbox(block.get("label_bbox"), mode=coordinate_mode, image_width=image_width, image_height=image_height),
-        "option_bbox": _normalize_option_bbox(block.get("option_bbox"), mode=coordinate_mode, image_width=image_width, image_height=image_height),
-        "text_bbox": _normalize_option_bbox(block.get("text_bbox"), mode=coordinate_mode, image_width=image_width, image_height=image_height),
-        "image_bboxes": [
-            _normalize_option_bbox(item, mode=coordinate_mode, image_width=image_width, image_height=image_height)
-            for item in (block.get("image_bboxes", []) or [])
-            if isinstance(item, dict)
-        ],
+        "label_bbox": _normalize_bbox(block.get("label_bbox")),
+        "option_bbox": _normalize_bbox(block.get("option_bbox")),
+        "text_bbox": _normalize_bbox(block.get("text_bbox")),
+        "image_bboxes": [_normalize_bbox(item) for item in (block.get("image_bboxes", []) or []) if isinstance(item, dict)],
         "bbox_space": bbox_space,
         "image_width": image_width,
         "image_height": image_height,
         "layout_type": str(block.get("layout_type", "") or "unknown"),
         "confidence": round(confidence, 4),
-        "bbox_coordinate_mode": coordinate_mode,
         "review_flags": review_flags,
     }
 
@@ -214,13 +134,10 @@ def _call_model(api_key: str, model: str, image_path: Path, bbox_space: str, hin
 
 def _call_inline_figure_model(api_key: str, model: str, image_path: Path, bbox_space: str, hint_text: str = "") -> dict:
     bundle = vision_prompt_store.get_inline_figure_prompt_bundle()
-    image_width, image_height = _read_image_meta(image_path)
     prompt = vision_prompt_store.render_template(
         bundle["user_template"],
         {
             "BBOX_SPACE": bbox_space or "stem_image",
-            "IMAGE_WIDTH": str(image_width),
-            "IMAGE_HEIGHT": str(image_height),
             "HINT_TEXT": hint_text or "- none",
         },
     )
@@ -234,97 +151,6 @@ def _call_inline_figure_model(api_key: str, model: str, image_path: Path, bbox_s
                 "content": [
                     {"type": "text", "text": prompt},
                     {"type": "image_url", "image_url": {"url": _image_to_data_url(image_path)}},
-                ],
-            },
-        ],
-    }
-    request = urllib.request.Request(
-        API_URL,
-        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=180) as response:
-            raw = response.read().decode("utf-8")
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"http_{exc.code}: {detail}") from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"network_error: {exc}") from exc
-    payload = json.loads(raw)
-    return _extract_json_block(payload["choices"][0]["message"]["content"])
-
-
-def _call_inline_figure_model_on_image(
-    api_key: str,
-    model: str,
-    image: Image.Image,
-    *,
-    bbox_space: str,
-    hint_text: str = "",
-) -> dict:
-    bundle = vision_prompt_store.get_inline_figure_prompt_bundle()
-    image_width, image_height = image.size
-    prompt = vision_prompt_store.render_template(
-        bundle["user_template"],
-        {
-            "BBOX_SPACE": bbox_space or "stem_image",
-            "IMAGE_WIDTH": str(image_width),
-            "IMAGE_HEIGHT": str(image_height),
-            "HINT_TEXT": hint_text or "- none",
-        },
-    )
-    body = {
-        "model": model,
-        "temperature": 0.0,
-        "messages": [
-            {"role": "system", "content": bundle["system_prompt"]},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": {"url": _pil_image_to_data_url(image)}},
-                ],
-            },
-        ],
-    }
-    request = urllib.request.Request(
-        API_URL,
-        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=180) as response:
-            raw = response.read().decode("utf-8")
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"http_{exc.code}: {detail}") from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"network_error: {exc}") from exc
-    payload = json.loads(raw)
-    return _extract_json_block(payload["choices"][0]["message"]["content"])
-
-
-def _call_inline_figure_refine_model(api_key: str, model: str, crop_image: Image.Image) -> dict:
-    bundle = vision_prompt_store.get_inline_figure_refine_prompt_bundle()
-    body = {
-        "model": model,
-        "temperature": 0.0,
-        "messages": [
-            {"role": "system", "content": bundle["system_prompt"]},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": bundle["user_template"]},
-                    {"type": "image_url", "image_url": {"url": _pil_image_to_data_url(crop_image)}},
                 ],
             },
         ],
@@ -472,20 +298,11 @@ def detect_option_anchors(
         detection["detector"] = "heuristic_fallback"
     else:
         raw_blocks = detection.get("options", []) or detection.get("option_visual_blocks", []) or []
-        raw_blocks = [
-            block
-            for block in raw_blocks
-            if isinstance(block, dict) and str(block.get("option_key", "") or "").upper() in OPTION_KEYS
-        ]
-        coordinate_modes = [
-            _option_bbox_coordinate_mode(block, width, height)
-            for block in raw_blocks
-        ]
-        force_coordinate_mode = "normalized_1000" if "normalized_1000" in coordinate_modes else None
         detection = {
             "option_visual_blocks": [
-                _normalize_option_block(block, bbox_space, width, height, force_coordinate_mode=force_coordinate_mode)
+                _normalize_option_block(block, bbox_space, width, height)
                 for block in raw_blocks
+                if isinstance(block, dict) and str(block.get("option_key", "") or "").upper() in OPTION_KEYS
             ],
             # Keep option detection focused on option-scoped layout only.
             "stem_image_bboxes": [],
@@ -521,155 +338,35 @@ def _scale_model_canvas_boxes(
     model_image_height: int,
     image_width: int,
     image_height: int,
-    image: Image.Image | None = None,
 ) -> list[dict]:
-    if not items:
+    if model_image_width <= 0 or model_image_height <= 0:
         return items
-
-    def transform(source: str, scale_x: float, scale_y: float) -> list[dict]:
-        scaled: list[dict] = []
-        for item in items:
-            raw_bbox = {
-                "x": int(item.get("x", 0) or 0),
-                "y": int(item.get("y", 0) or 0),
-                "w": int(item.get("w", 0) or 0),
-                "h": int(item.get("h", 0) or 0),
+    if model_image_width == image_width and model_image_height == image_height:
+        return items
+    scale_x = image_width / max(model_image_width, 1)
+    scale_y = image_height / max(model_image_height, 1)
+    scaled: list[dict] = []
+    for item in items:
+        x = int(round(int(item.get("x", 0) or 0) * scale_x))
+        y = int(round(int(item.get("y", 0) or 0) * scale_y))
+        w = int(round(int(item.get("w", 0) or 0) * scale_x))
+        h = int(round(int(item.get("h", 0) or 0) * scale_y))
+        flags = normalize_review_flags(
+            list(item.get("review_flags", []) or []) + ["model_canvas_scaled"]
+        )
+        scaled.append(
+            {
+                **item,
+                "x": max(x, 0),
+                "y": max(y, 0),
+                "w": max(w, 1),
+                "h": max(h, 1),
+                "review_flags": flags,
+                "model_image_width": model_image_width,
+                "model_image_height": model_image_height,
             }
-            x = int(round(raw_bbox["x"] * scale_x))
-            y = int(round(raw_bbox["y"] * scale_y))
-            w = int(round(raw_bbox["w"] * scale_x))
-            h = int(round(raw_bbox["h"] * scale_y))
-            flags = list(item.get("review_flags", []) or [])
-            if source == "model_canvas":
-                flags.append("model_canvas_scaled")
-            elif source == "normalized_1000":
-                flags.append("model_bbox_normalized_1000")
-            scaled.append(
-                {
-                    **item,
-                    "x": max(x, 0),
-                    "y": max(y, 0),
-                    "w": max(w, 1),
-                    "h": max(h, 1),
-                    "review_flags": normalize_review_flags(flags),
-                    "raw_model_bbox_json": raw_bbox,
-                    "bbox_coordinate_mode": source,
-                    "model_image_width": model_image_width,
-                    "model_image_height": model_image_height,
-                }
-            )
-        return scaled
-
-    candidates: list[tuple[str, list[dict]]] = [
-        ("pixel", transform("pixel", 1.0, 1.0)),
-    ]
-    if model_image_width > 0 and model_image_height > 0 and (
-        model_image_width != image_width or model_image_height != image_height
-    ):
-        candidates.append(
-            (
-                "model_canvas",
-                transform(
-                    "model_canvas",
-                    image_width / max(model_image_width, 1),
-                    image_height / max(model_image_height, 1),
-                ),
-            )
         )
-    # Several vision APIs/models emit grounding boxes in a 0-1000 coordinate
-    # space even when the surrounding JSON echoes the original image size.
-    # Keep this as an explicit candidate instead of assuming the declared size.
-    candidates.append(
-        (
-            "normalized_1000",
-            transform("normalized_1000", image_width / 1000.0, image_height / 1000.0),
-        )
-    )
-
-    if image is None:
-        # Deterministic fallback: if any raw box exceeds the real image bounds,
-        # the 0-1000 interpretation is safer than treating it as pixels.
-        max_right = max(int(item.get("x", 0) or 0) + int(item.get("w", 0) or 0) for item in items)
-        max_bottom = max(int(item.get("y", 0) or 0) + int(item.get("h", 0) or 0) for item in items)
-        if max_right > image_width or max_bottom > image_height:
-            return candidates[-1][1]
-        return candidates[0][1]
-
-    def red_ratio(crop: Image.Image) -> float:
-        if crop.width <= 0 or crop.height <= 0:
-            return 1.0
-        pixels = crop.convert("RGB").load()
-        red = 0
-        total = crop.width * crop.height
-        for yy in range(crop.height):
-            for xx in range(crop.width):
-                r, g, b = pixels[xx, yy]
-                if r >= 150 and g <= 120 and b <= 120 and r - max(g, b) >= 45:
-                    red += 1
-        return red / max(total, 1)
-
-    def score_box(box: dict) -> float:
-        x = int(box.get("x", 0) or 0)
-        y = int(box.get("y", 0) or 0)
-        w = int(box.get("w", 0) or 0)
-        h = int(box.get("h", 0) or 0)
-        if w <= 0 or h <= 0:
-            return -100.0
-        x2 = x + w
-        y2 = y + h
-        out_of_bounds = max(0, -x) + max(0, -y) + max(0, x2 - image_width) + max(0, y2 - image_height)
-        cx1 = max(x, 0)
-        cy1 = max(y, 0)
-        cx2 = min(x2, image_width)
-        cy2 = min(y2, image_height)
-        if cx2 <= cx1 or cy2 <= cy1:
-            return -100.0
-        crop = image.crop((cx1, cy1, cx2, cy2))
-        bounds = _find_dark_bounds(crop, 0, 0, crop.width, crop.height, threshold=220)
-        if bounds is None:
-            return -20.0
-        bx1, by1, bx2, by2 = bounds
-        fg_w = bx2 - bx1
-        fg_h = by2 - by1
-        fg_area_ratio = (fg_w * fg_h) / max(crop.width * crop.height, 1)
-        edge_touch_penalty = sum(
-            1
-            for value in (
-                bx1,
-                by1,
-                crop.width - bx2,
-                crop.height - by2,
-            )
-            if value <= 1
-        )
-        # Prefer crops that contain a real sparse figure and avoid red teacher
-        # explanation text. Extremely large text-heavy regions score poorly.
-        score = 0.0
-        score += min(fg_area_ratio, 0.82) * 6.0
-        score -= red_ratio(crop) * 18.0
-        score -= edge_touch_penalty * 0.7
-        score -= out_of_bounds / max(image_width + image_height, 1) * 12.0
-        if crop.width > image_width * 0.45 or crop.height > image_height * 0.55:
-            score -= 1.4
-        return score
-
-    def score_set(candidate_items: list[dict]) -> float:
-        if not candidate_items:
-            return -100.0
-        scores = [score_box(item) for item in candidate_items]
-        # Do not let one good box hide several broken boxes.
-        return (sum(scores) / len(scores)) + min(scores) * 0.35
-
-    best_name, best_items = max(candidates, key=lambda pair: score_set(pair[1]))
-    if best_name != "pixel":
-        return best_items
-    # If the raw pixel interpretation contains impossible boxes but scoring was
-    # inconclusive, still avoid propagating impossible pixel coordinates.
-    max_right = max(int(item.get("x", 0) or 0) + int(item.get("w", 0) or 0) for item in items)
-    max_bottom = max(int(item.get("y", 0) or 0) + int(item.get("h", 0) or 0) for item in items)
-    if max_right > image_width or max_bottom > image_height:
-        return candidates[-1][1]
-    return best_items
+    return scaled
 
 
 def _segment_runs(
@@ -742,224 +439,6 @@ def _looks_figure_like_bbox(
     if width > int(image_width * 0.92) and height < int(image_height * 0.14):
         return False
     return True
-
-
-def _colored_pixel_ratios(image: Image.Image, bbox: dict) -> dict[str, float]:
-    x1 = max(int(bbox.get("x", 0) or 0), 0)
-    y1 = max(int(bbox.get("y", 0) or 0), 0)
-    x2 = min(x1 + int(bbox.get("w", 0) or 0), image.size[0])
-    y2 = min(y1 + int(bbox.get("h", 0) or 0), image.size[1])
-    if x2 <= x1 or y2 <= y1:
-        return {"red": 0.0, "blue": 0.0}
-    crop = image.convert("RGB").crop((x1, y1, x2, y2))
-    pixels = crop.load()
-    red = 0
-    blue = 0
-    total = crop.size[0] * crop.size[1]
-    for yy in range(crop.size[1]):
-        for xx in range(crop.size[0]):
-            r, g, b = pixels[xx, yy]
-            if r > 150 and g < 125 and b < 125:
-                red += 1
-            if b > 145 and r < 120 and g < 170:
-                blue += 1
-    return {"red": red / max(total, 1), "blue": blue / max(total, 1)}
-
-
-def _dark_row_runs_for_bbox(image: Image.Image, bbox: dict, threshold: int = 220) -> list[tuple[int, int]]:
-    x1 = max(int(bbox.get("x", 0) or 0), 0)
-    y1 = max(int(bbox.get("y", 0) or 0), 0)
-    x2 = min(x1 + int(bbox.get("w", 0) or 0), image.size[0])
-    y2 = min(y1 + int(bbox.get("h", 0) or 0), image.size[1])
-    if x2 <= x1 or y2 <= y1:
-        return []
-    gray = image.convert("L").crop((x1, y1, x2, y2))
-    pixels = gray.load()
-    cw, ch = gray.size
-    ratios: list[float] = []
-    for yy in range(ch):
-        dark = 0
-        for xx in range(cw):
-            if pixels[xx, yy] < threshold:
-                dark += 1
-        ratios.append(dark / max(cw, 1))
-    return _segment_runs(ratios, threshold=0.012, min_len=3, max_gap=4)
-
-
-def _looks_like_text_false_positive(image: Image.Image, bbox: dict) -> bool:
-    width = int(bbox.get("w", 0) or 0)
-    height = int(bbox.get("h", 0) or 0)
-    if width <= 0 or height <= 0:
-        return True
-
-    ratios = _colored_pixel_ratios(image, bbox)
-    row_runs = _dark_row_runs_for_bbox(image, bbox)
-    if not row_runs:
-        return True
-    run_count = len(row_runs)
-    total_run_height = sum(end - start + 1 for start, end in row_runs)
-    text_stack_like = run_count >= 4 and total_run_height <= max(80, int(height * 0.55))
-
-    # Teacher analysis text is often red. Real math figures can contain a little
-    # red annotation, so only reject when it also looks like stacked text lines.
-    if ratios["red"] >= 0.018 and (text_stack_like or height < 150):
-        return True
-    if ratios["red"] >= 0.003 and run_count >= 4:
-        return True
-
-    # Blue page headers/titles are not semantic in-question figures.
-    if ratios["blue"] >= 0.012 and height < 180:
-        return True
-
-    # A wide shallow crop with many short dark line runs is almost always a text
-    # paragraph or formula strip, not a drawable figure.
-    aspect = width / max(height, 1)
-    if aspect > 2.2 and text_stack_like:
-        return True
-    if height < 95 and run_count >= 3:
-        return True
-    return False
-
-
-def _trim_colored_header_strip(image: Image.Image, bbox: dict) -> dict:
-    x1 = int(bbox.get("x", 0) or 0)
-    y1 = int(bbox.get("y", 0) or 0)
-    x2 = x1 + int(bbox.get("w", 0) or 0)
-    y2 = y1 + int(bbox.get("h", 0) or 0)
-    if x2 <= x1 or y2 <= y1 or y2 - y1 < 120:
-        return bbox
-
-    crop = image.convert("RGB").crop((x1, y1, x2, min(y2, y1 + min(120, (y2 - y1) // 3))))
-    pixels = crop.load()
-    cw, ch = crop.size
-    blue_rows: list[float] = []
-    for yy in range(ch):
-        blue = 0
-        for xx in range(cw):
-            r, g, b = pixels[xx, yy]
-            if b > 145 and r < 135 and g < 185:
-                blue += 1
-        blue_rows.append(blue / max(cw, 1))
-    runs = _segment_runs(blue_rows, threshold=0.01, min_len=3, max_gap=4)
-    if not runs:
-        return bbox
-    _, end = runs[0]
-    new_y1 = y1 + end + 6
-    if new_y1 >= y2 - 72:
-        return bbox
-    return {
-        **bbox,
-        "y": new_y1,
-        "h": y2 - new_y1,
-        "review_flags": normalize_review_flags(
-            list(bbox.get("review_flags", []) or []) + ["colored_header_trimmed"]
-        ),
-    }
-
-
-def _trim_red_teacher_text_edges(image: Image.Image, bbox: dict) -> dict:
-    x1 = int(bbox.get("x", 0) or 0)
-    y1 = int(bbox.get("y", 0) or 0)
-    x2 = x1 + int(bbox.get("w", 0) or 0)
-    y2 = y1 + int(bbox.get("h", 0) or 0)
-    if x2 <= x1 or y2 <= y1 or y2 - y1 < 90:
-        return bbox
-
-    crop = image.convert("RGB").crop((x1, y1, x2, y2))
-    pixels = crop.load()
-    cw, ch = crop.size
-    red_rows: list[float] = []
-    for yy in range(ch):
-        red = 0
-        for xx in range(cw):
-            r, g, b = pixels[xx, yy]
-            if r > 150 and g < 130 and b < 130:
-                red += 1
-        red_rows.append(red / max(cw, 1))
-
-    runs = _segment_runs(red_rows, threshold=0.0035, min_len=2, max_gap=3)
-    if not runs:
-        return bbox
-
-    updated = dict(bbox)
-    top_limit = int(ch * 0.35)
-    bottom_limit = int(ch * 0.65)
-    top_runs = [(s, e) for s, e in runs if s <= top_limit]
-    bottom_runs = [(s, e) for s, e in runs if e >= bottom_limit]
-
-    if top_runs:
-        _s, top_end = max(top_runs, key=lambda run: run[1])
-        new_y1 = y1 + top_end + 5
-        if new_y1 < y2 - 72:
-            updated["y"] = new_y1
-            updated["h"] = y2 - new_y1
-            updated["review_flags"] = normalize_review_flags(
-                list(updated.get("review_flags", []) or []) + ["red_teacher_text_top_trimmed"]
-            )
-
-    if bottom_runs:
-        bottom_start, _e = min(bottom_runs, key=lambda run: run[0])
-        new_y2 = y1 + bottom_start - 4
-        current_y1 = int(updated.get("y", 0) or 0)
-        if new_y2 > current_y1 + 72:
-            updated["h"] = new_y2 - current_y1
-            updated["review_flags"] = normalize_review_flags(
-                list(updated.get("review_flags", []) or []) + ["red_teacher_text_bottom_trimmed"]
-            )
-    return updated
-
-
-def _trim_bottom_text_block_after_gap(image: Image.Image, bbox: dict) -> dict:
-    x1 = int(bbox.get("x", 0) or 0)
-    y1 = int(bbox.get("y", 0) or 0)
-    x2 = x1 + int(bbox.get("w", 0) or 0)
-    y2 = y1 + int(bbox.get("h", 0) or 0)
-    if x2 <= x1 or y2 <= y1 or y2 - y1 < 120:
-        return bbox
-
-    crop = image.convert("L").crop((x1, y1, x2, y2))
-    pixels = crop.load()
-    cw, ch = crop.size
-    row_ratios: list[float] = []
-    for yy in range(ch):
-        dark = 0
-        for xx in range(cw):
-            if pixels[xx, yy] < 220:
-                dark += 1
-        row_ratios.append(dark / max(cw, 1))
-    runs = _segment_runs(row_ratios, threshold=0.01, min_len=3, max_gap=3)
-    if len(runs) < 3:
-        return bbox
-
-    for idx in range(1, len(runs)):
-        prev_end = runs[idx - 1][1]
-        start = runs[idx][0]
-        gap = start - prev_end - 1
-        if start < int(ch * 0.48) or gap < 8:
-            continue
-        tail = runs[idx:]
-        tail_height = sum(e - s + 1 for s, e in tail)
-        tail_line_count = len(tail)
-        tail_has_wide_line = False
-        for s, e in tail:
-            bounds = _find_dark_bounds(image, x1, y1 + s, x2, y1 + e + 1)
-            if bounds is None:
-                continue
-            bx1, _by1, bx2, _by2 = bounds
-            if bx2 - bx1 >= cw * 0.34:
-                tail_has_wide_line = True
-                break
-        if tail_line_count >= 2 and tail_height <= max(90, int(ch * 0.42)) and tail_has_wide_line:
-            new_y2 = y1 + start - 4
-            if new_y2 > y1 + 72:
-                return {
-                    **bbox,
-                    "h": new_y2 - y1,
-                    "review_flags": normalize_review_flags(
-                        list(bbox.get("review_flags", []) or []) + ["bottom_text_block_trimmed"]
-                    ),
-                }
-    return bbox
 
 
 def _try_extend_caption(image: Image.Image, bbox: dict, max_extra: int = 64) -> dict:
@@ -1401,51 +880,6 @@ def _trim_isolated_left_label_components(image: Image.Image, bbox: dict) -> dict
     }
 
 
-def _trim_left_label_by_vertical_gap(image: Image.Image, bbox: dict) -> dict:
-    x1 = int(bbox.get("x", 0) or 0)
-    y1 = int(bbox.get("y", 0) or 0)
-    x2 = x1 + int(bbox.get("w", 0) or 0)
-    y2 = y1 + int(bbox.get("h", 0) or 0)
-    if x2 <= x1 or y2 <= y1:
-        return bbox
-    crop_w = x2 - x1
-    crop_h = y2 - y1
-    if crop_w < 90 or crop_h < 60:
-        return bbox
-
-    gray = image.convert("L").crop((x1, y1, x2, y2))
-    pixels = gray.load()
-    col_ratios: list[float] = []
-    for xx in range(crop_w):
-        dark = 0
-        for yy in range(crop_h):
-            if pixels[xx, yy] < 220:
-                dark += 1
-        col_ratios.append(dark / max(crop_h, 1))
-
-    runs = _segment_runs(col_ratios, threshold=0.012, min_len=3, max_gap=2)
-    if len(runs) < 2:
-        return bbox
-    first_start, first_end = runs[0]
-    second_start, _second_end = runs[1]
-    first_width = first_end - first_start + 1
-    gap = second_start - first_end - 1
-    first_near_edge = first_start <= 12
-    second_substantial = second_start <= max(70, int(crop_w * 0.38))
-    if first_near_edge and first_width <= 34 and gap >= 7 and second_substantial:
-        new_x1 = x1 + max(second_start - 6, 0)
-        if new_x1 < x2 - 72:
-            return {
-                **bbox,
-                "x": new_x1,
-                "w": x2 - new_x1,
-                "review_flags": normalize_review_flags(
-                    list(bbox.get("review_flags", []) or []) + ["left_label_gap_trimmed"]
-                ),
-            }
-    return bbox
-
-
 def _split_candidate_columns(image: Image.Image, bbox: dict) -> list[dict]:
     x1 = int(bbox.get("x", 0) or 0)
     y1 = int(bbox.get("y", 0) or 0)
@@ -1758,41 +1192,6 @@ def _dedupe_public_boxes(items: list[dict]) -> list[dict]:
     return result
 
 
-def _bbox_iou(a: dict, b: dict) -> float:
-    ax1 = int(a.get("x", 0) or 0)
-    ay1 = int(a.get("y", 0) or 0)
-    ax2 = ax1 + int(a.get("w", 0) or 0)
-    ay2 = ay1 + int(a.get("h", 0) or 0)
-    bx1 = int(b.get("x", 0) or 0)
-    by1 = int(b.get("y", 0) or 0)
-    bx2 = bx1 + int(b.get("w", 0) or 0)
-    by2 = by1 + int(b.get("h", 0) or 0)
-    ix1 = max(ax1, bx1)
-    iy1 = max(ay1, by1)
-    ix2 = min(ax2, bx2)
-    iy2 = min(ay2, by2)
-    if ix2 <= ix1 or iy2 <= iy1:
-        return 0.0
-    inter = (ix2 - ix1) * (iy2 - iy1)
-    area_a = max(ax2 - ax1, 0) * max(ay2 - ay1, 0)
-    area_b = max(bx2 - bx1, 0) * max(by2 - by1, 0)
-    return inter / max(area_a + area_b - inter, 1)
-
-
-def _dedupe_overlapping_public_boxes(items: list[dict], iou_threshold: float = 0.62) -> list[dict]:
-    ordered = sorted(
-        [dict(item) for item in items if int(item.get("w", 0) or 0) > 0 and int(item.get("h", 0) or 0) > 0],
-        key=lambda item: float(item.get("confidence", 0.0) or 0.0),
-        reverse=True,
-    )
-    kept: list[dict] = []
-    for item in ordered:
-        if any(_bbox_iou(item, existing) >= iou_threshold for existing in kept):
-            continue
-        kept.append(item)
-    return sorted(kept, key=lambda item: (int(item.get("y", 0) or 0), int(item.get("x", 0) or 0)))
-
-
 def _sanitize_public_boxes(
     items: list[dict],
     *,
@@ -1807,41 +1206,12 @@ def _sanitize_public_boxes(
             continue
         split_candidates = _split_candidate_columns(image, item)
         for part in split_candidates:
-            coordinate_mode = str(part.get("bbox_coordinate_mode", "") or "")
-            if coordinate_mode in {"model_canvas", "normalized_1000"}:
-                part = _trim_colored_header_strip(image, part)
-                part = _pad_public_figure_bbox(
-                    image,
-                    part,
-                    pad_left=24,
-                    pad_right=12,
-                    pad_top=10,
-                    pad_bottom=10,
-                )
-                part = _trim_isolated_left_label_components(image, part)
-                part = _trim_colored_header_strip(image, part)
-                part = _trim_red_teacher_text_edges(image, part)
-                part = _trim_left_label_by_vertical_gap(image, part)
-                part = _trim_leading_body_text(image, part)
-                part = _trim_isolated_top_caption(image, part)
-                part = _trim_trailing_body_text(image, part)
-                part = _trim_red_teacher_text_edges(image, part)
-                part = _trim_bottom_text_block_after_gap(image, part)
-                if _looks_like_text_false_positive(image, part):
-                    continue
-                if not _looks_figure_like_bbox(part, image_width=image_width, image_height=image_height):
-                    continue
-                result.append(part)
-                continue
             part = _tighten_candidate_bbox(image, part)
             part = _trim_leading_body_text(image, part)
             part = _trim_isolated_top_caption(image, part)
-            part = _trim_colored_header_strip(image, part)
-            part = _trim_red_teacher_text_edges(image, part)
             part = _try_extend_caption(image, part)
             part = _pad_public_figure_bbox(image, part)
             part = _trim_trailing_body_text(image, part)
-            part = _trim_bottom_text_block_after_gap(image, part)
             if source_field_name == "question_image":
                 part = _pad_public_figure_bbox(
                     image,
@@ -1869,190 +1239,12 @@ def _sanitize_public_boxes(
                     pad_top=8,
                     pad_bottom=0,
                 )
-            part = _trim_colored_header_strip(image, part)
-            part = _trim_red_teacher_text_edges(image, part)
-            part = _trim_left_label_by_vertical_gap(image, part)
-            part = _trim_bottom_text_block_after_gap(image, part)
-            if _looks_like_text_false_positive(image, part):
-                continue
             if not _looks_figure_like_bbox(part, image_width=image_width, image_height=image_height):
                 continue
             result.append(part)
     result = _dedupe_public_boxes(result)
     result = _complete_sparse_grid_boxes(image, result)
-    result = [
-        item
-        for item in result
-        if _looks_figure_like_bbox(item, image_width=image_width, image_height=image_height)
-        and not _looks_like_text_false_positive(image, item)
-    ]
     return _dedupe_public_boxes(result)
-
-
-def _refine_public_boxes_with_model(
-    image: Image.Image,
-    boxes: list[dict],
-    *,
-    api_key: str,
-    model: str,
-) -> list[dict]:
-    if not api_key or not boxes:
-        return boxes
-
-    image_width, image_height = image.size
-    refined: list[dict] = []
-    for box in boxes:
-        x1 = max(int(box.get("x", 0) or 0) - 36, 0)
-        y1 = max(int(box.get("y", 0) or 0) - 36, 0)
-        x2 = min(int(box.get("x", 0) or 0) + int(box.get("w", 0) or 0) + 36, image_width)
-        y2 = min(int(box.get("y", 0) or 0) + int(box.get("h", 0) or 0) + 36, image_height)
-        if x2 <= x1 or y2 <= y1:
-            continue
-        crop = image.crop((x1, y1, x2, y2))
-        try:
-            payload = _call_inline_figure_refine_model(api_key, model, crop)
-        except Exception:
-            kept = dict(box)
-            kept["review_flags"] = normalize_review_flags(
-                list(kept.get("review_flags", []) or []) + ["inline_figure_refine_model_failed"]
-            )
-            refined.append(kept)
-            continue
-
-        is_valid = bool(payload.get("is_valid_figure", True))
-        if not is_valid:
-            continue
-        raw_bbox = payload.get("bbox", {})
-        candidate = _normalize_bbox(raw_bbox)
-        canvas_w = int(payload.get("image_width", 1000) or 1000)
-        canvas_h = int(payload.get("image_height", 1000) or 1000)
-        if candidate["w"] <= 0 or candidate["h"] <= 0 or canvas_w <= 0 or canvas_h <= 0:
-            kept = dict(box)
-            kept["review_flags"] = normalize_review_flags(
-                list(kept.get("review_flags", []) or []) + ["inline_figure_refine_bbox_invalid"]
-            )
-            refined.append(kept)
-            continue
-
-        crop_w = x2 - x1
-        crop_h = y2 - y1
-        nx1 = x1 + round(candidate["x"] / canvas_w * crop_w)
-        ny1 = y1 + round(candidate["y"] / canvas_h * crop_h)
-        nx2 = x1 + round((candidate["x"] + candidate["w"]) / canvas_w * crop_w)
-        ny2 = y1 + round((candidate["y"] + candidate["h"]) / canvas_h * crop_h)
-        nx1 = max(0, min(nx1, image_width - 1))
-        ny1 = max(0, min(ny1, image_height - 1))
-        nx2 = max(nx1 + 1, min(nx2, image_width))
-        ny2 = max(ny1 + 1, min(ny2, image_height))
-
-        updated = {
-            **box,
-            "x": nx1,
-            "y": ny1,
-            "w": nx2 - nx1,
-            "h": ny2 - ny1,
-            "pre_refine_bbox_json": {
-                "x": int(box.get("x", 0) or 0),
-                "y": int(box.get("y", 0) or 0),
-                "w": int(box.get("w", 0) or 0),
-                "h": int(box.get("h", 0) or 0),
-            },
-            "refine_crop_bbox_json": {"x": x1, "y": y1, "w": crop_w, "h": crop_h},
-            "refine_model_bbox_json": dict(raw_bbox) if isinstance(raw_bbox, dict) else raw_bbox,
-            "figure_refine_source": "vision_model",
-            "figure_refine_confidence": float(payload.get("confidence", 0.0) or 0.0),
-            "review_flags": normalize_review_flags(
-                list(box.get("review_flags", []) or []) + list(payload.get("review_flags", []) or [])
-            ),
-        }
-        if _looks_figure_like_bbox(updated, image_width=image_width, image_height=image_height) and not _looks_like_text_false_positive(image, updated):
-            refined.append(updated)
-    return _dedupe_public_boxes(refined)
-
-
-def _detect_public_figures_in_vertical_tiles(
-    image: Image.Image,
-    *,
-    api_key: str,
-    model: str,
-    bbox_space: str,
-    hint_text: str = "",
-) -> list[dict]:
-    width, height = image.size
-    if not api_key or height < 1300 or height < width * 1.55:
-        return []
-
-    tile_h = min(max(int(width * 1.25), 900), 1350)
-    overlap = min(220, max(120, tile_h // 6))
-    step = max(tile_h - overlap, 1)
-    y_positions: list[int] = []
-    y = 0
-    while y < height:
-        y_positions.append(y)
-        if y + tile_h >= height:
-            break
-        y += step
-    if y_positions and y_positions[-1] + tile_h < height:
-        y_positions.append(max(height - tile_h, 0))
-
-    boxes: list[dict] = []
-    for tile_index, y1 in enumerate(y_positions, start=1):
-        y2 = min(y1 + tile_h, height)
-        if y2 - y1 < 240:
-            continue
-        tile = image.crop((0, y1, width, y2))
-        try:
-            payload = _call_inline_figure_model_on_image(
-                api_key,
-                model,
-                tile,
-                bbox_space=f"{bbox_space}_tile_{tile_index}",
-                hint_text=hint_text,
-            )
-        except Exception:
-            continue
-        raw_boxes = [_normalize_public_image_bbox(item) for item in (payload.get("image_bboxes", []) or [])]
-        scaled = _scale_model_canvas_boxes(
-            [item for item in raw_boxes if item],
-            model_image_width=int(payload.get("image_width", 0) or 0),
-            model_image_height=int(payload.get("image_height", 0) or 0),
-            image_width=width,
-            image_height=y2 - y1,
-            image=tile.copy(),
-        )
-        for item in scaled:
-            mapped = dict(item)
-            mapped["y"] = int(mapped.get("y", 0) or 0) + y1
-            mapped["detector_source"] = "vision_model_tile"
-            mapped["tile_bbox_json"] = {"x": 0, "y": y1, "w": width, "h": y2 - y1}
-            mapped["tile_index"] = tile_index
-            boxes.append(mapped)
-    return _dedupe_overlapping_public_boxes(boxes)
-
-
-def _should_run_vertical_tile_detection(image_width: int, image_height: int, boxes: list[dict]) -> bool:
-    if image_height < 1300 or image_height < image_width * 1.55:
-        return False
-    if not boxes:
-        return True
-    if len(boxes) < 3:
-        return True
-
-    centers_y = [
-        int(item.get("y", 0) or 0) + int(item.get("h", 0) or 0) / 2
-        for item in boxes
-        if int(item.get("w", 0) or 0) > 0 and int(item.get("h", 0) or 0) > 0
-    ]
-    if not centers_y:
-        return True
-    has_lower_half_figure = any(center >= image_height * 0.55 for center in centers_y)
-    if not has_lower_half_figure:
-        return True
-
-    top = min(int(item.get("y", 0) or 0) for item in boxes)
-    bottom = max(int(item.get("y", 0) or 0) + int(item.get("h", 0) or 0) for item in boxes)
-    vertical_span = bottom - top
-    return vertical_span < image_height * 0.38
 
 
 def detect_public_figure_regions(
@@ -2116,17 +1308,16 @@ def detect_public_figure_regions(
             except Exception:
                 model_failed = True
                 payload = {}
+        boxes = [_normalize_public_image_bbox(item) for item in (payload.get("image_bboxes", []) or [])]
+        boxes = _scale_model_canvas_boxes(
+            [item for item in boxes if item],
+            model_image_width=int(payload.get("image_width", 0) or 0),
+            model_image_height=int(payload.get("image_height", 0) or 0),
+            image_width=width,
+            image_height=height,
+        )
         detector_source = "vision_model"
         with Image.open(image_path) as original:
-            boxes = [_normalize_public_image_bbox(item) for item in (payload.get("image_bboxes", []) or [])]
-            boxes = _scale_model_canvas_boxes(
-                [item for item in boxes if item],
-                model_image_width=int(payload.get("image_width", 0) or 0),
-                model_image_height=int(payload.get("image_height", 0) or 0),
-                image_width=width,
-                image_height=height,
-                image=original.copy(),
-            )
             normalized_boxes = _sanitize_public_boxes(
                 boxes,
                 image=original.copy(),
@@ -2134,27 +1325,9 @@ def detect_public_figure_regions(
                 image_height=height,
                 source_field_name=field_name,
             )
-            if api_key_value and _should_run_vertical_tile_detection(width, height, normalized_boxes):
-                tile_boxes = _detect_public_figures_in_vertical_tiles(
-                    original.copy(),
-                    api_key=api_key_value,
-                    model=model_name,
-                    bbox_space=field_name,
-                    hint_text=hint_text,
-                )
-                if tile_boxes:
-                    tile_boxes = _sanitize_public_boxes(
-                        tile_boxes,
-                        image=original.copy(),
-                        image_width=width,
-                        image_height=height,
-                        source_field_name=field_name,
-                    )
-                    normalized_boxes = _dedupe_overlapping_public_boxes(normalized_boxes + tile_boxes)
-        safe_empty_fallback = bool(allow_heuristic_fallback) or (model_attempted and not model_failed)
-        if not normalized_boxes and safe_empty_fallback:
+        if not normalized_boxes and allow_heuristic_fallback:
             normalized_boxes = _dedupe_public_boxes(_heuristic_public_figure_regions(image_path, source_field_name=field_name))
-            detector_source = "heuristic_fallback" if allow_heuristic_fallback else "vision_model_empty_safe_fallback"
+            detector_source = "heuristic_fallback"
         elif not normalized_boxes:
             detector_source = "vision_model_empty" if model_attempted else "model_not_run"
             if model_failed:
@@ -2169,40 +1342,9 @@ def detect_public_figure_regions(
                 result["global_review_flags"] = normalize_review_flags(
                     list(result.get("global_review_flags", [])) + ["public_figure_model_not_run"]
                 )
-        if normalized_boxes and api_key_value:
-            with Image.open(image_path) as original:
-                refined_boxes = _refine_public_boxes_with_model(
-                    original.copy(),
-                    normalized_boxes,
-                    api_key=api_key_value,
-                    model=model_name,
-                )
-            if refined_boxes:
-                normalized_boxes = _dedupe_overlapping_public_boxes(refined_boxes, iou_threshold=0.86)
-                detector_source = f"{detector_source}+refine_model"
-            else:
-                normalized_boxes = [
-                    {
-                        **item,
-                        "review_flags": normalize_review_flags(
-                            list(item.get("review_flags", []) or []) + ["inline_figure_refine_all_rejected_keep_coarse"]
-                        ),
-                    }
-                    for item in normalized_boxes
-                ]
-                detector_source = f"{detector_source}+refine_model_empty_keep_coarse"
-                result["global_review_flags"] = normalize_review_flags(
-                    list(result.get("global_review_flags", [])) + ["inline_figure_refine_all_rejected"]
-                )
         for item in normalized_boxes:
             item["bbox_space"] = field_name
-            if item.get("figure_refine_source"):
-                base_source = str(item.get("detector_source", "") or detector_source)
-                if "refine_model" not in base_source:
-                    base_source = f"{base_source}+refine_model"
-                item["detector_source"] = base_source
-            else:
-                item["detector_source"] = str(item.get("detector_source", "") or detector_source)
+            item["detector_source"] = str(item.get("detector_source", "") or detector_source)
         result[bucket_name] = normalized_boxes
         result["detector"] = detector_source
         result["global_review_flags"] = normalize_review_flags(

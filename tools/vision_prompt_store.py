@@ -134,6 +134,36 @@ def get_transcription_prompt_bundle(variant: str | None = None) -> dict[str, str
     }
 
 
+def get_raw_blocks_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    raw_blocks = prompts.get("raw_blocks", {})
+    if not isinstance(raw_blocks, dict):
+        raise PromptConfigError("missing_raw_blocks_prompt_config")
+    return {
+        "prompt_version": str(raw_blocks.get("prompt_version", "") or ""),
+        "system_prompt": str(raw_blocks.get("system_prompt", "") or ""),
+        "user_template": str(raw_blocks.get("user_template", "") or ""),
+    }
+
+
+def get_field_mapping_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    field_mapping = prompts.get("field_mapping", {})
+    if not isinstance(field_mapping, dict):
+        raise PromptConfigError("missing_field_mapping_prompt_config")
+    return {
+        "prompt_version": str(field_mapping.get("prompt_version", "") or ""),
+        "system_prompt": str(field_mapping.get("system_prompt", "") or ""),
+        "user_template": str(field_mapping.get("user_template", "") or ""),
+    }
+
+
 def get_refine_prompt_bundle() -> dict[str, str]:
     config = load_prompt_config()
     prompts = config.get("prompts", {})
@@ -175,4 +205,19 @@ def get_inline_figure_prompt_bundle() -> dict[str, str]:
         "prompt_version": str(inline_figure.get("prompt_version", "") or ""),
         "system_prompt": str(inline_figure.get("system_prompt", "") or ""),
         "user_template": str(inline_figure.get("user_template", "") or ""),
+    }
+
+
+def get_inline_figure_refine_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    inline_figure_refine = prompts.get("inline_figure_refine", {})
+    if not isinstance(inline_figure_refine, dict):
+        raise PromptConfigError("missing_inline_figure_refine_prompt_config")
+    return {
+        "prompt_version": str(inline_figure_refine.get("prompt_version", "") or ""),
+        "system_prompt": str(inline_figure_refine.get("system_prompt", "") or ""),
+        "user_template": str(inline_figure_refine.get("user_template", "") or ""),
     }

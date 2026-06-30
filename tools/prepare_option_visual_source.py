@@ -11,6 +11,54 @@ import option_choice_gating
 import option_crop_staging
 
 
+def _bbox_iou(a: dict, b: dict) -> float:
+    ax1 = int(a.get("x", 0) or 0)
+    ay1 = int(a.get("y", 0) or 0)
+    ax2 = ax1 + int(a.get("w", 0) or 0)
+    ay2 = ay1 + int(a.get("h", 0) or 0)
+    bx1 = int(b.get("x", 0) or 0)
+    by1 = int(b.get("y", 0) or 0)
+    bx2 = bx1 + int(b.get("w", 0) or 0)
+    by2 = by1 + int(b.get("h", 0) or 0)
+    ix1 = max(ax1, bx1)
+    iy1 = max(ay1, by1)
+    ix2 = min(ax2, bx2)
+    iy2 = min(ay2, by2)
+    if ix2 <= ix1 or iy2 <= iy1:
+        return 0.0
+    inter = (ix2 - ix1) * (iy2 - iy1)
+    area_a = max(ax2 - ax1, 0) * max(ay2 - ay1, 0)
+    area_b = max(bx2 - bx1, 0) * max(by2 - by1, 0)
+    return inter / max(area_a + area_b - inter, 1)
+
+
+def _suppress_public_boxes_owned_by_options(public_boxes: list[dict], option_blocks: list[dict]) -> list[dict]:
+    option_boxes: list[dict] = []
+    for block in option_blocks or []:
+        bbox_space = str(block.get("bbox_space", "") or "")
+        for image_bbox in block.get("image_bboxes", []) or []:
+            if not isinstance(image_bbox, dict):
+                continue
+            if int(image_bbox.get("w", 0) or 0) <= 0 or int(image_bbox.get("h", 0) or 0) <= 0:
+                continue
+            option_boxes.append({**image_bbox, "bbox_space": bbox_space})
+    if not option_boxes:
+        return public_boxes
+
+    kept: list[dict] = []
+    for public_box in public_boxes or []:
+        public_space = str(public_box.get("bbox_space", "") or "")
+        overlaps_option = any(
+            public_space == str(option_box.get("bbox_space", "") or "")
+            and _bbox_iou(public_box, option_box) >= 0.42
+            for option_box in option_boxes
+        )
+        if overlaps_option:
+            continue
+        kept.append(public_box)
+    return kept
+
+
 def read_json(path: Path) -> dict | list:
     return json.loads(path.read_text(encoding="utf-8-sig"))
 
@@ -39,6 +87,8 @@ def build_prepared_payload(
     option_anchor_mode: str,
     api_key: str = "",
     model: str = "",
+    require_vision_figure_model: bool = False,
+    allow_heuristic_figure_fallback: bool = True,
 ) -> dict:
     payload = read_json(source_json_path)
     if not isinstance(payload, dict):
@@ -75,8 +125,14 @@ def build_prepared_payload(
             question,
             api_key=api_key,
             model=model,
+            require_model=require_vision_figure_model,
+            allow_heuristic_fallback=allow_heuristic_figure_fallback,
         )
-        detection["stem_image_bboxes"] = list(detection.get("stem_image_bboxes", []) or []) + list(public_figures.get("stem_image_bboxes", []) or [])
+        public_stem_boxes = _suppress_public_boxes_owned_by_options(
+            list(public_figures.get("stem_image_bboxes", []) or []),
+            list(detection.get("option_visual_blocks", []) or []),
+        )
+        detection["stem_image_bboxes"] = list(detection.get("stem_image_bboxes", []) or []) + public_stem_boxes
         detection["analysis_image_bboxes"] = list(public_figures.get("analysis_image_bboxes", []) or [])
         detection["global_review_flags"] = list(detection.get("global_review_flags", []) or []) + list(public_figures.get("global_review_flags", []) or [])
         staged_assets = option_crop_staging.build_staged_visual_assets(enriched, detection)
@@ -106,6 +162,8 @@ def build_prepared_payload(
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "source_json": str(source_json_path),
         "option_anchor_mode": option_anchor_mode,
+        "require_vision_figure_model": require_vision_figure_model,
+        "allow_heuristic_figure_fallback": allow_heuristic_figure_fallback,
         "questions": enriched_questions,
         "option_visual_debug": debug_rows,
     }
@@ -118,17 +176,34 @@ def main() -> None:
     parser.add_argument("--option-anchor-mode", default="auto")
     parser.add_argument("--api-key", default=os.environ.get("ARK_API_KEY", ""))
     parser.add_argument("--model", default=option_anchor_detection.DEFAULT_MODEL)
+    parser.add_argument(
+        "--require-vision-figure-model",
+        action="store_true",
+        default=str(os.environ.get("VISUAL_FIGURE_REQUIRE_MODEL", "") or "").strip() == "1",
+        help="Fail before preparing if the public figure detection model cannot run.",
+    )
+    parser.add_argument(
+        "--disable-heuristic-figure-fallback",
+        action="store_true",
+        default=str(os.environ.get("VISUAL_FIGURE_DISABLE_HEURISTIC_FALLBACK", "") or "").strip() == "1",
+        help="Do not use heuristic public-figure detection when the model returns no boxes.",
+    )
     args = parser.parse_args()
 
     source_json = Path(args.source_json).expanduser().resolve()
     if not source_json.exists():
         raise SystemExit(f"source_json_not_found: {source_json}")
+    api_key = str(args.api_key or "")
+    if args.require_vision_figure_model and not api_key.strip():
+        raise SystemExit("missing_api_key_for_required_vision_figure_model")
     out_json = Path(args.out_json).expanduser().resolve()
     payload = build_prepared_payload(
         source_json,
         option_anchor_mode=str(args.option_anchor_mode or "auto"),
-        api_key=str(args.api_key or ""),
+        api_key=api_key,
         model=str(args.model or option_anchor_detection.DEFAULT_MODEL),
+        require_vision_figure_model=bool(args.require_vision_figure_model),
+        allow_heuristic_figure_fallback=not bool(args.disable_heuristic_figure_fallback),
     )
     write_json(out_json, payload)
     write_json(out_json.with_suffix(".debug.json"), payload.get("option_visual_debug", []))
