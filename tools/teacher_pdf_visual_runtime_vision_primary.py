@@ -82,6 +82,19 @@ def build_default_transcribe_out_dir(split_out_dir: Path | None, out_name: str) 
     return WORKSPACE_ROOT / "outputs" / "visual_transcription_v0.1" / out_name
 
 
+def resolve_runtime_run_id() -> str:
+    explicit = str(os.environ.get("VISUAL_RUNTIME_RUN_ID", "") or "").strip()
+    if explicit:
+        return explicit
+    source_hint = (
+        str(os.environ.get("VISUAL_TRANSCRIBE_OUT_NAME", "") or "").strip()
+        or str(os.environ.get("SPLIT_OUT_NAME", "") or "").strip()
+        or Path(str(os.environ.get("PDF_TEACHER", "") or "visual_runtime")).stem
+    )
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"visualrun_{stamp}_{safe_slug(source_hint)}"
+
+
 def build_all_questions_manifest(source_json_path: Path, out_dir: Path) -> Path:
     payload = read_json(source_json_path)
     questions = payload.get("questions", []) if isinstance(payload, dict) else []
@@ -231,9 +244,12 @@ def main() -> None:
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
     env["PYTHONUTF8"] = "1"
+    runtime_run_id = resolve_runtime_run_id()
+    env["VISUAL_RUNTIME_RUN_ID"] = runtime_run_id
     summary: dict[str, object] = {
         "runtime": "teacher_pdf_visual_runtime_vision_primary",
         "timestamp": datetime.now().isoformat(timespec="seconds"),
+        "runtime_run_id": runtime_run_id,
         "transcribe_only": transcribe_only,
         "transcribe_enable": transcribe_enable,
         "assetize_enable": assetize_enable,

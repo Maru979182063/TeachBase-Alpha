@@ -43,6 +43,118 @@ function reorderBundle(bundle) {
   };
 }
 
+function buildVisualQuestionVisualStructure() {
+  return {
+    schema_version: "question_visual_structure.v1.1",
+    generated_by: "contract_visual_manifest",
+    runtime_run_id: "run_contract_visual_001",
+    question_uid: "visual_doc_p003_q001",
+    stem_md: "Choose the matching diagram.",
+    answer_md: "A",
+    analysis_md: "Option A matches the prompt.",
+    legacy_stem_md:
+      "Choose the matching diagram.\n\nA. ![qa_visual_doc_p003_q001_option_A_001](asset://qa_visual_doc_p003_q001_option_A_001)",
+    gating: {
+      mode: "auto",
+      decision: "choice_detected",
+    },
+    options: [
+      {
+        option_key: "A",
+        label_md: "A.",
+        asset_ids: ["qa_visual_doc_p003_q001_option_A_001"],
+      },
+    ],
+    content_blocks: [
+      {
+        block_type: "option_image",
+        option_key: "A",
+        asset_id: "qa_visual_doc_p003_q001_option_A_001",
+      },
+    ],
+    visual_assets: [
+      {
+        asset_id: "qa_visual_doc_p003_q001_option_A_001",
+        asset_role: "option",
+        option_key: "A",
+        placement_scope: "option_inline",
+        display_ref: "asset://qa_visual_doc_p003_q001_option_A_001",
+        storage_key:
+          "question_assets/visual_doc_p003_q001/run_contract_visual_001/options/A/001.png",
+        attach_status: "attached",
+        file_status: "materialized",
+        mime_type: "image/png",
+        page_no: 3,
+      },
+    ],
+    review_flags: [],
+  };
+}
+
+function buildVisualManifestPayload(tag) {
+  const qvs = buildVisualQuestionVisualStructure();
+  return {
+    actor: "contract_suite",
+    bundle_id: `visual_contract_bundle_${tag}`,
+    lesson_id: `visual_contract_lesson_${tag}`,
+    title: "Visual Contract Validation Lesson",
+    track_code: "english_senior",
+    subject: "英语",
+    stage: "senior",
+    grade: "g11",
+    season: "autumn",
+    source_tree: [
+      {
+        source_node_local_id: "root",
+        node_type: "lesson",
+        phase: "reading_main",
+        title: "Visual Contract Root",
+        checkpoint_codes: ["阅读理解主旨大意"],
+      },
+    ],
+    visualManifest: {
+      schema_version: "question_asset_manifest.v0.1",
+      generated_at: "2026-07-01T00:00:00.000Z",
+      question_count: 1,
+      asset_count: 1,
+      questions: [
+        {
+          question_id: `visual_question_${tag}`,
+          question_uid: qvs.question_uid,
+          checkpoint: "阅读理解主旨大意",
+          component_kind: "single_choice",
+          stem_text_md: qvs.legacy_stem_md,
+          answer_text_md: qvs.answer_md,
+          analysis_text_md: qvs.analysis_md,
+          question_visual_structure: qvs,
+          merged_source_refs_json: {
+            page_no: 3,
+            bbox: {
+              x: 24,
+              y: 48,
+              width: 260,
+              height: 120,
+            },
+            audit_trace: {
+              source: "visual_manifest_contract",
+            },
+            schema_versions: {
+              question_visual_structure: "question_visual_structure.v1.1",
+            },
+            question_visual_structure: qvs,
+          },
+        },
+      ],
+    },
+  };
+}
+
+function findLessonRevisionBundle(detail, lessonRevisionId) {
+  return detail.lessonRevisions.find(
+    (item) => item.lesson_revision_id === lessonRevisionId
+  )?.bundle_jsonb;
+}
+
 async function importApprovePublish(server, bundle, actor = "contract_suite") {
   const reviewerActor = `${actor}_reviewer`;
   const publisherActor = `${actor}_publisher`;
@@ -252,6 +364,125 @@ export function registerTests(register) {
       return {
         filePatchId: fileResult.patchId,
         postgresPatchId: pgResult.patchId,
+      };
+    },
+  });
+
+  register({
+    id: "C24-VIS",
+    suite: "store_contract",
+    title: "Visual manifest adapter keeps question_visual_structure alive through import and rerun in file and postgres modes",
+    required: true,
+    async run({ harness }) {
+      const payload = buildVisualManifestPayload("adapter");
+      const fileServer = await harness.startFileServer("contract_visual_file");
+      const postgresServer = await harness.startPostgresServer("contract_visual_pg_test");
+
+      const runFlow = async (server, tag) => {
+        const requestPayload = {
+          ...payload,
+          bundle_id: `${payload.bundle_id}_${tag}`,
+          lesson_id: `${payload.lesson_id}_${tag}`,
+        };
+        const imported = await server.request("/api/runtime/imports/lesson-draft-bundles", {
+          method: "POST",
+          body: requestPayload,
+        });
+        expect(imported.ok, `visual_import_failed_${tag}:${JSON.stringify(imported.data)}`);
+
+        const detail = await server.request(
+          `/api/runtime/lessons/${requestPayload.lesson_id}`
+        );
+        expect(detail.ok, `visual_detail_failed_${tag}:${JSON.stringify(detail.data)}`);
+        const importedBundle = findLessonRevisionBundle(
+          detail.data.detail,
+          imported.data.result.lessonRevisionId
+        );
+        const importedTask = importedBundle?.tasks?.[0];
+        expect(importedTask, `visual_imported_task_missing_${tag}`);
+        expect(
+          importedTask.source_refs_json?.audit_trace?.source ===
+            "visual_manifest_contract",
+          `visual_audit_trace_missing_${tag}`
+        );
+        expect(
+          importedTask.source_refs_json?.question_visual_structure?.runtime_run_id ===
+            "run_contract_visual_001",
+          `visual_runtime_run_id_missing_${tag}`
+        );
+        expect(
+          importedTask.source_refs_json?.question_visual_structure?.visual_assets?.[0]
+            ?.storage_key ===
+            "question_assets/visual_doc_p003_q001/run_contract_visual_001/options/A/001.png",
+          `visual_storage_key_missing_${tag}`
+        );
+
+        const projectionSearch = await server.request(
+          `/api/runtime/task-projections/search?lessonId=${encodeURIComponent(requestPayload.lesson_id)}`
+        );
+        expect(
+          projectionSearch.ok,
+          `visual_projection_search_failed_${tag}:${JSON.stringify(projectionSearch.data)}`
+        );
+        const projection = projectionSearch.data.items.find(
+          (item) => item.lesson_id === requestPayload.lesson_id
+        );
+        expect(projection, `visual_projection_missing_${tag}`);
+        expect(
+          projection.source_refs_json?.question_visual_structure?.question_uid ===
+            "visual_doc_p003_q001",
+          `visual_projection_qvs_missing_${tag}`
+        );
+
+        const rerun = await server.request(
+          `/api/runtime/lessons/${requestPayload.lesson_id}/rerun`,
+          {
+            method: "POST",
+            body: {
+              actor: `contract_rerun_${tag}`,
+            },
+          }
+        );
+        expect(rerun.ok, `visual_rerun_failed_${tag}:${JSON.stringify(rerun.data)}`);
+
+        const rerunDetail = await server.request(
+          `/api/runtime/lessons/${requestPayload.lesson_id}`
+        );
+        expect(
+          rerunDetail.ok,
+          `visual_rerun_detail_failed_${tag}:${JSON.stringify(rerunDetail.data)}`
+        );
+        const rerunBundle = findLessonRevisionBundle(
+          rerunDetail.data.detail,
+          rerun.data.result.activeRevisionId
+        );
+        const rerunTask = rerunBundle?.tasks?.[0];
+        expect(rerunTask, `visual_rerun_task_missing_${tag}`);
+        expect(
+          rerunTask.source_refs_json?.question_visual_structure?.question_uid ===
+            "visual_doc_p003_q001",
+          `visual_rerun_qvs_missing_${tag}`
+        );
+        expect(
+          rerunTask.source_refs_json?.audit_trace?.source ===
+            "visual_manifest_contract",
+          `visual_rerun_audit_trace_missing_${tag}`
+        );
+
+        return {
+          lessonId: requestPayload.lesson_id,
+          lessonRevisionId: imported.data.result.lessonRevisionId,
+          rerunRevisionId: rerun.data.result.activeRevisionId,
+        };
+      };
+
+      const fileResult = await runFlow(fileServer, "file");
+      const postgresResult = await runFlow(postgresServer, "pg");
+      return {
+        fileLessonId: fileResult.lessonId,
+        postgresLessonId: postgresResult.lessonId,
+        fileRerunRevisionId: fileResult.rerunRevisionId,
+        postgresRerunRevisionId: postgresResult.rerunRevisionId,
       };
     },
   });

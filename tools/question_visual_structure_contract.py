@@ -121,14 +121,22 @@ def make_storage_key(
     option_key: str | None = None,
     ordinal: int = 1,
     suffix: str = ".png",
+    runtime_run_id: str = "",
+    content_hash: str = "",
 ) -> str:
     role_value = str(role or "").strip().lower()
     option_value = str(option_key or "").strip().upper()
     question_part = safe_slug(question_uid)
+    version_part = safe_slug(runtime_run_id or content_hash)
     ext = suffix if str(suffix or "").startswith(".") else f".{suffix}"
+    base_prefix = f"question_assets/{question_part}"
+    # Use a run/content segment when available so reruns do not overwrite a
+    # previously reviewed visual bundle under the same question uid.
+    if version_part:
+        base_prefix = f"{base_prefix}/{version_part}"
     if option_value:
-        return f"question_assets/{question_part}/options/{option_value}/{ordinal:03d}{ext}"
-    return f"question_assets/{question_part}/{role_value}/{ordinal:03d}{ext}"
+        return f"{base_prefix}/options/{option_value}/{ordinal:03d}{ext}"
+    return f"{base_prefix}/{role_value}/{ordinal:03d}{ext}"
 
 
 def make_display_ref(asset_id: str) -> str:

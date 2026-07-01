@@ -11,6 +11,12 @@ import option_choice_gating
 import option_crop_staging
 
 
+def safe_slug(text: str) -> str:
+    value = "".join(ch if ch.isalnum() or ch in {"_", "-", "."} else "_" for ch in str(text or "").strip())
+    value = value.strip("._-")
+    return value[:80].rstrip("._-") or "item"
+
+
 def _bbox_iou(a: dict, b: dict) -> float:
     ax1 = int(a.get("x", 0) or 0)
     ay1 = int(a.get("y", 0) or 0)
@@ -81,6 +87,14 @@ def make_question_uid(source_json_path: Path, question: dict, index: int) -> str
     return f"{source_stem}_p{page_no:03d}_q{local_no}"
 
 
+def resolve_runtime_run_id(source_json_path: Path) -> str:
+    explicit = str(os.environ.get("VISUAL_RUNTIME_RUN_ID", "") or "").strip()
+    if explicit:
+        return explicit
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"visualrun_{stamp}_{safe_slug(source_json_path.parent.name)}"
+
+
 def build_prepared_payload(
     source_json_path: Path,
     *,
@@ -96,6 +110,7 @@ def build_prepared_payload(
     questions = payload.get("questions", [])
     if not isinstance(questions, list):
         raise ValueError("questions_must_be_list")
+    runtime_run_id = resolve_runtime_run_id(source_json_path)
 
     enriched_questions: list[dict] = []
     debug_rows: list[dict] = []
@@ -105,6 +120,7 @@ def build_prepared_payload(
         enriched = dict(question)
         question_uid = make_question_uid(source_json_path, question, index)
         enriched["question_uid"] = question_uid
+        enriched["runtime_run_id"] = runtime_run_id
 
         gating = option_choice_gating.evaluate_choice_gating(
             question_uid=question_uid,
@@ -150,6 +166,7 @@ def build_prepared_payload(
             {
                 "question_id": question.get("question_id", ""),
                 "question_uid": question_uid,
+                "runtime_run_id": runtime_run_id,
                 "gating": gating,
                 "detection": detection,
                 "staged_visual_assets": staged_assets,
@@ -161,6 +178,7 @@ def build_prepared_payload(
         "schema_version": "option_visual_source.v1.1",
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "source_json": str(source_json_path),
+        "runtime_run_id": runtime_run_id,
         "option_anchor_mode": option_anchor_mode,
         "require_vision_figure_model": require_vision_figure_model,
         "allow_heuristic_figure_fallback": allow_heuristic_figure_fallback,

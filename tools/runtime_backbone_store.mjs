@@ -14,6 +14,11 @@ import {
   resolveTrackProfile,
   validateTrackProfile,
 } from "./runtime_subject_tracks.mjs";
+import {
+  adaptQuestionAssetManifestToLessonDraftBundle,
+  looksLikeVisualQuestionManifest,
+  normalizeLessonDraftBundle,
+} from "./runtime_visual_split_adapter.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -125,6 +130,72 @@ function buildDifficultyPayload(input, trackProfile, options = {}) {
     defaultSource: options.defaultSource || "manual",
     defaultConfidence: options.defaultConfidence ?? 0.8,
   });
+}
+
+function normalizeBundleImportPayload(payload = {}) {
+  if (looksLikeVisualQuestionManifest(payload?.bundle)) {
+    return adaptQuestionAssetManifestToLessonDraftBundle(payload.bundle, {
+      bundle_id: payload.bundle_id || payload.bundleId,
+      lesson_id: payload.lesson_id || payload.lessonId || payload.lesson?.lesson_id,
+      title: payload.title || payload.lesson?.title || payload.lesson?.lesson_title,
+      subject: payload.subject || payload.lesson?.subject,
+      stage: payload.stage || payload.lesson?.stage,
+      track_code: payload.track_code || payload.trackCode || payload.lesson?.track_code,
+      grade: payload.grade || payload.lesson?.grade,
+      season: payload.season || payload.lesson?.season,
+      source_tree: payload.source_tree || payload.sourceTree,
+      runtime_run_id: payload.runtime_run_id || payload.runtimeRunId,
+    });
+  }
+  if (payload?.bundle) {
+    return deepClone(payload.bundle);
+  }
+  if (looksLikeVisualQuestionManifest(payload?.visualManifest)) {
+    return adaptQuestionAssetManifestToLessonDraftBundle(payload.visualManifest, {
+      bundle_id: payload.bundle_id || payload.bundleId,
+      lesson_id: payload.lesson_id || payload.lessonId || payload.lesson?.lesson_id,
+      title: payload.title || payload.lesson?.title || payload.lesson?.lesson_title,
+      subject: payload.subject || payload.lesson?.subject,
+      stage: payload.stage || payload.lesson?.stage,
+      track_code: payload.track_code || payload.trackCode || payload.lesson?.track_code,
+      grade: payload.grade || payload.lesson?.grade,
+      season: payload.season || payload.lesson?.season,
+      source_tree: payload.source_tree || payload.sourceTree,
+      runtime_run_id: payload.runtime_run_id || payload.runtimeRunId,
+    });
+  }
+  if (looksLikeVisualQuestionManifest(payload)) {
+    return adaptQuestionAssetManifestToLessonDraftBundle(payload, {
+      bundle_id: payload.bundle_id || payload.bundleId,
+      lesson_id: payload.lesson_id || payload.lessonId || payload.lesson?.lesson_id,
+      title: payload.title || payload.lesson?.title || payload.lesson?.lesson_title,
+      subject: payload.subject || payload.lesson?.subject,
+      stage: payload.stage || payload.lesson?.stage,
+      track_code: payload.track_code || payload.trackCode || payload.lesson?.track_code,
+      grade: payload.grade || payload.lesson?.grade,
+      season: payload.season || payload.lesson?.season,
+      source_tree: payload.source_tree || payload.sourceTree,
+      runtime_run_id: payload.runtime_run_id || payload.runtimeRunId,
+    });
+  }
+  return deepClone(payload);
+}
+
+function mergeTaskRuntimeSourceRefs(sourceRefsJson = {}, component = null, pageAsset = null) {
+  const merged = deepClone(sourceRefsJson || {});
+  // Keep the richer visual contract intact while refreshing the runtime linkage fields.
+  merged.component_id = component?.component_id || merged.component_id || null;
+  merged.page_no = pageAsset?.page_no || merged.page_no || null;
+  merged.crop_artifact_id = component?.crop_artifact_id || merged.crop_artifact_id || null;
+  return merged;
+}
+
+function readPersistedTaskSourceRefs(taskSubjectExt = null, componentRevision = null) {
+  const storedInSubjectExt = deepClone(taskSubjectExt?.payload_json?.source_refs_json || {});
+  if (Object.keys(storedInSubjectExt).length > 0) {
+    return storedInSubjectExt;
+  }
+  return deepClone(componentRevision?.source_refs_json || {});
 }
 
 function parseDifficultyFilter(value) {
@@ -1142,6 +1213,14 @@ function buildLessonSeed(state, splitLesson, reviewQueue) {
         review_status: question.reviewStatus,
         risk: question.risk,
         tags: question.versionTags || [],
+        // Task subject ext is the per-revision fact row that survives reruns, so
+        // we persist the source refs contract here instead of reconstructing it later.
+        source_refs_json: {
+          component_id: component.component_id,
+          page_no: pageAsset?.page_no || question.sourcePage || null,
+          crop_artifact_id: component.crop_artifact_id || null,
+          bbox: deepClone(component.bbox_json || null),
+        },
         ...difficulty,
         visual_stats: question.visualStats || {},
       },
@@ -1345,6 +1424,9 @@ function buildLessonDraftBundle(state, lessonRevisionId) {
   );
   const pageAssetById = new Map(state.pageAssets.map((item) => [item.page_asset_id, item]));
   const componentById = new Map(state.components.map((item) => [item.component_id, item]));
+  const componentRevisionById = new Map(
+    state.componentRevisions.map((item) => [item.component_revision_id, item])
+  );
 
   const tasks = taskRevisions.map((taskRevision) => {
     const task = taskById.get(taskRevision.task_id);
@@ -1359,6 +1441,15 @@ function buildLessonDraftBundle(state, lessonRevisionId) {
     );
     const component = componentLink ? componentById.get(componentLink.component_id) : null;
     const pageAsset = component ? pageAssetById.get(component.page_asset_id) : null;
+    const componentRevision = component?.current_revision_id
+      ? componentRevisionById.get(component.current_revision_id) ||
+        state.componentRevisions.find(
+          (item) =>
+            item.component_id === component.component_id &&
+            item.source_task_revision_id === taskRevision.task_revision_id
+        ) ||
+        null
+      : null;
     const difficulty = buildDifficultyPayload(
       taskSubjectExt?.payload_json || {},
       safeTrackScope(lesson)?.trackProfile || null,
@@ -1383,11 +1474,11 @@ function buildLessonDraftBundle(state, lessonRevisionId) {
         taskRevision.task_revision_id
       ),
       subject_tags: taskSubjectExt?.payload_json?.tags || [],
-      source_refs_json: {
-        component_id: component?.component_id || null,
-        page_no: pageAsset?.page_no || null,
-        crop_artifact_id: component?.crop_artifact_id || null,
-      },
+      source_refs_json: mergeTaskRuntimeSourceRefs(
+        readPersistedTaskSourceRefs(taskSubjectExt, componentRevision),
+        component,
+        pageAsset
+      ),
     };
   });
 
@@ -1565,19 +1656,27 @@ function syncComponentRevisionSeeds(state) {
         item.target_type === "task_revision" &&
         item.relation_type === "primary_visual_crop"
     );
+    const taskSubjectExt = state.taskSubjectExt.find(
+      (item) => item.task_revision_id === componentLink?.target_revision_id
+    );
+    const pageNo =
+      state.pageAssets.find((item) => item.page_asset_id === component.page_asset_id)?.page_no || null;
     currentRevision = {
       component_revision_id: makeId("component_revision"),
       component_id: component.component_id,
       source_task_revision_id: componentLink?.target_revision_id || null,
-      page_no:
-        state.pageAssets.find((item) => item.page_asset_id === component.page_asset_id)?.page_no || null,
+      page_no: pageNo,
       bbox_json: component.bbox_json,
       extracted_text:
         state.taskRevisions.find((item) => item.task_revision_id === componentLink?.target_revision_id)
           ?.student_stem || "",
-      source_refs_json: {
-        crop_artifact_id: component.crop_artifact_id,
-      },
+      // Seeded component revisions should reuse any richer source refs already
+      // persisted on the task fact row so rebuilds do not drop visual structure.
+      source_refs_json: mergeTaskRuntimeSourceRefs(
+        readPersistedTaskSourceRefs(taskSubjectExt, null),
+        component,
+        pageNo ? { page_no: pageNo } : null
+      ),
       created_by: "seed_loader",
       created_at: component.created_at || new Date().toISOString(),
     };
@@ -1917,6 +2016,9 @@ export function registerExportRun(state, payload, historyItem) {
     audiences: historyItem.audiences || [],
     formats: historyItem.formats || [],
     include_compass: Boolean(historyItem.includeCompass),
+    preflight_checked_question_count:
+      historyItem.preflight?.checkedQuestionCount || 0,
+    preflight_warning_count: historyItem.preflight?.warningCount || 0,
   };
 
   let bundleArtifact = state.artifacts.find(
@@ -2087,6 +2189,21 @@ export function rerunLesson(state, lessonId, actor = "manual_rerun") {
         task_revision_id: newTaskRevisionId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+      });
+    }
+
+    for (const componentLink of state.componentLinks.filter(
+      (item) =>
+        item.target_type === "task_revision" &&
+        item.target_revision_id === oldTaskRevision.task_revision_id
+    )) {
+      // Keep the task-to-component bridge on rerun so the rebuilt bundle can
+      // still resolve visual lineage without waiting for a fresh crop job.
+      state.componentLinks.push({
+        ...componentLink,
+        component_link_id: makeId("component_link"),
+        target_revision_id: newTaskRevisionId,
+        created_at: new Date().toISOString(),
       });
     }
   }
@@ -3075,6 +3192,9 @@ function hydrateRevisionFromBundle(state, lesson, documentId, lessonRevisionId, 
         track_code: lesson.track_code || trackProfile.track_code,
         component_kind: task.question_type || "question",
         tags: task.subject_tags || [],
+        // Persist the merged source refs on the task fact row so reruns can
+        // rebuild projections even when no new visual crop is generated.
+        source_refs_json: deepClone(task.source_refs_json || {}),
         ...difficulty,
       },
       created_at: new Date().toISOString(),
@@ -3148,7 +3268,9 @@ function hydrateRevisionFromBundle(state, lesson, documentId, lessonRevisionId, 
  * 容器创建和版本灌入分开，便于迁移复用同一组内部步骤。
  */
 export function importLessonDraftBundle(state, payload = {}) {
-  const bundle = deepClone(payload.bundle || payload);
+  const bundle = normalizeLessonDraftBundle(normalizeBundleImportPayload(payload), {
+    runtimeRunId: payload.runtime_run_id || payload.runtimeRunId || "",
+  });
   bundle.bundle_id = bundle.bundle_id || bundle.bundleId || `${bundle.lesson_id || bundle.lesson?.lesson_id || "lesson"}:bundle`;
   bundle.lesson_id = bundle.lesson_id || bundle.lesson?.lesson_id || makeId("lesson");
   bundle.title = bundle.title || bundle.lesson?.title || bundle.lesson?.lesson_title || bundle.lesson_id;

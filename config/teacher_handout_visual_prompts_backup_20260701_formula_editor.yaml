@@ -483,7 +483,6 @@ prompts:
       5a. Transcribe comparison symbols as valid LaTeX: use \ne for not equal, \leq for less-than-or-equal, and \geq for greater-than-or-equal. Never output broken tokens such as e, eq, ae0, 1eq, leq0, or geq0 as plain text.
       5b. Transcribe set membership symbols as valid LaTeX: use \in and \notin. Never output broken fragments such as otin, otinM, noti, or inM as plain text.
       5c. For systems of equations, inequalities, piecewise layouts, or vertical vector coordinates, preserve the two-dimensional layout with $$...$$ and cases/aligned/pmatrix/bmatrix when visible.
-      5d. Follow formula-editor style for vectors and tall fractions: write vector letters as \vec{a}, \vec{b}, \vec{c}; write directed segments as \overrightarrow{AB}; write dot product, perpendicular, and parallel as \cdot, \perp, and \parallel. In option lines, keep coefficient-vector terms in one inline formula, e.g. A. $-\frac{9}{25}\vec{c}$, and do not split numerator, denominator, and vector into separate text lines.
       6. Do not summarize, explain, solve, normalize wording, or improve formatting beyond faithful readable transcription.
       7. visible_blocks must contain only visible text blocks. Do not create a block that merely describes a figure, graph, geometry diagram, or layout.
       8. If an image region has no readable text, omit it from visible_blocks and rely on *_requires_image flags instead.
@@ -551,7 +550,6 @@ prompts:
       9a. Preserve comparison symbols as valid LaTeX: use \ne, \leq, and \geq. If the visible expression says 9 is not equal to 10, output $9 \ne 10$, not 9e10 or 9eq10. If it says a is not equal to 0, output $a \ne 0$, not ae0.
       9b. Preserve set membership symbols as valid LaTeX: output $4 \notin M$, not 4otinM; output $2 \in M$, not 2inM.
       9c. Preserve equation-system and vector-coordinate layout. If the visible math has a large brace with multiple lines, compose it as \begin{cases} ... \\ ... \end{cases}; if it is a column vector, use pmatrix or bmatrix.
-      9d. Preserve formula-editor style for vectors and tall fractions: write vector letters as \vec{a}, \vec{b}, \vec{c}; write directed segments as \overrightarrow{AB}; write dot product, perpendicular, and parallel as \cdot, \perp, and \parallel. In option lines, keep coefficient-vector terms in one inline formula, e.g. A. $-\frac{9}{25}\vec{c}$, and do not split numerator, denominator, and vector into separate text lines.
       10. Standalone figure captions or bare figure labels such as `图1`, `图2`, `图3` must not be inserted into stem_text_md or analysis_text_md unless they are part of a visible sentence.
       11. If images are still required for safe use, set the matching *_requires_image field to true.
       12. If handwriting is unclear or conflicts with the printed content, keep the readable fragment in handwriting_text_md, set handwriting_requires_review=true, and fill handwriting_consistency.

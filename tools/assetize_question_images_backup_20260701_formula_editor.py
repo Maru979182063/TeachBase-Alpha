@@ -470,26 +470,13 @@ def materialize_staged_asset(
 
 def _build_qvs(record: dict[str, Any], question: dict[str, Any], visual: dict[str, Any], all_assets: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[str, Any]]:
     base_qvs = visual.get("question_visual_structure", {}) if isinstance(visual.get("question_visual_structure"), dict) else {}
-    runtime_run_id = str(
-        base_qvs.get("runtime_run_id", "")
-        or question.get("runtime_run_id", "")
-        or next(
-            (
-                asset.get("runtime_run_id")
-                for asset in all_assets
-                if isinstance(asset, dict) and str(asset.get("runtime_run_id", "") or "").strip()
-            ),
-            "",
-        )
-        or ""
-    ).strip()
     asset_flags: list[str] = []
     for asset in all_assets:
         asset_flags.extend(asset.get("review_flags", []) or [])
     qvs = {
         "schema_version": SCHEMA_VERSION,
         "generated_by": str(base_qvs.get("generated_by", "assetize_question_images") or "assetize_question_images"),
-        "runtime_run_id": runtime_run_id,
+        "runtime_run_id": str(base_qvs.get("runtime_run_id", "") or ""),
         "question_uid": str(base_qvs.get("question_uid", question.get("question_uid", question.get("question_id", ""))) or ""),
         "stem_md": str(base_qvs.get("stem_md", record["stem_text_md"]) or record["stem_text_md"]),
         "answer_md": str(base_qvs.get("answer_md", record["answer_text_md"]) or record["answer_text_md"]),
@@ -1260,7 +1247,7 @@ def write_html(out_path: Path, payload: dict[str, Any]) -> None:
     h3 {{ margin: 14px 0 10px; font-size: 16px; color: #344054; }}
     h4 {{ margin: 12px 0 6px; color: #101828; }}
     .grid {{ display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(280px, .8fr); gap: 18px; align-items: start; }}
-    .md {{ background: #fbfcff; border: 1px solid #e7edf8; border-radius: 12px; padding: 14px; line-height: 1.9; white-space: normal; }}
+    .md {{ background: #fbfcff; border: 1px solid #e7edf8; border-radius: 12px; padding: 14px; line-height: 1.75; white-space: normal; }}
     .badges {{ margin: 8px 0 12px; }}
     .badge {{ display: inline-block; margin: 0 6px 6px 0; padding: 4px 8px; border-radius: 999px; background: #eef4ff; color: #175cd3; font-size: 12px; }}
     .badge.warn {{ background: #fff1f3; color: #c01048; }}
@@ -1271,9 +1258,7 @@ def write_html(out_path: Path, payload: dict[str, Any]) -> None:
     figure {{ margin: 0 0 12px; padding: 10px; border: 1px solid #e7edf8; border-radius: 12px; background: #fff; }}
     img {{ max-width: 100%; height: auto; display: block; border-radius: 8px; background: #fff; }}
     figcaption {{ margin-top: 8px; color: #667085; font-size: 12px; word-break: break-all; }}
-    .katex {{ font-size: 1.06em; line-height: 1.35; }}
-    .md .katex {{ vertical-align: -0.12em; }}
-    .md .katex-html {{ white-space: nowrap; }}
+    .katex {{ font-size: 1.06em; }}
     .katex-display {{ margin: .6em 0; overflow-x: auto; overflow-y: hidden; }}
     @media (max-width: 900px) {{ .grid {{ grid-template-columns: 1fr; }} .wrap {{ padding: 14px; }} }}
   </style>
@@ -1389,7 +1374,7 @@ def write_html_clean(out_path: Path, payload: dict[str, Any]) -> None:
     h3 {{ margin: 14px 0 10px; font-size: 16px; color: #344054; }}
     h4 {{ margin: 12px 0 6px; color: #101828; }}
     .grid {{ display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(280px, .8fr); gap: 18px; align-items: start; }}
-    .md {{ background: #fbfcff; border: 1px solid #e7edf8; border-radius: 12px; padding: 14px; line-height: 1.9; white-space: normal; }}
+    .md {{ background: #fbfcff; border: 1px solid #e7edf8; border-radius: 12px; padding: 14px; line-height: 1.75; white-space: normal; }}
     .badges {{ margin: 8px 0 12px; }}
     .badge {{ display: inline-block; margin: 0 6px 6px 0; padding: 4px 8px; border-radius: 999px; background: #eef4ff; color: #175cd3; font-size: 12px; }}
     .badge.warn {{ background: #fff1f3; color: #c01048; }}
@@ -1400,9 +1385,7 @@ def write_html_clean(out_path: Path, payload: dict[str, Any]) -> None:
     figure {{ margin: 0 0 12px; padding: 10px; border: 1px solid #e7edf8; border-radius: 12px; background: #fff; }}
     img {{ max-width: 100%; height: auto; display: block; border-radius: 8px; background: #fff; }}
     figcaption {{ margin-top: 8px; color: #667085; font-size: 12px; word-break: break-all; }}
-    .katex {{ font-size: 1.06em; line-height: 1.35; }}
-    .md .katex {{ vertical-align: -0.12em; }}
-    .md .katex-html {{ white-space: nowrap; }}
+    .katex {{ font-size: 1.06em; }}
     .katex-display {{ margin: .6em 0; overflow-x: auto; overflow-y: hidden; }}
     @media (max-width: 900px) {{ .grid {{ grid-template-columns: 1fr; }} .wrap {{ padding: 14px; }} }}
   </style>
@@ -1462,7 +1445,6 @@ def main() -> None:
         "path_policy": {
             "deploy_fields_are_relative": True,
             "asset_storage_key_base": "bundle_root",
-            "asset_storage_key_strategy": "question_assets/{question_uid}/{runtime_run_id}/...",
             "debug_absolute_paths_included": bool(args.include_debug_paths),
         },
         "question_count": len(records),

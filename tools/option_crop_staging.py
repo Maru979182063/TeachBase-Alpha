@@ -88,6 +88,7 @@ def _infer_public_figure_role(
 def _make_asset(
     *,
     question_uid: str,
+    runtime_run_id: str,
     role: str,
     ordinal: int,
     bbox_space: str,
@@ -111,10 +112,18 @@ def _make_asset(
     return {
         "asset_id": asset_id,
         "asset_role": role,
+        "runtime_run_id": str(runtime_run_id or "").strip(),
         "placement_scope": placement_scope,
         "option_key": option_key,
         "candidate_option_key": candidate_option_key,
-        "storage_key": make_storage_key(question_uid, role, option_key=option_key, ordinal=ordinal, suffix=suffix),
+        "storage_key": make_storage_key(
+            question_uid,
+            role,
+            option_key=option_key,
+            ordinal=ordinal,
+            suffix=suffix,
+            runtime_run_id=runtime_run_id,
+        ),
         "display_ref": make_display_ref(asset_id),
         "mime_type": "image/png",
         "bbox_space": bbox_space,
@@ -137,6 +146,7 @@ def _make_asset(
 
 def build_staged_visual_assets(question: dict, detection: dict) -> list[dict]:
     question_uid = str(question.get("question_uid", "") or question.get("question_id", "")).strip() or "question"
+    runtime_run_id = str(question.get("runtime_run_id", "") or "").strip()
     staged: list[dict] = []
     option_ordinals: dict[str, int] = {}
     evidence_ordinal = 1
@@ -167,6 +177,7 @@ def build_staged_visual_assets(question: dict, detection: dict) -> list[dict]:
                 staged.append(
                     _make_asset(
                         question_uid=question_uid,
+                        runtime_run_id=runtime_run_id,
                         role="option",
                         option_key=option_key,
                         candidate_option_key=option_key,
@@ -190,6 +201,7 @@ def build_staged_visual_assets(question: dict, detection: dict) -> list[dict]:
                 staged.append(
                     _make_asset(
                         question_uid=question_uid,
+                        runtime_run_id=runtime_run_id,
                         role="evidence",
                         option_key=None,
                         candidate_option_key=option_key or None,
@@ -218,6 +230,7 @@ def build_staged_visual_assets(question: dict, detection: dict) -> list[dict]:
         staged.append(
             _make_asset(
                 question_uid=question_uid,
+                runtime_run_id=runtime_run_id,
                 role="evidence",
                 option_key=None,
                 candidate_option_key=None,
@@ -250,6 +263,7 @@ def build_staged_visual_assets(question: dict, detection: dict) -> list[dict]:
         staged.append(
             _make_asset(
                 question_uid=question_uid,
+                runtime_run_id=runtime_run_id,
                 role=role,
                 option_key=None,
                 candidate_option_key=None,
@@ -277,6 +291,7 @@ def build_staged_visual_assets(question: dict, detection: dict) -> list[dict]:
         staged.append(
             _make_asset(
                 question_uid=question_uid,
+                runtime_run_id=runtime_run_id,
                 role="analysis",
                 option_key=None,
                 candidate_option_key=None,

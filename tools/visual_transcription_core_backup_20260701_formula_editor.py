@@ -398,20 +398,6 @@ def _apply_safe_string_normalization(text: str, field: str) -> tuple[str, list[d
         current = compare_fixed
         log.append({"field": field, "op": "normalize_malformed_compare_operator"})
 
-    def _normalize_formula_editor_style(value: str) -> str:
-        repaired = value
-        # Keep inline option fractions compact and editor-friendly. This is
-        # visually equivalent to \dfrac but avoids broken tall option rows.
-        repaired = re.sub(r"\\dfrac\b", r"\\frac", repaired)
-        # Normalize bare vector commands from model output: \vec a -> \vec{a}.
-        repaired = re.sub(r"\\vec\s+([A-Za-z])\b", r"\\vec{\1}", repaired)
-        return repaired
-
-    formula_editor_fixed = _normalize_formula_editor_style(current)
-    if formula_editor_fixed != current:
-        current = formula_editor_fixed
-        log.append({"field": field, "op": "normalize_formula_editor_style"})
-
     return current, log
 
 
@@ -888,25 +874,8 @@ def _extract_option_sections(stem_text: str) -> tuple[str, list[dict]]:
 
 def build_question_visual_structure(question_context: dict, payload: dict) -> dict:
     question_uid = str(question_context.get("question_uid", "") or question_context.get("question_id", "") or payload.get("question_id", "")).strip()
-    runtime_run_id = str(
-        question_context.get("runtime_run_id", "")
-        or payload.get("runtime_run_id", "")
-        or ""
-    ).strip()
     gating = question_context.get("gating_result", {}) if isinstance(question_context.get("gating_result"), dict) else {}
     staged_assets = [dict(item) for item in (question_context.get("staged_visual_assets", []) or []) if isinstance(item, dict)]
-    if not runtime_run_id:
-        runtime_run_id = str(
-            next(
-                (
-                    item.get("runtime_run_id")
-                    for item in staged_assets
-                    if isinstance(item, dict) and str(item.get("runtime_run_id", "") or "").strip()
-                ),
-                "",
-            )
-            or ""
-        ).strip()
     option_blocks = [dict(item) for item in (question_context.get("option_visual_blocks", []) or []) if isinstance(item, dict)]
     stem_md_raw = str(payload.get("stem_text_md", "") or "")
     answer_md = str(payload.get("answer_text_md", "") or "")
@@ -1115,7 +1084,7 @@ def build_question_visual_structure(question_context: dict, payload: dict) -> di
     return {
         "schema_version": SCHEMA_VERSION,
         "generated_by": "visual_transcription_core",
-        "runtime_run_id": runtime_run_id,
+        "runtime_run_id": "",
         "question_uid": question_uid,
         "stem_md": stem_md.strip(),
         "answer_md": answer_md,

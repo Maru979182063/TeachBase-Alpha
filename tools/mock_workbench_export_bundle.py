@@ -41,6 +41,7 @@ AUDIENCE_ORDER = ["学生版", "教师版"]
 
 
 PUA_RE = re.compile(r"[\ue000-\uf8ff]")
+IMAGE_MARKDOWN_RE = re.compile(r"!\[[^\]]*\]\([^)]+\)")
 
 
 def safe_name(text: str) -> str:
@@ -73,6 +74,23 @@ def normalize_preview_text(text: str) -> str:
     return re.sub(r"\s+", " ", str(text or "")).strip()
 
 
+def question_visual_structure(question: dict) -> dict:
+    direct = question.get("question_visual_structure")
+    if isinstance(direct, dict):
+        return direct
+    for key in ("merged_source_refs_json", "source_refs_json"):
+        refs = question.get(key)
+        if isinstance(refs, dict) and isinstance(refs.get("question_visual_structure"), dict):
+            return refs.get("question_visual_structure") or {}
+    return {}
+
+
+def strip_markdown_images(text: str) -> str:
+    cleaned = IMAGE_MARKDOWN_RE.sub("[图片]", str(text or ""))
+    cleaned = re.sub(r"asset://[A-Za-z0-9._:-]+", "[图片]", cleaned)
+    return cleaned
+
+
 def preview_looks_noisy(text: str) -> bool:
     normalized = normalize_preview_text(text)
     if not normalized:
@@ -93,11 +111,40 @@ def preview_looks_noisy(text: str) -> bool:
     return private_use_count >= 1 or spaced_operator_runs >= 1 or sparse_readable or symbol_heavy or formula_noise
 
 
+def visual_preview_text(question: dict) -> str:
+    qvs = question_visual_structure(question)
+    candidates = [
+        question.get("display_markdown", ""),
+        qvs.get("legacy_stem_md", ""),
+        qvs.get("stem_md", ""),
+    ]
+    for candidate in candidates:
+        normalized = normalize_preview_text(strip_markdown_images(candidate))
+        if normalized and not preview_looks_noisy(normalized):
+            return normalized
+    return ""
+
+
+def export_review_note(question: dict) -> str:
+    notes: list[str] = []
+    explicit = normalize_preview_text(question.get("reviewNote", ""))
+    if explicit:
+        notes.append(explicit)
+    qvs = question_visual_structure(question)
+    review_flags = qvs.get("review_flags", []) if isinstance(qvs.get("review_flags"), list) else []
+    if review_flags:
+        notes.append("视觉标记：" + "；".join(str(item) for item in review_flags[:6]))
+    return "\n".join(notes)
+
+
 def export_preview_text(question: dict) -> str:
     preview = normalize_preview_text(question.get("previewText", ""))
     storage_mode = str(question.get("textStorageMode") or "")
     if preview and storage_mode != "ocr_reference_only" and not preview_looks_noisy(preview):
         return preview
+    visual_preview = visual_preview_text(question)
+    if visual_preview:
+        return visual_preview
 
     checkpoint = str(question.get("checkpoint") or "\u5f53\u524d\u9898\u5757")
     component = str(question.get("componentLabel") or "\u9898\u56fe\u9884\u89c8")
@@ -110,6 +157,147 @@ def export_preview_text(question: dict) -> str:
 
 
 # DOCX 导出阶段：生成面向审阅者的讲义，包含表格、摘要和题目预览。
+def _existing_path(value: str):
+    text = str(value or "").strip()
+    if not text:
+        return None
+    path_value = Path(text)
+    return path_value if path_value.exists() else None
+
+
+def _storage_key_path(storage_key: str) -> Path:
+    parts = [part for part in str(storage_key or "").replace("\\", "/").split("/") if part]
+    return Path(*parts) if parts else Path()
+
+
+def _append_asset_root(candidates: list[Path], seen: set[str], candidate) -> None:
+    if not candidate:
+        return
+    path_value = Path(candidate)
+    if not path_value.exists() or not path_value.is_dir():
+        return
+    marker = str(path_value.resolve())
+    if marker in seen:
+        return
+    seen.add(marker)
+    candidates.append(path_value)
+
+
+def export_asset_root_candidates(payload: dict, question: dict, storage_key: str = "") -> list[Path]:
+    # Visual manifests store relative storage_key values, so export needs a
+    # deterministic list of bundle-root candidates before it can embed images.
+    candidates: list[Path] = []
+    seen: set[str] = set()
+    split_lesson = payload.get("splitLesson", {}) if isinstance(payload.get("splitLesson"), dict) else {}
+    for value in (
+        question.get("assetBaseDir"),
+        question.get("asset_base_dir"),
+        question.get("assetBundleDir"),
+        question.get("asset_bundle_dir"),
+        payload.get("assetBaseDir"),
+        payload.get("asset_base_dir"),
+        payload.get("assetBundleDir"),
+        payload.get("asset_bundle_dir"),
+        split_lesson.get("assetBaseDir"),
+        split_lesson.get("asset_base_dir"),
+        split_lesson.get("assetBundleDir"),
+        split_lesson.get("asset_bundle_dir"),
+    ):
+        _append_asset_root(candidates, seen, value)
+
+    crop_path = _existing_path(question.get("cropPath", ""))
+    storage_rel = _storage_key_path(storage_key)
+    if crop_path and storage_key and storage_rel.parts:
+        for parent in [crop_path.parent, *crop_path.parents]:
+            if (parent / storage_rel).exists():
+                _append_asset_root(candidates, seen, parent)
+
+    _append_asset_root(candidates, seen, Path.cwd())
+    return candidates
+
+
+def resolve_visual_asset_path(payload: dict, question: dict, asset: dict):
+    storage_key = str(asset.get("storage_key", "") or "").strip()
+    storage_rel = _storage_key_path(storage_key)
+    if not storage_key or not storage_rel.parts:
+        return None
+    for root in export_asset_root_candidates(payload, question, storage_key):
+        candidate = root / storage_rel
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def export_visual_asset_paths(payload: dict, question: dict, max_images: int = 6) -> list[Path]:
+    qvs = question_visual_structure(question)
+    if not qvs:
+        return []
+
+    asset_by_id: dict[str, dict] = {}
+    for asset in qvs.get("visual_assets", []) if isinstance(qvs.get("visual_assets"), list) else []:
+        if not isinstance(asset, dict):
+            continue
+        if str(asset.get("attach_status", "") or "") != "attached":
+            continue
+        if str(asset.get("file_status", "") or "") != "materialized":
+            continue
+        if str(asset.get("placement_scope", "") or "") == "evidence_only":
+            continue
+        asset_id = str(asset.get("asset_id", "") or "").strip()
+        if asset_id:
+            asset_by_id[asset_id] = asset
+
+    ordered_assets: list[dict] = []
+    blocks = qvs.get("content_blocks", []) if isinstance(qvs.get("content_blocks"), list) else []
+    if blocks:
+        for block in sorted(
+            [item for item in blocks if isinstance(item, dict)],
+            key=lambda item: int(item.get("block_order", 0) or 0),
+        ):
+            if str(block.get("block_type", "") or "").strip() != "image":
+                continue
+            block_asset_id = str(block.get("asset_id", "") or "").strip()
+            asset = asset_by_id.get(block_asset_id)
+            if asset:
+                ordered_assets.append(asset)
+                continue
+            if str(block.get("storage_key", "") or "").strip():
+                ordered_assets.append(block)
+    if not ordered_assets:
+        for option in qvs.get("options", []) if isinstance(qvs.get("options"), list) else []:
+            if not isinstance(option, dict):
+                continue
+            for asset_id in option.get("asset_ids", []) if isinstance(option.get("asset_ids"), list) else []:
+                asset = asset_by_id.get(str(asset_id or "").strip())
+                if asset:
+                    ordered_assets.append(asset)
+    if not ordered_assets:
+        ordered_assets = list(asset_by_id.values())
+
+    resolved_paths: list[Path] = []
+    seen_paths: set[str] = set()
+    for asset in ordered_assets:
+        resolved_path = resolve_visual_asset_path(payload, question, asset)
+        if not resolved_path:
+            continue
+        marker = str(resolved_path.resolve())
+        if marker in seen_paths:
+            continue
+        seen_paths.add(marker)
+        resolved_paths.append(resolved_path)
+        if len(resolved_paths) >= max_images:
+            break
+    return resolved_paths
+
+
+def export_primary_visual_path(payload: dict, question: dict):
+    crop_path = _existing_path(question.get("cropPath", ""))
+    if crop_path:
+        return crop_path
+    visual_paths = export_visual_asset_paths(payload, question, max_images=1)
+    return visual_paths[0] if visual_paths else None
+
+
 def make_docx(payload: dict, target_path: Path) -> None:
     lesson = payload["lesson"]
     questions = payload["questions"]
@@ -186,9 +374,12 @@ def make_docx(payload: dict, target_path: Path) -> None:
             f"{question['componentLabel']} · P{question['sourcePage']} · 标签：{' / '.join(question['effectiveVersionTags'])}"
         ).font.color.rgb = RGBColor(0x6D, 0x7A, 0x8C)
 
-        crop_path = question.get("cropPath")
-        if crop_path and os.path.exists(crop_path):
-            document.add_picture(crop_path, width=Inches(5.85))
+        crop_path = _existing_path(question.get("cropPath", ""))
+        if crop_path:
+            document.add_picture(str(crop_path), width=Inches(5.85))
+        else:
+            for asset_path in export_visual_asset_paths(payload, question):
+                document.add_picture(str(asset_path), width=Inches(2.35))
 
         if audience == "教师版":
             prompt = document.add_paragraph()
@@ -196,7 +387,7 @@ def make_docx(payload: dict, target_path: Path) -> None:
             prompt.add_run(export_preview_text(question))
             review = document.add_paragraph()
             review.add_run("视觉备注：").bold = True
-            review.add_run(question.get("reviewNote", ""))
+            review.add_run(export_review_note(question))
             if question.get("riskIssues"):
                 risk = document.add_paragraph()
                 risk.add_run("风险提示：").bold = True
@@ -300,16 +491,22 @@ def make_pdf(payload: dict, target_path: Path) -> None:
                 meta_style,
             )
         )
-        crop_path = question.get("cropPath")
-        if crop_path and os.path.exists(crop_path):
-            image = Image(crop_path)
+        crop_path = _existing_path(question.get("cropPath", ""))
+        if crop_path:
+            image = Image(str(crop_path))
             image._restrictSize(172 * mm, 95 * mm)
             story.append(Spacer(1, 2 * mm))
             story.append(image)
+        else:
+            for asset_path in export_visual_asset_paths(payload, question):
+                image = Image(str(asset_path))
+                image._restrictSize(72 * mm, 52 * mm)
+                story.append(Spacer(1, 2 * mm))
+                story.append(image)
         if audience == "教师版":
             story.append(Spacer(1, 2 * mm))
             story.append(Paragraph(f"题块摘要：{export_preview_text(question)}", body_style))
-            story.append(Paragraph(f"视觉备注：{question.get('reviewNote', '')}", meta_style))
+            story.append(Paragraph(f"视觉备注：{export_review_note(question)}", meta_style))
             if question.get("riskIssues"):
                 story.append(Paragraph(f"风险提示：{'；'.join(question['riskIssues'])}", meta_style))
         story.append(Spacer(1, 4 * mm))
@@ -339,6 +536,13 @@ def build_variant_payload(base_payload: dict, version: str, audience: str) -> di
         "questions": questions,
         "knowledge_tree": base_payload["splitLesson"].get("tree", []),
         "created_at_display": base_payload["createdAtDisplay"],
+        # Visual assets keep storage_key relative to the bundle root, so export
+        # needs the caller-provided base directory when no legacy cropPath exists.
+        "asset_base_dir": base_payload.get("assetBaseDir")
+        or base_payload.get("asset_base_dir")
+        or base_payload["splitLesson"].get("assetBaseDir")
+        or base_payload["splitLesson"].get("asset_base_dir")
+        or "",
     }
 
 
@@ -439,9 +643,9 @@ def make_compass_ppt(payload: dict, target_path: Path) -> None:
             12,
             True,
         )
-        crop_path = item.get("cropPath")
-        if crop_path and Path(crop_path).exists():
-            slide.shapes.add_picture(str(crop_path), PptInches(left), PptInches(top + 0.4), width=PptInches(2.2))
+        primary_visual = export_primary_visual_path(payload, item)
+        if primary_visual and primary_visual.exists():
+            slide.shapes.add_picture(str(primary_visual), PptInches(left), PptInches(top + 0.4), width=PptInches(2.2))
         note = item.get("reviewNote") or "；".join(item.get("tags", [])) or "建议人工再看一下视觉边界。"
         add_ppt_text(slide, note[:90], left + 2.35, top + 0.46, 2.8, 1.2, 10, False, "1D2736")
         add_ppt_text(slide, item.get("risk", "待审"), left + 4.4, top, 0.7, 0.2, 11, True, "F05555" if item.get("risk") == "高风险" else "F59B23", PP_ALIGN.RIGHT)

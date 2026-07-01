@@ -12,6 +12,10 @@ import { randomUUID } from "crypto";
 import { fileURLToPath } from "url";
 import { createRuntimeBackboneStore } from "./runtime_backbone_store_interface.mjs";
 import { resolveBundledPythonPath } from "./runtime_dependency_paths.mjs";
+import {
+  normalizeBundleTask,
+  validateQuestionVisualSourceRefs,
+} from "./runtime_visual_split_adapter.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -255,6 +259,269 @@ function buildPayload(input) {
   };
 }
 
+function questionVisualStructureFromRefs(sourceRefsJson = {}) {
+  if (
+    sourceRefsJson &&
+    typeof sourceRefsJson === "object" &&
+    !Array.isArray(sourceRefsJson) &&
+    sourceRefsJson.question_visual_structure &&
+    typeof sourceRefsJson.question_visual_structure === "object" &&
+    !Array.isArray(sourceRefsJson.question_visual_structure)
+  ) {
+    return sourceRefsJson.question_visual_structure;
+  }
+  return null;
+}
+
+function storageKeyToPath(storageKey = "") {
+  const parts = String(storageKey || "")
+    .trim()
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter(Boolean);
+  return parts.length ? path.join(...parts) : "";
+}
+
+function pushAssetRoot(roots, seen, candidate) {
+  const text = String(candidate || "").trim();
+  if (!text) {
+    return;
+  }
+  const resolved = path.resolve(text);
+  try {
+    if (!fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) {
+      return;
+    }
+  } catch {
+    return;
+  }
+  if (seen.has(resolved)) {
+    return;
+  }
+  seen.add(resolved);
+  roots.push(resolved);
+}
+
+function exportAssetRootCandidates(payload, question, storageKey = "") {
+  const roots = [];
+  const seen = new Set();
+  const splitLesson = payload.splitLesson || {};
+  for (const candidate of [
+    question.assetBaseDir,
+    question.asset_base_dir,
+    question.assetBundleDir,
+    question.asset_bundle_dir,
+    payload.assetBaseDir,
+    payload.asset_base_dir,
+    payload.assetBundleDir,
+    payload.asset_bundle_dir,
+    splitLesson.assetBaseDir,
+    splitLesson.asset_base_dir,
+    splitLesson.assetBundleDir,
+    splitLesson.asset_bundle_dir,
+  ]) {
+    pushAssetRoot(roots, seen, candidate);
+  }
+
+  const cropPath = String(question.cropPath || "").trim();
+  const relativeStoragePath = storageKeyToPath(storageKey);
+  if (cropPath && relativeStoragePath && fs.existsSync(cropPath)) {
+    let parent = path.dirname(cropPath);
+    const parsed = path.parse(parent);
+    while (parent && parent !== parsed.root) {
+      if (fs.existsSync(path.join(parent, relativeStoragePath))) {
+        pushAssetRoot(roots, seen, parent);
+      }
+      const nextParent = path.dirname(parent);
+      if (nextParent === parent) {
+        break;
+      }
+      parent = nextParent;
+    }
+  }
+
+  pushAssetRoot(roots, seen, workspaceRoot);
+  return roots;
+}
+
+function resolveVisualAssetPath(payload, question, asset = {}) {
+  const relativeStoragePath = storageKeyToPath(asset.storage_key || "");
+  if (!relativeStoragePath) {
+    return "";
+  }
+  for (const root of exportAssetRootCandidates(payload, question, asset.storage_key || "")) {
+    const candidate = path.join(root, relativeStoragePath);
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return "";
+}
+
+function collectExportVisualAssets(question, sourceRefsJson = {}) {
+  const qvs = questionVisualStructureFromRefs(sourceRefsJson);
+  if (!qvs) {
+    return [];
+  }
+  const visualAssets = Array.isArray(qvs.visual_assets) ? qvs.visual_assets : [];
+  const assetById = new Map();
+  for (const asset of visualAssets) {
+    if (!asset || typeof asset !== "object" || Array.isArray(asset)) continue;
+    if (String(asset.attach_status || "").trim() !== "attached") continue;
+    if (String(asset.file_status || "").trim() !== "materialized") continue;
+    if (String(asset.placement_scope || "").trim() === "evidence_only") continue;
+    const assetId = String(asset.asset_id || "").trim();
+    if (!assetId) continue;
+    assetById.set(assetId, asset);
+  }
+
+  const orderedAssets = [];
+  const pushAsset = (asset) => {
+    if (!asset || typeof asset !== "object" || Array.isArray(asset)) return;
+    orderedAssets.push(asset);
+  };
+  const blocks = Array.isArray(qvs.content_blocks) ? qvs.content_blocks : [];
+  for (const block of [...blocks]
+    .filter((item) => item && typeof item === "object" && !Array.isArray(item))
+    .sort((left, right) => Number(left.block_order || 0) - Number(right.block_order || 0))) {
+    if (String(block.block_type || "").trim() !== "image") continue;
+    const assetId = String(block.asset_id || "").trim();
+    if (assetId && assetById.has(assetId)) {
+      pushAsset(assetById.get(assetId));
+      continue;
+    }
+    if (String(block.storage_key || "").trim()) {
+      pushAsset(block);
+    }
+  }
+  if (orderedAssets.length === 0) {
+    const options = Array.isArray(qvs.options) ? qvs.options : [];
+    for (const option of options) {
+      if (!option || typeof option !== "object" || Array.isArray(option)) continue;
+      const assetIds = Array.isArray(option.asset_ids) ? option.asset_ids : [];
+      for (const assetId of assetIds) {
+        const normalizedId = String(assetId || "").trim();
+        if (normalizedId && assetById.has(normalizedId)) {
+          pushAsset(assetById.get(normalizedId));
+        }
+      }
+    }
+  }
+  if (orderedAssets.length === 0) {
+    orderedAssets.push(...assetById.values());
+  }
+  return orderedAssets;
+}
+
+function validateExportVisualAssets(payload, question, sourceRefsJson = {}) {
+  if (String(question.cropPath || "").trim() && fs.existsSync(String(question.cropPath || "").trim())) {
+    return { errors: [], warnings: [] };
+  }
+  // Keep missing image files out of the Python exporter so export failures are
+  // explicit API errors instead of half-rendered packages with silent loss.
+  const assets = collectExportVisualAssets(question, sourceRefsJson);
+  if (assets.length === 0) {
+    return { errors: [], warnings: [] };
+  }
+  const errors = [];
+  const warnings = [];
+  let resolvedCount = 0;
+  const seenAssetIds = new Set();
+  for (const asset of assets) {
+    const assetId = String(asset.asset_id || "unknown").trim() || "unknown";
+    if (seenAssetIds.has(assetId)) {
+      continue;
+    }
+    seenAssetIds.add(assetId);
+    const resolvedPath = resolveVisualAssetPath(payload, question, asset);
+    if (!resolvedPath) {
+      errors.push(`export_visual_asset_path_missing:${assetId}`);
+      continue;
+    }
+    resolvedCount += 1;
+  }
+  if (resolvedCount === 0) {
+    warnings.push("export_visual_assets_require_asset_base_dir");
+  }
+  return { errors, warnings };
+}
+
+function runExportPreflight(payload) {
+  const questions = payload.splitLesson?.questions || [];
+  const checks = [];
+
+  for (const [index, question] of questions.entries()) {
+    const normalized = normalizeBundleTask({
+      ...question,
+      local_task_id:
+        question.localTaskId ||
+        question.local_task_id ||
+        question.question_uid ||
+        question.id ||
+        `export_question_${index + 1}`,
+      source_refs_json:
+        question.merged_source_refs_json ||
+        question.source_refs_json ||
+        {},
+      merged_source_refs_json: question.merged_source_refs_json || null,
+      question_visual_structure: question.question_visual_structure || null,
+      stem: question.display_markdown || question.previewText || question.stem || "",
+      answer: question.answer || question.answer_text_md || "",
+      explanation:
+        question.explanation || question.analysis_text_md || "",
+    });
+    const validation = validateQuestionVisualSourceRefs(normalized.source_refs_json);
+    if (validation.skipped) {
+      continue;
+    }
+    const fileValidation = validateExportVisualAssets(
+      payload,
+      question,
+      normalized.source_refs_json
+    );
+    checks.push({
+      questionId:
+        question.id ||
+        question.question_id ||
+        question.question_uid ||
+        normalized.local_task_id,
+      ...validation,
+      errors: [...validation.errors, ...fileValidation.errors],
+      warnings: [...validation.warnings, ...fileValidation.warnings],
+    });
+  }
+
+  const issues = [];
+  let warningCount = 0;
+  for (const check of checks) {
+    warningCount += check.warnings.length;
+    for (const error of check.errors) {
+      issues.push(`${check.questionId}:${error}`);
+    }
+  }
+
+  if (issues.length > 0) {
+    // Export still uses the legacy splitLesson renderer, so we fail fast here
+    // instead of producing a half-rendered package with silent image loss.
+    throw new Error(
+      `invalid_export_preflight:${issues.slice(0, 12).join(",")}`
+    );
+  }
+
+  return {
+    checkedQuestionCount: checks.length,
+    skippedQuestionCount: Math.max(0, questions.length - checks.length),
+    warningCount,
+    checks: checks.map((check) => ({
+      questionId: check.questionId,
+      questionUid: check.questionUid,
+      assetCount: check.assetCount,
+      warningCount: check.warnings.length,
+      warnings: check.warnings,
+    })),
+  };
+}
+
 /**
  * 以子进程执行 Python 导出器，并返回生成的产物映射。
  * 把进程边界放在这里，可以隔离 Office/PDF 依赖和 HTTP 服务。
@@ -265,9 +532,11 @@ async function runExport(payload) {
   const runId = `${stamp}_${slug(payload.lesson.lesson_id)}`;
   const runDir = path.join(exportRoot, runId);
   fs.mkdirSync(runDir, { recursive: true });
+  const preflight = runExportPreflight(payload);
 
   const runtimePayload = {
     ...payload,
+    preflight,
     outputDir: runDir,
     createdAtDisplay: now.toLocaleString("zh-CN", { hour12: false }),
   };
@@ -311,6 +580,7 @@ async function runExport(payload) {
     audiences: payload.selectedAudiences,
     formats: payload.selectedFormats,
     includeCompass: payload.includeCompass,
+    preflight,
     fileCount: normalizedFiles.length,
     files: normalizedFiles,
   };

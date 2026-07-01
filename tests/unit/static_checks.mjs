@@ -12,6 +12,7 @@ import {
   runProcess,
   workspaceRoot,
 } from "../helpers/runtime_testkit.mjs";
+import { resolveBundledPythonPath } from "../../tools/runtime_dependency_paths.mjs";
 
 export function registerTests(register) {
   register({
@@ -235,6 +236,81 @@ export function registerTests(register) {
         policyDocs: policyDocs.length,
         bundleDocs: bundleDocs.length,
       };
+    },
+  });
+
+  register({
+    id: "A13",
+    suite: "static",
+    title: "Visual Python helpers emit versioned storage keys and carry runtime_run_id into question_visual_structure",
+    required: true,
+    async run() {
+      const pythonExe = resolveBundledPythonPath() || process.env.PYTHON || "python";
+      const script = `
+import json
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(r"${workspaceRoot.replace(/\\/g, "\\\\")}") / "tools"))
+from option_crop_staging import _make_asset
+from visual_transcription_core import build_question_visual_structure
+
+asset = _make_asset(
+    question_uid="visual_doc_p003_q001",
+    runtime_run_id="run_visual_contract_001",
+    role="option",
+    ordinal=1,
+    bbox_space="question_image",
+    bbox_json={"x": 1, "y": 2, "w": 3, "h": 4},
+    image_width=100,
+    image_height=80,
+    source_image_role="question_image",
+    option_key="A",
+    candidate_option_key="A",
+    confidence=0.95,
+    attach_status="attached",
+    placement_scope="option_inline",
+    review_flags=[],
+    detector_source="contract_test",
+)
+qvs = build_question_visual_structure(
+    {
+        "question_uid": "visual_doc_p003_q001",
+        "runtime_run_id": "run_visual_contract_001",
+        "staged_visual_assets": [asset],
+        "option_visual_blocks": [],
+        "option_detection_review_flags": [],
+        "gating_result": {},
+    },
+    {
+        "question_id": "visual_q1",
+        "stem_text_md": "A. option",
+        "answer_text_md": "A",
+        "analysis_text_md": "analysis",
+    },
+)
+print(json.dumps({
+    "storage_key": asset["storage_key"],
+    "asset_runtime_run_id": asset["runtime_run_id"],
+    "qvs_runtime_run_id": qvs["runtime_run_id"],
+}, ensure_ascii=False))
+`;
+      const result = await runProcess(pythonExe, ["-c", script]);
+      expect(result.code === 0, `visual_python_contract_failed:${result.stderr || result.stdout}`);
+      const parsed = JSON.parse(result.stdout.trim());
+      expect(
+        parsed.storage_key ===
+          "question_assets/visual_doc_p003_q001/run_visual_contract_001/options/A/001.png",
+        `visual_storage_key_strategy_mismatch:${parsed.storage_key}`
+      );
+      expect(
+        parsed.asset_runtime_run_id === "run_visual_contract_001",
+        `visual_asset_runtime_run_id_missing:${parsed.asset_runtime_run_id}`
+      );
+      expect(
+        parsed.qvs_runtime_run_id === "run_visual_contract_001",
+        `visual_qvs_runtime_run_id_missing:${parsed.qvs_runtime_run_id}`
+      );
+      return parsed;
     },
   });
 }
