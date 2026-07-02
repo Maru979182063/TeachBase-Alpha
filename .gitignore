@@ -26,6 +26,7 @@ tmp_preview_check.js
 .codex_assets/
 .codex_previews/
 _backup_*/
+backups/
 *.bak
 *.bak_*
 *.backup_*

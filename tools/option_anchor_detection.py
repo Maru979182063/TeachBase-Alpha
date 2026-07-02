@@ -432,6 +432,57 @@ def _call_analysis_figure_rescan_model(api_key: str, model: str, image: Image.Im
     return _extract_json_block(payload["choices"][0]["message"]["content"])
 
 
+def _call_public_figure_rescan_model(
+    api_key: str,
+    model: str,
+    image: Image.Image,
+    *,
+    image_presence: str,
+    target_scope: str,
+) -> dict:
+    bundle = vision_prompt_store.get_public_figure_rescan_prompt_bundle()
+    prompt = vision_prompt_store.render_template(
+        bundle["user_template"],
+        {
+            "IMAGE_PRESENCE": str(image_presence or "public_figure"),
+            "TARGET_SCOPE": str(target_scope or "stem"),
+        },
+    )
+    body = {
+        "model": model,
+        "temperature": 0.0,
+        "messages": [
+            {"role": "system", "content": bundle["system_prompt"]},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": _pil_image_to_data_url(image)}},
+                ],
+            },
+        ],
+    }
+    request = urllib.request.Request(
+        API_URL,
+        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=180) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"http_{exc.code}: {detail}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"network_error: {exc}") from exc
+    payload = json.loads(raw)
+    return _extract_json_block(payload["choices"][0]["message"]["content"])
+
+
 def _heuristic_detect(option_keys: list[str], bbox_space: str, image_width: int, image_height: int) -> dict:
     if not option_keys:
         return {
@@ -2364,6 +2415,41 @@ def _should_run_vertical_tile_detection(image_width: int, image_height: int, box
     return vertical_span < image_height * 0.38
 
 
+def _same_long_source(question: dict) -> bool:
+    question_image_raw = str(question.get("question_image", "") or "").strip()
+    stem_image_raw = str(question.get("stem_image", "") or "").strip()
+    analysis_image_raw = str(question.get("analysis_image", "") or "").strip()
+    return bool(
+        question_image_raw
+        and stem_image_raw
+        and analysis_image_raw
+        and Path(question_image_raw) == Path(stem_image_raw) == Path(analysis_image_raw)
+    )
+
+
+def _should_use_panel_long_branch(
+    question: dict,
+    *,
+    source_field: str,
+    rescan_scope: str,
+    image_width: int,
+    image_height: int,
+) -> bool:
+    gate = question.get("image_need_gate") if isinstance(question.get("image_need_gate"), dict) else {}
+    image_presence = str(gate.get("image_presence", "") or "").strip().lower()
+    long_image = image_height >= 1300 or image_height >= image_width * 1.55
+    planner_panel = "panel" in image_presence or image_presence in {"mixed", "graph", "geometry", "small_auxiliary_figure"}
+    if _same_long_source(question):
+        return True
+    if source_field != "question_image":
+        return False
+    if long_image:
+        return True
+    if rescan_scope == "stem" and planner_panel:
+        return True
+    return False
+
+
 def detect_public_figure_regions(
     question: dict,
     *,
@@ -2390,12 +2476,7 @@ def detect_public_figure_regions(
     stem_image_raw = str(question.get("stem_image", "") or "").strip()
     question_image_raw = str(question.get("question_image", "") or "").strip()
     analysis_image_raw = str(question.get("analysis_image", "") or "").strip()
-    same_long_source = (
-        question_image_raw
-        and stem_image_raw
-        and analysis_image_raw
-        and Path(question_image_raw) == Path(stem_image_raw) == Path(analysis_image_raw)
-    )
+    same_long_source = _same_long_source(question)
     if same_long_source:
         # Packaged samples can store the same long question crop in all three
         # fields. Probe the same container with both whole-question and stem
@@ -2563,14 +2644,30 @@ def detect_public_figure_regions(
         if source_raw and Path(source_raw).exists():
             image_path = Path(source_raw)
             width, height = _read_image_meta(image_path)
+            use_panel_long_branch = _should_use_panel_long_branch(
+                question,
+                source_field=source_field,
+                rescan_scope=rescan_scope,
+                image_width=width,
+                image_height=height,
+            )
             try:
                 with Image.open(image_path) as original:
-                    payload = _call_analysis_figure_rescan_model(
-                        api_key_value,
-                        model_name,
-                        original.convert("RGB"),
-                        image_presence,
-                    )
+                    if rescan_scope == "analysis" and not use_panel_long_branch:
+                        payload = _call_analysis_figure_rescan_model(
+                            api_key_value,
+                            model_name,
+                            original.convert("RGB"),
+                            image_presence,
+                        )
+                    else:
+                        payload = _call_public_figure_rescan_model(
+                            api_key_value,
+                            model_name,
+                            original.convert("RGB"),
+                            image_presence=image_presence,
+                            target_scope=rescan_scope,
+                        )
                     raw_boxes = [_normalize_public_image_bbox(item) for item in (payload.get("image_bboxes", []) or [])]
                     if "number_line" in image_presence:
                         raw_boxes = [
@@ -2601,10 +2698,42 @@ def detect_public_figure_regions(
                                 "bbox_space": "analysis_image" if source_field == "analysis_image" else "question_image",
                                 "detector_source": f"{rescan_scope}_zero_asset_rescan_model",
                                 "review_flags": normalize_review_flags(
-                                    list(item.get("review_flags", []) or []) + [f"{rescan_scope}_zero_asset_rescan"]
+                                    list(item.get("review_flags", []) or [])
+                                    + [f"{rescan_scope}_zero_asset_rescan"]
+                                    + (["long_image_branch"] if use_panel_long_branch else [])
                                 ),
                             }
                         )
+                    if not accepted and use_panel_long_branch and api_key_value and rescan_scope == "stem":
+                        tile_boxes = _detect_public_figures_in_vertical_tiles(
+                            original.copy(),
+                            api_key=api_key_value,
+                            model=model_name,
+                            bbox_space=source_field,
+                            hint_text=str(question.get("stem_text", "") or ""),
+                        )
+                        if tile_boxes:
+                            tile_boxes = _sanitize_public_boxes(
+                                tile_boxes,
+                                image=original.copy(),
+                                image_width=width,
+                                image_height=height,
+                                source_field_name=source_field,
+                            )
+                            accepted = [
+                                {
+                                    **item,
+                                    "bbox_space": "analysis_image" if source_field == "analysis_image" else "question_image",
+                                    "detector_source": f"{rescan_scope}_zero_asset_rescan_model+tile_fallback",
+                                    "review_flags": normalize_review_flags(
+                                        list(item.get("review_flags", []) or [])
+                                        + [f"{rescan_scope}_zero_asset_rescan", "long_image_branch", "tile_fallback"]
+                                    ),
+                                }
+                                for item in tile_boxes
+                                if _looks_figure_like_bbox(item, image_width=width, image_height=height)
+                                and not _looks_like_text_false_positive(original.copy(), item)
+                            ]
                     if accepted:
                         refined_accepted = accepted
                         if api_key_value:

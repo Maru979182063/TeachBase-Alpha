@@ -253,6 +253,21 @@ def get_analysis_figure_rescan_prompt_bundle() -> dict[str, str]:
     }
 
 
+def get_public_figure_rescan_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    public_figure_rescan = prompts.get("public_figure_rescan", {})
+    if not isinstance(public_figure_rescan, dict):
+        raise PromptConfigError("missing_public_figure_rescan_prompt_config")
+    return {
+        "prompt_version": str(public_figure_rescan.get("prompt_version", "") or ""),
+        "system_prompt": str(public_figure_rescan.get("system_prompt", "") or ""),
+        "user_template": str(public_figure_rescan.get("user_template", "") or ""),
+    }
+
+
 def get_image_need_gate_prompt_bundle() -> dict[str, str]:
     config = load_prompt_config()
     prompts = config.get("prompts", {})

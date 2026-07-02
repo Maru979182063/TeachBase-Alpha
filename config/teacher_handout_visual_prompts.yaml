@@ -32,7 +32,7 @@ prompts:
       {
         "question_id": "{{QUESTION_ID}}",
         "needs_figure_detection": true,
-        "image_presence": "none|public_figure|option_images|table|number_line|graph|geometry|analysis_figure|small_auxiliary_figure|mixed|uncertain",
+        "image_presence": "none|public_figure|option_images|table|number_line|graph|geometry|analysis_figure|small_auxiliary_figure|multi_figure_panel|mixed|uncertain",
         "where": ["stem", "options", "analysis"],
         "confidence": 0.0,
         "reason": "一句话说明为什么"
@@ -773,6 +773,60 @@ prompts:
 
       Optional noisy text hint:
       {{HINT_TEXT}}
+
+      Output schema:
+      {
+        "image_width": 1000,
+        "image_height": 1000,
+        "image_bboxes": [
+          {
+            "asset_id": "figure_001",
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0,
+            "confidence": 0.0,
+            "review_flags": []
+          }
+        ],
+        "global_review_flags": []
+      }
+  public_figure_rescan:
+    prompt_version: "public_figure_rescan_panelfirst_cn_grounding1000_v0.1"
+    system_prompt: |
+      你只做数学题题内图片的漏检复扫。
+      输入是一整张题目截图，planner 已经判断指定区域存在题内图形，但前一轮检测漏掉了或切得不稳定。
+      你只返回严格 JSON，不解题，不转录正文，不解释。
+      默认策略是 panel-first：
+      - 如果多个小图本来就是一个组合面板、步骤图组、图1/图2/图3 连续图、同一道大题里的并列辅助图，请优先保留为完整 panel。
+      - 只有在天然独立、边界非常清楚、拆开后不会丢内容也不会重复时，才拆成多个 bbox。
+      - 宁可略带少量空白，也不要切残、切碎、重复框同一组图。
+    user_template: |
+      target_scope: {{TARGET_SCOPE}}
+      planner 判断的图形类型：{{IMAGE_PRESENCE}}
+
+      任务：
+      1. 只在与 {{TARGET_SCOPE}} 相关的区域寻找题内图形。
+      2. 如果这是超长题图、长解析图、步骤图组、图1/图2/图3/图4、横向并列或纵向连续的小图集合，请优先输出完整 panel bbox。
+      3. 如果图形本来就是一个组合区域，不要为了干净而拆碎成很多小框。
+      4. 不要重复输出高度重叠、明显属于同一 panel 的 bbox。
+
+      坐标要求：
+      1. 把整张输入图看成 1000 x 1000 的归一化画布。
+      2. 左上角是 (0,0)，右下角是 (1000,1000)。
+      3. 输出 image_width=1000，image_height=1000。
+
+      必须保留：
+      - 函数图像、坐标轴、数轴、几何图、立体图、统计图、表格、辅助线、步骤图、图内点名/字母/数字标注。
+      - 紧贴图形的 图1/图2/图3/图4、步骤编号、面板内必要标签。
+
+      必须排除：
+      - 题干正文、解析正文、红色教师讲解文字、页眉页脚、题号、纯公式推导行。
+
+      review_flags 约定：
+      - 如果这是组合图整体保留，加入 "panel_kept"。
+      - 如果 bbox 可能仍需人工确认，加入 "bbox_needs_review"。
+      - 如果这是长图场景下的复扫结果，加入 "long_image_branch"。
 
       Output schema:
       {
