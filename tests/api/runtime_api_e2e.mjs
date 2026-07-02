@@ -76,6 +76,9 @@ function buildInvalidVisualExportPayload() {
                 display_ref: "asset://qa_visual_export_p001_q001_option_A_001",
                 storage_key:
                   "question_assets/visual_export_p001_q001/run_api_preflight/options/A/001.png",
+                bbox_space: "option_crop",
+                source_image_asset_id:
+                  "qa_visual_export_p001_q001_option_A_001_source",
                 placement_scope: "option_inline",
                 option_key: "A",
                 attach_status: "attached",
@@ -181,6 +184,9 @@ function buildValidVisualExportPayload(assetBaseDir) {
                 display_ref: "asset://qa_visual_export_asset_p002_q001_option_A_001",
                 storage_key:
                   "question_assets/visual_export_asset_p002_q001/run_api_export_asset/options/A/001.png",
+                bbox_space: "option_crop",
+                source_image_asset_id:
+                  "qa_visual_export_asset_p002_q001_option_A_001_source",
                 placement_scope: "option_inline",
                 option_key: "A",
                 attach_status: "attached",

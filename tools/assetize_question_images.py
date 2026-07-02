@@ -934,8 +934,10 @@ def build_records(
             materialize_staged_asset(item, question, base_dir, out_dir, include_debug_paths=include_debug_paths)
             for item in staged_assets
         ]
-        deduped_staged_assets, removed_duplicate_assets = dedupe_materialized_assets(materialized_staged_assets, out_dir)
-        all_assets = assets + deduped_staged_assets
+        # Do not similarity-dedupe math figures. Set/function diagrams can be
+        # visually close while carrying different labels or auxiliary lines.
+        removed_duplicate_assets: list[dict[str, Any]] = []
+        all_assets = assets + materialized_staged_assets
         assign_external_labels(all_assets)
 
         record = {
@@ -945,6 +947,9 @@ def build_records(
             "component_label": str(question.get("component_label", "") or ""),
             "local_number": str(question.get("local_number", "") or ""),
             "visual_pages": question.get("visual_pages", []),
+            "image_need_gate": question.get("image_need_gate", {}) if isinstance(question.get("image_need_gate"), dict) else {},
+            "figure_detection_scope": question.get("figure_detection_scope", {}) if isinstance(question.get("figure_detection_scope"), dict) else {},
+            "option_detection_review_flags": question.get("option_detection_review_flags", []) if isinstance(question.get("option_detection_review_flags"), list) else [],
             "stem_text_md": pick_text(question, visual, "stem_text", "stem_text_md"),
             "answer_text_md": pick_text(question, visual, "answer_text", "answer_text_md"),
             "analysis_text_md": pick_text(question, visual, "analysis_text", "analysis_text_md"),

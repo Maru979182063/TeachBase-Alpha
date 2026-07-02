@@ -221,3 +221,48 @@ def get_inline_figure_refine_prompt_bundle() -> dict[str, str]:
         "system_prompt": str(inline_figure_refine.get("system_prompt", "") or ""),
         "user_template": str(inline_figure_refine.get("user_template", "") or ""),
     }
+
+
+def get_option_figure_refine_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    option_figure_refine = prompts.get("option_figure_refine", {})
+    if not isinstance(option_figure_refine, dict):
+        raise PromptConfigError("missing_option_figure_refine_prompt_config")
+    return {
+        "prompt_version": str(option_figure_refine.get("prompt_version", "") or ""),
+        "system_prompt": str(option_figure_refine.get("system_prompt", "") or ""),
+        "user_template": str(option_figure_refine.get("user_template", "") or ""),
+    }
+
+
+def get_analysis_figure_rescan_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    analysis_figure_rescan = prompts.get("analysis_figure_rescan", {})
+    if not isinstance(analysis_figure_rescan, dict):
+        raise PromptConfigError("missing_analysis_figure_rescan_prompt_config")
+    return {
+        "prompt_version": str(analysis_figure_rescan.get("prompt_version", "") or ""),
+        "system_prompt": str(analysis_figure_rescan.get("system_prompt", "") or ""),
+        "user_template": str(analysis_figure_rescan.get("user_template", "") or ""),
+    }
+
+
+def get_image_need_gate_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    image_need_gate = prompts.get("image_need_gate", {})
+    if not isinstance(image_need_gate, dict):
+        raise PromptConfigError("missing_image_need_gate_prompt_config")
+    return {
+        "prompt_version": str(image_need_gate.get("prompt_version", "") or ""),
+        "system_prompt": str(image_need_gate.get("system_prompt", "") or ""),
+        "user_template": str(image_need_gate.get("user_template", "") or ""),
+    }

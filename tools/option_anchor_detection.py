@@ -350,6 +350,88 @@ def _call_inline_figure_refine_model(api_key: str, model: str, crop_image: Image
     return _extract_json_block(payload["choices"][0]["message"]["content"])
 
 
+def _call_option_figure_refine_model(api_key: str, model: str, image: Image.Image, option_key: str) -> dict:
+    bundle = vision_prompt_store.get_option_figure_refine_prompt_bundle()
+    prompt = vision_prompt_store.render_template(
+        bundle["user_template"],
+        {"OPTION_KEY": str(option_key or "").upper()},
+    )
+    body = {
+        "model": model,
+        "temperature": 0.0,
+        "messages": [
+            {"role": "system", "content": bundle["system_prompt"]},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": _pil_image_to_data_url(image)}},
+                ],
+            },
+        ],
+    }
+    request = urllib.request.Request(
+        API_URL,
+        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=180) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"http_{exc.code}: {detail}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"network_error: {exc}") from exc
+    payload = json.loads(raw)
+    return _extract_json_block(payload["choices"][0]["message"]["content"])
+
+
+def _call_analysis_figure_rescan_model(api_key: str, model: str, image: Image.Image, image_presence: str) -> dict:
+    bundle = vision_prompt_store.get_analysis_figure_rescan_prompt_bundle()
+    prompt = vision_prompt_store.render_template(
+        bundle["user_template"],
+        {"IMAGE_PRESENCE": str(image_presence or "analysis_figure")},
+    )
+    body = {
+        "model": model,
+        "temperature": 0.0,
+        "messages": [
+            {"role": "system", "content": bundle["system_prompt"]},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": _pil_image_to_data_url(image)}},
+                ],
+            },
+        ],
+    }
+    request = urllib.request.Request(
+        API_URL,
+        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=180) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"http_{exc.code}: {detail}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"network_error: {exc}") from exc
+    payload = json.loads(raw)
+    return _extract_json_block(payload["choices"][0]["message"]["content"])
+
+
 def _heuristic_detect(option_keys: list[str], bbox_space: str, image_width: int, image_height: int) -> dict:
     if not option_keys:
         return {
@@ -493,11 +575,200 @@ def detect_option_anchors(
             "global_review_flags": normalize_review_flags(detection.get("global_review_flags", []) or []),
             "detector": "vision_model",
         }
+        if detection["option_visual_blocks"]:
+            with Image.open(image_path) as img:
+                refined_blocks = _refine_option_blocks_with_model(
+                    img.convert("RGB"),
+                    detection["option_visual_blocks"],
+                    api_key=api_key_value,
+                    model=model_name,
+                )
+            if refined_blocks:
+                detection["option_visual_blocks"] = refined_blocks
+                detection["detector"] = "vision_model+option_refine_model"
         if not detection["option_visual_blocks"]:
             detection["global_review_flags"] = normalize_review_flags(
                 list(detection.get("global_review_flags", [])) + ["option_anchor_missing"]
             )
     return detection
+
+
+def _refine_option_blocks_with_model(
+    image: Image.Image,
+    blocks: list[dict],
+    *,
+    api_key: str,
+    model: str,
+) -> list[dict]:
+    if not api_key or not blocks:
+        return blocks
+
+    image_width, image_height = image.size
+    refined_blocks: list[dict] = []
+    for block in blocks:
+        updated_block = dict(block)
+        option_key = str(block.get("option_key", "") or "").upper()
+        refined_image_bboxes: list[dict] = []
+        for box in block.get("image_bboxes", []) or []:
+            if not isinstance(box, dict):
+                continue
+            x = int(box.get("x", 0) or 0)
+            y = int(box.get("y", 0) or 0)
+            w = int(box.get("w", 0) or 0)
+            h = int(box.get("h", 0) or 0)
+            if w <= 0 or h <= 0:
+                continue
+
+            if option_key:
+                try:
+                    target_payload = _call_option_figure_refine_model(api_key, model, image, option_key)
+                    if bool(target_payload.get("is_valid_figure", True)):
+                        raw_target_bbox = target_payload.get("bbox", {})
+                        target_candidate = _normalize_bbox(raw_target_bbox)
+                        target_canvas_w = int(target_payload.get("image_width", 1000) or 1000)
+                        target_canvas_h = int(target_payload.get("image_height", 1000) or 1000)
+                        if target_candidate["w"] > 0 and target_candidate["h"] > 0 and target_canvas_w > 0 and target_canvas_h > 0:
+                            tx1 = round(target_candidate["x"] / target_canvas_w * image_width)
+                            ty1 = round(target_candidate["y"] / target_canvas_h * image_height)
+                            tx2 = round((target_candidate["x"] + target_candidate["w"]) / target_canvas_w * image_width)
+                            ty2 = round((target_candidate["y"] + target_candidate["h"]) / target_canvas_h * image_height)
+                            tx1 = max(0, min(tx1, image_width - 1))
+                            ty1 = max(0, min(ty1, image_height - 1))
+                            tx2 = max(tx1 + 1, min(tx2, image_width))
+                            ty2 = max(ty1 + 1, min(ty2, image_height))
+                            targeted = {
+                                **box,
+                                "x": tx1,
+                                "y": ty1,
+                                "w": tx2 - tx1,
+                                "h": ty2 - ty1,
+                                "pre_refine_bbox_json": {"x": x, "y": y, "w": w, "h": h},
+                                "refine_model_bbox_json": dict(raw_target_bbox) if isinstance(raw_target_bbox, dict) else raw_target_bbox,
+                                "figure_refine_source": "option_target_refine_model",
+                                "figure_refine_confidence": float(target_payload.get("confidence", 0.0) or 0.0),
+                                "review_flags": normalize_review_flags(
+                                    list(box.get("review_flags", []) or []) + list(target_payload.get("review_flags", []) or [])
+                                ),
+                            }
+                            if _looks_figure_like_bbox(targeted, image_width=image_width, image_height=image_height):
+                                refined_image_bboxes.append(targeted)
+                                continue
+                except Exception:
+                    pass
+
+            # Refine inside the full option region when available. If the
+            # first-stage image bbox is already wrong, a small crop around it
+            # cannot recover missing axes/curves.
+            context_box = _normalize_bbox(block.get("option_bbox", {}))
+            if context_box["w"] <= 0 or context_box["h"] <= 0:
+                context_box = {"x": x, "y": y, "w": w, "h": h}
+            cx = int(context_box.get("x", 0) or 0)
+            cy = int(context_box.get("y", 0) or 0)
+            cw = int(context_box.get("w", 0) or 0)
+            ch = int(context_box.get("h", 0) or 0)
+            pad_x = max(24, int(cw * 0.06))
+            pad_y = max(18, int(ch * 0.06))
+            x1 = max(cx - pad_x, 0)
+            y1 = max(cy - pad_y, 0)
+            x2 = min(cx + cw + pad_x, image_width)
+            y2 = min(cy + ch + pad_y, image_height)
+            if x2 <= x1 or y2 <= y1:
+                refined_image_bboxes.append(box)
+                continue
+
+            crop = image.crop((x1, y1, x2, y2))
+            try:
+                payload = _call_inline_figure_refine_model(api_key, model, crop)
+            except Exception:
+                kept = dict(box)
+                kept["review_flags"] = normalize_review_flags(
+                    list(kept.get("review_flags", []) or []) + ["option_figure_refine_model_failed"]
+                )
+                refined_image_bboxes.append(kept)
+                continue
+
+            if not bool(payload.get("is_valid_figure", True)):
+                kept = dict(box)
+                kept["review_flags"] = normalize_review_flags(
+                    list(kept.get("review_flags", []) or []) + ["option_figure_refine_invalid"]
+                )
+                refined_image_bboxes.append(kept)
+                continue
+
+            raw_bbox = payload.get("bbox", {})
+            candidate = _normalize_bbox(raw_bbox)
+            canvas_w = int(payload.get("image_width", 1000) or 1000)
+            canvas_h = int(payload.get("image_height", 1000) or 1000)
+            if candidate["w"] <= 0 or candidate["h"] <= 0 or canvas_w <= 0 or canvas_h <= 0:
+                kept = dict(box)
+                kept["review_flags"] = normalize_review_flags(
+                    list(kept.get("review_flags", []) or []) + ["option_figure_refine_bbox_invalid"]
+                )
+                refined_image_bboxes.append(kept)
+                continue
+
+            crop_w = x2 - x1
+            crop_h = y2 - y1
+            nx1 = x1 + round(candidate["x"] / canvas_w * crop_w)
+            ny1 = y1 + round(candidate["y"] / canvas_h * crop_h)
+            nx2 = x1 + round((candidate["x"] + candidate["w"]) / canvas_w * crop_w)
+            ny2 = y1 + round((candidate["y"] + candidate["h"]) / canvas_h * crop_h)
+            nx1 = max(0, min(nx1, image_width - 1))
+            ny1 = max(0, min(ny1, image_height - 1))
+            nx2 = max(nx1 + 1, min(nx2, image_width))
+            ny2 = max(ny1 + 1, min(ny2, image_height))
+
+            updated = {
+                **box,
+                "x": nx1,
+                "y": ny1,
+                "w": nx2 - nx1,
+                "h": ny2 - ny1,
+                "pre_refine_bbox_json": {"x": x, "y": y, "w": w, "h": h},
+                "refine_crop_bbox_json": {"x": x1, "y": y1, "w": crop_w, "h": crop_h},
+                "refine_model_bbox_json": dict(raw_bbox) if isinstance(raw_bbox, dict) else raw_bbox,
+                "figure_refine_source": "option_refine_model",
+                "figure_refine_confidence": float(payload.get("confidence", 0.0) or 0.0),
+                "review_flags": normalize_review_flags(
+                    list(box.get("review_flags", []) or []) + list(payload.get("review_flags", []) or [])
+                ),
+            }
+
+            pre_area = max(w * h, 1)
+            new_area = max((nx2 - nx1) * (ny2 - ny1), 1)
+            left_shift = nx1 - x
+            top_shift = ny1 - y
+            shrink_too_much = new_area / pre_area < 0.55
+            shifted_too_much = left_shift > max(28, int(w * 0.18)) or top_shift > max(24, int(h * 0.16))
+            if shrink_too_much or shifted_too_much:
+                kept = dict(box)
+                kept["rejected_refine_bbox_json"] = {
+                    "x": nx1,
+                    "y": ny1,
+                    "w": nx2 - nx1,
+                    "h": ny2 - ny1,
+                    "area_ratio": round(new_area / pre_area, 4),
+                    "left_shift": left_shift,
+                    "top_shift": top_shift,
+                }
+                kept["refine_crop_bbox_json"] = {"x": x1, "y": y1, "w": crop_w, "h": crop_h}
+                kept["refine_model_bbox_json"] = dict(raw_bbox) if isinstance(raw_bbox, dict) else raw_bbox
+                kept["figure_refine_source"] = "option_refine_model_rejected"
+                kept["figure_refine_confidence"] = float(payload.get("confidence", 0.0) or 0.0)
+                kept["review_flags"] = normalize_review_flags(
+                    list(box.get("review_flags", []) or []) + ["option_figure_refine_rejected_keep_coarse"]
+                )
+                refined_image_bboxes.append(kept)
+                continue
+
+            refined_image_bboxes.append(updated)
+
+        updated_block["image_bboxes"] = refined_image_bboxes
+        updated_block["review_flags"] = normalize_review_flags(
+            list(updated_block.get("review_flags", []) or []) + ["option_figure_refine_attempted"]
+        )
+        refined_blocks.append(updated_block)
+    return refined_blocks
 
 
 def _normalize_public_image_bbox(item: object) -> dict:
@@ -735,8 +1006,13 @@ def _looks_figure_like_bbox(
     min_height = max(PUBLIC_FIGURE_MIN_SIDE, int(image_height * PUBLIC_FIGURE_MIN_HEIGHT_RATIO))
     min_width = max(PUBLIC_FIGURE_MIN_SIDE, int(image_width * PUBLIC_FIGURE_MIN_WIDTH_RATIO))
     if height < min_height or width < min_width:
-        return False
+        review_flags = set(str(item) for item in (bbox.get("review_flags", []) or []))
+        if "number_line" not in review_flags:
+            return False
     aspect = width / max(height, 1)
+    review_flags = set(str(item) for item in (bbox.get("review_flags", []) or []))
+    if "number_line" in review_flags:
+        return 2.4 <= aspect <= 18.0 and width >= min_width and height >= 18
     if aspect > PUBLIC_FIGURE_MAX_ASPECT or aspect < 0.22:
         return False
     if width > int(image_width * 0.92) and height < int(image_height * 0.14):
@@ -1965,6 +2241,39 @@ def _refine_public_boxes_with_model(
                 list(box.get("review_flags", []) or []) + list(payload.get("review_flags", []) or [])
             ),
         }
+        pre_w = max(int(box.get("w", 0) or 0), 1)
+        pre_h = max(int(box.get("h", 0) or 0), 1)
+        top_shift = ny1 - int(box.get("y", 0) or 0)
+        left_shift = nx1 - int(box.get("x", 0) or 0)
+        area_ratio = ((nx2 - nx1) * (ny2 - ny1)) / max(pre_w * pre_h, 1)
+        shrink_too_much = area_ratio < 0.72
+        shifted_too_much = top_shift > max(22, int(pre_h * 0.12)) or left_shift > max(22, int(pre_w * 0.12))
+        if shrink_too_much or shifted_too_much:
+            kept = dict(box)
+            kept["pre_refine_bbox_json"] = {
+                "x": int(box.get("x", 0) or 0),
+                "y": int(box.get("y", 0) or 0),
+                "w": int(box.get("w", 0) or 0),
+                "h": int(box.get("h", 0) or 0),
+            }
+            kept["rejected_refine_bbox_json"] = {
+                "x": nx1,
+                "y": ny1,
+                "w": nx2 - nx1,
+                "h": ny2 - ny1,
+                "top_shift": top_shift,
+                "left_shift": left_shift,
+                "area_ratio": round(area_ratio, 4),
+            }
+            kept["refine_crop_bbox_json"] = {"x": x1, "y": y1, "w": crop_w, "h": crop_h}
+            kept["refine_model_bbox_json"] = dict(raw_bbox) if isinstance(raw_bbox, dict) else raw_bbox
+            kept["figure_refine_source"] = "vision_model_rejected"
+            kept["figure_refine_confidence"] = float(payload.get("confidence", 0.0) or 0.0)
+            kept["review_flags"] = normalize_review_flags(
+                list(box.get("review_flags", []) or []) + ["inline_figure_refine_shrink_rejected"]
+            )
+            refined.append(kept)
+            continue
         if _looks_figure_like_bbox(updated, image_width=image_width, image_height=image_height) and not _looks_like_text_false_positive(image, updated):
             refined.append(updated)
     return _dedupe_public_boxes(refined)
@@ -2077,19 +2386,33 @@ def detect_public_figure_regions(
         result["global_review_flags"] = ["public_figure_model_not_run_missing_api_key"]
         return result
 
-    image_targets: list[tuple[str, str]] = []
+    image_targets: list[tuple[str, str, str]] = []
     stem_image_raw = str(question.get("stem_image", "") or "").strip()
     question_image_raw = str(question.get("question_image", "") or "").strip()
-    if stem_image_raw:
-        image_targets.append(("stem_image", "stem_image_bboxes"))
+    analysis_image_raw = str(question.get("analysis_image", "") or "").strip()
+    same_long_source = (
+        question_image_raw
+        and stem_image_raw
+        and analysis_image_raw
+        and Path(question_image_raw) == Path(stem_image_raw) == Path(analysis_image_raw)
+    )
+    if same_long_source:
+        # Packaged samples can store the same long question crop in all three
+        # fields. Probe the same container with both whole-question and stem
+        # prompts, then merge by bbox overlap. This keeps recall for labeled
+        # figures such as 图1/图2/图3 without image-similarity dedupe.
+        image_targets.append(("question_image", "stem_image_bboxes", "question_image"))
+        image_targets.append(("stem_image", "stem_image_bboxes", "question_image"))
+    elif stem_image_raw:
+        image_targets.append(("stem_image", "stem_image_bboxes", "stem_image"))
     elif question_image_raw:
         # Legacy or packaged samples may only preserve the whole question crop.
         # In that case, still attempt public-figure extraction from question_image.
-        image_targets.append(("question_image", "stem_image_bboxes"))
-    if str(question.get("analysis_image", "") or "").strip():
-        image_targets.append(("analysis_image", "analysis_image_bboxes"))
+        image_targets.append(("question_image", "stem_image_bboxes", "question_image"))
+    if analysis_image_raw and not same_long_source:
+        image_targets.append(("analysis_image", "analysis_image_bboxes", "analysis_image"))
 
-    for field_name, bucket_name in image_targets:
+    for field_name, bucket_name, output_bbox_space in image_targets:
         image_path_raw = str(question.get(field_name, "") or "").strip()
         if not image_path_raw:
             continue
@@ -2195,7 +2518,7 @@ def detect_public_figure_regions(
                     list(result.get("global_review_flags", [])) + ["inline_figure_refine_all_rejected"]
                 )
         for item in normalized_boxes:
-            item["bbox_space"] = field_name
+            item["bbox_space"] = output_bbox_space
             if item.get("figure_refine_source"):
                 base_source = str(item.get("detector_source", "") or detector_source)
                 if "refine_model" not in base_source:
@@ -2203,9 +2526,128 @@ def detect_public_figure_regions(
                 item["detector_source"] = base_source
             else:
                 item["detector_source"] = str(item.get("detector_source", "") or detector_source)
-        result[bucket_name] = normalized_boxes
+        result[bucket_name] = _dedupe_overlapping_public_boxes(
+            list(result.get(bucket_name, []) or []) + normalized_boxes,
+            iou_threshold=0.82,
+        )
         result["detector"] = detector_source
         result["global_review_flags"] = normalize_review_flags(
             list(result.get("global_review_flags", [])) + list(payload.get("global_review_flags", []) or [])
         )
+    gate = question.get("image_need_gate") if isinstance(question.get("image_need_gate"), dict) else {}
+    gate_where = {str(item or "").strip().lower() for item in (gate.get("where", []) if isinstance(gate.get("where", []), list) else [])}
+    needs_figure_detection = bool(gate.get("needs_figure_detection"))
+    stem_requested = needs_figure_detection and "stem" in gate_where
+    analysis_requested = needs_figure_detection and (
+        "analysis" in gate_where or "answer" in gate_where or "solution" in gate_where
+    )
+    has_stem_candidate = bool(result.get("stem_image_bboxes"))
+    has_analysis_candidate = bool(result.get("analysis_image_bboxes")) or any(
+        str(item.get("bbox_space", "") or "") == "question_image"
+        for item in (result.get("stem_image_bboxes", []) or [])
+    )
+    zero_asset_rescan_requests: list[tuple[str, str, str, str]] = []
+    if stem_requested and not has_stem_candidate:
+        source_field = "question_image" if question_image_raw else ("stem_image" if stem_image_raw else "analysis_image")
+        source_raw = question_image_raw or stem_image_raw or analysis_image_raw
+        if source_raw:
+            zero_asset_rescan_requests.append(("stem", "stem_image_bboxes", source_field, source_raw))
+    if analysis_requested and not has_analysis_candidate:
+        source_field = "analysis_image" if analysis_image_raw and not same_long_source else "question_image"
+        source_raw = analysis_image_raw if source_field == "analysis_image" else (question_image_raw or stem_image_raw or analysis_image_raw)
+        if source_raw:
+            zero_asset_rescan_requests.append(("analysis", "analysis_image_bboxes" if source_field == "analysis_image" else "stem_image_bboxes", source_field, source_raw))
+
+    for rescan_scope, bucket_name, source_field, source_raw in zero_asset_rescan_requests:
+        image_presence = str(gate.get("image_presence", "") or f"{rescan_scope}_figure")
+        if source_raw and Path(source_raw).exists():
+            image_path = Path(source_raw)
+            width, height = _read_image_meta(image_path)
+            try:
+                with Image.open(image_path) as original:
+                    payload = _call_analysis_figure_rescan_model(
+                        api_key_value,
+                        model_name,
+                        original.convert("RGB"),
+                        image_presence,
+                    )
+                    raw_boxes = [_normalize_public_image_bbox(item) for item in (payload.get("image_bboxes", []) or [])]
+                    if "number_line" in image_presence:
+                        raw_boxes = [
+                            {
+                                **item,
+                                "review_flags": normalize_review_flags(list(item.get("review_flags", []) or []) + ["number_line"]),
+                            }
+                            for item in raw_boxes
+                        ]
+                    rescanned = _scale_model_canvas_boxes(
+                        [item for item in raw_boxes if item],
+                        model_image_width=int(payload.get("image_width", 0) or 0),
+                        model_image_height=int(payload.get("image_height", 0) or 0),
+                        image_width=width,
+                        image_height=height,
+                        image=original.copy(),
+                    )
+                    accepted = []
+                    for item in rescanned:
+                        flags = set(str(flag) for flag in (item.get("review_flags", []) or []))
+                        if not _looks_figure_like_bbox(item, image_width=width, image_height=height):
+                            continue
+                        if "number_line" not in flags and _looks_like_text_false_positive(original.copy(), item):
+                            continue
+                        accepted.append(
+                            {
+                                **item,
+                                "bbox_space": "analysis_image" if source_field == "analysis_image" else "question_image",
+                                "detector_source": f"{rescan_scope}_zero_asset_rescan_model",
+                                "review_flags": normalize_review_flags(
+                                    list(item.get("review_flags", []) or []) + [f"{rescan_scope}_zero_asset_rescan"]
+                                ),
+                            }
+                        )
+                    if accepted:
+                        refined_accepted = accepted
+                        if api_key_value:
+                            refined = _refine_public_boxes_with_model(
+                                original.copy(),
+                                accepted,
+                                api_key=api_key_value,
+                                model=model_name,
+                            )
+                            if refined:
+                                refined_accepted = [
+                                    {
+                                        **item,
+                                        "detector_source": f"{rescan_scope}_zero_asset_rescan_model+refine_model",
+                                        "review_flags": normalize_review_flags(
+                                            list(item.get("review_flags", []) or []) + [f"{rescan_scope}_zero_asset_rescan"]
+                                        ),
+                                    }
+                                    for item in refined
+                                ]
+                            else:
+                                refined_accepted = [
+                                    {
+                                        **item,
+                                        "review_flags": normalize_review_flags(
+                                            list(item.get("review_flags", []) or [])
+                                            + [f"{rescan_scope}_zero_asset_rescan", "inline_figure_refine_all_rejected_keep_coarse"]
+                                        ),
+                                    }
+                                    for item in accepted
+                                ]
+                        result[bucket_name] = _dedupe_overlapping_public_boxes(
+                            list(result.get(bucket_name, []) or []) + refined_accepted,
+                            iou_threshold=0.82,
+                        )
+                        result["detector"] = f"{rescan_scope}_zero_asset_rescan_model+refine_model"
+                    result["global_review_flags"] = normalize_review_flags(
+                        list(result.get("global_review_flags", []))
+                        + list(payload.get("global_review_flags", []) or [])
+                        + [f"{rescan_scope}_zero_asset_rescan_attempted"]
+                    )
+            except Exception:
+                result["global_review_flags"] = normalize_review_flags(
+                    list(result.get("global_review_flags", [])) + [f"{rescan_scope}_zero_asset_rescan_failed"]
+                )
     return result

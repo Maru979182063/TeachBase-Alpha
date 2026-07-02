@@ -1,6 +1,6 @@
 # Three-Track Known Limitations
 
-Updated: 2026-06-24
+Updated: 2026-07-01
 
 ## Current Positioning
 
@@ -8,17 +8,17 @@ This round delivered a validation baseline, not a production release.
 
 The runtime currently self-identifies as:
 
-- `releaseChannel = validation_only`
-- `architectureMode = state_replay_bridge`
+- `releaseChannel = validation_baseline`
+- `architectureMode = scoped_table_write`
 - validated input boundary = `LessonDraftBundle`
 
 ## Active Limitations
 
-### 1. Production gate remains intentionally closed
+### 1. This branch is still not the production promotion branch
 
-- `npm run test:production-readiness` currently ends in `NOT_READY`
-- the blocking gate is `POLICY-001`
-- this is intentional so the validation baseline is not misrepresented as a production-ready architecture
+- the backend write-path blocker `POLICY-001` is closed
+- that does not automatically promote this branch to a production release branch
+- final production promotion still requires separate operational review and sign-off
 
 ### 2. Compatibility forwarding is still present
 
@@ -56,5 +56,5 @@ This round did not attempt:
 
 After review, the next step should be to decide whether to:
 
-- keep extending the validation bridge, or
-- start a dedicated production architecture round with separate readiness criteria
+- keep shrinking the remaining non-core state bridge paths, or
+- open a separate production promotion round with operational readiness criteria

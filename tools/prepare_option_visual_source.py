@@ -65,6 +65,102 @@ def _suppress_public_boxes_owned_by_options(public_boxes: list[dict], option_blo
     return kept
 
 
+def _empty_detection() -> dict:
+    return {
+        "option_visual_blocks": [],
+        "stem_image_bboxes": [],
+        "analysis_image_bboxes": [],
+        "unassigned_image_bboxes": [],
+        "global_review_flags": [],
+    }
+
+
+def _planner_scope(question: dict) -> dict:
+    """Use the model planner as the authority for which image branches may run."""
+    gate = question.get("image_need_gate")
+    if not isinstance(gate, dict):
+        return {
+            "option": True,
+            "stem": True,
+            "analysis": True,
+            "reason": "no_planner_gate_conservative",
+            "where": [],
+            "image_presence": "",
+        }
+
+    where_raw = gate.get("where", [])
+    alias = {
+        "stem": "stem",
+        "question": "stem",
+        "public": "stem",
+        "public_figure": "stem",
+        "题干": "stem",
+        "option": "options",
+        "options": "options",
+        "choice": "options",
+        "choices": "options",
+        "选项": "options",
+        "answer": "analysis",
+        "answers": "analysis",
+        "solution": "analysis",
+        "solutions": "analysis",
+        "explanation": "analysis",
+        "analysis": "analysis",
+        "解析": "analysis",
+        "解答": "analysis",
+        "答案": "analysis",
+        "证明": "analysis",
+    }
+    where = {
+        alias.get(str(item or "").strip().lower(), "")
+        for item in (where_raw if isinstance(where_raw, list) else [])
+        if str(item or "").strip()
+    }
+    where.discard("")
+    image_presence = str(gate.get("image_presence", "") or "").strip().lower()
+
+    if not bool(gate.get("needs_figure_detection", False)):
+        return {
+            "option": False,
+            "stem": False,
+            "analysis": False,
+            "reason": "planner_no_figure",
+            "where": sorted(where),
+            "image_presence": image_presence,
+        }
+
+    if not where:
+        return {
+            "option": True,
+            "stem": True,
+            "analysis": True,
+            "reason": "planner_uncertain_conservative",
+            "where": [],
+            "image_presence": image_presence,
+        }
+
+    return {
+        "option": "options" in where,
+        "stem": "stem" in where,
+        "analysis": "analysis" in where,
+        "reason": "planner_where_scope",
+        "where": sorted(where),
+        "image_presence": image_presence,
+    }
+
+
+def _filter_public_review_flags(flags: list, scope: dict) -> list:
+    kept: list = []
+    for flag in flags or []:
+        value = str(flag or "")
+        if not scope.get("stem", True) and "public_stem_image_detected" in value:
+            continue
+        if not scope.get("analysis", True) and "public_analysis_image_detected" in value:
+            continue
+        kept.append(flag)
+    return kept
+
+
 def read_json(path: Path) -> dict | list:
     return json.loads(path.read_text(encoding="utf-8-sig"))
 
@@ -72,6 +168,53 @@ def read_json(path: Path) -> dict | list:
 def write_json(path: Path, payload: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def append_jsonl(path: Path | None, payload: object) -> None:
+    if path is None:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
+        handle.flush()
+
+
+def write_partial_payload(
+    path: Path | None,
+    source_payload: dict,
+    *,
+    source_json_path: Path,
+    runtime_run_id: str,
+    option_anchor_mode: str,
+    require_vision_figure_model: bool,
+    allow_heuristic_figure_fallback: bool,
+    enriched_questions: list[dict],
+    debug_rows: list[dict],
+    current_index: int,
+    total_count: int,
+) -> None:
+    if path is None:
+        return
+    write_json(
+        path,
+        {
+            **source_payload,
+            "schema_version": "option_visual_source.partial.v1.1",
+            "generated_at": datetime.now().isoformat(timespec="seconds"),
+            "source_json": str(source_json_path),
+            "runtime_run_id": runtime_run_id,
+            "option_anchor_mode": option_anchor_mode,
+            "require_vision_figure_model": require_vision_figure_model,
+            "allow_heuristic_figure_fallback": allow_heuristic_figure_fallback,
+            "progress": {
+                "processed_count": len(enriched_questions),
+                "current_index": current_index,
+                "total_count": total_count,
+            },
+            "questions": enriched_questions,
+            "option_visual_debug": debug_rows,
+        },
+    )
 
 
 def make_question_uid(source_json_path: Path, question: dict, index: int) -> str:
@@ -103,6 +246,8 @@ def build_prepared_payload(
     model: str = "",
     require_vision_figure_model: bool = False,
     allow_heuristic_figure_fallback: bool = True,
+    progress_path: Path | None = None,
+    partial_path: Path | None = None,
 ) -> dict:
     payload = read_json(source_json_path)
     if not isinstance(payload, dict):
@@ -114,64 +259,221 @@ def build_prepared_payload(
 
     enriched_questions: list[dict] = []
     debug_rows: list[dict] = []
+    total_count = len([item for item in questions if isinstance(item, dict)])
     for index, question in enumerate(questions, start=1):
         if not isinstance(question, dict):
             continue
+        question_id = str(question.get("question_id", "") or question.get("record_id", "") or f"question_{index:03d}")
+        started_at = datetime.now()
+        append_jsonl(
+            progress_path,
+            {
+                "event": "question_started",
+                "time": started_at.isoformat(timespec="seconds"),
+                "index": index,
+                "total_count": total_count,
+                "question_id": question_id,
+            },
+        )
+        print(
+            json.dumps(
+                {
+                    "event": "question_started",
+                    "index": index,
+                    "total_count": total_count,
+                    "question_id": question_id,
+                },
+                ensure_ascii=False,
+            ),
+            flush=True,
+        )
         enriched = dict(question)
         question_uid = make_question_uid(source_json_path, question, index)
-        enriched["question_uid"] = question_uid
-        enriched["runtime_run_id"] = runtime_run_id
+        try:
+            enriched["question_uid"] = question_uid
+            enriched["runtime_run_id"] = runtime_run_id
+            planner_scope = _planner_scope(question)
 
-        gating = option_choice_gating.evaluate_choice_gating(
-            question_uid=question_uid,
-            option_anchor_mode=option_anchor_mode,
-            question_type=str(question.get("question_type", "") or ""),
-            stem_text=str(question.get("stem_text", "") or ""),
-            raw_ocr_text=str(question.get("transcription_ocr", "") or ""),
-            question_image_path=str(question.get("question_image", "") or ""),
-            stem_image_path=str(question.get("stem_image", "") or ""),
-        )
-        detection = option_anchor_detection.detect_option_anchors(
-            question,
-            gating,
-            api_key=api_key,
-            model=model,
-        )
-        public_figures = option_anchor_detection.detect_public_figure_regions(
-            question,
-            api_key=api_key,
-            model=model,
-            require_model=require_vision_figure_model,
-            allow_heuristic_fallback=allow_heuristic_figure_fallback,
-        )
-        public_stem_boxes = _suppress_public_boxes_owned_by_options(
-            list(public_figures.get("stem_image_bboxes", []) or []),
-            list(detection.get("option_visual_blocks", []) or []),
-        )
-        detection["stem_image_bboxes"] = list(detection.get("stem_image_bboxes", []) or []) + public_stem_boxes
-        detection["analysis_image_bboxes"] = list(public_figures.get("analysis_image_bboxes", []) or [])
-        detection["global_review_flags"] = list(detection.get("global_review_flags", []) or []) + list(public_figures.get("global_review_flags", []) or [])
-        staged_assets = option_crop_staging.build_staged_visual_assets(enriched, detection)
-        enriched["option_anchor_mode"] = option_anchor_mode
-        enriched["gating_result"] = gating
-        enriched["option_visual_blocks"] = detection.get("option_visual_blocks", []) or []
-        enriched["stem_image_bboxes"] = detection.get("stem_image_bboxes", []) or []
-        enriched["analysis_image_bboxes"] = detection.get("analysis_image_bboxes", []) or []
-        enriched["unassigned_image_bboxes"] = detection.get("unassigned_image_bboxes", []) or []
-        enriched["option_detection_review_flags"] = detection.get("global_review_flags", []) or []
-        enriched["staged_visual_assets"] = staged_assets
-        enriched_questions.append(enriched)
+            if planner_scope.get("option", True):
+                gating = option_choice_gating.evaluate_choice_gating(
+                    question_uid=question_uid,
+                    option_anchor_mode=option_anchor_mode,
+                    question_type=str(question.get("question_type", "") or ""),
+                    stem_text=str(question.get("stem_text", "") or ""),
+                    raw_ocr_text=str(question.get("transcription_ocr", "") or ""),
+                    question_image_path=str(question.get("question_image", "") or ""),
+                    stem_image_path=str(question.get("stem_image", "") or ""),
+                )
+                if not bool(gating.get("should_run_option_detection", False)):
+                    gating = {
+                        **gating,
+                        "should_run_option_detection": True,
+                        "planner_override": True,
+                        "planner_override_reason": "image_need_gate_options",
+                        "planner_scope": planner_scope,
+                    }
+                detection = option_anchor_detection.detect_option_anchors(
+                    question,
+                    gating,
+                    api_key=api_key,
+                    model=model,
+                )
+            else:
+                gating = {
+                    "should_run_option_detection": False,
+                    "gate_reason": planner_scope.get("reason", "planner_scope_skip"),
+                    "planner_scope": planner_scope,
+                }
+                detection = _empty_detection()
 
-        debug_rows.append(
-            {
-                "question_id": question.get("question_id", ""),
-                "question_uid": question_uid,
-                "runtime_run_id": runtime_run_id,
-                "gating": gating,
-                "detection": detection,
-                "staged_visual_assets": staged_assets,
-            }
-        )
+            if planner_scope.get("stem", True) or planner_scope.get("analysis", True):
+                public_figures = option_anchor_detection.detect_public_figure_regions(
+                    question,
+                    api_key=api_key,
+                    model=model,
+                    require_model=require_vision_figure_model,
+                    allow_heuristic_fallback=allow_heuristic_figure_fallback,
+                )
+            else:
+                public_figures = _empty_detection()
+
+            if not planner_scope.get("stem", True):
+                if planner_scope.get("analysis", True):
+                    # In packaged samples the same long crop can be stored as
+                    # question/stem/analysis. Public-figure detection keeps
+                    # whole-question boxes in the stem bucket, then staging
+                    # reclassifies question_image boxes by the red solution
+                    # boundary. Do not delete those analysis candidates here.
+                    kept_for_analysis = [
+                        item
+                        for item in (public_figures.get("stem_image_bboxes", []) or [])
+                        if str(item.get("bbox_space", "") or "") == "question_image"
+                    ]
+                    if kept_for_analysis:
+                        public_figures["global_review_flags"] = list(public_figures.get("global_review_flags", []) or []) + [
+                            "question_image_boxes_kept_for_analysis_reclassify"
+                        ]
+                    public_figures["stem_image_bboxes"] = kept_for_analysis
+                else:
+                    public_figures["stem_image_bboxes"] = []
+            if not planner_scope.get("analysis", True):
+                public_figures["analysis_image_bboxes"] = []
+            public_figures["global_review_flags"] = _filter_public_review_flags(
+                list(public_figures.get("global_review_flags", []) or []),
+                planner_scope,
+            )
+            public_stem_boxes = _suppress_public_boxes_owned_by_options(
+                list(public_figures.get("stem_image_bboxes", []) or []),
+                list(detection.get("option_visual_blocks", []) or []),
+            )
+            detection["stem_image_bboxes"] = list(detection.get("stem_image_bboxes", []) or []) + public_stem_boxes
+            detection["analysis_image_bboxes"] = list(public_figures.get("analysis_image_bboxes", []) or [])
+            detection["global_review_flags"] = list(detection.get("global_review_flags", []) or []) + list(public_figures.get("global_review_flags", []) or [])
+            staged_assets = option_crop_staging.build_staged_visual_assets(enriched, detection)
+            if bool((question.get("image_need_gate") or {}).get("needs_figure_detection", False)) and not staged_assets:
+                detection["global_review_flags"] = list(detection.get("global_review_flags", []) or []) + ["figure_detection_zero_assets"]
+            enriched["option_anchor_mode"] = option_anchor_mode
+            enriched["figure_detection_scope"] = planner_scope
+            enriched["gating_result"] = gating
+            enriched["option_visual_blocks"] = detection.get("option_visual_blocks", []) or []
+            enriched["stem_image_bboxes"] = detection.get("stem_image_bboxes", []) or []
+            enriched["analysis_image_bboxes"] = detection.get("analysis_image_bboxes", []) or []
+            enriched["unassigned_image_bboxes"] = detection.get("unassigned_image_bboxes", []) or []
+            enriched["option_detection_review_flags"] = detection.get("global_review_flags", []) or []
+            enriched["staged_visual_assets"] = staged_assets
+            enriched_questions.append(enriched)
+
+            debug_rows.append(
+                {
+                    "question_id": question.get("question_id", ""),
+                    "question_uid": question_uid,
+                    "runtime_run_id": runtime_run_id,
+                    "figure_detection_scope": planner_scope,
+                    "gating": gating,
+                    "detection": detection,
+                    "staged_visual_assets": staged_assets,
+                }
+            )
+            write_partial_payload(
+                partial_path,
+                payload,
+                source_json_path=source_json_path,
+                runtime_run_id=runtime_run_id,
+                option_anchor_mode=option_anchor_mode,
+                require_vision_figure_model=require_vision_figure_model,
+                allow_heuristic_figure_fallback=allow_heuristic_figure_fallback,
+                enriched_questions=enriched_questions,
+                debug_rows=debug_rows,
+                current_index=index,
+                total_count=total_count,
+            )
+            elapsed = round((datetime.now() - started_at).total_seconds(), 3)
+            append_jsonl(
+                progress_path,
+                {
+                    "event": "question_completed",
+                    "time": datetime.now().isoformat(timespec="seconds"),
+                    "index": index,
+                    "total_count": total_count,
+                    "question_id": question_id,
+                    "elapsed_seconds": elapsed,
+                    "staged_asset_count": len(staged_assets),
+                    "review_flags": detection.get("global_review_flags", []) or [],
+                },
+            )
+            print(
+                json.dumps(
+                    {
+                        "event": "question_completed",
+                        "index": index,
+                        "total_count": total_count,
+                        "question_id": question_id,
+                        "elapsed_seconds": elapsed,
+                        "staged_asset_count": len(staged_assets),
+                    },
+                    ensure_ascii=False,
+                ),
+                flush=True,
+            )
+        except Exception as exc:
+            append_jsonl(
+                progress_path,
+                {
+                    "event": "question_failed",
+                    "time": datetime.now().isoformat(timespec="seconds"),
+                    "index": index,
+                    "total_count": total_count,
+                    "question_id": question_id,
+                    "error": str(exc),
+                },
+            )
+            write_partial_payload(
+                partial_path,
+                payload,
+                source_json_path=source_json_path,
+                runtime_run_id=runtime_run_id,
+                option_anchor_mode=option_anchor_mode,
+                require_vision_figure_model=require_vision_figure_model,
+                allow_heuristic_figure_fallback=allow_heuristic_figure_fallback,
+                enriched_questions=enriched_questions,
+                debug_rows=debug_rows,
+                current_index=index,
+                total_count=total_count,
+            )
+            print(
+                json.dumps(
+                    {
+                        "event": "question_failed",
+                        "index": index,
+                        "total_count": total_count,
+                        "question_id": question_id,
+                        "error": str(exc),
+                    },
+                    ensure_ascii=False,
+                ),
+                flush=True,
+            )
+            raise
 
     return {
         **payload,
@@ -215,6 +517,10 @@ def main() -> None:
     if args.require_vision_figure_model and not api_key.strip():
         raise SystemExit("missing_api_key_for_required_vision_figure_model")
     out_json = Path(args.out_json).expanduser().resolve()
+    progress_path = out_json.with_suffix(".progress.jsonl")
+    partial_path = out_json.with_suffix(".partial.json")
+    if progress_path.exists():
+        progress_path.unlink()
     payload = build_prepared_payload(
         source_json,
         option_anchor_mode=str(args.option_anchor_mode or "auto"),
@@ -222,6 +528,8 @@ def main() -> None:
         model=str(args.model or option_anchor_detection.DEFAULT_MODEL),
         require_vision_figure_model=bool(args.require_vision_figure_model),
         allow_heuristic_figure_fallback=not bool(args.disable_heuristic_figure_fallback),
+        progress_path=progress_path,
+        partial_path=partial_path,
     )
     write_json(out_json, payload)
     write_json(out_json.with_suffix(".debug.json"), payload.get("option_visual_debug", []))

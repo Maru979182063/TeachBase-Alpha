@@ -61,6 +61,66 @@ def _infer_detector_source(bbox_json: dict) -> str:
     return "unknown"
 
 
+def _as_int_bbox(value: dict | None) -> dict | None:
+    if not isinstance(value, dict):
+        return None
+    x = int(value.get("x", 0) or 0)
+    y = int(value.get("y", 0) or 0)
+    w = int(value.get("w", 0) or 0)
+    h = int(value.get("h", 0) or 0)
+    if w <= 0 or h <= 0:
+        return None
+    return {"x": x, "y": y, "w": w, "h": h}
+
+
+def _safe_option_crop_bbox(block: dict, image_bbox: dict, *, image_width: int, image_height: int, source_path: Path | None) -> dict:
+    """Option figures should keep the option label and the full small graph.
+
+    Vision boxes for option images are often semantically correct but tight or
+    slightly shifted. Unioning the label/option/image boxes makes the stored
+    asset reviewable and prevents axis/label truncation.
+    """
+    base = _as_int_bbox(image_bbox) or {"x": 0, "y": 0, "w": image_width, "h": image_height}
+    boxes = [base]
+    x_boxes = [base]
+    for key in ("label_bbox", "option_bbox", "text_bbox"):
+        candidate = _as_int_bbox(block.get(key))
+        if candidate:
+            x_boxes.append(candidate)
+            if key != "option_bbox":
+                boxes.append(candidate)
+
+    x1 = min(item["x"] for item in x_boxes)
+    y1 = min(item["y"] for item in boxes)
+    x2 = max(item["x"] + item["w"] for item in x_boxes)
+    y2 = max(item["y"] + item["h"] for item in boxes)
+    union_w = max(x2 - x1, 1)
+    union_h = max(y2 - y1, 1)
+    # Option labels are often outside the model's figure bbox. Keep generous
+    # horizontal context so A/B/C/D stay attached to their small figures.
+    pad_x = max(64, int(union_w * 0.24))
+    pad_y = max(16, int(union_h * 0.10))
+
+    x1 = max(0, x1 - pad_x)
+    y1 = max(0, y1 - pad_y)
+    max_w = image_width if image_width > 0 else max(x2, 1)
+    max_h = image_height if image_height > 0 else max(y2, 1)
+    x2 = min(max_w, x2 + pad_x)
+    y2 = min(max_h, y2 + pad_y)
+
+    red_boundary = _detect_red_solution_boundary(source_path)
+    if red_boundary is not None and y1 < red_boundary:
+        y2 = min(y2, max(y1 + 1, red_boundary - 4))
+
+    updated = dict(image_bbox)
+    updated.update({"x": int(x1), "y": int(y1), "w": int(max(1, x2 - x1)), "h": int(max(1, y2 - y1))})
+    updated["review_flags"] = normalize_review_flags(
+        list(image_bbox.get("review_flags", []) or []) + ["option_crop_safe_union"]
+    )
+    updated["pre_safe_union_bbox_json"] = dict(base)
+    return updated
+
+
 def _infer_public_figure_role(
     *,
     bbox: dict,
@@ -165,6 +225,19 @@ def build_staged_visual_assets(question: dict, detection: dict) -> list[dict]:
             option_ordinals[option_key] = ordinal
             confidence = block_conf
             detector_source = _infer_detector_source(image_bbox if isinstance(image_bbox, dict) else {})
+            staged_bbox = image_bbox
+            staged_block_flags = list(block_flags)
+            if isinstance(image_bbox, dict) and not str(image_bbox.get("figure_refine_source", "") or "").strip():
+                staged_bbox = _safe_option_crop_bbox(
+                    block,
+                    image_bbox,
+                    image_width=width or int(block.get("image_width", 0) or 0),
+                    image_height=height or int(block.get("image_height", 0) or 0),
+                    source_path=source_path,
+                )
+                staged_block_flags = normalize_review_flags(
+                    staged_block_flags + list(staged_bbox.get("review_flags", []) or [])
+                )
             attachable = (
                 bool(option_key)
                 and bbox_space in {"question_image", "stem_image", "analysis_image"}
@@ -183,16 +256,16 @@ def build_staged_visual_assets(question: dict, detection: dict) -> list[dict]:
                         candidate_option_key=option_key,
                         ordinal=ordinal,
                         bbox_space=bbox_space,
-                        bbox_json=image_bbox,
+                        bbox_json=staged_bbox,
                         image_width=width or int(block.get("image_width", 0) or 0),
                         image_height=height or int(block.get("image_height", 0) or 0),
                         source_image_role=source_image_role,
                         confidence=confidence,
                         attach_status="attached",
                         placement_scope="option_inline",
-                        review_flags=block_flags,
+                        review_flags=staged_block_flags,
                         detector_source=detector_source,
-                        crop_policy="figure_body_only",
+                        crop_policy="option_label_figure_safe_union",
                         external_label_kind="option_key",
                         external_label_text=option_key,
                     )
@@ -207,16 +280,16 @@ def build_staged_visual_assets(question: dict, detection: dict) -> list[dict]:
                         candidate_option_key=option_key or None,
                         ordinal=evidence_ordinal,
                         bbox_space=bbox_space or "stem_image",
-                        bbox_json=image_bbox,
+                        bbox_json=staged_bbox,
                         image_width=width or int(block.get("image_width", 0) or 0),
                         image_height=height or int(block.get("image_height", 0) or 0),
                         source_image_role=source_image_role or "stem_image",
                         confidence=confidence,
                         attach_status="not_attached_low_confidence" if confidence < OPTION_ATTACH_CONFIDENCE_THRESHOLD else "not_attached_conflict",
                         placement_scope="evidence_only",
-                        review_flags=block_flags + ["option_asset_unassigned"],
+                        review_flags=staged_block_flags + ["option_asset_unassigned"],
                         detector_source=detector_source,
-                        crop_policy="figure_body_only",
+                        crop_policy="option_label_figure_safe_union",
                         external_label_kind="option_key" if option_key else "",
                         external_label_text=option_key,
                     )

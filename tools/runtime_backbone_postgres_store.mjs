@@ -47,10 +47,50 @@ import {
   readSnapshotInfo,
   writeSnapshotBestEffort,
 } from "../runtime/postgres/snapshot_repository.mjs";
+import {
+  loadCreateMaterialBuildScopedRuntimeState,
+  loadImportScopedRuntimeState,
+  loadMaterialExportScopedRuntimeState,
+  loadMaterialItemsScopedRuntimeState,
+  loadPublishScopedRuntimeState,
+  loadQuestionBankScopedRuntimeState,
+  loadRegisterExportRunScopedRuntimeState,
+  loadReviewTaskScopedRuntimeState,
+} from "../runtime/postgres/scoped_state_repository.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const workspaceRoot = path.resolve(__dirname, "..");
+const CORE_DIRECT_WRITE_PATHS = [
+  "importLessonDraftBundle",
+  "approveReviewTask",
+  "requestReviewChanges",
+  "publishLesson",
+  "createQuestionBankItem",
+  "createMaterialBuild",
+  "addMaterialBuildItems",
+  "exportMaterialBuild",
+  "registerExportRun",
+];
+const REMAINING_STATE_BRIDGE_PATHS = {
+  mainBusiness: [
+    "rerunLesson",
+    "rerunComponent",
+    "acceptComponentPatch",
+    "rejectComponentPatch",
+    "rebuildTaskProjections",
+    "recoverJobs",
+  ],
+  migrationDebug: [
+    "bootstrap",
+    "getDebugState",
+    "getConsistencyReport",
+    "refreshDebugSnapshot",
+  ],
+  compatibilityRead: [
+    "8792 compatibility forwarder proxies reads/writes to 8790 and owns no Postgres write path",
+  ],
+};
 const migrationPaths = [
   path.join(
     workspaceRoot,
@@ -158,10 +198,12 @@ export class PostgresRuntimeBackboneStore {
   async refreshDebugSnapshot(state) {
     // Snapshot is intentionally best-effort: normalized tables are the business
     // source of truth, so debug snapshot failure must never poison the write path.
+    const snapshotState =
+      state || (this.debugSnapshotEnabled ? await loadRuntimeState(this.pool, this.snapshotKey) : null);
     this.lastSnapshotStatus = await writeSnapshotBestEffort(
       this.pool,
       this.snapshotKey,
-      state,
+      snapshotState,
       this.debugSnapshotEnabled
     );
     return this.lastSnapshotStatus;
@@ -198,6 +240,37 @@ export class PostgresRuntimeBackboneStore {
       this.lastConsistencyReport = null;
       this.lastMutationStats = persistence.tableStats;
       await this.refreshDebugSnapshot(nextState);
+      return result;
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async mutateScopedState(loadScopedState, mutator, options = {}) {
+    const client = await this.pool.connect();
+    try {
+      await client.query("begin");
+      // We keep the same advisory lock while the validation baseline still
+      // shares pure mutators between file mode and scoped Postgres writes.
+      await client.query("select pg_advisory_xact_lock(hashtext($1))", [this.snapshotKey]);
+      const previousState = await loadScopedState(client);
+      const nextState = cloneRuntimeState(previousState);
+      if (options.autoRecover !== false) {
+        recoverJobs(nextState);
+      }
+      const result = await mutator(nextState);
+      nextState.meta.generatedAt =
+        nextState.meta.generatedAt || previousState.meta.generatedAt || new Date().toISOString();
+      nextState.meta.updatedAt = new Date().toISOString();
+      nextState.meta.source = nextState.meta.source || previousState.meta.source || "postgres_normalized_tables";
+      const persistence = await persistRuntimeState(client, previousState, nextState, this.snapshotKey);
+      await client.query("commit");
+      this.lastConsistencyReport = null;
+      this.lastMutationStats = persistence.tableStats;
+      await this.refreshDebugSnapshot();
       return result;
     } catch (error) {
       await client.query("rollback");
@@ -249,11 +322,17 @@ export class PostgresRuntimeBackboneStore {
   }
 
   async publishLesson(lessonId, actor, options) {
-    return this.mutateState(async (state) => publishLessonRevision(state, lessonId, actor, options));
+    return this.mutateScopedState(
+      (client) => loadPublishScopedRuntimeState(client, lessonId, this.snapshotKey),
+      async (state) => publishLessonRevision(state, lessonId, actor, options)
+    );
   }
 
   async importLessonDraftBundle(payload) {
-    return this.mutateState(async (state) => importLessonDraftBundle(state, payload));
+    return this.mutateScopedState(
+      (client) => loadImportScopedRuntimeState(client, payload, this.snapshotKey),
+      async (state) => importLessonDraftBundle(state, payload)
+    );
   }
 
   async listRuns() {
@@ -270,14 +349,17 @@ export class PostgresRuntimeBackboneStore {
   }
 
   async approveReviewTask(reviewTaskId, actor) {
-    return this.mutateState(async (state) =>
-      updateReviewTaskStatus(state, reviewTaskId, "approve", actor)
+    return this.mutateScopedState(
+      (client) => loadReviewTaskScopedRuntimeState(client, reviewTaskId, this.snapshotKey),
+      async (state) => updateReviewTaskStatus(state, reviewTaskId, "approve", actor)
     );
   }
 
   async requestReviewChanges(reviewTaskId, actor) {
-    return this.mutateState(async (state) =>
-      updateReviewTaskStatus(state, reviewTaskId, "request_changes", actor)
+    return this.mutateScopedState(
+      (client) => loadReviewTaskScopedRuntimeState(client, reviewTaskId, this.snapshotKey),
+      async (state) =>
+        updateReviewTaskStatus(state, reviewTaskId, "request_changes", actor)
     );
   }
 
@@ -294,24 +376,42 @@ export class PostgresRuntimeBackboneStore {
   }
 
   async createQuestionBankItem(payload) {
-    return this.mutateState(async (state) => {
-      if (payload.taskProjectionId) {
-        rebuildDerivedState(state);
-      }
-      return createQuestionBankItem(state, payload);
-    });
+    return this.mutateScopedState(
+      (client) => loadQuestionBankScopedRuntimeState(client, payload, this.snapshotKey),
+      async (state) => createQuestionBankItem(state, payload)
+    );
   }
 
   async createMaterialBuild(payload) {
-    return this.mutateState(async (state) => createMaterialBuild(state, payload));
+    return this.mutateScopedState(
+      (client) => loadCreateMaterialBuildScopedRuntimeState(client, payload, this.snapshotKey),
+      async (state) => createMaterialBuild(state, payload)
+    );
   }
 
   async addMaterialBuildItems(materialBuildId, payload) {
-    return this.mutateState(async (state) => addMaterialBuildItems(state, materialBuildId, payload));
+    return this.mutateScopedState(
+      (client) =>
+        loadMaterialItemsScopedRuntimeState(
+          client,
+          materialBuildId,
+          payload,
+          this.snapshotKey
+        ),
+      async (state) => addMaterialBuildItems(state, materialBuildId, payload)
+    );
   }
 
   async exportMaterialBuild(materialBuildId, payload) {
-    return this.mutateState(async (state) => exportMaterialBuild(state, materialBuildId, payload));
+    return this.mutateScopedState(
+      (client) =>
+        loadMaterialExportScopedRuntimeState(
+          client,
+          materialBuildId,
+          this.snapshotKey
+        ),
+      async (state) => exportMaterialBuild(state, materialBuildId, payload)
+    );
   }
 
   async rerunComponent(componentId, payload) {
@@ -335,7 +435,15 @@ export class PostgresRuntimeBackboneStore {
   }
 
   async registerExportRun(payload, historyItem) {
-    return this.mutateState(async (state) => registerExportRun(state, payload, historyItem));
+    return this.mutateScopedState(
+      (client) =>
+        loadRegisterExportRunScopedRuntimeState(
+          client,
+          payload?.lesson?.lesson_id,
+          this.snapshotKey
+        ),
+      async (state) => registerExportRun(state, payload, historyItem)
+    );
   }
 
   async recoverJobs(actor) {
@@ -424,8 +532,8 @@ export class PostgresRuntimeBackboneStore {
   async getHealth() {
     const status = {
       runtimeMode: this.mode,
-      releaseChannel: "validation_only",
-      architectureMode: "state_replay_bridge",
+      releaseChannel: "validation_baseline",
+      architectureMode: "scoped_table_write",
       database: {
         status: "connected",
         engine: "postgres",
@@ -438,6 +546,11 @@ export class PostgresRuntimeBackboneStore {
       },
       debugSnapshotMirror: this.lastSnapshotStatus,
       lastMutationStats: this.lastMutationStats,
+      writePathAudit: {
+        coreWriteMode: "scoped_table_write",
+        directCorePaths: CORE_DIRECT_WRITE_PATHS,
+        remainingStateBridgePaths: REMAINING_STATE_BRIDGE_PATHS,
+      },
       consistency: this.lastConsistencyReport
         ? {
             status: this.lastConsistencyReport.status,

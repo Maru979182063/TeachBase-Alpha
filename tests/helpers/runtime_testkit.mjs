@@ -128,6 +128,14 @@ export async function runProcess(command, args = [], options = {}) {
     child.stderr.on("data", (chunk) => {
       stderr += String(chunk);
     });
+    child.on("error", (error) => {
+      resolve({
+        code: 1,
+        signal: null,
+        stdout,
+        stderr: `${stderr}${error.message}`,
+      });
+    });
     child.on("close", (code, signal) => {
       resolve({
         code,
@@ -447,9 +455,13 @@ export async function startCompatRuntimeServer(options = {}) {
 export class RuntimeHarness {
   constructor(options = {}) {
     this.runId = options.runId || makeRunId("production_readiness");
-    this.outputDir = path.join(reportRoot, this.runId);
+    // Keep the default report location stable for existing suites while
+    // allowing release-gate style runners to isolate their artifacts.
+    this.reportRoot = options.reportRoot || process.env.RUNTIME_TEST_REPORT_ROOT || reportRoot;
+    this.outputDir = path.join(this.reportRoot, this.runId);
     this.cleanupTasks = [];
     this.postgresCluster = null;
+    this.createdDatabases = [];
   }
 
   async init() {
@@ -467,7 +479,9 @@ export class RuntimeHarness {
 
   async createPostgresDatabase(prefix = "runtime_test") {
     const cluster = await this.ensurePostgresCluster();
-    return cluster.createDatabase(prefix);
+    const database = await cluster.createDatabase(prefix);
+    this.createdDatabases.push(database.database);
+    return database;
   }
 
   async queryDatabase(connectionString, sql, params = []) {

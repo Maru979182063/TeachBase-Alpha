@@ -1,6 +1,6 @@
 # Three-Track Validation Release Notes
 
-Updated: 2026-06-24
+Updated: 2026-07-01
 
 ## Summary
 
@@ -42,6 +42,12 @@ Its validated upstream input is `LessonDraftBundle`, not raw PDF/OCR/model-impor
 
 - verified `task_projection` can be deleted, GET search stays read-only, and the explicit rebuild path can restore it from fact-backed state
 
+### Core Postgres write-path cutover
+
+- moved the core LessonDraftBundle write path off the full-runtime replay bridge
+- changed Postgres runtime health from `validation_only / state_replay_bridge` to `validation_baseline / scoped_table_write`
+- kept `runtime_state_snapshot` as debug / migration support only
+
 ### Test coverage
 
 - added three-track golden fixtures
@@ -51,7 +57,8 @@ Its validated upstream input is `LessonDraftBundle`, not raw PDF/OCR/model-impor
 ## Validation Outcome
 
 - three-track baseline result: `VALIDATION_BASELINE_READY`
-- production readiness result: `NOT_READY`
+- backend write-path blocker result: `POLICY-001` closed
+- branch positioning: still validation baseline, not a production promotion
 
 ## Explicit Boundary
 

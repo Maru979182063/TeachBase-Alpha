@@ -27,6 +27,8 @@ tmp_preview_check.js
 .codex_previews/
 _backup_*/
 *.bak
+*.bak_*
+*.backup_*
 
 # Vendored local binaries
 tools/vendor/

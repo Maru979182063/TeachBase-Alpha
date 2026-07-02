@@ -1,6 +1,6 @@
 # Production Readiness Audit
 
-Updated: 2026-06-24
+Updated: 2026-07-01
 
 ## Audit Scope
 
@@ -43,20 +43,43 @@ That includes publish, search, question bank, material build, export, and compon
 `task_projection` is treated as a rebuildable projection layer.
 The test baseline now verifies that it can be deleted and rebuilt from fact-backed lesson state.
 
-## Remaining Audit Conclusion
+### 5. Core Postgres writes no longer use the full-state replay bridge
+
+The latest runtime architecture keeps the existing pure domain mutators, but it no longer hydrates and rewrites the whole runtime state for the core LessonDraftBundle business path.
+
+Current core write mode:
+
+- `releaseChannel = validation_baseline`
+- `architectureMode = scoped_table_write`
+
+Core paths now run through scoped Postgres state hydration plus targeted table diffs:
+
+- import
+- review approve / request changes
+- publish
+- question bank creation
+- material build creation / item append / export
+- export run registration
+
+### 6. Remaining bridge paths are explicit and isolated
+
+The remaining state-bridge writes are no longer hidden inside the core readiness claim. They are now explicitly limited to:
+
+- lesson rerun
+- component rerun and patch accept / reject
+- recovery / manual rebuild helpers
+- bootstrap / debug support
+
+## Current Audit Conclusion
 
 The repository should currently be described as:
 
 - `VALIDATION_BASELINE_READY`
-- not `READY` for production
-
-The production readiness gate remains intentionally blocked by `POLICY-001`, because the runtime still reports:
-
-- `releaseChannel = validation_only`
-- `architectureMode = state_replay_bridge`
+- architecture blocker for `POLICY-001` is closed
+- still not the production promotion branch
 
 ## Final Assessment
 
-This round successfully closed the requested three-track validation baseline starting from `LessonDraftBundle`.
+This round successfully closed the requested backend write-path blocker while keeping the validated input boundary at `LessonDraftBundle`.
 It does not claim that OCR/PDF-to-`LessonDraftBundle` accuracy is already production-ready.
-It did not complete a final production architecture declaration, so the correct production readiness conclusion remains `NOT_READY`.
+It also does not relabel this branch as the production release branch; that remains a separate promotion decision.

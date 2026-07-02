@@ -1,4 +1,42 @@
 prompts:
+  image_need_gate:
+    prompt_version: "image_need_gate_cn_v0.2"
+    system_prompt: |
+      你是数学题目入库流水线的题内图片需求判断节点。
+      只根据题目截图判断是否需要进入题内图片识别、裁图和挂 asset 路径。
+      不解题，不转录全文，不输出 bbox，只返回严格 JSON。
+    user_template: |
+      任务：判断这道题后续是否需要进入“题内图片识别/裁图/挂 asset 路径”的昂贵节点。
+
+      题目信息：
+      - question_id: {{QUESTION_ID}}
+      - module: {{MODULE_ZH}}
+      - submodule: {{SUBMODULE_ZH}}
+
+      必须判为 needs_figure_detection=true 的情况：
+      1. 题干、选项、答案、解析任一区域存在函数图像、坐标系、数轴、几何图、立体图、统计图、表格、示意图、韦恩图、单位圆、图1/图2/图3、辅助小图、小草图、选项旁配图。
+      2. 选择题选项 A/B/C/D 中任一选项带图，哪怕只是一个很小的坐标图、数轴图、几何图，也必须进入图片节点，where 包含 "options"。
+      3. 解答、答案、解析、证明、讲解过程里出现图，也必须进入图片节点，where 统一输出 "analysis"，不要输出 "answer"。
+      4. 如果不确定是否是独立图形，倾向于 true，并降低 confidence，避免漏图。
+
+      不要误判为图的情况：
+      1. 纯文字、纯公式、普通分式、根式、向量符号、方程组、集合符号、上下标，不算题内图片。
+      2. 只有页眉、页码、标题条、红色讲解文字、公式行、装饰线，不算题内图片。
+
+      where 枚举只能使用：
+      - "stem": 题干或题干公共配图
+      - "options": 选择题选项配图
+      - "analysis": 答案、解答、解析、证明、讲解过程配图
+
+      返回 JSON：
+      {
+        "question_id": "{{QUESTION_ID}}",
+        "needs_figure_detection": true,
+        "image_presence": "none|public_figure|option_images|table|number_line|graph|geometry|analysis_figure|small_auxiliary_figure|mixed|uncertain",
+        "where": ["stem", "options", "analysis"],
+        "confidence": 0.0,
+        "reason": "一句话说明为什么"
+      }
   transcription:
     active_variant: "v7"
     system_prompt: |
@@ -787,5 +825,88 @@ prompts:
         "is_valid_figure": true,
         "bbox": {"x": 0, "y": 0, "w": 0, "h": 0},
         "confidence": 0.0,
+          "review_flags": []
+        }
+
+  option_figure_refine:
+    prompt_version: "option_figure_refine_grounding1000_v0.1"
+    system_prompt: |
+      你只做数学选择题选项配图的定位。
+      输入是一整张题目截图和一个目标选项字母。
+      只返回该选项对应的图形本体 bbox，不解题，不转录文字，不输出多余内容。
+    user_template: |
+      目标选项：{{OPTION_KEY}}
+
+      任务：
+      在整张题图中找到目标选项 {{OPTION_KEY}} 对应的数学图形本体，并返回 bbox。
+
+      坐标要求：
+      1. 把整张输入图看成 1000 x 1000 的归一化画布。
+      2. 左上角为 (0,0)，右下角为 (1000,1000)。
+      3. 输出 image_width=1000，image_height=1000。
+
+      必须保留：
+      - 坐标轴、箭头、曲线、几何线段、点名、图内字母、图内数字、图内坐标。
+
+      必须排除：
+      - 题干文字、解析文字、红色答案/解析、页眉页脚。
+      - 其他选项的图形。
+
+      选项字母 A/B/C/D 本身可以不框入 bbox，因为系统会用 option_key 单独展示。
+      如果目标选项图形无法可靠定位，返回 is_valid_figure=false。
+
+      Output schema:
+      {
+        "image_width": 1000,
+        "image_height": 1000,
+        "is_valid_figure": true,
+        "bbox": {"x": 0, "y": 0, "w": 0, "h": 0},
+        "confidence": 0.0,
         "review_flags": []
+      }
+
+  analysis_figure_rescan:
+    prompt_version: "analysis_figure_rescan_grounding1000_v0.1"
+    system_prompt: |
+      你只做数学题解析区配图的漏检复扫。
+      输入是一整张题目截图，planner 已经判断解析/解答区域存在图形。
+      只返回解析/答案/解答/证明区域中需要单独保存的图形 bbox。
+      不解题，不转录文字，不解释。
+    user_template: |
+      planner 判断的图形类型：{{IMAGE_PRESENCE}}
+
+      任务：
+      在整张题图中找到解析、答案、解答、证明、讲解过程区域里的数学图形资产。
+
+      坐标要求：
+      1. 把整张输入图看成 1000 x 1000 的归一化画布。
+      2. 左上角为 (0,0)，右下角为 (1000,1000)。
+      3. 输出 image_width=1000，image_height=1000。
+
+      必须识别：
+      - 数轴、坐标轴、函数图像、几何图、辅助图、小草图、表格、统计图。
+      - 特别注意细长数轴也是图形资产，不能因为很扁就忽略。
+
+      必须排除：
+      - 题干文字、纯公式推导、红色解析文字本身、页眉页脚、题号。
+
+      如果找到细长数轴，请在该 bbox 的 review_flags 中加入 "number_line"。
+      如果 bbox 可能贴边或略含文字，请在 review_flags 中加入 "bbox_needs_review"，不要漏图。
+
+      Output schema:
+      {
+        "image_width": 1000,
+        "image_height": 1000,
+        "image_bboxes": [
+          {
+            "asset_id": "analysis_figure_001",
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0,
+            "confidence": 0.0,
+            "review_flags": []
+          }
+        ],
+        "global_review_flags": []
       }

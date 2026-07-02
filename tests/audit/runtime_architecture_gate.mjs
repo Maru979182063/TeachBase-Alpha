@@ -165,21 +165,78 @@ export function registerTests(register) {
   register({
     id: "POLICY-001",
     suite: "policy",
-    title: "Validation baseline must not claim production readiness while the write path remains a state replay bridge",
+    title: "Validation baseline keeps the branch non-production while the core Postgres write path is no longer a full state replay bridge",
     required: true,
     async run({ harness }) {
+      const filePath = path.join(workspaceRoot, "tools", "runtime_backbone_postgres_store.mjs");
+      const source = await fs.readFile(filePath, "utf8");
+      const requiredCorePaths = [
+        "importLessonDraftBundle",
+        "approveReviewTask",
+        "requestReviewChanges",
+        "publishLesson",
+        "createQuestionBankItem",
+        "createMaterialBuild",
+        "addMaterialBuildItems",
+        "exportMaterialBuild",
+        "registerExportRun",
+      ];
+      const extractMethodBlock = (methodName) => {
+        const start = source.indexOf(`async ${methodName}(`);
+        if (start < 0) {
+          return "";
+        }
+        const nextAsync = source.indexOf("\n  async ", start + 1);
+        const nextClose = source.indexOf("\n}", start + 1);
+        const endCandidates = [nextAsync, nextClose].filter((value) => value >= 0);
+        const end = endCandidates.length ? Math.min(...endCandidates) : source.length;
+        return source.slice(start, end);
+      };
+      for (const methodName of requiredCorePaths) {
+        const methodBlock = extractMethodBlock(methodName);
+        expect(methodBlock, `policy_core_write_method_missing:${methodName}`);
+        expect(
+          methodBlock.includes("return this.mutateScopedState("),
+          `policy_core_write_not_scoped:${methodName}`
+        );
+        expect(
+          !methodBlock.includes("return this.mutateState("),
+          `policy_core_write_still_full_bridge:${methodName}`
+        );
+      }
+
       const server = await harness.startPostgresServer("arch002_test");
       const health = await server.request("/health");
       expect(health.ok, "arch002_health_failed");
       expect(
-        health.data.storeHealth?.architectureMode === "state_replay_bridge",
-        "arch002_expected_validation_bridge_marker_missing"
+        health.data.storeHealth?.architectureMode === "scoped_table_write",
+        "arch002_expected_scoped_table_write_marker_missing"
       );
       expect(
-        health.data.storeHealth?.releaseChannel === "validation_only",
-        "arch002_expected_validation_channel_missing"
+        health.data.storeHealth?.releaseChannel === "validation_baseline",
+        "arch002_expected_validation_baseline_channel_missing"
       );
-      throw new Error("validation_baseline_must_not_claim_production_ready");
+      const directCorePaths =
+        health.data.storeHealth?.writePathAudit?.directCorePaths || [];
+      const remainingMainBridgePaths =
+        health.data.storeHealth?.writePathAudit?.remainingStateBridgePaths
+          ?.mainBusiness || [];
+      for (const methodName of requiredCorePaths) {
+        expect(
+          directCorePaths.includes(methodName),
+          `arch002_core_write_audit_missing:${methodName}`
+        );
+        expect(
+          !remainingMainBridgePaths.includes(methodName),
+          `arch002_core_write_still_listed_as_bridge:${methodName}`
+        );
+      }
+      return {
+        releaseChannel: health.data.storeHealth.releaseChannel,
+        architectureMode: health.data.storeHealth.architectureMode,
+        directCorePaths,
+        remainingMainBridgePaths,
+      };
     },
   });
 }

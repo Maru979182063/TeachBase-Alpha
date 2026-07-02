@@ -51,7 +51,14 @@ function isRelativeStorageKey(storageKey) {
   if (value.startsWith("\\\\")) {
     return false;
   }
-  return !path.posix.isAbsolute(value) && !path.win32.isAbsolute(value);
+  if (path.posix.isAbsolute(value) || path.win32.isAbsolute(value)) {
+    return false;
+  }
+  const normalized = value.replace(/\\/g, "/");
+  return !normalized
+    .split("/")
+    .filter(Boolean)
+    .some((segment) => segment === "." || segment === "..");
 }
 
 function normalizeVisualAsset(asset) {
@@ -69,6 +76,29 @@ function normalizeVisualAsset(asset) {
   normalized.placement_scope = String(normalized.placement_scope || normalized.placement || "").trim();
   normalized.review_flags = normalizeStringArray(normalized.review_flags);
   return normalized;
+}
+
+function collectDuplicateAssetIds(assets = []) {
+  const counts = new Map();
+  for (const asset of assets) {
+    const assetId = String(asset?.asset_id || "").trim();
+    if (!assetId) {
+      continue;
+    }
+    counts.set(assetId, (counts.get(assetId) || 0) + 1);
+  }
+  return [...counts.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([assetId]) => assetId);
+}
+
+function stripNonPortableFields(value) {
+  const cloned = toPlainObject(value);
+  delete cloned.crop_path;
+  delete cloned.cropPath;
+  delete cloned.absolute_path;
+  delete cloned.absolutePath;
+  return cloned;
 }
 
 export function normalizeQuestionVisualStructure(questionVisualStructure = {}, options = {}) {
@@ -127,8 +157,8 @@ export function mergeSourceRefsJson(existing = {}, questionVisualStructure = {})
 }
 
 export function normalizeTaskSourceRefs(task = {}, options = {}) {
-  const explicitRefs = toPlainObject(task.source_refs_json);
-  const mergedRefs = toPlainObject(task.merged_source_refs_json);
+  const explicitRefs = stripNonPortableFields(task.source_refs_json);
+  const mergedRefs = stripNonPortableFields(task.merged_source_refs_json);
   const baseRefs =
     Object.keys(mergedRefs).length > 0 ? mergedRefs : deepCloneJson(explicitRefs);
   const qvsCandidate =
@@ -312,7 +342,10 @@ export function extractAssetDisplayRefs(markdown = "") {
 export function resolveQuestionVisualAsset(sourceRefsJson = {}, displayRef = "", options = {}) {
   const refs = toPlainObject(sourceRefsJson);
   const qvs = toPlainObject(refs.question_visual_structure);
-  const assets = Array.isArray(qvs.visual_assets) ? qvs.visual_assets : [];
+  const assets = (Array.isArray(qvs.visual_assets) ? qvs.visual_assets : [])
+    .map((item) => normalizeVisualAsset(item))
+    .filter(Boolean);
+  const duplicateAssetIds = collectDuplicateAssetIds(assets);
   const normalizedRef = String(displayRef || "").trim();
   if (!normalizedRef.startsWith("asset://")) {
     return {
@@ -322,7 +355,15 @@ export function resolveQuestionVisualAsset(sourceRefsJson = {}, displayRef = "",
     };
   }
   const assetId = normalizedRef.slice("asset://".length);
-  const asset = assets.map((item) => normalizeVisualAsset(item)).find((item) => item?.asset_id === assetId);
+  if (duplicateAssetIds.includes(assetId)) {
+    return {
+      ok: false,
+      error: "duplicate_asset_id",
+      assetId,
+      displayRef: normalizedRef,
+    };
+  }
+  const asset = assets.find((item) => item?.asset_id === assetId);
   if (!asset) {
     return {
       ok: false,
@@ -355,6 +396,14 @@ export function resolveQuestionVisualAsset(sourceRefsJson = {}, displayRef = "",
       asset,
     };
   }
+  if (options.allowEvidenceOnly !== true && asset.placement_scope === "evidence_only") {
+    return {
+      ok: false,
+      error: "asset_evidence_only",
+      assetId,
+      asset,
+    };
+  }
   return {
     ok: true,
     assetId,
@@ -380,11 +429,16 @@ export function validateQuestionVisualSourceRefs(sourceRefsJson = {}, options = 
   const errors = [];
   const warnings = [];
   const assets = qvs.visual_assets || [];
+  const duplicateAssetIds = collectDuplicateAssetIds(assets);
   const assetById = new Map(assets.map((asset) => [asset.asset_id, asset]));
   const assetRefs = extractAssetDisplayRefs(qvs.legacy_stem_md || "");
 
   if (!qvs.runtime_run_id) {
     warnings.push("question_visual_structure_runtime_run_id_missing");
+  }
+
+  for (const assetId of duplicateAssetIds) {
+    errors.push(`duplicate_asset_id:${assetId}`);
   }
 
   for (const asset of assets) {
@@ -395,6 +449,27 @@ export function validateQuestionVisualSourceRefs(sourceRefsJson = {}, options = 
     }
     if (String(asset.display_ref || "").trim() && asset.display_ref !== `asset://${asset.asset_id}`) {
       warnings.push(`asset_display_ref_noncanonical:${asset.asset_id}`);
+    }
+    if (!String(asset.bbox_space || "").trim()) {
+      errors.push(`bbox_space_missing:${asset.asset_id || "unknown"}`);
+    }
+    if (
+      !String(asset.source_image_asset_id || "").trim() &&
+      !String(asset.source_image_storage_key || "").trim()
+    ) {
+      errors.push(`source_image_ref_missing:${asset.asset_id || "unknown"}`);
+    }
+    if (
+      String(asset.placement_scope || "").trim() === "option_inline" &&
+      !String(asset.option_key || "").trim()
+    ) {
+      errors.push(`option_asset_option_key_missing:${asset.asset_id || "unknown"}`);
+    }
+    if (
+      String(asset.asset_role || "").trim() === "analysis" &&
+      String(asset.option_key || "").trim()
+    ) {
+      errors.push(`analysis_asset_option_key_forbidden:${asset.asset_id || "unknown"}`);
     }
   }
 
@@ -426,6 +501,13 @@ export function validateQuestionVisualSourceRefs(sourceRefsJson = {}, options = 
       }
       if (String(asset.attach_status || "").trim() !== "attached") {
         errors.push(`option_asset_not_attached:${optionKey}:${assetId}`);
+      }
+      if (
+        typeof asset.confidence === "number" &&
+        Number.isFinite(asset.confidence) &&
+        asset.confidence < 0.75
+      ) {
+        errors.push(`option_asset_low_confidence:${optionKey}:${assetId}`);
       }
     }
   }
