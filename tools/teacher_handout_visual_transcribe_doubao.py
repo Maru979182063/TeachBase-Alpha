@@ -25,7 +25,12 @@ ACTIVE_TRANSCRIPTION_PROMPT = vision_prompt_store.get_transcription_prompt_bundl
 PROMPT_VERSION = ACTIVE_TRANSCRIPTION_PROMPT["prompt_version"]
 RAW_BLOCKS_PROMPT = vision_prompt_store.get_raw_blocks_prompt_bundle()
 FIELD_MAPPING_PROMPT = vision_prompt_store.get_field_mapping_prompt_bundle()
-PIPELINE_PROMPT_VERSION = f"{RAW_BLOCKS_PROMPT['prompt_version']}+{FIELD_MAPPING_PROMPT['prompt_version']}"
+FORMAT_NORMALIZE_PROMPT = vision_prompt_store.get_format_normalize_prompt_bundle()
+PIPELINE_PROMPT_VERSION = (
+    f"{RAW_BLOCKS_PROMPT['prompt_version']}"
+    f"+{FIELD_MAPPING_PROMPT['prompt_version']}"
+    f"+{FORMAT_NORMALIZE_PROMPT['prompt_version']}"
+)
 
 
 def ensure_dir(path: Path) -> None:
@@ -402,6 +407,19 @@ def build_field_mapping_prompt(question: dict, record_id: str, raw_blocks_payloa
     )
 
 
+def build_format_normalize_prompt(question: dict, record_id: str, field_mapping_payload: dict) -> str:
+    context_block, hint_block = _build_prompt_blocks(question, record_id)
+    field_mapping_json = json.dumps(field_mapping_payload, ensure_ascii=False, indent=2)
+    return vision_prompt_store.render_template(
+        FORMAT_NORMALIZE_PROMPT["user_template"],
+        {
+            "CONTEXT_LINES": context_block,
+            "HINT_LINES": hint_block,
+            "FIELD_MAPPING_JSON": field_mapping_json,
+        },
+    )
+
+
 def build_prompt(question: dict, record_id: str) -> str:
     context_lines = [f"- record_id: {record_id}", f"- question_id: {question.get('question_id', '')}"]
     for label, value in (
@@ -708,6 +726,16 @@ def call_field_mapping_model(api_key: str, model: str, prompt: str, image_paths:
     )
 
 
+def call_format_normalize_model(api_key: str, model: str, prompt: str, image_paths: list[Path]) -> dict:
+    return call_model_with_system(
+        api_key,
+        model,
+        FORMAT_NORMALIZE_PROMPT["system_prompt"],
+        prompt,
+        image_paths,
+    )
+
+
 def load_source_questions(source_json_path: Path) -> dict[str, dict]:
     payload = read_json(source_json_path)
     questions = payload.get("questions", []) if isinstance(payload, dict) else []
@@ -927,6 +955,8 @@ def main() -> None:
             raw_blocks_call_model_fn=call_raw_blocks_model,
             field_mapping_prompt_builder=build_field_mapping_prompt,
             field_mapping_call_model_fn=call_field_mapping_model,
+            format_normalize_prompt_builder=build_format_normalize_prompt,
+            format_normalize_call_model_fn=call_format_normalize_model,
             extract_json_fn=extract_json_block,
         )
 
@@ -937,6 +967,8 @@ def main() -> None:
         raw_blocks_content = str(pipeline_result.get("raw_blocks_content", "") or "")
         field_mapping_response = pipeline_result.get("field_mapping_response", {}) or {}
         field_mapping_content = str(pipeline_result.get("field_mapping_content", "") or "")
+        format_normalize_response = pipeline_result.get("format_normalize_response", {}) or {}
+        format_normalize_content = str(pipeline_result.get("format_normalize_content", "") or "")
         record = pipeline_result.get("record", {}) or {}
         status = str(record.get("status", "") or "")
 
@@ -957,6 +989,17 @@ def main() -> None:
         if field_mapping_content:
             target_name = "field_mapping.response.txt" if status == "ok" else "field_mapping.response_failed_parse.txt"
             (raw_dir / f"{record_id}.{target_name}").write_text(field_mapping_content, encoding="utf-8")
+        if format_normalize_response:
+            if status == "ok":
+                write_json(raw_dir / f"{record_id}.format_normalize.response.json", format_normalize_response)
+            else:
+                write_json(
+                    raw_dir / f"{record_id}.format_normalize.response_failed_parse.json",
+                    format_normalize_response,
+                )
+        if format_normalize_content:
+            target_name = "format_normalize.response.txt" if status == "ok" else "format_normalize.response_failed_parse.txt"
+            (raw_dir / f"{record_id}.{target_name}").write_text(format_normalize_content, encoding="utf-8")
 
         records.append(record)
         time.sleep(max(args.sleep_seconds, 0.0))

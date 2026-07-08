@@ -369,6 +369,7 @@ def build_prepared_payload(
             detection["stem_image_bboxes"] = list(detection.get("stem_image_bboxes", []) or []) + public_stem_boxes
             detection["analysis_image_bboxes"] = list(public_figures.get("analysis_image_bboxes", []) or [])
             detection["global_review_flags"] = list(detection.get("global_review_flags", []) or []) + list(public_figures.get("global_review_flags", []) or [])
+            detection["figure_branch_trace"] = list(public_figures.get("branch_trace", []) or [])
             staged_assets = option_crop_staging.build_staged_visual_assets(enriched, detection)
             if bool((question.get("image_need_gate") or {}).get("needs_figure_detection", False)) and not staged_assets:
                 detection["global_review_flags"] = list(detection.get("global_review_flags", []) or []) + ["figure_detection_zero_assets"]
@@ -380,6 +381,7 @@ def build_prepared_payload(
             enriched["analysis_image_bboxes"] = detection.get("analysis_image_bboxes", []) or []
             enriched["unassigned_image_bboxes"] = detection.get("unassigned_image_bboxes", []) or []
             enriched["option_detection_review_flags"] = detection.get("global_review_flags", []) or []
+            enriched["figure_branch_trace"] = detection.get("figure_branch_trace", []) or []
             enriched["staged_visual_assets"] = staged_assets
             enriched_questions.append(enriched)
 

@@ -164,6 +164,21 @@ def get_field_mapping_prompt_bundle() -> dict[str, str]:
     }
 
 
+def get_format_normalize_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    format_normalize = prompts.get("format_normalize", {})
+    if not isinstance(format_normalize, dict):
+        raise PromptConfigError("missing_format_normalize_prompt_config")
+    return {
+        "prompt_version": str(format_normalize.get("prompt_version", "") or ""),
+        "system_prompt": str(format_normalize.get("system_prompt", "") or ""),
+        "user_template": str(format_normalize.get("user_template", "") or ""),
+    }
+
+
 def get_refine_prompt_bundle() -> dict[str, str]:
     config = load_prompt_config()
     prompts = config.get("prompts", {})
@@ -238,6 +253,21 @@ def get_option_figure_refine_prompt_bundle() -> dict[str, str]:
     }
 
 
+def get_visual_insert_anchor_review_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    visual_insert = prompts.get("visual_insert_anchor_review", {})
+    if not isinstance(visual_insert, dict):
+        raise PromptConfigError("missing_visual_insert_anchor_review_prompt_config")
+    return {
+        "prompt_version": str(visual_insert.get("prompt_version", "") or ""),
+        "system_prompt": str(visual_insert.get("system_prompt", "") or ""),
+        "user_template": str(visual_insert.get("user_template", "") or ""),
+    }
+
+
 def get_analysis_figure_rescan_prompt_bundle() -> dict[str, str]:
     config = load_prompt_config()
     prompts = config.get("prompts", {})
@@ -268,6 +298,21 @@ def get_public_figure_rescan_prompt_bundle() -> dict[str, str]:
     }
 
 
+def get_public_figure_route_review_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    public_figure_route_review = prompts.get("public_figure_route_review", {})
+    if not isinstance(public_figure_route_review, dict):
+        raise PromptConfigError("missing_public_figure_route_review_prompt_config")
+    return {
+        "prompt_version": str(public_figure_route_review.get("prompt_version", "") or ""),
+        "system_prompt": str(public_figure_route_review.get("system_prompt", "") or ""),
+        "user_template": str(public_figure_route_review.get("user_template", "") or ""),
+    }
+
+
 def get_image_need_gate_prompt_bundle() -> dict[str, str]:
     config = load_prompt_config()
     prompts = config.get("prompts", {})
@@ -280,4 +325,64 @@ def get_image_need_gate_prompt_bundle() -> dict[str, str]:
         "prompt_version": str(image_need_gate.get("prompt_version", "") or ""),
         "system_prompt": str(image_need_gate.get("system_prompt", "") or ""),
         "user_template": str(image_need_gate.get("user_template", "") or ""),
+    }
+
+
+def get_runtime_route_planner_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    runtime_route_planner = prompts.get("runtime_route_planner", {})
+    if not isinstance(runtime_route_planner, dict):
+        raise PromptConfigError("missing_runtime_route_planner_prompt_config")
+    return {
+        "prompt_version": str(runtime_route_planner.get("prompt_version", "") or ""),
+        "system_prompt": str(runtime_route_planner.get("system_prompt", "") or ""),
+        "user_template": str(runtime_route_planner.get("user_template", "") or ""),
+    }
+
+
+def get_english_unit_planner_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    english_unit_planner = prompts.get("english_unit_planner", {})
+    if not isinstance(english_unit_planner, dict):
+        raise PromptConfigError("missing_english_unit_planner_prompt_config")
+    return {
+        "prompt_version": str(english_unit_planner.get("prompt_version", "") or ""),
+        "system_prompt": str(english_unit_planner.get("system_prompt", "") or ""),
+        "user_template": str(english_unit_planner.get("user_template", "") or ""),
+    }
+
+
+def get_english_question_splitter_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    english_question_splitter = prompts.get("english_question_splitter", {})
+    if not isinstance(english_question_splitter, dict):
+        raise PromptConfigError("missing_english_question_splitter_prompt_config")
+    return {
+        "prompt_version": str(english_question_splitter.get("prompt_version", "") or ""),
+        "system_prompt": str(english_question_splitter.get("system_prompt", "") or ""),
+        "user_template": str(english_question_splitter.get("user_template", "") or ""),
+    }
+
+
+def get_english_panel_planner_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    english_panel_planner = prompts.get("english_panel_planner", {})
+    if not isinstance(english_panel_planner, dict):
+        raise PromptConfigError("missing_english_panel_planner_prompt_config")
+    return {
+        "prompt_version": str(english_panel_planner.get("prompt_version", "") or ""),
+        "system_prompt": str(english_panel_planner.get("system_prompt", "") or ""),
+        "user_template": str(english_panel_planner.get("user_template", "") or ""),
     }

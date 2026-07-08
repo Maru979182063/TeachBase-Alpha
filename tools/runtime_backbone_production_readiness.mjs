@@ -100,6 +100,12 @@ function computeFinalStatus(results) {
   if (skipped.length > 0) {
     return "CONDITIONALLY_READY";
   }
+  const validationBaselinePolicy = results.find((item) => item.id === "POLICY-001");
+  // Passing the validation-baseline policy gate means the backend baseline is
+  // structurally sound, but the branch still must not self-report production readiness.
+  if (validationBaselinePolicy?.detail?.releaseChannel === "validation_baseline") {
+    return "NOT_READY";
+  }
   return "READY";
 }
 

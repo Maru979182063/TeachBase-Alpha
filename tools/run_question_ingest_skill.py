@@ -11,6 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from PIL import Image
+
 
 DEFAULT_MODEL = "doubao-seed-2-0-lite-260428"
 
@@ -33,6 +35,12 @@ def safe_rel(path: Path, base: Path) -> str:
         return str(path.resolve().relative_to(base.resolve())).replace("\\", "/")
     except Exception:
         return str(path.resolve())
+
+
+def safe_slug(text: str) -> str:
+    value = "".join(ch if ch.isalnum() or ch in {"_", "-", "."} else "_" for ch in str(text or "").strip())
+    value = value.strip("._-")
+    return value[:80].rstrip("._-") or "item"
 
 
 def run_cmd(
@@ -124,6 +132,87 @@ def build_manifest(source_json: Path, out_path: Path, question_ids: list[str], t
 def split_list(items: list[str], shard_count: int) -> list[list[str]]:
     shard_count = max(1, shard_count)
     return [items[index::shard_count] for index in range(shard_count)]
+
+
+def _same_long_source(question: dict[str, Any]) -> bool:
+    question_image_raw = str(question.get("question_image", "") or "").strip()
+    stem_image_raw = str(question.get("stem_image", "") or "").strip()
+    analysis_image_raw = str(question.get("analysis_image", "") or "").strip()
+    return bool(
+        question_image_raw
+        and stem_image_raw
+        and analysis_image_raw
+        and Path(question_image_raw) == Path(stem_image_raw) == Path(analysis_image_raw)
+    )
+
+
+def _resolve_any_existing_image(question: dict[str, Any]) -> Path | None:
+    for key in ("question_image", "stem_image", "analysis_image"):
+        raw = str(question.get(key, "") or "").strip()
+        if not raw:
+            continue
+        path = Path(raw)
+        if path.exists():
+            return path
+    return None
+
+
+def _read_image_size(path: Path | None) -> tuple[int, int]:
+    if path is None:
+        return 0, 0
+    try:
+        with Image.open(path) as image:
+            return image.size
+    except Exception:
+        return 0, 0
+
+
+def _build_figure_routing_decision(question: dict[str, Any]) -> dict[str, Any]:
+    image_path = _resolve_any_existing_image(question)
+    width, height = _read_image_size(image_path)
+    gate = question.get("image_need_gate") if isinstance(question.get("image_need_gate"), dict) else {}
+    image_presence = str(gate.get("image_presence", "") or "").strip().lower()
+    same_long_source = _same_long_source(question)
+    long_image = width > 0 and height > 0 and (height >= 1300 or height >= width * 1.55)
+    planner_panel_presence = "panel" in image_presence
+
+    if same_long_source:
+        force_serial = True
+        reason = "same_source_long_container"
+    elif long_image:
+        force_serial = True
+        reason = "long_image"
+    elif planner_panel_presence:
+        force_serial = True
+        reason = "planner_panel_presence"
+    else:
+        force_serial = False
+        reason = "parallel_ok"
+
+    return {
+        "force_serial": force_serial,
+        "reason": reason,
+        "same_long_source": same_long_source,
+        "image_path": str(image_path) if image_path else "",
+        "image_width": width,
+        "image_height": height,
+        "long_image": long_image,
+        "long_image_threshold_hit": bool(width > 0 and height > 0 and (height >= 1300 or height >= width * 1.55)),
+        "image_presence": image_presence,
+        "planner_panel_presence": planner_panel_presence,
+        "gate_where": list(gate.get("where", [])) if isinstance(gate.get("where", []), list) else [],
+    }
+
+
+def _should_serial_figure_detection(question: dict[str, Any]) -> tuple[bool, str]:
+    decision = _build_figure_routing_decision(question)
+    return bool(decision.get("force_serial")), str(decision.get("reason", "") or "parallel_ok")
+
+
+def _build_question_job_payload(source_payload: dict[str, Any], questions: list[dict[str, Any]]) -> dict[str, Any]:
+    payload = dict(source_payload)
+    payload["questions"] = questions
+    return payload
 
 
 def state_update(state_path: Path, **kwargs: Any) -> dict[str, Any]:
@@ -256,24 +345,171 @@ def run_transcription_retries(args: argparse.Namespace, paths: dict[str, Path], 
     return merge_out / "visual_transcription_results.json"
 
 
+def _record_has_format_normalize_node(record: dict[str, Any]) -> bool:
+    format_normalize_only = record.get("format_normalize_only")
+    if isinstance(format_normalize_only, dict):
+        return True
+    pipeline_trace = record.get("pipeline_trace", {}) if isinstance(record.get("pipeline_trace"), dict) else {}
+    nodes = pipeline_trace.get("nodes", []) if isinstance(pipeline_trace.get("nodes"), list) else []
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        if str(node.get("node", "") or "").strip() == "format_normalize_model_node":
+            return True
+    layers = pipeline_trace.get("parallel_layers", []) if isinstance(pipeline_trace.get("parallel_layers"), list) else []
+    for layer in layers:
+        if not isinstance(layer, dict):
+            continue
+        node_names = layer.get("nodes", []) if isinstance(layer.get("nodes"), list) else []
+        if "format_normalize_model_node" in node_names:
+            return True
+    return False
+
+
+def inspect_format_normalize_backfill(results_path: Path | None) -> dict[str, Any]:
+    if results_path is None or not results_path.exists():
+        return {
+            "status": "missing_results",
+            "results_path": str(results_path) if results_path else "",
+            "record_count": 0,
+            "ok_count": 0,
+            "needs_backfill_count": 0,
+            "already_normalized_count": 0,
+            "needs_backfill_question_ids": [],
+        }
+    records = load_records(results_path)
+    ok_records = [item for item in records if item.get("status") == "ok"]
+    needs_backfill_ids: list[str] = []
+    already_normalized_count = 0
+    for record in ok_records:
+        question_id = str(record.get("question_id", "") or record.get("record_id", "") or "").strip()
+        if _record_has_format_normalize_node(record):
+            already_normalized_count += 1
+        else:
+            needs_backfill_ids.append(question_id)
+    return {
+        "status": "inspect_ok",
+        "results_path": str(results_path),
+        "record_count": len(records),
+        "ok_count": len(ok_records),
+        "needs_backfill_count": len(needs_backfill_ids),
+        "already_normalized_count": already_normalized_count,
+        "needs_backfill_question_ids": needs_backfill_ids,
+    }
+
+
+def run_format_normalize_backfill(args: argparse.Namespace, paths: dict[str, Path], env: dict[str, str], visual_results: Path | None) -> tuple[Path | None, dict[str, Any]]:
+    paths["transcription_format_dir"].mkdir(parents=True, exist_ok=True)
+    summary_path = paths["transcription_format_dir"] / "format_normalize_only_summary.json"
+    inspection = inspect_format_normalize_backfill(visual_results)
+    if visual_results is None or not visual_results.exists():
+        write_json(summary_path, inspection)
+        return visual_results, inspection
+    if int(inspection.get("needs_backfill_count", 0) or 0) <= 0:
+        inspection["status"] = "skipped_already_normalized"
+        write_json(summary_path, inspection)
+        return visual_results, inspection
+
+    cmd = [
+        sys.executable,
+        "tools/apply_format_normalize_existing_results.py",
+        "--source-results",
+        str(visual_results),
+        "--source-json",
+        str(paths["abs_source_json"]),
+        "--results-out-dir",
+        str(paths["transcription_format_dir"]),
+        "--api-key",
+        str(args.api_key or ""),
+        "--model",
+        str(args.model or ""),
+        "--concurrency",
+        str(max(1, int(args.transcription_concurrency or 1))),
+        "--skip-if-already-normalized",
+    ]
+    result = run_cmd(cmd, cwd=paths["workspace"], env=env, log_path=paths["logs"] / "04_5_format_normalize_backfill.log")
+    if result["returncode"] != 0:
+        raise RuntimeError(f"format_normalize_backfill_failed: {result['log_path']}")
+    if not summary_path.exists():
+        raise RuntimeError(f"format_normalize_backfill_summary_missing: {summary_path}")
+    summary = read_json(summary_path)
+    summary["status"] = "backfill_done"
+    summary["inspection"] = inspection
+    summary["log_path"] = str(paths["logs"] / "04_5_format_normalize_backfill.log")
+    return paths["transcription_format_dir"] / "visual_transcription_results.format_normalize_only.json", summary
+
+
 def run_figure_detection(args: argparse.Namespace, paths: dict[str, Path], env: dict[str, str]) -> Path:
     candidate_summary = read_json(paths["candidate_json"].with_suffix(".summary.json"))
     shard_paths = [Path(item).resolve() for item in candidate_summary.get("shard_paths", [])]
     prepared_paths: list[Path] = []
+    figure_jobs_dir = paths["candidate_shard_dir"]
+    serial_jobs: list[tuple[Path, Path, Path, dict[str, Any]]] = []
+    parallel_jobs: list[tuple[Path, Path, Path, dict[str, Any]]] = []
+    routing_rows: list[dict[str, Any]] = []
+    job_counter = 0
+    figure_env = dict(env)
+    figure_env.setdefault(
+        "VISUAL_RUNTIME_RUN_ID",
+        f"visualrun_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_slug(paths['out_dir'].name)}",
+    )
+
+    for shard_index, shard_path in enumerate(shard_paths, start=1):
+        payload = read_json(shard_path)
+        questions = payload.get("questions", []) if isinstance(payload, dict) else []
+        if not questions:
+            continue
+        parallel_questions: list[dict[str, Any]] = []
+        for question in questions:
+            if not isinstance(question, dict):
+                continue
+            question_id = str(question.get("question_id", "") or question.get("record_id", "") or f"q{job_counter + 1}")
+            routing_decision = _build_figure_routing_decision(question)
+            force_serial = bool(routing_decision.get("force_serial"))
+            serial_reason = str(routing_decision.get("reason", "") or "parallel_ok")
+            routing_rows.append({
+                "question_id": question_id,
+                "source_shard": str(shard_path),
+                "mode": "serial" if force_serial else "parallel",
+                **routing_decision,
+            })
+            if force_serial:
+                job_counter += 1
+                job_path = figure_jobs_dir / f"{shard_path.stem}__serial__{safe_slug(question_id)}.json"
+                out_json = paths["figure_dir"] / f"prepared_job_{job_counter:02d}_{safe_slug(question_id)}.json"
+                log_path = paths["logs"] / f"05_figure_detection_serial_{job_counter:02d}_{safe_slug(question_id)}.log"
+                write_json(job_path, _build_question_job_payload(payload, [question]))
+                serial_jobs.append((job_path, out_json, log_path, {"question_id": question_id, "reason": serial_reason}))
+            else:
+                parallel_questions.append(question)
+
+        if parallel_questions:
+            job_counter += 1
+            job_path = figure_jobs_dir / f"{shard_path.stem}__parallel.json"
+            out_json = paths["figure_dir"] / f"prepared_job_{job_counter:02d}_parallel.json"
+            log_path = paths["logs"] / f"05_figure_detection_parallel_{job_counter:02d}.log"
+            write_json(job_path, _build_question_job_payload(payload, parallel_questions))
+            parallel_jobs.append((job_path, out_json, log_path, {"question_ids": [str(q.get("question_id", "") or q.get("record_id", "") or "") for q in parallel_questions]}))
+
+    write_json(
+        paths["figure_dir"] / "figure_job_routing_summary.json",
+        {
+            "generated_at": now(),
+            "parallel_job_count": len(parallel_jobs),
+            "serial_job_count": len(serial_jobs),
+            "rows": routing_rows,
+        },
+    )
+
     futures: list[concurrent.futures.Future] = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.figure_concurrency)) as pool:
-        for index, shard_path in enumerate(shard_paths, start=1):
-            payload = read_json(shard_path)
-            questions = payload.get("questions", []) if isinstance(payload, dict) else []
-            if not questions:
-                continue
-            out_json = paths["figure_dir"] / f"prepared_shard_{index:02d}.json"
+        for job_path, out_json, log_path, _job_meta in parallel_jobs:
             prepared_paths.append(out_json)
             cmd = [
                 sys.executable,
                 "tools/prepare_option_visual_source.py",
                 "--source-json",
-                str(shard_path),
+                str(job_path),
                 "--out-json",
                 str(out_json),
                 "--model",
@@ -287,8 +523,8 @@ def run_figure_detection(args: argparse.Namespace, paths: dict[str, Path], env: 
                     run_cmd,
                     cmd,
                     cwd=paths["workspace"],
-                    env=env,
-                    log_path=paths["logs"] / f"05_figure_detection_{index:02d}.log",
+                    env=figure_env,
+                    log_path=log_path,
                     timeout=None,
                 )
             )
@@ -296,6 +532,31 @@ def run_figure_detection(args: argparse.Namespace, paths: dict[str, Path], env: 
             result = future.result()
             if result["returncode"] != 0:
                 raise RuntimeError(f"figure_detection_failed: {result['log_path']}")
+
+    for job_path, out_json, log_path, _job_meta in serial_jobs:
+        prepared_paths.append(out_json)
+        cmd = [
+            sys.executable,
+            "tools/prepare_option_visual_source.py",
+            "--source-json",
+            str(job_path),
+            "--out-json",
+            str(out_json),
+            "--model",
+            args.model,
+            "--require-vision-figure-model",
+        ]
+        if args.disable_heuristic_figure_fallback:
+            cmd.append("--disable-heuristic-figure-fallback")
+        result = run_cmd(
+            cmd,
+            cwd=paths["workspace"],
+            env=figure_env,
+            log_path=log_path,
+            timeout=None,
+        )
+        if result["returncode"] != 0:
+            raise RuntimeError(f"figure_detection_failed: {result['log_path']}")
 
     if not prepared_paths:
         copied = read_json(paths["abs_source_json"])
@@ -400,6 +661,12 @@ def summarize(paths: dict[str, Path], visual_results: Path | None) -> dict[str, 
         if paths["prepared_merged_json"].with_suffix(".summary.json").exists()
         else {}
     )
+    figure_job_routing_summary_path = paths["figure_dir"] / "figure_job_routing_summary.json"
+    figure_job_routing_summary = (
+        read_json(figure_job_routing_summary_path)
+        if figure_job_routing_summary_path.exists()
+        else {}
+    )
     asset_manifest = (
         read_json(paths["asset_bundle_dir"] / "question_asset_manifest_v0.1.json")
         if (paths["asset_bundle_dir"] / "question_asset_manifest_v0.1.json").exists()
@@ -421,6 +688,8 @@ def summarize(paths: dict[str, Path], visual_results: Path | None) -> dict[str, 
         else {}
     )
     visual_records = load_records(visual_results)
+    format_normalize_summary_path = paths["transcription_format_dir"] / "format_normalize_only_summary.json"
+    format_normalize_summary = read_json(format_normalize_summary_path) if format_normalize_summary_path.exists() else {}
     return {
         "generated_at": now(),
         "status": "complete",
@@ -429,11 +698,18 @@ def summarize(paths: dict[str, Path], visual_results: Path | None) -> dict[str, 
         "planner": {k: gate_summary.get(k) for k in ("question_count", "ok_count", "failed_count", "needs_figure_detection_count", "no_figure_count", "total_tokens")},
         "candidate": candidate_summary,
         "figure_prepared": prepared_summary,
+        "figure_job_routing": {
+            "summary": str(figure_job_routing_summary_path),
+            "parallel_job_count": figure_job_routing_summary.get("parallel_job_count", 0),
+            "serial_job_count": figure_job_routing_summary.get("serial_job_count", 0),
+            "row_count": len(figure_job_routing_summary.get("rows", [])) if isinstance(figure_job_routing_summary.get("rows", []), list) else 0,
+        },
         "transcription": {
             "question_count": len(visual_records),
             "ok_count": sum(1 for item in visual_records if item.get("status") == "ok"),
             "failed_count": sum(1 for item in visual_records if item.get("status") == "failed"),
         },
+        "format_normalize_backfill": format_normalize_summary,
         "asset_bundle": {
             "manifest": str(paths["asset_bundle_dir"] / "question_asset_manifest_v0.1.json"),
             "review_html": str(paths["asset_bundle_dir"] / "question_asset_review.html"),
@@ -504,6 +780,7 @@ def main() -> None:
         "transcription_dir": out_dir / "03_transcription",
         "figure_dir": out_dir / "04_figure_detection",
         "prepared_merged_json": out_dir / "05_prepared_merged" / "prepared_merged.json",
+        "transcription_format_dir": out_dir / "03_5_format_normalize_backfill",
         "asset_bundle_dir": out_dir / "06_asset_bundle",
         "asset_consolidation_dir": out_dir / "06_5_asset_visual_consolidation",
         "asset_reconcile_dir": out_dir / "06_6_asset_reconcile_refine",
@@ -534,6 +811,13 @@ def main() -> None:
     visual_results = Path(args.transcription_results).expanduser().resolve() if args.transcription_results else None
     visual_results = run_transcription_retries(args, paths, env) or visual_results
     state_update(paths["state"], transcription="done", visual_results=str(visual_results) if visual_results else "")
+
+    visual_results, format_normalize_stage = run_format_normalize_backfill(args, paths, env, visual_results)
+    state_update(
+        paths["state"],
+        format_normalize_backfill=str(format_normalize_stage.get("status", "") or ""),
+        visual_results=str(visual_results) if visual_results else "",
+    )
 
     if args.skip_figure_detection:
         shutil.copy2(paths["abs_source_json"], paths["prepared_merged_json"])

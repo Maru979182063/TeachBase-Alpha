@@ -14,6 +14,10 @@ import {
 } from "../helpers/runtime_testkit.mjs";
 import { resolveBundledPythonPath } from "../../tools/runtime_dependency_paths.mjs";
 
+function findLessonRevisionBundle(detail, lessonRevisionId) {
+  return detail.lessonRevisions.find((item) => item.lesson_revision_id === lessonRevisionId)?.bundle_jsonb;
+}
+
 function buildInvalidVisualExportPayload() {
   return {
     lesson: {
@@ -199,10 +203,150 @@ function buildValidVisualExportPayload(assetBaseDir) {
       ],
     },
     reviewQueue: [],
-    selectedVersions: ["基础版"],
-    selectedAudiences: ["教师版"],
+    selectedVersions: ["base"],
+    selectedAudiences: ["teacher"],
     selectedFormats: ["DOCX"],
     includeCompass: false,
+  };
+}
+
+function buildNoFilesExportPayload() {
+  return {
+    lesson: {
+      lesson_id: "label_mismatch_export_lesson",
+      lesson_title: "Label Mismatch Export Probe",
+      stage: "senior",
+      grade: "g11",
+      season: "summer",
+      lesson_no: 3,
+      source_pdf_name: "label_mismatch_export.pdf",
+      knowledge_point_count: 0,
+      objectives: "Fail loudly when an export request does not generate any real files",
+    },
+    splitLesson: {
+      lesson_id: "label_mismatch_export_lesson",
+      question_count: 0,
+      tree: [],
+      auditSummary: {
+        reviewedCount: 0,
+        pendingCount: 0,
+      },
+      questions: [],
+    },
+    reviewQueue: [],
+    selectedVersions: ["基础版"],
+    selectedAudiences: ["教师版"],
+    selectedFormats: ["TXT"],
+    includeCompass: false,
+  };
+}
+
+function buildUnsupportedVersionExportPayload() {
+  return {
+    lesson: {
+      lesson_id: "unsupported_version_export_lesson",
+      lesson_title: "Unsupported Export Version Probe",
+      stage: "senior",
+      grade: "g11",
+      season: "summer",
+      lesson_no: 4,
+      source_pdf_name: "unsupported_version_export.pdf",
+      knowledge_point_count: 0,
+      objectives: "Reject unsupported export version aliases before creating artifacts",
+    },
+    splitLesson: {
+      lesson_id: "unsupported_version_export_lesson",
+      question_count: 0,
+      tree: [],
+      auditSummary: {
+        reviewedCount: 0,
+        pendingCount: 0,
+      },
+      questions: [],
+    },
+    reviewQueue: [],
+    selectedVersions: ["answer"],
+    selectedAudiences: ["teacher"],
+    selectedFormats: ["DOCX"],
+    includeCompass: false,
+  };
+}
+
+function buildRuntimeManifestImportPayload() {
+  return {
+    title: "English Runtime Manifest Adapter Contract",
+    lesson_id: "english_runtime_manifest_adapter_lesson",
+    subject: "英语",
+    stage: "senior",
+    track_code: "english_senior",
+    grade: "g11",
+    season: "summer",
+    document_metadata: {
+      lesson_title: "English Runtime Manifest Adapter Contract",
+      source_pdf_name: "english_runtime_manifest_adapter.pdf",
+    },
+    runtime_manifest: {
+      run_name: "english_runtime_manifest_adapter_contract",
+      source_pdf: "english_runtime_manifest_adapter.pdf",
+      page_count: 2,
+      component_count: 2,
+      question_count: 2,
+      components: [
+        {
+          block_id: "comp_001",
+          kind: "reading_method",
+          label: "阅读方法",
+          start_page: 1,
+          start_y: 20,
+          end_page: 1,
+          end_y: 260,
+        },
+        {
+          block_id: "comp_002",
+          kind: "example",
+          label: "例题讲解",
+          start_page: 2,
+          start_y: 20,
+          end_page: 2,
+          end_y: 700,
+        },
+      ],
+      questions: [
+        {
+          block_id: "question_001",
+          kind: "question_slice",
+          label: "例题 1 - 题1",
+          start_page: 2,
+          start_y: 120,
+          end_page: 2,
+          end_y: 260,
+          text_preview:
+            "1. What is the main idea of the passage? A. Habit B. Teamwork C. Weather D. Noise 【答案】B",
+          question_visual_structure: {
+            schema_version: "question_visual_structure.v1.1",
+            generated_by: "api_runtime_manifest_contract",
+            question_uid: "english_runtime_manifest_adapter_q001",
+            stem_md: "What is the main idea of the passage?",
+            answer_md: "B",
+            analysis_md: "Option B matches the main point.",
+            legacy_stem_md: "What is the main idea of the passage?",
+            visual_assets: [],
+            review_flags: ["text_only_contract"],
+          },
+        },
+        {
+          block_id: "question_002",
+          kind: "question_slice",
+          label: "例题 1 - 题2",
+          start_page: 2,
+          start_y: 280,
+          end_page: 2,
+          end_y: 420,
+          text_preview:
+            "2. Why did the students stay after class? A. To rehearse B. To relax C. To argue D. To hide 【答案】A",
+        },
+      ],
+    },
   };
 }
 
@@ -279,6 +423,99 @@ export function registerTests(register) {
   });
 
   register({
+    id: "API-RUNTIME-MANIFEST",
+    suite: "api",
+    title: "Runtime manifest imports use the formal adapter path and stay idempotent through review and publish",
+    required: true,
+    async run({ harness }) {
+      const server = await harness.startPostgresServer("api_runtime_manifest_import_test");
+      const payload = buildRuntimeManifestImportPayload();
+      const imported = await server.request("/api/runtime/imports/runtime-manifest", {
+        method: "POST",
+        body: {
+          actor: "api_runtime_manifest_suite",
+          ...payload,
+        },
+      });
+      expect(imported.ok, `runtime_manifest_import_failed:${JSON.stringify(imported.data)}`);
+
+      const detail = await server.request(`/api/runtime/lessons/${payload.lesson_id}`);
+      expect(detail.ok, `runtime_manifest_detail_failed:${JSON.stringify(detail.data)}`);
+      const importedBundle = findLessonRevisionBundle(detail.data.detail, imported.data.result.lessonRevisionId);
+      const importedTask = importedBundle?.tasks?.[0];
+      expect(importedBundle, "runtime_manifest_bundle_missing");
+      expect(
+        importedBundle.lesson_id === payload.lesson_id,
+        `runtime_manifest_lesson_id_mismatch:${importedBundle?.lesson_id}`
+      );
+      expect(importedBundle.validation_issues?.length >= 1, "runtime_manifest_validation_issues_missing");
+      expect(importedTask?.local_task_id === "question_001", `runtime_manifest_local_task_id_missing:${JSON.stringify(importedTask)}`);
+      expect(
+        importedTask?.source_node_local_id === "comp_002",
+        `runtime_manifest_component_mapping_missing:${JSON.stringify(importedTask)}`
+      );
+      expect(
+        importedTask?.source_refs_json?.runtime_manifest?.block_id === "question_001",
+        `runtime_manifest_source_refs_missing:${JSON.stringify(importedTask?.source_refs_json)}`
+      );
+      expect(
+        importedTask?.source_refs_json?.question_visual_structure?.question_uid ===
+          "english_runtime_manifest_adapter_q001",
+        `runtime_manifest_qvs_missing:${JSON.stringify(importedTask?.source_refs_json)}`
+      );
+      expect(importedTask?.answer === "B", `runtime_manifest_answer_parse_failed:${JSON.stringify(importedTask)}`);
+
+      const approved = await server.request(
+        `/api/runtime/review-tasks/${imported.data.result.reviewTaskId}/approve`,
+        {
+          method: "POST",
+          body: {
+            actor: "api_runtime_manifest_reviewer",
+          },
+        }
+      );
+      expect(approved.ok, `runtime_manifest_approve_failed:${JSON.stringify(approved.data)}`);
+
+      const published = await server.request(`/api/runtime/lessons/${payload.lesson_id}/publish`, {
+        method: "POST",
+        body: {
+          actor: "api_runtime_manifest_publisher",
+          lessonRevisionId: imported.data.result.lessonRevisionId,
+        },
+      });
+      expect(published.ok, `runtime_manifest_publish_failed:${JSON.stringify(published.data)}`);
+
+      const search = await server.request(
+        `/api/runtime/task-projections/search?subject=${encodeURIComponent("英语")}&stage=senior&trackCode=english_senior&publishedOnly=true&q=${encodeURIComponent("main idea")}`
+      );
+      expect(search.ok, `runtime_manifest_search_failed:${JSON.stringify(search.data)}`);
+      expect(
+        (search.data?.items || []).length >= 1,
+        `runtime_manifest_projection_missing:${JSON.stringify(search.data)}`
+      );
+
+      const idempotent = await server.request("/api/runtime/imports/runtime-manifest", {
+        method: "POST",
+        body: {
+          actor: "api_runtime_manifest_suite",
+          ...payload,
+        },
+      });
+      expect(idempotent.ok, `runtime_manifest_idempotent_import_failed:${JSON.stringify(idempotent.data)}`);
+      expect(
+        idempotent.data?.result?.idempotent === true,
+        `runtime_manifest_idempotent_flag_missing:${JSON.stringify(idempotent.data)}`
+      );
+      return {
+        lessonId: payload.lesson_id,
+        lessonRevisionId: imported.data.result.lessonRevisionId,
+        validationIssues: importedBundle.validation_issues.length,
+        searchCount: search.data.items.length,
+      };
+    },
+  });
+
+  register({
     id: "L10",
     suite: "api",
     title: "Invalid Content-Type is rejected with 415",
@@ -340,6 +577,58 @@ export function registerTests(register) {
       expect(
         String(response.data?.error || "").startsWith("invalid_export_preflight:"),
         `visual_export_preflight_error_missing:${JSON.stringify(response.data)}`
+      );
+      return {
+        status: response.status,
+        error: response.data?.error,
+      };
+    },
+  });
+
+  register({
+    id: "API-EXPORT-NOFILES",
+    suite: "api",
+    title: "Export rejects payloads that request files but produce no concrete outputs",
+    required: true,
+    async run({ harness }) {
+      const server = await harness.startPostgresServer("api_export_nofiles_test");
+      const response = await server.request("/api/export/generate", {
+        method: "POST",
+        body: buildNoFilesExportPayload(),
+      });
+      expect(
+        response.status === 400,
+        `export_generated_no_files_status_mismatch:${response.status}`
+      );
+      expect(
+        response.data?.error === "export_generated_no_files",
+        `export_generated_no_files_error_missing:${JSON.stringify(response.data)}`
+      );
+      return {
+        status: response.status,
+        error: response.data?.error,
+      };
+    },
+  });
+
+  register({
+    id: "API-EXPORT-UNSUPPORTED-VERSION",
+    suite: "api",
+    title: "Export rejects unsupported version aliases before generating bookkeeping artifacts",
+    required: true,
+    async run({ harness }) {
+      const server = await harness.startPostgresServer("api_export_unsupported_version_test");
+      const response = await server.request("/api/export/generate", {
+        method: "POST",
+        body: buildUnsupportedVersionExportPayload(),
+      });
+      expect(
+        response.status === 400,
+        `unsupported_export_version_status_mismatch:${response.status}`
+      );
+      expect(
+        response.data?.error === "unsupported_export_version:answer",
+        `unsupported_export_version_error_missing:${JSON.stringify(response.data)}`
       );
       return {
         status: response.status,
@@ -417,13 +706,20 @@ Image.new("RGB", (24, 24), (40, 120, 220)).save(target)
       });
       expect(response.ok, `visual_export_should_succeed:${JSON.stringify(response.data)}`);
       expect(
+        Number(response.data?.item?.fileCount || 0) > 0,
+        `visual_export_file_count_missing:${JSON.stringify(response.data?.item)}`
+      );
+      expect(
         response.data?.item?.preflight?.checkedQuestionCount === 1,
         `visual_export_preflight_count_mismatch:${JSON.stringify(response.data?.item?.preflight)}`
       );
       const docxFile = response.data?.item?.files?.find((file) => file.format === "DOCX");
       expect(docxFile?.relativePath, `visual_export_docx_missing:${JSON.stringify(response.data?.item?.files)}`);
+      expect(Number(docxFile?.size || 0) > 0, `visual_export_docx_size_missing:${JSON.stringify(docxFile)}`);
 
       const docxPath = path.join(workspaceRoot, docxFile.relativePath);
+      const docxStat = await fs.stat(docxPath);
+      expect(docxStat.size > 0, `visual_export_docx_stat_empty:${docxPath}`);
       const inspectScript = `
 import json
 import zipfile
@@ -439,6 +735,8 @@ print(json.dumps({"media_count": len(media_entries), "entries": media_entries}))
       expect(parsed.media_count >= 1, `visual_export_docx_media_missing:${inspect.stdout}`);
       return {
         docx: docxFile.relativePath,
+        fileCount: response.data?.item?.fileCount,
+        size: docxStat.size,
         mediaCount: parsed.media_count,
       };
     },

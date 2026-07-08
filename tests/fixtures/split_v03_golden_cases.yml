@@ -1,0 +1,23 @@
+{
+  "cases": [
+    {"case_id": "math_p4_q1_complete", "doc": "math", "pages": [4], "expected_node_type": "question"},
+    {"case_id": "math_p4_p5_q2_cross_page", "doc": "math", "pages": [4, 5], "expected_node_type": "question", "requires_multi_fragment": true},
+    {"case_id": "math_p5_p6_q4_cross_page", "doc": "math", "pages": [5, 6], "expected_node_type": "question", "requires_multi_fragment": true},
+    {"case_id": "math_p19_summary_not_question", "doc": "math", "pages": [19], "must_not_be_node_type": "question"},
+    {"case_id": "math_p20_after_class_questions", "doc": "math", "pages": [20, 21], "expected_node_type": "question"},
+
+    {"case_id": "english_preflight_image_pdf", "doc": "english", "pages": [1], "expected_preflight_not": "good_text_pdf"},
+    {"case_id": "english_p2_p3_knowledge_map_blank_answer", "doc": "english", "pages": [2, 3], "expected_node_type": "knowledge_map"},
+    {"case_id": "english_p4_knowledge_map_blank_answer_same_page", "doc": "english", "pages": [4], "expected_node_type": "knowledge_map"},
+    {"case_id": "english_p5_p6_strength_q3_cross_page", "doc": "english", "pages": [5, 6], "expected_node_type": "question", "requires_multi_fragment": true},
+    {"case_id": "english_p5_p6_strength_q1_to_q6_not_tiny", "doc": "english", "pages": [5, 6], "expected_node_type": "question"},
+    {"case_id": "english_p8_p10_example_and_strength", "doc": "english", "pages": [8, 9, 10], "expected_node_type": "question"},
+    {"case_id": "english_p17_p19_translation_cross_page", "doc": "english", "pages": [17, 18, 19], "expected_node_type": "question_group"},
+
+    {"case_id": "biology_p3_p5_knowledge_then_questions", "doc": "biology", "pages": [3, 4, 5], "expected_node_type": "question"},
+    {"case_id": "biology_p4_p5_q2_cross_page", "doc": "biology", "pages": [4, 5], "expected_node_type": "question", "requires_multi_fragment": true},
+    {"case_id": "biology_p11_p12_knowledge_not_question", "doc": "biology", "pages": [11, 12], "must_not_be_node_type": "question"},
+    {"case_id": "biology_p17_p18_diagram_question_cross_page", "doc": "biology", "pages": [17, 18], "expected_node_type": "question", "requires_multi_fragment": true},
+    {"case_id": "biology_p23_p25_expansion_summary_afterclass", "doc": "biology", "pages": [23, 24, 25], "expected_node_type": "question"}
+  ]
+}

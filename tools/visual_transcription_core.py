@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 
@@ -25,6 +26,7 @@ INLINE_MATH_RE = re.compile(r"\$\$(.+?)\$\$|\$(.+?)\$", re.DOTALL)
 ANSWER_HEADER_RE = re.compile(r"^\s*(?:\[|【)\s*答案\s*(?:\]|】)\s*[:：]?\s*", re.UNICODE)
 EXPLANATION_HEADER_RE = re.compile(r"(?:\[|【)\s*(?:解答|解析|分析|证明|详解|点评|思路|结论)\s*(?:\]|】)", re.UNICODE)
 SUBQUESTION_MARK_RE = re.compile(r"(?:(?<=^)|(?<=\n)|(?<=\s))(?:\(\d+\)|（\d+）)")
+FIGURE_REF_RE = re.compile(r"图\s*(?:\d{1,2}|[一二三四五六七八九十]+|备用图)")
 CIRCLED_SUBQUESTION_VALUES = {
     "①": 1,
     "②": 2,
@@ -96,6 +98,8 @@ ANSWER_WRAPPER_PATTERNS = (
     (re.compile(r"(?P<prefix>^\s*(?:[（(]\d+[）)])?\s*)一次函数(?:的)?(?:解析式|表达式)为\s*[:：]?\s*"), r"\g<prefix>"),
     (re.compile(r"(?P<prefix>^\s*(?:[（(]\d+[）)])?\s*)故(?:答案为|选)\s*[:：]?\s*"), r"\g<prefix>"),
 )
+
+INLINE_ASSET_ANCHOR_ENV = "VT_ENABLE_INLINE_ASSET_ANCHOR"
 
 
 def ensure_dir(path: Path) -> None:
@@ -294,9 +298,8 @@ def _apply_safe_string_normalization(text: str, field: str) -> tuple[str, list[d
         ("display_math_close_bracket", "\\]", "$$"),
         ("inline_math_open_paren", "\\(", "$"),
         ("inline_math_close_paren", "\\)", "$"),
-        ("normalize_multiply_symbol", "脳", "×"),
-        ("normalize_middle_dot_symbol", "·", "×"),
-        ("normalize_bullet_symbol", "•", "×"),
+        ("normalize_multiply_symbol_legacy", "脳", "\u00d7"),
+        ("normalize_multiply_symbol_utf8_mojibake", "Ã—", "\u00d7"),
     )
     for op, before, after in replacements:
         if before in current:
@@ -304,6 +307,16 @@ def _apply_safe_string_normalization(text: str, field: str) -> tuple[str, list[d
             log.append({"field": field, "op": op})
 
     literal_linebreak = re.sub(r"\\r\\n", "\n", current)
+    literal_linebreak = re.sub(
+        r"\\n(?=\s*(?:[A-D][.．、]|[①②③④⑤⑥⑦⑧⑨⑩]|[（(]\d+[）)]|##\s|【|图\d|第\d+题|解[:：]|证明[:：]|分析[:：]))",
+        "\n",
+        literal_linebreak,
+    )
+    literal_linebreak = re.sub(
+        r"\\r(?=\s*(?:[A-D][.．、]|[①②③④⑤⑥⑦⑧⑨⑩]|[（(]\d+[）)]|##\s|【|图\d|第\d+题|解[:：]|证明[:：]|分析[:：]))",
+        "\n",
+        literal_linebreak,
+    )
     literal_linebreak = re.sub(r"\\n(?![A-Za-z])", "\n", literal_linebreak)
     literal_linebreak = re.sub(r"\\r(?![A-Za-z])", "\n", literal_linebreak)
     if literal_linebreak != current:
@@ -328,75 +341,28 @@ def _apply_safe_string_normalization(text: str, field: str) -> tuple[str, list[d
         current = collapsed
         log.append({"field": field, "op": "collapse_excess_blank_lines"})
 
-    restored_latex_n_command = re.sub(
-        r"(?<=[A-Za-z0-9)}\]])\n(?=(?:e(?:q)?|otin|otsubset|subseteq|subset|supseteq|supset)(?:\s|[A-Za-z0-9<>=(),.;]))",
-        r"\\n",
-        current,
-    )
-    if restored_latex_n_command != current:
-        current = restored_latex_n_command
-        log.append({"field": field, "op": "restore_latex_n_command_prefix"})
-
-    def _normalize_malformed_compare_operators(value: str) -> str:
+    def _normalize_valid_latex_operator_spacing(value: str) -> str:
         repaired = value
-        # Common malformed not-equal artifacts from vision transcription:
-        # m - 1eq0, m - 1 eq0, m - 1neq0, and m - 11eq0 should all be
-        # interpreted as the visible constraint m - 1 \neq 0.
-        repaired = re.sub(
-            r"(?<=[A-Za-z0-9)}\]])\s*leq\s*(?=[A-Za-z0-9({\\-])",
-            r" \\leq ",
-            repaired,
-        )
-        repaired = re.sub(
-            r"(?<=[A-Za-z0-9)}\]])\s*geq\s*(?=[A-Za-z0-9({\\-])",
-            r" \\geq ",
-            repaired,
-        )
-        repaired = re.sub(
-            r"(?<=[0-9)}\]])\s*(?:n\s*eq|neq|eq)\s*(?=[A-Za-z0-9({\\-])",
-            r" \\neq ",
-            repaired,
-        )
-        repaired = re.sub(
-            r"(?<=[0-9)}\]])\s*(?:n\s*e|ne)\s*(?=[0-9({\\-])",
-            r" \\neq ",
-            repaired,
-        )
-        if not re.search(r"(?:科学[计记]数法|近似数|有效数字|scientific\s+notation|e[-\s]?notation)", repaired, re.IGNORECASE):
+        for command in ("neq", "leq", "geq", "notin", "in"):
             repaired = re.sub(
-                r"(?<![.\d])([0-9]{1,3})\s*e\s*([0-9]{1,3})(?![.\d])",
-                r"\1 \\neq \2",
+                rf"\\{command}\s*(?=[A-Za-z0-9(\\-])",
+                rf"\\{command} ",
                 repaired,
             )
-            repaired = re.sub(
-                r"(?<![A-Za-z\\])([A-Za-z])\s*e\s*(-?[0-9]{1,3})(?![A-Za-z0-9])",
-                r"\1 \\neq \2",
-                repaired,
-            )
-        repaired = re.sub(
-            r"(?<=[A-Za-z0-9)}\]])\s*(?:≤)\s*(?=[A-Za-z0-9({\\-])",
-            r" \\leq ",
-            repaired,
-        )
-        repaired = re.sub(
-            r"(?<=[A-Za-z0-9)}\]])\s*(?:≥)\s*(?=[A-Za-z0-9({\\-])",
-            r" \\geq ",
-            repaired,
-        )
-        repaired = re.sub(
-            r"(?<=[A-Za-z0-9)}\]])\s*(?:≠|!=|！=)\s*(?=[A-Za-z0-9({\\-])",
-            r" \\neq ",
-            repaired,
-        )
+        repaired = re.sub(r"(?<=[0-9A-Za-z)}\]])\s*(≤)\s*(?=[A-Za-z0-9({\\-])", r" \\leq ", repaired)
+        repaired = re.sub(r"(?<=[0-9A-Za-z)}\]])\s*(≥)\s*(?=[A-Za-z0-9({\\-])", r" \\geq ", repaired)
+        repaired = re.sub(r"(?<=[0-9A-Za-z)}\]])\s*(≠|!=|！=)\s*(?=[A-Za-z0-9({\\-])", r" \\neq ", repaired)
         repaired = re.sub(r"\\neq\s*0\b", r"\\neq 0", repaired)
         repaired = re.sub(r"\\leq\s*0\b", r"\\leq 0", repaired)
         repaired = re.sub(r"\\geq\s*0\b", r"\\geq 0", repaired)
+        repaired = re.sub(r"\\notin\s*([A-Z])\b", r"\\notin \1", repaired)
+        repaired = re.sub(r"(?<!\\)\\in\s*([A-Z])\b", r"\\in \1", repaired)
         return repaired
 
-    compare_fixed = _normalize_malformed_compare_operators(current)
+    compare_fixed = _normalize_valid_latex_operator_spacing(current)
     if compare_fixed != current:
         current = compare_fixed
-        log.append({"field": field, "op": "normalize_malformed_compare_operator"})
+        log.append({"field": field, "op": "normalize_valid_latex_operator_spacing"})
 
     def _normalize_formula_editor_style(value: str) -> str:
         repaired = value
@@ -411,6 +377,20 @@ def _apply_safe_string_normalization(text: str, field: str) -> tuple[str, list[d
     if formula_editor_fixed != current:
         current = formula_editor_fixed
         log.append({"field": field, "op": "normalize_formula_editor_style"})
+
+    def _normalize_parallelogram_symbol(value: str) -> str:
+        repaired = value
+        repaired = re.sub(r"\\parallelogram\s*([A-Z]{3,6})\b", lambda m: "\u25b1" + m.group(1), repaired)
+        repaired = re.sub(r"\\square\s*([A-Z]{3,6})\b", lambda m: "\u25b1" + m.group(1), repaired)
+        repaired = re.sub(r"\\Box\s*([A-Z]{3,6})\b", lambda m: "\u25b1" + m.group(1), repaired)
+        repaired = re.sub(r"\u25a1\s*([A-Z]{3,6})\b", lambda m: "\u25b1" + m.group(1), repaired)
+        repaired = re.sub(r"\?\s*([A-Z]{3,6})\b", lambda m: "\u25b1" + m.group(1), repaired)
+        return repaired
+
+    parallelogram_fixed = _normalize_parallelogram_symbol(current)
+    if parallelogram_fixed != current:
+        current = parallelogram_fixed
+        log.append({"field": field, "op": "normalize_parallelogram_symbol"})
 
     return current, log
 
@@ -886,6 +866,268 @@ def _extract_option_sections(stem_text: str) -> tuple[str, list[dict]]:
     return stem_body, sections
 
 
+def _inline_asset_anchor_enabled() -> bool:
+    return str(os.environ.get(INLINE_ASSET_ANCHOR_ENV, "") or "").strip() == "1"
+
+
+def _asset_sort_key(asset: dict) -> tuple[int, int, int]:
+    candidate_order = int(asset.get("candidate_anchor_order", 0) or 0)
+    if candidate_order > 0:
+        segment_index = int(asset.get("panel_segment_index", 0) or 0)
+        return segment_index, candidate_order, 0
+    bbox = asset.get("bbox_json", {}) if isinstance(asset.get("bbox_json"), dict) else {}
+    y = int(bbox.get("y", 0) or 0)
+    x = int(bbox.get("x", 0) or 0)
+    return y // 160, y, x
+
+
+def _is_long_panel_asset(asset: dict) -> bool:
+    if str(asset.get("panel_group_id", "") or "").strip():
+        return True
+    if int(asset.get("panel_segment_index", 0) or 0) > 0:
+        return True
+    if int(asset.get("panel_subfigure_count", 0) or 0) > 1:
+        return True
+    flags = {str(item or "").strip() for item in (asset.get("review_flags", []) or []) if str(item or "").strip()}
+    return "long_image_branch" in flags or "panel_kept" in flags or "panel_subfigure_union" in flags
+
+
+def _figure_ref_matches(text: str) -> list[re.Match[str]]:
+    value = str(text or "")
+    if not value:
+        return []
+    return list(FIGURE_REF_RE.finditer(value))
+
+
+def _figure_ref_boundary(text: str, match: re.Match[str]) -> int:
+    value = str(text or "")
+    end = match.end()
+    while end < len(value) and value[end] in " \t\r\n，,。；;：:、）)]】》":
+        end += 1
+    return end
+
+
+def _split_field_for_inline_anchor(text: str) -> tuple[str, str]:
+    value = str(text or "").strip()
+    if not value:
+        return "", ""
+    match = re.search(r"(?:(?<=^)|(?<=\n)|(?<=:)|(?<=\uFF1A))\s*(?:\uFF08|\()1(?:\uFF09|\))", value)
+    if not match:
+        return value, ""
+    split_at = match.start() + (1 if value[match.start()] == "\n" else 0)
+    return value[:split_at].rstrip(), value[split_at:].lstrip()
+
+
+def _split_numbered_sections_for_inline_anchor(text: str) -> tuple[str, list[str]]:
+    value = str(text or "").strip()
+    if not value:
+        return "", []
+    matches = list(
+        re.finditer(
+            r"(?:(?<=^)|(?<=\n)|(?<=:)|(?<=\uFF1A))\s*(?:\uFF08|\()(\d+)(?:\uFF09|\))",
+            value,
+        )
+    )
+    if not matches:
+        return value, []
+    intro = value[: matches[0].start()].rstrip()
+    sections: list[str] = []
+    for idx, match in enumerate(matches):
+        start = match.start()
+        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(value)
+        chunk = value[start:end].strip()
+        if chunk:
+            sections.append(chunk)
+    return intro, sections
+
+
+def _split_section_for_inline_anchor(section: str) -> tuple[str, str]:
+    value = str(section or "").strip()
+    if not value:
+        return "", ""
+    lines = [line.strip() for line in value.splitlines() if line.strip()]
+    if len(lines) <= 2:
+        return value, ""
+    split_idx = min(max(2, len(lines) // 4), 5)
+    intro = "\n".join(lines[:split_idx]).strip()
+    rest = "\n".join(lines[split_idx:]).strip()
+    return intro, rest
+
+
+def _append_markdown_block(
+    content_blocks: list[dict],
+    *,
+    block_id: str,
+    block_order: int,
+    scope: str,
+    text_md: str,
+    option_key: str | None = None,
+    confidence: float = 1.0,
+    review_flags: list[str] | None = None,
+) -> int:
+    text_value = str(text_md or "").strip()
+    if not text_value:
+        return block_order
+    content_blocks.append(
+        {
+            "block_id": block_id,
+            "block_order": block_order,
+            "scope": scope,
+            "option_key": option_key,
+            "block_type": "markdown",
+            "text_md": text_value,
+            "asset_id": None,
+            "display_ref": None,
+            "confidence": float(confidence or 1.0),
+            "review_flags": list(review_flags or []),
+        }
+    )
+    return block_order + 1
+
+
+def _append_image_block(
+    content_blocks: list[dict],
+    *,
+    block_id: str,
+    block_order: int,
+    scope: str,
+    asset: dict,
+    option_key: str | None = None,
+) -> int:
+    content_blocks.append(
+        {
+            "block_id": block_id,
+            "block_order": block_order,
+            "scope": scope,
+            "option_key": option_key,
+            "block_type": "image",
+            "text_md": None,
+            "asset_id": asset.get("asset_id"),
+            "display_ref": asset.get("display_ref"),
+            "storage_key": asset.get("storage_key"),
+            "asset_role": asset.get("asset_role"),
+            "confidence": float(asset.get("confidence", 0.8) or 0.8),
+            "review_flags": list(asset.get("review_flags", []) or []),
+        }
+    )
+    return block_order + 1
+
+
+def _append_figure_anchored_text_and_images(
+    content_blocks: list[dict],
+    *,
+    block_prefix: str,
+    block_order: int,
+    scope: str,
+    text_md: str,
+    assets: list[dict],
+    confidence: float,
+) -> tuple[int, list[dict]]:
+    value = str(text_md or "").strip()
+    usable_assets = [dict(item) for item in assets if str(item.get("asset_id", "") or "").strip()]
+    matches = _figure_ref_matches(value)
+    if not value:
+        for idx, asset in enumerate(usable_assets, start=1):
+            block_order = _append_image_block(
+                content_blocks,
+                block_id=f"{block_prefix}_img_{idx:03d}",
+                block_order=block_order,
+                scope=scope,
+                asset=asset,
+            )
+        return block_order, []
+
+    if not matches or not usable_assets:
+        block_order = _append_markdown_block(
+            content_blocks,
+            block_id=f"{block_prefix}_md_001",
+            block_order=block_order,
+            scope=scope,
+            text_md=value,
+            confidence=confidence,
+        )
+        return block_order, []
+
+    anchor_plan: list[dict] = []
+    anchor_count = min(len(matches), len(usable_assets))
+    previous = 0
+    text_index = 1
+    image_index = 1
+
+    for idx in range(anchor_count):
+        match = matches[idx]
+        boundary = _figure_ref_boundary(value, match)
+        chunk = value[previous:boundary].strip()
+        if chunk:
+            block_order = _append_markdown_block(
+                content_blocks,
+                block_id=f"{block_prefix}_md_{text_index:03d}",
+                block_order=block_order,
+                scope=scope,
+                text_md=chunk,
+                confidence=confidence,
+            )
+            text_index += 1
+
+        asset = usable_assets[idx]
+        block_order = _append_image_block(
+            content_blocks,
+            block_id=f"{block_prefix}_img_{image_index:03d}",
+            block_order=block_order,
+            scope=scope,
+            asset=asset,
+        )
+        anchor_plan.append(
+            {
+                "asset_id": str(asset.get("asset_id", "") or "").strip(),
+                "target_scope": scope,
+                "anchor_type": "figure_ref",
+                "anchor_value": value[match.start():boundary].strip(),
+                "anchor_index": idx + 1,
+                "candidate_anchor_source": str(asset.get("candidate_anchor_source", "") or "").strip(),
+                "candidate_anchor_key": str(asset.get("candidate_anchor_key", "") or "").strip(),
+                "candidate_anchor_order": int(asset.get("candidate_anchor_order", 0) or 0),
+            }
+        )
+        image_index += 1
+        previous = boundary
+
+    tail = value[previous:].strip()
+    if tail:
+        block_order = _append_markdown_block(
+            content_blocks,
+            block_id=f"{block_prefix}_md_{text_index:03d}",
+            block_order=block_order,
+            scope=scope,
+            text_md=tail,
+            confidence=confidence,
+        )
+
+    for extra_offset, asset in enumerate(usable_assets[anchor_count:], start=1):
+        block_order = _append_image_block(
+            content_blocks,
+            block_id=f"{block_prefix}_img_{image_index:03d}",
+            block_order=block_order,
+            scope=scope,
+            asset=asset,
+        )
+        anchor_plan.append(
+            {
+                "asset_id": str(asset.get("asset_id", "") or "").strip(),
+                "target_scope": scope,
+                "anchor_type": "append_after_tail",
+                "anchor_value": "",
+                "anchor_index": anchor_count + extra_offset,
+                "candidate_anchor_source": str(asset.get("candidate_anchor_source", "") or "").strip(),
+                "candidate_anchor_key": str(asset.get("candidate_anchor_key", "") or "").strip(),
+                "candidate_anchor_order": int(asset.get("candidate_anchor_order", 0) or 0),
+            }
+        )
+        image_index += 1
+
+    return block_order, anchor_plan
+
+
 def build_question_visual_structure(question_context: dict, payload: dict) -> dict:
     question_uid = str(question_context.get("question_uid", "") or question_context.get("question_id", "") or payload.get("question_id", "")).strip()
     runtime_run_id = str(
@@ -946,23 +1188,8 @@ def build_question_visual_structure(question_context: dict, payload: dict) -> di
     text_by_key = {str(item.get("option_key", "") or "").upper(): str(item.get("option_text_md", "") or "") for item in parsed_options}
     options: list[dict] = []
     content_blocks: list[dict] = []
+    long_image_anchor_plan: list[dict] = []
     block_order = 1
-    if stem_md.strip():
-        content_blocks.append(
-            {
-                "block_id": "blk_stem_001",
-                "block_order": block_order,
-                "scope": "stem",
-                "option_key": None,
-                "block_type": "markdown",
-                "text_md": stem_md.strip(),
-                "asset_id": None,
-                "display_ref": None,
-                "confidence": 0.95,
-                "review_flags": [],
-            }
-        )
-        block_order += 1
 
     stem_inline_assets = [
         asset
@@ -970,24 +1197,106 @@ def build_question_visual_structure(question_context: dict, payload: dict) -> di
         if str(asset.get("asset_role", "") or "") == "stem"
         and str(asset.get("placement_scope", "") or "") == "after_stem"
     ]
-    for asset_index, asset in enumerate(stem_inline_assets, start=1):
-        content_blocks.append(
-            {
-                "block_id": f"blk_stem_img_{asset_index:03d}",
-                "block_order": block_order,
-                "scope": "stem",
-                "option_key": None,
-                "block_type": "image",
-                "text_md": None,
-                "asset_id": asset.get("asset_id"),
-                "display_ref": asset.get("display_ref"),
-                "storage_key": asset.get("storage_key"),
-                "asset_role": asset.get("asset_role"),
-                "confidence": float(asset.get("confidence", 0.8) or 0.8),
-                "review_flags": list(asset.get("review_flags", []) or []),
-            }
+    stem_inline_assets = sorted(stem_inline_assets, key=_asset_sort_key)
+    inline_anchor_enabled = _inline_asset_anchor_enabled()
+
+    if inline_anchor_enabled and stem_inline_assets:
+        stem_intro, stem_sections = _split_numbered_sections_for_inline_anchor(stem_md)
+        if stem_sections:
+            block_order = _append_markdown_block(
+                content_blocks,
+                block_id="blk_stem_intro_001",
+                block_order=block_order,
+                scope="stem",
+                text_md=stem_intro,
+                confidence=0.95,
+            )
+            for idx, section in enumerate(stem_sections, start=1):
+                if idx <= len(stem_inline_assets):
+                    section_intro, section_rest = _split_section_for_inline_anchor(section)
+                    block_order = _append_markdown_block(
+                        content_blocks,
+                        block_id=f"blk_stem_sec_{idx:03d}_a",
+                        block_order=block_order,
+                        scope="stem",
+                        text_md=section_intro,
+                        confidence=0.95,
+                    )
+                    block_order = _append_image_block(
+                        content_blocks,
+                        block_id=f"blk_stem_img_{idx:03d}",
+                        block_order=block_order,
+                        scope="stem",
+                        asset=stem_inline_assets[idx - 1],
+                    )
+                    block_order = _append_markdown_block(
+                        content_blocks,
+                        block_id=f"blk_stem_sec_{idx:03d}_b",
+                        block_order=block_order,
+                        scope="stem",
+                        text_md=section_rest,
+                        confidence=0.95,
+                    )
+                else:
+                    block_order = _append_markdown_block(
+                        content_blocks,
+                        block_id=f"blk_stem_sec_{idx:03d}",
+                        block_order=block_order,
+                        scope="stem",
+                        text_md=section,
+                        confidence=0.95,
+                    )
+            for extra_index, asset in enumerate(stem_inline_assets[len(stem_sections):], start=len(stem_sections) + 1):
+                block_order = _append_image_block(
+                    content_blocks,
+                    block_id=f"blk_stem_img_{extra_index:03d}",
+                    block_order=block_order,
+                    scope="stem",
+                    asset=asset,
+                )
+        else:
+            stem_intro, stem_rest = _split_field_for_inline_anchor(stem_md)
+            block_order = _append_markdown_block(
+                content_blocks,
+                block_id="blk_stem_001",
+                block_order=block_order,
+                scope="stem",
+                text_md=stem_intro,
+                confidence=0.95,
+            )
+            for asset_index, asset in enumerate(stem_inline_assets, start=1):
+                block_order = _append_image_block(
+                    content_blocks,
+                    block_id=f"blk_stem_img_{asset_index:03d}",
+                    block_order=block_order,
+                    scope="stem",
+                    asset=asset,
+                )
+            block_order = _append_markdown_block(
+                content_blocks,
+                block_id="blk_stem_002",
+                block_order=block_order,
+                scope="stem",
+                text_md=stem_rest if stem_rest else ("" if stem_intro else stem_md),
+                confidence=0.95,
+            )
+    else:
+        block_order = _append_markdown_block(
+            content_blocks,
+            block_id="blk_stem_001",
+            block_order=block_order,
+            scope="stem",
+            text_md=stem_md,
+            confidence=0.95,
         )
-        block_order += 1
+        for asset_index, asset in enumerate(stem_inline_assets, start=1):
+            block_order = _append_image_block(
+                content_blocks,
+                block_id=f"blk_stem_img_{asset_index:03d}",
+                block_order=block_order,
+                scope="stem",
+                asset=asset,
+            )
 
     for index, option_key in enumerate(ordered_keys, start=1):
         detection = detection_by_key.get(option_key, {})
@@ -1052,63 +1361,169 @@ def build_question_visual_structure(question_context: dict, payload: dict) -> di
         )
         review_flags.extend(detection.get("review_flags", []) or [])
 
-    if answer_md.strip():
-        content_blocks.append(
-            {
-                "block_id": "blk_answer_001",
-                "block_order": block_order,
-                "scope": "answer",
-                "option_key": None,
-                "block_type": "markdown",
-                "text_md": answer_md.strip(),
-                "asset_id": None,
-                "display_ref": None,
-                "confidence": 1.0,
-                "review_flags": [],
-            }
-        )
-        block_order += 1
-    if analysis_md.strip():
-        content_blocks.append(
-            {
-                "block_id": "blk_analysis_001",
-                "block_order": block_order,
-                "scope": "analysis",
-                "option_key": None,
-                "block_type": "markdown",
-                "text_md": analysis_md.strip(),
-                "asset_id": None,
-                "display_ref": None,
-                "confidence": 1.0,
-                "review_flags": [],
-            }
-        )
-        block_order += 1
-
     analysis_inline_assets = [
         asset
         for asset in staged_assets
         if str(asset.get("asset_role", "") or "") == "analysis"
         and str(asset.get("placement_scope", "") or "") == "after_analysis"
     ]
-    for asset_index, asset in enumerate(analysis_inline_assets, start=1):
-        content_blocks.append(
-            {
-                "block_id": f"blk_analysis_img_{asset_index:03d}",
-                "block_order": block_order,
-                "scope": "analysis",
-                "option_key": None,
-                "block_type": "image",
-                "text_md": None,
-                "asset_id": asset.get("asset_id"),
-                "display_ref": asset.get("display_ref"),
-                "storage_key": asset.get("storage_key"),
-                "asset_role": asset.get("asset_role"),
-                "confidence": float(asset.get("confidence", 0.8) or 0.8),
-                "review_flags": list(asset.get("review_flags", []) or []),
-            }
+    analysis_inline_assets = sorted(analysis_inline_assets, key=_asset_sort_key)
+    long_analysis_assets = [asset for asset in analysis_inline_assets if _is_long_panel_asset(asset)]
+    answer_figure_matches = _figure_ref_matches(answer_md)
+    candidate_answer_first = any(
+        str(asset.get("candidate_anchor_scope_preference", "") or "").strip() == "answer_first"
+        for asset in long_analysis_assets
+    )
+    use_long_answer_anchor = (
+        inline_anchor_enabled
+        and len(long_analysis_assets) >= 1
+        and (
+            len(answer_figure_matches) >= 2
+            or (candidate_answer_first and len(answer_figure_matches) >= 1)
         )
-        block_order += 1
+    )
+    if use_long_answer_anchor:
+        block_order, answer_anchor_plan = _append_figure_anchored_text_and_images(
+            content_blocks,
+            block_prefix="blk_answer",
+            block_order=block_order,
+            scope="answer",
+            text_md=answer_md,
+            assets=long_analysis_assets,
+            confidence=1.0,
+        )
+        long_image_anchor_plan.extend(answer_anchor_plan)
+        anchored_asset_ids = {
+            str(asset.get("asset_id", "") or "").strip()
+            for asset in long_analysis_assets
+            if str(asset.get("asset_id", "") or "").strip()
+        }
+        analysis_inline_assets = [
+            asset
+            for asset in analysis_inline_assets
+            if str(asset.get("asset_id", "") or "").strip() not in anchored_asset_ids
+        ]
+        review_flags.append("long_answer_anchor_applied")
+    else:
+        block_order = _append_markdown_block(
+            content_blocks,
+            block_id="blk_answer_001",
+            block_order=block_order,
+            scope="answer",
+            text_md=answer_md,
+            confidence=1.0,
+        )
+
+    analysis_figure_matches = _figure_ref_matches(analysis_md)
+    if inline_anchor_enabled and analysis_inline_assets and analysis_figure_matches:
+        block_order, analysis_anchor_plan = _append_figure_anchored_text_and_images(
+            content_blocks,
+            block_prefix="blk_analysis",
+            block_order=block_order,
+            scope="analysis",
+            text_md=analysis_md,
+            assets=analysis_inline_assets,
+            confidence=1.0,
+        )
+        long_image_anchor_plan.extend(analysis_anchor_plan)
+        review_flags.append("analysis_figure_anchor_applied")
+    elif inline_anchor_enabled and analysis_inline_assets:
+        analysis_intro, analysis_sections = _split_numbered_sections_for_inline_anchor(analysis_md)
+        if analysis_sections:
+            block_order = _append_markdown_block(
+                content_blocks,
+                block_id="blk_analysis_intro_001",
+                block_order=block_order,
+                scope="analysis",
+                text_md=analysis_intro,
+                confidence=1.0,
+            )
+            for idx, section in enumerate(analysis_sections, start=1):
+                if idx <= len(analysis_inline_assets):
+                    section_intro, section_rest = _split_section_for_inline_anchor(section)
+                    block_order = _append_markdown_block(
+                        content_blocks,
+                        block_id=f"blk_analysis_sec_{idx:03d}_a",
+                        block_order=block_order,
+                        scope="analysis",
+                        text_md=section_intro,
+                        confidence=1.0,
+                    )
+                    block_order = _append_image_block(
+                        content_blocks,
+                        block_id=f"blk_analysis_img_{idx:03d}",
+                        block_order=block_order,
+                        scope="analysis",
+                        asset=analysis_inline_assets[idx - 1],
+                    )
+                    block_order = _append_markdown_block(
+                        content_blocks,
+                        block_id=f"blk_analysis_sec_{idx:03d}_b",
+                        block_order=block_order,
+                        scope="analysis",
+                        text_md=section_rest,
+                        confidence=1.0,
+                    )
+                else:
+                    block_order = _append_markdown_block(
+                        content_blocks,
+                        block_id=f"blk_analysis_sec_{idx:03d}",
+                        block_order=block_order,
+                        scope="analysis",
+                        text_md=section,
+                        confidence=1.0,
+                    )
+            for extra_index, asset in enumerate(analysis_inline_assets[len(analysis_sections):], start=len(analysis_sections) + 1):
+                block_order = _append_image_block(
+                    content_blocks,
+                    block_id=f"blk_analysis_img_{extra_index:03d}",
+                    block_order=block_order,
+                    scope="analysis",
+                    asset=asset,
+                )
+        else:
+            analysis_intro, analysis_rest = _split_section_for_inline_anchor(analysis_md)
+            block_order = _append_markdown_block(
+                content_blocks,
+                block_id="blk_analysis_001",
+                block_order=block_order,
+                scope="analysis",
+                text_md=analysis_intro,
+                confidence=1.0,
+            )
+            for asset_index, asset in enumerate(analysis_inline_assets, start=1):
+                block_order = _append_image_block(
+                    content_blocks,
+                    block_id=f"blk_analysis_img_{asset_index:03d}",
+                    block_order=block_order,
+                    scope="analysis",
+                    asset=asset,
+                )
+            block_order = _append_markdown_block(
+                content_blocks,
+                block_id="blk_analysis_002",
+                block_order=block_order,
+                scope="analysis",
+                text_md=analysis_rest if analysis_rest else ("" if analysis_intro else analysis_md),
+                confidence=1.0,
+            )
+    else:
+        block_order = _append_markdown_block(
+            content_blocks,
+            block_id="blk_analysis_001",
+            block_order=block_order,
+            scope="analysis",
+            text_md=analysis_md,
+            confidence=1.0,
+        )
+        for asset_index, asset in enumerate(analysis_inline_assets, start=1):
+            block_order = _append_image_block(
+                content_blocks,
+                block_id=f"blk_analysis_img_{asset_index:03d}",
+                block_order=block_order,
+                scope="analysis",
+                asset=asset,
+            )
 
     legacy_stem_md, legacy_flags = compose_legacy_stem_md(stem_md, options, content_blocks, staged_assets)
     review_flags.extend(legacy_flags)
@@ -1121,9 +1536,11 @@ def build_question_visual_structure(question_context: dict, payload: dict) -> di
         "answer_md": answer_md,
         "analysis_md": analysis_md,
         "legacy_stem_md": legacy_stem_md,
+        "inline_asset_anchor_mode": "slot_reflow_v1" if inline_anchor_enabled else "legacy_after_field",
         "gating": gating,
         "options": options,
         "content_blocks": content_blocks,
+        "long_image_anchor_plan": long_image_anchor_plan,
         "visual_assets": staged_assets,
         "review_flags": normalize_review_flags(review_flags),
     }

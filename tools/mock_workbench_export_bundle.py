@@ -51,6 +51,10 @@ def safe_name(text: str) -> str:
     return text or "未命名"
 
 
+def lesson_subject_label(lesson: dict) -> str:
+    return str(lesson.get("subject") or "数学").strip() or "数学"
+
+
 def set_doc_cell_shading(cell, fill: str) -> None:
     tc_pr = cell._tc.get_or_add_tcPr()
     shd = OxmlElement("w:shd")
@@ -316,7 +320,7 @@ def make_docx(payload: dict, target_path: Path) -> None:
     meta = document.add_paragraph()
     meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
     meta_run = meta.add_run(
-        f"{lesson['stage']}数学 / {lesson['grade']} / {lesson['season']} / 第{lesson['lesson_no']}讲"
+        f"{lesson['stage']}{lesson_subject_label(lesson)} / {lesson['grade']} / {lesson['season']} / 第{lesson['lesson_no']}讲"
     )
     meta_run.font.size = Pt(10.5)
     meta_run.font.color.rgb = RGBColor(0x6D, 0x7A, 0x8C)
@@ -446,7 +450,7 @@ def make_pdf(payload: dict, target_path: Path) -> None:
         Paragraph(f"{lesson['lesson_title']} · {version} · {audience}", title_style),
         Spacer(1, 6 * mm),
         Paragraph(
-            f"{lesson['stage']}数学 / {lesson['grade']} / {lesson['season']} / 第{lesson['lesson_no']}讲 / 导出时间 {payload['created_at_display']}",
+            f"{lesson['stage']}{lesson_subject_label(lesson)} / {lesson['grade']} / {lesson['season']} / 第{lesson['lesson_no']}讲 / 导出时间 {payload['created_at_display']}",
             meta_style,
         ),
         Spacer(1, 6 * mm),
@@ -669,7 +673,7 @@ def main() -> None:
         for audience in [a for a in AUDIENCE_ORDER if a in payload["selectedAudiences"]]:
             item_payload = build_variant_payload(payload, version, audience)
             base_name = safe_name(
-                f"{payload['lesson']['stage']}数学_{payload['lesson']['grade']}_{payload['lesson']['season']}_{payload['lesson']['lesson_title']}_{version}_{audience}"
+                f"{payload['lesson']['stage']}{lesson_subject_label(payload['lesson'])}_{payload['lesson']['grade']}_{payload['lesson']['season']}_{payload['lesson']['lesson_title']}_{version}_{audience}"
             )
             for fmt in payload["selectedFormats"]:
                 target_path = output_dir / f"{base_name}.{fmt.lower()}"
@@ -692,7 +696,7 @@ def main() -> None:
 
     if payload.get("includeCompass"):
         compass_name = safe_name(
-            f"{payload['lesson']['stage']}数学_{payload['lesson']['grade']}_{payload['lesson']['season']}_{payload['lesson']['lesson_title']}_讲义罗盘"
+            f"{payload['lesson']['stage']}{lesson_subject_label(payload['lesson'])}_{payload['lesson']['grade']}_{payload['lesson']['season']}_{payload['lesson']['lesson_title']}_讲义罗盘"
         )
         compass_path = output_dir / f"{compass_name}.pptx"
         make_compass_ppt(payload, compass_path)

@@ -9,6 +9,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+import cv2
+import numpy as np
 from PIL import Image
 
 import vision_prompt_store
@@ -483,6 +485,83 @@ def _call_public_figure_rescan_model(
     return _extract_json_block(payload["choices"][0]["message"]["content"])
 
 
+def _call_public_figure_route_review_model(
+    api_key: str,
+    model: str,
+    image: Image.Image,
+    *,
+    image_presence: str,
+    target_scope: str,
+    source_field: str,
+    same_long_source: bool,
+) -> dict:
+    bundle = vision_prompt_store.get_public_figure_route_review_prompt_bundle()
+    prompt = vision_prompt_store.render_template(
+        bundle["user_template"],
+        {
+            "IMAGE_PRESENCE": str(image_presence or "public_figure"),
+            "TARGET_SCOPE": str(target_scope or "stem"),
+            "SOURCE_FIELD": str(source_field or "question_image"),
+            "SAME_LONG_SOURCE": "true" if same_long_source else "false",
+            "IMAGE_WIDTH": str(image.size[0]),
+            "IMAGE_HEIGHT": str(image.size[1]),
+        },
+    )
+    body = {
+        "model": model,
+        "temperature": 0.0,
+        "messages": [
+            {"role": "system", "content": bundle["system_prompt"]},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": _pil_image_to_data_url(image)}},
+                ],
+            },
+        ],
+    }
+    request = urllib.request.Request(
+        API_URL,
+        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=180) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"http_{exc.code}: {detail}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"network_error: {exc}") from exc
+    payload = json.loads(raw)
+    return _extract_json_block(payload["choices"][0]["message"]["content"])
+
+
+def _should_run_public_figure_route_review(
+    question: dict,
+    *,
+    source_field: str,
+    image_width: int,
+    image_height: int,
+) -> bool:
+    if source_field != "question_image":
+        return False
+    same_long_source = _same_long_source(question)
+    long_image = image_height >= 1300 or image_height >= image_width * 1.55
+    if long_image:
+        return True
+    if same_long_source:
+        return True
+    gate = question.get("image_need_gate") if isinstance(question.get("image_need_gate"), dict) else {}
+    image_presence = str(gate.get("image_presence", "") or "").strip().lower()
+    return "panel" in image_presence
+
+
 def _heuristic_detect(option_keys: list[str], bbox_space: str, image_width: int, image_height: int) -> dict:
     if not option_keys:
         return {
@@ -831,6 +910,16 @@ def _normalize_public_image_bbox(item: object) -> dict:
     detector_source = str(item.get("detector_source", "") or "").strip()
     if detector_source:
         normalized["detector_source"] = detector_source
+    for key in (
+        "candidate_anchor_source",
+        "candidate_anchor_scope",
+        "candidate_anchor_scope_preference",
+        "candidate_anchor_order",
+        "candidate_anchor_key",
+    ):
+        value = item.get(key)
+        if value not in (None, ""):
+            normalized[key] = value
     if normalized["confidence"] < IMAGE_ASSIGNMENT_CONFIDENCE_THRESHOLD and "option_anchor_low_confidence" not in normalized["review_flags"]:
         normalized["review_flags"] = normalize_review_flags(list(normalized["review_flags"]) + ["option_anchor_low_confidence"])
     return normalized
@@ -1044,6 +1133,31 @@ def _find_dark_bounds(image: Image.Image, x1: int, y1: int, x2: int, y2: int, th
     return int(left), int(top), int(right) + 1, int(bottom) + 1
 
 
+def _detect_red_solution_boundary_from_image(image: Image.Image) -> int | None:
+    rgb = image.convert("RGB")
+    width, height = rgb.size
+    pixels = rgb.load()
+    start_y = max(60, int(height * 0.18))
+    for y in range(start_y, height):
+        red = 0
+        for x in range(width):
+            r, g, b = pixels[x, y]
+            if r > 150 and g < 135 and b < 135 and r - max(g, b) > 35:
+                red += 1
+        if red / max(width, 1) >= 0.006:
+            return y
+    return None
+
+
+def _number_line_focus_crop_bounds(image: Image.Image) -> tuple[int, int, int, int]:
+    width, height = image.size
+    boundary_y = _detect_red_solution_boundary_from_image(image)
+    focus_bottom = boundary_y - 6 if boundary_y is not None else int(height * 0.62)
+    focus_bottom = max(int(height * 0.28), focus_bottom)
+    focus_bottom = min(height, focus_bottom)
+    return 0, 0, width, max(1, focus_bottom)
+
+
 def _looks_figure_like_bbox(
     bbox: dict,
     *,
@@ -1064,6 +1178,12 @@ def _looks_figure_like_bbox(
     review_flags = set(str(item) for item in (bbox.get("review_flags", []) or []))
     if "number_line" in review_flags:
         return 2.4 <= aspect <= 18.0 and width >= min_width and height >= 18
+    if "panel_kept" in review_flags or int(bbox.get("panel_subfigure_count", 0) or 0) > 1:
+        if aspect > 6.4 or aspect < 0.16:
+            return False
+        if width > int(image_width * 0.98) and height < int(image_height * 0.08):
+            return False
+        return height >= max(48, int(image_height * 0.06))
     if aspect > PUBLIC_FIGURE_MAX_ASPECT or aspect < 0.22:
         return False
     if width > int(image_width * 0.92) and height < int(image_height * 0.14):
@@ -1118,6 +1238,7 @@ def _looks_like_text_false_positive(image: Image.Image, bbox: dict) -> bool:
     height = int(bbox.get("h", 0) or 0)
     if width <= 0 or height <= 0:
         return True
+    panel_like = "panel_kept" in set(str(item) for item in (bbox.get("review_flags", []) or [])) or int(bbox.get("panel_subfigure_count", 0) or 0) > 1
 
     ratios = _colored_pixel_ratios(image, bbox)
     row_runs = _dark_row_runs_for_bbox(image, bbox)
@@ -1126,6 +1247,11 @@ def _looks_like_text_false_positive(image: Image.Image, bbox: dict) -> bool:
     run_count = len(row_runs)
     total_run_height = sum(end - start + 1 for start, end in row_runs)
     text_stack_like = run_count >= 4 and total_run_height <= max(80, int(height * 0.55))
+
+    if panel_like:
+        if ratios["blue"] >= 0.08 and height < 120:
+            return True
+        return False
 
     # Teacher analysis text is often red. Real math figures can contain a little
     # red annotation, so only reject when it also looks like stacked text lines.
@@ -1981,91 +2107,718 @@ def _merge_nearby_boxes(items: list[dict], gap: int = 16) -> list[dict]:
     return merged
 
 
-def _heuristic_public_figure_regions(image_path: Path, source_field_name: str = "") -> list[dict]:
-    with Image.open(image_path) as original:
-        gray = original.convert("L")
-        width, height = gray.size
-        scale = 2 if max(width, height) >= 1400 else 1
-        small = gray.resize((max(width // scale, 1), max(height // scale, 1))) if scale > 1 else gray
-        sw, sh = small.size
-        pixels = small.load()
+def _heuristic_public_figure_regions_from_image(image: Image.Image, source_field_name: str = "") -> list[dict]:
+    original = image.convert("RGB")
+    gray = original.convert("L")
+    width, height = gray.size
+    scale = 2 if max(width, height) >= 1400 else 1
+    small = gray.resize((max(width // scale, 1), max(height // scale, 1))) if scale > 1 else gray
+    sw, sh = small.size
+    pixels = small.load()
 
-        row_ratios: list[float] = []
-        for y in range(sh):
+    row_ratios: list[float] = []
+    for y in range(sh):
+        dark = 0
+        for x in range(sw):
+            if pixels[x, y] < 220:
+                dark += 1
+        row_ratios.append(dark / max(sw, 1))
+
+    row_runs = _segment_runs(
+        row_ratios,
+        threshold=0.012,
+        min_len=max(18, int(sh * 0.02)),
+        max_gap=10,
+    )
+
+    candidates: list[dict] = []
+    for row_start, row_end in row_runs:
+        band_h = row_end - row_start + 1
+        if band_h < max(28, int(sh * 0.04)):
+            continue
+        col_ratios: list[float] = []
+        for x in range(sw):
             dark = 0
-            for x in range(sw):
+            for y in range(row_start, row_end + 1):
                 if pixels[x, y] < 220:
                     dark += 1
-            row_ratios.append(dark / max(sw, 1))
+            col_ratios.append(dark / max(band_h, 1))
 
-        row_runs = _segment_runs(
-            row_ratios,
-            threshold=0.012,
-            min_len=max(18, int(sh * 0.02)),
+        col_runs = _segment_runs(
+            col_ratios,
+            threshold=0.02,
+            min_len=max(22, int(sw * 0.035)),
             max_gap=10,
         )
-
-        candidates: list[dict] = []
-        for row_start, row_end in row_runs:
-            band_h = row_end - row_start + 1
-            if band_h < max(28, int(sh * 0.04)):
-                continue
-            col_ratios: list[float] = []
-            for x in range(sw):
-                dark = 0
-                for y in range(row_start, row_end + 1):
-                    if pixels[x, y] < 220:
-                        dark += 1
-                col_ratios.append(dark / max(band_h, 1))
-
-            col_runs = _segment_runs(
-                col_ratios,
-                threshold=0.02,
-                min_len=max(22, int(sw * 0.035)),
-                max_gap=10,
+        for col_start, col_end in col_runs:
+            bounds = _find_dark_bounds(
+                original,
+                max(col_start * scale - 12, 0),
+                max(row_start * scale - 12, 0),
+                min((col_end + 1) * scale + 12, width),
+                min((row_end + 1) * scale + 12, height),
             )
-            for col_start, col_end in col_runs:
-                bounds = _find_dark_bounds(
-                    original,
-                    max(col_start * scale - 12, 0),
-                    max(row_start * scale - 12, 0),
-                    min((col_end + 1) * scale + 12, width),
-                    min((row_end + 1) * scale + 12, height),
-                )
-                if bounds is None:
+            if bounds is None:
+                continue
+            x1, y1, x2, y2 = bounds
+            candidate = {
+                "x": x1,
+                "y": y1,
+                "w": x2 - x1,
+                "h": y2 - y1,
+                "confidence": 0.72,
+                "review_flags": ["option_anchor_low_confidence"],
+            }
+            if not _looks_figure_like_bbox(candidate, image_width=width, image_height=height):
+                continue
+            split_candidates = _split_candidate_columns(original, candidate)
+            for part in split_candidates:
+                part = _tighten_candidate_bbox(original, part)
+                part = _try_extend_caption(original, part)
+                if not _looks_figure_like_bbox(part, image_width=width, image_height=height):
                     continue
-                x1, y1, x2, y2 = bounds
-                candidate = {
-                    "x": x1,
-                    "y": y1,
-                    "w": x2 - x1,
-                    "h": y2 - y1,
-                    "confidence": 0.72,
-                    "review_flags": ["option_anchor_low_confidence"],
-                }
-                if not _looks_figure_like_bbox(candidate, image_width=width, image_height=height):
-                    continue
-                split_candidates = _split_candidate_columns(original, candidate)
-                for part in split_candidates:
-                    part = _tighten_candidate_bbox(original, part)
-                    part = _try_extend_caption(original, part)
-                    if not _looks_figure_like_bbox(part, image_width=width, image_height=height):
-                        continue
-                    candidates.append(part)
+                candidates.append(part)
 
-        merged = _merge_nearby_boxes(candidates, gap=18)
-        refined = _sanitize_public_boxes(
-            merged,
-            image=original.copy(),
-            image_width=width,
-            image_height=height,
-            source_field_name=source_field_name,
-        )
+    merged = _merge_nearby_boxes(candidates, gap=18)
+    refined = _sanitize_public_boxes(
+        merged,
+        image=original.copy(),
+        image_width=width,
+        image_height=height,
+        source_field_name=source_field_name,
+    )
     return [
         box
         for box in refined
         if _looks_figure_like_bbox(box, image_width=width, image_height=height)
     ]
+
+
+def _heuristic_public_figure_regions(image_path: Path, source_field_name: str = "") -> list[dict]:
+    with Image.open(image_path) as original:
+        return _heuristic_public_figure_regions_from_image(original.convert("RGB"), source_field_name=source_field_name)
+
+
+def _cv_panel_component_boxes(image: Image.Image) -> list[dict]:
+    rgb = image.convert("RGB")
+    width, height = rgb.size
+    if width <= 0 or height <= 0:
+        return []
+
+    gray = cv2.cvtColor(np.array(rgb), cv2.COLOR_RGB2GRAY)
+    _, thresholded = cv2.threshold(gray, 210, 255, cv2.THRESH_BINARY_INV)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    dilated = cv2.dilate(thresholded, kernel, iterations=2)
+    component_count, _, stats, _ = cv2.connectedComponentsWithStats(dilated, 8)
+
+    boxes: list[dict] = []
+    for index in range(1, component_count):
+        x, y, w, h, area = stats[index]
+        if w < 64 or h < 52:
+            continue
+        if area < 4200:
+            continue
+        if h > max(int(height * 0.75), 120):
+            continue
+        candidate = {
+            "x": int(x),
+            "y": int(y),
+            "w": int(w),
+            "h": int(h),
+            "confidence": 0.79,
+            "review_flags": ["cv_panel_component"],
+            "detector_source": "panel_component_cv",
+        }
+        if not _looks_figure_like_bbox(candidate, image_width=width, image_height=height):
+            continue
+        if _looks_like_text_false_positive(rgb.copy(), candidate):
+            continue
+        if not _has_panel_line_signal(rgb.copy(), candidate):
+            continue
+        boxes.append(candidate)
+    return _dedupe_overlapping_public_boxes(boxes, iou_threshold=0.72)
+
+
+def _has_panel_line_signal(image: Image.Image, bbox: dict) -> bool:
+    x = int(bbox.get("x", 0) or 0)
+    y = int(bbox.get("y", 0) or 0)
+    w = int(bbox.get("w", 0) or 0)
+    h = int(bbox.get("h", 0) or 0)
+    if w <= 0 or h <= 0:
+        return False
+    crop = image.crop((x, y, x + w, y + h)).convert("RGB")
+    gray = cv2.cvtColor(np.array(crop), cv2.COLOR_RGB2GRAY)
+    _, thresholded = cv2.threshold(gray, 210, 255, cv2.THRESH_BINARY_INV)
+    lines = cv2.HoughLinesP(
+        thresholded,
+        1,
+        np.pi / 180,
+        threshold=20,
+        minLineLength=18,
+        maxLineGap=6,
+    )
+    if lines is None:
+        return False
+    longest = 0.0
+    for line in lines[:, 0, :]:
+        x1, y1, x2, y2 = line
+        longest = max(longest, ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5)
+    return longest >= max(54.0, min(w, h) * 0.62)
+
+
+def _row_dark_ratios(image: Image.Image, threshold: int = 220, sample_step: int = 1) -> list[float]:
+    gray = image.convert("L")
+    pixels = gray.load()
+    width, height = gray.size
+    step = max(1, int(sample_step))
+    ratios: list[float] = []
+    sample_width = len(range(0, width, step))
+    for y in range(height):
+        dark = 0
+        for x in range(0, width, step):
+            if pixels[x, y] < threshold:
+                dark += 1
+        ratios.append(dark / max(sample_width, 1))
+    return ratios
+
+
+def _row_blue_header_ratios(image: Image.Image, sample_step: int = 2) -> list[float]:
+    rgb = image.convert("RGB")
+    pixels = rgb.load()
+    width, height = rgb.size
+    step = max(1, int(sample_step))
+    sample_width = len(range(0, width, step))
+    ratios: list[float] = []
+    for y in range(height):
+        blueish = 0
+        for x in range(0, width, step):
+            r, g, b = pixels[x, y]
+            if b >= 188 and b >= g + 4 and b >= r + 8:
+                blueish += 1
+        ratios.append(blueish / max(sample_width, 1))
+    return ratios
+
+
+def _row_red_text_ratios(image: Image.Image, sample_step: int = 2) -> list[float]:
+    rgb = image.convert("RGB")
+    pixels = rgb.load()
+    width, height = rgb.size
+    step = max(1, int(sample_step))
+    sample_width = len(range(0, width, step))
+    ratios: list[float] = []
+    for y in range(height):
+        redish = 0
+        for x in range(0, width, step):
+            r, g, b = pixels[x, y]
+            if r > 150 and g < 140 and b < 140 and r - max(g, b) > 28:
+                redish += 1
+        ratios.append(redish / max(sample_width, 1))
+    return ratios
+
+
+def _row_edge_transition_ratios(image: Image.Image, sample_step: int = 2, diff_threshold: int = 28) -> list[float]:
+    gray = image.convert("L")
+    pixels = gray.load()
+    width, height = gray.size
+    step = max(1, int(sample_step))
+    xs = list(range(0, width, step))
+    if len(xs) <= 1:
+        return [0.0 for _ in range(height)]
+    ratios: list[float] = []
+    for y in range(height):
+        edges = 0
+        prev = pixels[xs[0], y]
+        for x in xs[1:]:
+            current = pixels[x, y]
+            if abs(current - prev) >= diff_threshold:
+                edges += 1
+            prev = current
+        ratios.append(edges / max(len(xs) - 1, 1))
+    return ratios
+
+
+def _smooth_row_values(values: list[float], radius: int = 2) -> list[float]:
+    if not values or radius <= 0:
+        return list(values)
+    result: list[float] = []
+    length = len(values)
+    for idx in range(length):
+        left = max(0, idx - radius)
+        right = min(length, idx + radius + 1)
+        window = values[left:right]
+        result.append(sum(window) / max(len(window), 1))
+    return result
+
+
+def _bool_runs(flags: list[bool], *, min_len: int, max_gap: int) -> list[tuple[int, int]]:
+    values = [1.0 if flag else 0.0 for flag in flags]
+    return _segment_runs(values, threshold=0.5, min_len=min_len, max_gap=max_gap)
+
+
+def _expand_runs(runs: list[tuple[int, int]], *, radius: int, upper_bound: int) -> list[tuple[int, int]]:
+    expanded: list[tuple[int, int]] = []
+    for start, end in runs:
+        expanded.append((max(0, start - radius), min(upper_bound - 1, end + radius)))
+    return expanded
+
+
+def _mask_from_runs(length: int, runs: list[tuple[int, int]]) -> list[bool]:
+    mask = [False] * max(length, 0)
+    for start, end in runs:
+        for idx in range(max(start, 0), min(end + 1, length)):
+            mask[idx] = True
+    return mask
+
+
+def _long_image_segment_candidates(image: Image.Image) -> list[dict]:
+    width, height = image.size
+    if height < 1300 and height < width * 1.55:
+        return []
+
+    sample_step = 2 if width >= 1000 else 1
+    dark_ratios = _smooth_row_values(_row_dark_ratios(image, sample_step=sample_step), radius=2)
+    blue_ratios = _smooth_row_values(_row_blue_header_ratios(image, sample_step=max(2, sample_step)), radius=2)
+    red_ratios = _smooth_row_values(_row_red_text_ratios(image, sample_step=max(2, sample_step)), radius=2)
+    edge_ratios = _smooth_row_values(_row_edge_transition_ratios(image, sample_step=max(2, sample_step)), radius=2)
+
+    content_like_flags = [
+        (
+            dark_ratios[idx] >= 0.0034
+            or edge_ratios[idx] >= 0.018
+            or red_ratios[idx] >= 0.0028
+            or blue_ratios[idx] >= 0.010
+            or max(
+                dark_ratios[idx],
+                edge_ratios[idx] * 0.58,
+                red_ratios[idx] * 1.05,
+                blue_ratios[idx] * 0.82,
+            )
+            >= 0.0072
+        )
+        for idx in range(height)
+    ]
+    content_runs = _bool_runs(
+        content_like_flags,
+        min_len=max(10, int(height * 0.0035)),
+        max_gap=max(8, int(height * 0.0025)),
+    )
+    if not content_runs:
+        return []
+
+    protect_pad = max(10, int(height * 0.004))
+    protected_mask = _mask_from_runs(
+        height,
+        _expand_runs(content_runs, radius=protect_pad, upper_bound=height),
+    )
+
+    safe_blank_flags = [
+        (
+            not protected_mask[idx]
+            and dark_ratios[idx] <= 0.0021
+            and edge_ratios[idx] <= 0.010
+            and red_ratios[idx] <= 0.0018
+            and blue_ratios[idx] <= 0.006
+        )
+        for idx in range(height)
+    ]
+    safe_blank_runs = _bool_runs(
+        safe_blank_flags,
+        min_len=max(18, int(height * 0.0045)),
+        max_gap=4,
+    )
+
+    top_limit = max(content_runs[0][0] - 18, 0)
+    bottom_limit = min(content_runs[-1][1] + 18, height - 1)
+    min_segment_height = max(220, int(height * 0.075))
+
+    cut_centers: list[int] = []
+    last_boundary = top_limit
+    for start, end in safe_blank_runs:
+        center = (start + end) // 2
+        if center <= top_limit + 24 or center >= bottom_limit - 24:
+            continue
+        if center - last_boundary < min_segment_height:
+            continue
+        if bottom_limit - center < max(160, min_segment_height // 2):
+            continue
+        cut_centers.append(center)
+        last_boundary = center
+
+    boundaries = [top_limit] + cut_centers + [bottom_limit + 1]
+    segments: list[dict] = []
+    for idx, (seg_start, seg_end_exclusive) in enumerate(zip(boundaries, boundaries[1:]), start=1):
+        y1 = max(seg_start - 6, 0)
+        y2 = min(seg_end_exclusive + 6, height)
+        if y2 - y1 < 140:
+            continue
+        bounds = _find_dark_bounds(image, 0, y1, width, y2)
+        if bounds is None:
+            continue
+        bx1, by1, bx2, by2 = bounds
+        seg_x1 = max(bx1 - 10, 0)
+        seg_y1 = max(by1 - 8, 0)
+        seg_x2 = min(bx2 + 10, width)
+        seg_y2 = min(by2 + 8, height)
+        if seg_x2 - seg_x1 < 96 or seg_y2 - seg_y1 < 120:
+            continue
+        segments.append(
+            {
+                "segment_index": idx,
+                "x": seg_x1,
+                "y": seg_y1,
+                "w": seg_x2 - seg_x1,
+                "h": seg_y2 - seg_y1,
+            }
+        )
+
+    if segments:
+        return segments
+
+    fallback_bounds = _find_dark_bounds(image, 0, top_limit, width, bottom_limit + 1)
+    if fallback_bounds is None:
+        return []
+    bx1, by1, bx2, by2 = fallback_bounds
+    return [
+        {
+            "segment_index": 1,
+            "x": max(bx1 - 10, 0),
+            "y": max(by1 - 8, 0),
+            "w": min(bx2 + 10, width) - max(bx1 - 10, 0),
+            "h": min(by2 + 8, height) - max(by1 - 8, 0),
+        }
+    ]
+
+
+def _offset_mapped_box(box: dict, dx: int, dy: int) -> dict:
+    mapped = dict(box)
+    mapped["x"] = int(mapped.get("x", 0) or 0) + dx
+    mapped["y"] = int(mapped.get("y", 0) or 0) + dy
+    return mapped
+
+
+def _run_number_line_focus_rescan(
+    image: Image.Image,
+    *,
+    api_key: str,
+    model: str,
+    source_field: str,
+) -> list[dict]:
+    width, height = image.size
+    x1, y1, x2, y2 = _number_line_focus_crop_bounds(image)
+    crop = image.crop((x1, y1, x2, y2)).convert("RGB")
+    payload = _call_public_figure_rescan_model(
+        api_key,
+        model,
+        crop,
+        image_presence="number_line",
+        target_scope="stem",
+    )
+    raw_boxes = [_normalize_public_image_bbox(item) for item in (payload.get("image_bboxes", []) or [])]
+    raw_boxes = [
+        {
+            **item,
+            "review_flags": normalize_review_flags(list(item.get("review_flags", []) or []) + ["number_line", "number_line_focus_crop"]),
+        }
+        for item in raw_boxes
+        if item
+    ]
+    scaled = _scale_model_canvas_boxes(
+        raw_boxes,
+        model_image_width=int(payload.get("image_width", 0) or 0),
+        model_image_height=int(payload.get("image_height", 0) or 0),
+        image_width=crop.size[0],
+        image_height=crop.size[1],
+        image=crop.copy(),
+    )
+    accepted: list[dict] = []
+    for item in scaled:
+        shifted = _offset_mapped_box(item, x1, y1)
+        shifted["bbox_space"] = "analysis_image" if source_field == "analysis_image" else "question_image"
+        shifted["detector_source"] = "stem_number_line_focus_rescan_model"
+        shifted["review_flags"] = normalize_review_flags(
+            list(shifted.get("review_flags", []) or []) + ["number_line", "number_line_focus_rescan"]
+        )
+        if not _looks_figure_like_bbox(shifted, image_width=width, image_height=height):
+            continue
+        accepted.append(shifted)
+    return accepted
+
+
+def _cluster_panel_boxes(items: list[dict], *, strict: bool = False) -> list[list[dict]]:
+    ordered = sorted(items, key=lambda item: (int(item.get("y", 0) or 0), int(item.get("x", 0) or 0)))
+    if not ordered:
+        return []
+    clusters: list[list[dict]] = [[ordered[0]]]
+    cluster_bottom = int(ordered[0].get("y", 0) or 0) + int(ordered[0].get("h", 0) or 0)
+    for item in ordered[1:]:
+        y = int(item.get("y", 0) or 0)
+        h = int(item.get("h", 0) or 0)
+        gap = y - cluster_bottom
+        gap_limit = max(38, int(h * 0.35)) if strict else max(72, int(h * 0.8))
+        if gap <= gap_limit:
+            clusters[-1].append(item)
+            cluster_bottom = max(cluster_bottom, y + h)
+            continue
+        clusters.append([item])
+        cluster_bottom = y + h
+    return clusters
+
+
+def _bbox_bounds(item: dict) -> tuple[int, int, int, int]:
+    x1 = int(item.get("x", 0) or 0)
+    y1 = int(item.get("y", 0) or 0)
+    x2 = x1 + int(item.get("w", 0) or 0)
+    y2 = y1 + int(item.get("h", 0) or 0)
+    return x1, y1, x2, y2
+
+
+def _bbox_horizontal_overlap_ratio(a: dict, b: dict) -> float:
+    ax1, _, ax2, _ = _bbox_bounds(a)
+    bx1, _, bx2, _ = _bbox_bounds(b)
+    inter = min(ax2, bx2) - max(ax1, bx1)
+    if inter <= 0:
+        return 0.0
+    aw = max(ax2 - ax1, 1)
+    bw = max(bx2 - bx1, 1)
+    return inter / max(min(aw, bw), 1)
+
+
+def _bbox_vertical_gap(a: dict, b: dict) -> int:
+    _, ay1, _, ay2 = _bbox_bounds(a)
+    _, by1, _, by2 = _bbox_bounds(b)
+    if ay2 < by1:
+        return by1 - ay2
+    if by2 < ay1:
+        return ay1 - by2
+    return 0
+
+
+def _panelize_segment_boxes(
+    items: list[dict],
+    *,
+    segment_bbox: dict,
+    segment_index: int,
+    image: Image.Image,
+    detector_source: str,
+) -> list[dict]:
+    def _tighten_panel_component(item: dict) -> dict:
+        flags = {str(flag) for flag in (item.get("review_flags", []) or [])}
+        if "cv_panel_component" in flags:
+            return dict(item)
+        part = _tighten_candidate_bbox(image, dict(item))
+        part = _trim_trailing_body_text(image, part)
+        part = _trim_bottom_text_block_after_gap(image, part)
+        part = _pad_public_figure_bbox(
+            image,
+            part,
+            pad_left=6,
+            pad_right=6,
+            pad_top=6,
+            pad_bottom=6,
+        )
+        part["review_flags"] = normalize_review_flags(list(part.get("review_flags", []) or []) + ["panel_component_tighten"])
+        return part
+
+    if not items:
+        return []
+    cv_items = [
+        dict(item)
+        for item in items
+        if "cv_panel_component" in set(str(flag) for flag in (item.get("review_flags", []) or []))
+    ]
+    non_cv_items = [
+        dict(item)
+        for item in items
+        if "cv_panel_component" not in set(str(flag) for flag in (item.get("review_flags", []) or []))
+    ]
+
+    if cv_items:
+        clusters = _cluster_panel_boxes(cv_items, strict=True)
+        cluster_bounds: list[dict] = []
+        for cluster in clusters:
+            x1 = min(int(item.get("x", 0) or 0) for item in cluster)
+            y1 = min(int(item.get("y", 0) or 0) for item in cluster)
+            x2 = max(int(item.get("x", 0) or 0) + int(item.get("w", 0) or 0) for item in cluster)
+            y2 = max(int(item.get("y", 0) or 0) + int(item.get("h", 0) or 0) for item in cluster)
+            cluster_bounds.append({"x": x1, "y": y1, "w": x2 - x1, "h": y2 - y1})
+
+        leftovers: list[dict] = []
+        for item in non_cv_items:
+            best_index = -1
+            best_score = 0.0
+            for idx, bound in enumerate(cluster_bounds):
+                horizontal_overlap = _bbox_horizontal_overlap_ratio(item, bound)
+                vertical_gap = _bbox_vertical_gap(item, bound)
+                if horizontal_overlap < 0.45:
+                    continue
+                if vertical_gap > max(52, int(min(int(item.get("h", 0) or 0), int(bound.get("h", 0) or 0)) * 0.45)):
+                    continue
+                score = horizontal_overlap - (vertical_gap / max(int(bound.get("h", 0) or 1), 1))
+                if score > best_score:
+                    best_score = score
+                    best_index = idx
+            if best_index >= 0:
+                clusters[best_index].append(item)
+                cluster = clusters[best_index]
+                x1 = min(int(entry.get("x", 0) or 0) for entry in cluster)
+                y1 = min(int(entry.get("y", 0) or 0) for entry in cluster)
+                x2 = max(int(entry.get("x", 0) or 0) + int(entry.get("w", 0) or 0) for entry in cluster)
+                y2 = max(int(entry.get("y", 0) or 0) + int(entry.get("h", 0) or 0) for entry in cluster)
+                cluster_bounds[best_index] = {"x": x1, "y": y1, "w": x2 - x1, "h": y2 - y1}
+            else:
+                leftovers.append(item)
+        if leftovers:
+            clusters.extend(_cluster_panel_boxes(leftovers))
+    else:
+        clusters = _cluster_panel_boxes(items)
+
+    panelized: list[dict] = []
+    seg_x = int(segment_bbox.get("x", 0) or 0)
+    seg_y = int(segment_bbox.get("y", 0) or 0)
+    for cluster_index, cluster in enumerate(clusters, start=1):
+        prepared_cluster = [_tighten_panel_component(item) for item in cluster]
+        x1 = min(int(item.get("x", 0) or 0) for item in prepared_cluster)
+        y1 = min(int(item.get("y", 0) or 0) for item in prepared_cluster)
+        x2 = max(int(item.get("x", 0) or 0) + int(item.get("w", 0) or 0) for item in prepared_cluster)
+        y2 = max(int(item.get("y", 0) or 0) + int(item.get("h", 0) or 0) for item in prepared_cluster)
+        pad = 10
+        union_x1 = max(x1 - pad, 0)
+        union_y1 = max(y1 - pad, 0)
+        union_x2 = min(x2 + pad, image.size[0])
+        union_y2 = min(y2 + pad, image.size[1])
+        bounds = _find_dark_bounds(image, union_x1, union_y1, union_x2, union_y2)
+        if bounds is not None:
+            bx1, by1, bx2, by2 = bounds
+            union_x1, union_y1, union_x2, union_y2 = bx1, by1, bx2, by2
+        union_box = {
+            "x": union_x1,
+            "y": union_y1,
+            "w": max(union_x2 - union_x1, 1),
+            "h": max(union_y2 - union_y1, 1),
+        }
+        union_box = _trim_trailing_body_text(image, union_box)
+        union_box = _trim_bottom_text_block_after_gap(image, union_box)
+        union_x1 = int(union_box.get("x", union_x1) or union_x1)
+        union_y1 = int(union_box.get("y", union_y1) or union_y1)
+        union_x2 = union_x1 + int(union_box.get("w", max(union_x2 - union_x1, 1)) or max(union_x2 - union_x1, 1))
+        union_y2 = union_y1 + int(union_box.get("h", max(union_y2 - union_y1, 1)) or max(union_y2 - union_y1, 1))
+        global_subfigures = [_offset_mapped_box(item, seg_x, seg_y) for item in prepared_cluster]
+        review_flags: list[str] = ["long_image_branch", "long_image_segment_precut"]
+        if len(prepared_cluster) >= 2:
+            review_flags.extend(["panel_kept", "panel_subfigure_union"])
+        panelized.append(
+            {
+                "x": seg_x + union_x1,
+                "y": seg_y + union_y1,
+                "w": max(union_x2 - union_x1, 1),
+                "h": max(union_y2 - union_y1, 1),
+                "confidence": max(float(item.get("confidence", 0.0) or 0.0) for item in prepared_cluster),
+                "review_flags": normalize_review_flags(
+                    review_flags
+                    + [flag for item in prepared_cluster for flag in (item.get("review_flags", []) or [])]
+                ),
+                "detector_source": detector_source,
+                "panel_group_id": f"seg_{segment_index:02d}_grp_{cluster_index:02d}",
+                "panel_segment_index": segment_index,
+                "panel_subfigure_count": len(prepared_cluster),
+                "panel_subfigure_bboxes": global_subfigures,
+                "panel_segment_bbox_json": {
+                    "x": seg_x,
+                    "y": seg_y,
+                    "w": int(segment_bbox.get("w", 0) or 0),
+                    "h": int(segment_bbox.get("h", 0) or 0),
+                },
+            }
+        )
+    return panelized
+
+
+def _detect_public_figures_in_segmented_panels(
+    image: Image.Image,
+    *,
+    api_key: str,
+    model: str,
+    image_presence: str,
+    target_scope: str,
+    source_field_name: str,
+) -> tuple[list[dict], list[str]]:
+    segments = _long_image_segment_candidates(image)
+    if not segments:
+        return [], []
+
+    grouped_boxes: list[dict] = []
+    global_flags: list[str] = ["long_image_prepass_attempted"]
+    for segment in segments:
+        sx = int(segment.get("x", 0) or 0)
+        sy = int(segment.get("y", 0) or 0)
+        sw = int(segment.get("w", 0) or 0)
+        sh = int(segment.get("h", 0) or 0)
+        if sw <= 0 or sh <= 0:
+            continue
+        segment_image = image.crop((sx, sy, sx + sw, sy + sh)).convert("RGB")
+        local_boxes: list[dict] = []
+        model_detector_source = f"{target_scope}_panel_segment_model"
+        try:
+            payload = _call_public_figure_rescan_model(
+                api_key,
+                model,
+                segment_image,
+                image_presence=image_presence,
+                target_scope=target_scope,
+            )
+            global_flags.extend(list(payload.get("global_review_flags", []) or []))
+            raw_boxes = [_normalize_public_image_bbox(item) for item in (payload.get("image_bboxes", []) or [])]
+            scaled = _scale_model_canvas_boxes(
+                [item for item in raw_boxes if item],
+                model_image_width=int(payload.get("image_width", 0) or 0),
+                model_image_height=int(payload.get("image_height", 0) or 0),
+                image_width=sw,
+                image_height=sh,
+                image=segment_image.copy(),
+            )
+            local_boxes.extend(
+                _sanitize_public_boxes(
+                    scaled,
+                    image=segment_image.copy(),
+                    image_width=sw,
+                    image_height=sh,
+                    source_field_name=source_field_name,
+                )
+            )
+        except Exception:
+            model_detector_source = f"{target_scope}_panel_segment_model_failed"
+
+        heuristic_boxes = _heuristic_public_figure_regions_from_image(segment_image.copy(), source_field_name=source_field_name)
+        if heuristic_boxes:
+            heuristic_boxes = [
+                {
+                    **item,
+                    "detector_source": "panel_segment_heuristic",
+                    "review_flags": normalize_review_flags(list(item.get("review_flags", []) or []) + ["long_image_branch"]),
+                }
+                for item in heuristic_boxes
+            ]
+            local_boxes.extend(heuristic_boxes)
+
+        cv_panel_boxes = _cv_panel_component_boxes(segment_image.copy())
+        if cv_panel_boxes:
+            local_boxes.extend(cv_panel_boxes)
+
+        local_boxes = _dedupe_overlapping_public_boxes(local_boxes, iou_threshold=0.78)
+        if not local_boxes:
+            continue
+
+        panelized = _panelize_segment_boxes(
+            local_boxes,
+            segment_bbox=segment,
+            segment_index=int(segment.get("segment_index", 0) or 0),
+            image=segment_image,
+            detector_source=model_detector_source if model_detector_source.endswith("model") else "panel_segment_heuristic",
+        )
+        grouped_boxes.extend(panelized)
+    deduped = _dedupe_overlapping_public_boxes(grouped_boxes, iou_threshold=0.84)
+    anchored = _attach_long_panel_anchor_candidates(deduped, target_scope=target_scope)
+    return anchored, normalize_review_flags(global_flags)
 
 
 def _dedupe_public_boxes(items: list[dict]) -> list[dict]:
@@ -2120,6 +2873,128 @@ def _dedupe_overlapping_public_boxes(items: list[dict], iou_threshold: float = 0
     return sorted(kept, key=lambda item: (int(item.get("y", 0) or 0), int(item.get("x", 0) or 0)))
 
 
+def _attach_long_panel_anchor_candidates(items: list[dict], *, target_scope: str) -> list[dict]:
+    ordered = sorted(
+        [dict(item) for item in items if isinstance(item, dict)],
+        key=lambda item: (
+            int(item.get("panel_segment_index", 0) or 0),
+            int(item.get("y", 0) or 0),
+            int(item.get("x", 0) or 0),
+        ),
+    )
+    if not ordered:
+        return []
+    result: list[dict] = []
+    for idx, item in enumerate(ordered, start=1):
+        updated = dict(item)
+        updated["candidate_anchor_source"] = "long_panel_branch_v1"
+        updated["candidate_anchor_scope"] = str(target_scope or "analysis")
+        updated["candidate_anchor_scope_preference"] = "answer_first" if str(target_scope or "") == "analysis" else "stem_only"
+        updated["candidate_anchor_order"] = idx
+        updated["candidate_anchor_key"] = f"{str(target_scope or 'analysis')}_{idx:03d}"
+        result.append(updated)
+    return result
+
+
+def _box_intersection_area(box: dict, segment: dict) -> int:
+    bx1 = int(box.get("x", 0) or 0)
+    by1 = int(box.get("y", 0) or 0)
+    bx2 = bx1 + int(box.get("w", 0) or 0)
+    by2 = by1 + int(box.get("h", 0) or 0)
+    sx1 = int(segment.get("x", 0) or 0)
+    sy1 = int(segment.get("y", 0) or 0)
+    sx2 = sx1 + int(segment.get("w", 0) or 0)
+    sy2 = sy1 + int(segment.get("h", 0) or 0)
+    ix1 = max(bx1, sx1)
+    iy1 = max(by1, sy1)
+    ix2 = min(bx2, sx2)
+    iy2 = min(by2, sy2)
+    if ix2 <= ix1 or iy2 <= iy1:
+        return 0
+    return (ix2 - ix1) * (iy2 - iy1)
+
+
+def _regroup_boxes_into_segment_panels(
+    image: Image.Image,
+    items: list[dict],
+    *,
+    detector_source_hint: str,
+) -> list[dict]:
+    if not items:
+        return []
+
+    pregrouped = [dict(item) for item in items if str(item.get("panel_group_id", "") or "").strip()]
+    plain_items = [dict(item) for item in items if not str(item.get("panel_group_id", "") or "").strip()]
+    if not plain_items:
+        return _dedupe_overlapping_public_boxes(pregrouped, iou_threshold=0.84)
+
+    segments = _long_image_segment_candidates(image)
+    if not segments:
+        return _dedupe_overlapping_public_boxes(items, iou_threshold=0.84)
+
+    grouped_by_segment: dict[int, list[dict]] = {}
+    leftovers: list[dict] = []
+    for item in plain_items:
+        cx = int(item.get("x", 0) or 0) + int(item.get("w", 0) or 0) / 2
+        cy = int(item.get("y", 0) or 0) + int(item.get("h", 0) or 0) / 2
+        best_segment: dict | None = None
+        best_score = -1
+        for segment in segments:
+            area = _box_intersection_area(item, segment)
+            sx = int(segment.get("x", 0) or 0)
+            sy = int(segment.get("y", 0) or 0)
+            sw = int(segment.get("w", 0) or 0)
+            sh = int(segment.get("h", 0) or 0)
+            center_inside = sx <= cx <= sx + sw and sy <= cy <= sy + sh
+            score = area
+            if center_inside and score <= 0:
+                score = 1
+            if score > best_score:
+                best_segment = segment
+                best_score = score
+        if best_segment is None or best_score < 0:
+            leftovers.append(item)
+            continue
+        sx = int(best_segment.get("x", 0) or 0)
+        sy = int(best_segment.get("y", 0) or 0)
+        local_item = dict(item)
+        local_item["x"] = int(local_item.get("x", 0) or 0) - sx
+        local_item["y"] = int(local_item.get("y", 0) or 0) - sy
+        grouped_by_segment.setdefault(int(best_segment.get("segment_index", 0) or 0), []).append(local_item)
+
+    regrouped: list[dict] = list(pregrouped)
+    for segment in segments:
+        segment_index = int(segment.get("segment_index", 0) or 0)
+        local_items = grouped_by_segment.get(segment_index, [])
+        if not local_items:
+            continue
+        sx = int(segment.get("x", 0) or 0)
+        sy = int(segment.get("y", 0) or 0)
+        sw = int(segment.get("w", 0) or 0)
+        sh = int(segment.get("h", 0) or 0)
+        segment_image = image.crop((sx, sy, sx + sw, sy + sh)).convert("RGB")
+        panelized = _panelize_segment_boxes(
+            local_items,
+            segment_bbox=segment,
+            segment_index=segment_index,
+            image=segment_image,
+            detector_source=detector_source_hint,
+        )
+        panelized = [
+            {
+                **item,
+                "review_flags": normalize_review_flags(list(item.get("review_flags", []) or []) + ["long_image_regroup"]),
+            }
+            for item in panelized
+        ]
+        regrouped.extend(panelized)
+
+    regrouped.extend(leftovers)
+    deduped = _dedupe_overlapping_public_boxes(regrouped, iou_threshold=0.84)
+    target_scope = "analysis" if "analysis" in str(detector_source_hint or "") else "stem"
+    return _attach_long_panel_anchor_candidates(deduped, target_scope=target_scope)
+
+
 def _sanitize_public_boxes(
     items: list[dict],
     *,
@@ -2132,7 +3007,8 @@ def _sanitize_public_boxes(
     for item in items:
         if not _looks_figure_like_bbox(item, image_width=image_width, image_height=image_height):
             continue
-        split_candidates = _split_candidate_columns(image, item)
+        review_flags = {str(flag) for flag in (item.get("review_flags", []) or [])}
+        split_candidates = [dict(item)] if "route_whole_panel" in review_flags else _split_candidate_columns(image, item)
         for part in split_candidates:
             coordinate_mode = str(part.get("bbox_coordinate_mode", "") or "")
             if coordinate_mode in {"model_canvas", "normalized_1000"}:
@@ -2229,6 +3105,13 @@ def _refine_public_boxes_with_model(
     image_width, image_height = image.size
     refined: list[dict] = []
     for box in boxes:
+        if str(box.get("panel_group_id", "") or "").strip() or int(box.get("panel_subfigure_count", 0) or 0) > 1:
+            kept = dict(box)
+            kept["review_flags"] = normalize_review_flags(
+                list(kept.get("review_flags", []) or []) + ["inline_figure_refine_panel_skip"]
+            )
+            refined.append(kept)
+            continue
         x1 = max(int(box.get("x", 0) or 0) - 36, 0)
         y1 = max(int(box.get("y", 0) or 0) - 36, 0)
         x2 = min(int(box.get("x", 0) or 0) + int(box.get("w", 0) or 0) + 36, image_width)
@@ -2438,13 +3321,15 @@ def _should_use_panel_long_branch(
     gate = question.get("image_need_gate") if isinstance(question.get("image_need_gate"), dict) else {}
     image_presence = str(gate.get("image_presence", "") or "").strip().lower()
     long_image = image_height >= 1300 or image_height >= image_width * 1.55
-    planner_panel = "panel" in image_presence or image_presence in {"mixed", "graph", "geometry", "small_auxiliary_figure"}
-    if _same_long_source(question):
+    # Keep the long-image branch focused on truly long containers or
+    # explicitly panel-like short crops. Broad labels such as mixed / graph /
+    # geometry are too coarse and can fracture one public stem figure into
+    # several short-box crops.
+    planner_panel = "panel" in image_presence or image_presence == "small_auxiliary_figure"
+    if long_image:
         return True
     if source_field != "question_image":
         return False
-    if long_image:
-        return True
     if rescan_scope == "stem" and planner_panel:
         return True
     return False
@@ -2464,6 +3349,7 @@ def detect_public_figure_regions(
         "stem_image_bboxes": [],
         "analysis_image_bboxes": [],
         "global_review_flags": [],
+        "branch_trace": [],
         "detector": "not_run",
         "model_required": bool(require_model),
         "heuristic_fallback_allowed": bool(allow_heuristic_fallback),
@@ -2472,6 +3358,7 @@ def detect_public_figure_regions(
         result["global_review_flags"] = ["public_figure_model_not_run_missing_api_key"]
         return result
 
+    gate = question.get("image_need_gate") if isinstance(question.get("image_need_gate"), dict) else {}
     image_targets: list[tuple[str, str, str]] = []
     stem_image_raw = str(question.get("stem_image", "") or "").strip()
     question_image_raw = str(question.get("question_image", "") or "").strip()
@@ -2501,6 +3388,69 @@ def detect_public_figure_regions(
         if not image_path.exists():
             continue
         width, height = _read_image_meta(image_path)
+        route_review_result: dict[str, Any] = {}
+        route_mode = ""
+        route_panel_bbox_raw: dict[str, Any] | None = None
+        route_review_should_run = _should_run_public_figure_route_review(
+            question,
+            source_field=field_name,
+            image_width=width,
+            image_height=height,
+        )
+        rescan_scope = "analysis" if bucket_name == "analysis_image_bboxes" else "stem"
+        use_panel_long_branch = _should_use_panel_long_branch(
+            question,
+            source_field=field_name,
+            rescan_scope=rescan_scope,
+            image_width=width,
+            image_height=height,
+        )
+        if api_key_value and route_review_should_run:
+            try:
+                with Image.open(image_path) as route_image_file:
+                    route_review_result = _call_public_figure_route_review_model(
+                        api_key_value,
+                        model_name,
+                        route_image_file.convert("RGB"),
+                        image_presence=str(gate.get("image_presence", "") or f"{rescan_scope}_figure"),
+                        target_scope=rescan_scope,
+                        source_field=field_name,
+                        same_long_source=same_long_source,
+                    )
+                route_mode = str(route_review_result.get("route_mode", "") or "").strip().lower()
+                route_panel_bbox_raw = _normalize_public_image_bbox(route_review_result.get("panel_bbox", {}))
+                if route_mode == "panel_long_branch":
+                    use_panel_long_branch = True
+                elif route_mode in {"normal_detection", "whole_panel_bbox"}:
+                    use_panel_long_branch = False
+            except Exception as exc:
+                route_review_result = {"error": str(exc)[:300]}
+                route_mode = ""
+        branch_trace_entry = {
+            "trace_kind": "initial_probe",
+            "source_field": field_name,
+            "bucket_name": bucket_name,
+            "output_bbox_space": output_bbox_space,
+            "rescan_scope": rescan_scope,
+            "image_path": str(image_path),
+            "image_width": width,
+            "image_height": height,
+            "same_long_source": same_long_source,
+            "use_panel_long_branch": use_panel_long_branch,
+            "route_review_attempted": bool(api_key_value and route_review_should_run),
+            "route_mode": route_mode,
+            "route_review_flags": list(route_review_result.get("review_flags", []) or []) if isinstance(route_review_result, dict) else [],
+        }
+        if isinstance(route_review_result, dict) and route_review_result.get("error"):
+            branch_trace_entry["route_review_error"] = str(route_review_result.get("error", "") or "")
+        if same_long_source and field_name == "stem_image" and output_bbox_space == "question_image":
+            # The shared long question crop has already been probed through the
+            # whole-question container. Repeating the exact same probe on
+            # stem_image only doubles cost and duplicates boxes.
+            branch_trace_entry["skipped"] = True
+            branch_trace_entry["skip_reason"] = "duplicate_same_long_source_probe"
+            result["branch_trace"].append(branch_trace_entry)
+            continue
         hint_text = "\n".join(
             part
             for part in (
@@ -2513,32 +3463,133 @@ def detect_public_figure_regions(
         payload = {}
         model_attempted = False
         model_failed = False
+        detector_source = "vision_model"
+        precomputed_segment_boxes: list[dict] = []
+        direct_route_boxes: list[dict] = []
+        branch_trace_entry["hint_text_present"] = bool(hint_text.strip())
         if api_key_value:
             try:
-                model_attempted = True
-                payload = _call_inline_figure_model(api_key_value, model_name, image_path, field_name, hint_text)
+                if route_mode == "whole_panel_bbox" and route_panel_bbox_raw:
+                    direct_route_boxes = [
+                        {
+                            **route_panel_bbox_raw,
+                            "confidence": float(route_review_result.get("confidence", 0.0) or 0.0),
+                            "review_flags": normalize_review_flags(
+                                list(route_panel_bbox_raw.get("review_flags", []) or [])
+                                + [str(flag) for flag in (route_review_result.get("review_flags", []) or []) if str(flag).strip()]
+                                + ["route_whole_panel"]
+                            ),
+                            "bbox_coordinate_mode": "normalized_1000",
+                            "model_image_width": 1000,
+                            "model_image_height": 1000,
+                            "detector_source": "public_figure_route_review_whole_panel",
+                        }
+                    ]
+                    detector_source = "public_figure_route_review_whole_panel"
+                else:
+                    model_attempted = True
+                    if use_panel_long_branch:
+                        with Image.open(image_path) as original:
+                            original_rgb = original.convert("RGB")
+                            precomputed_segment_boxes, segment_flags = _detect_public_figures_in_segmented_panels(
+                                original_rgb,
+                                api_key=api_key_value,
+                                model=model_name,
+                                image_presence=str(gate.get("image_presence", "") or f"{rescan_scope}_figure"),
+                                target_scope=rescan_scope,
+                                source_field_name=field_name,
+                            )
+                            if precomputed_segment_boxes:
+                                payload = {"image_bboxes": precomputed_segment_boxes, "global_review_flags": segment_flags}
+                                detector_source = f"{rescan_scope}_panel_segment_branch"
+                            else:
+                                payload = _call_public_figure_rescan_model(
+                                    api_key_value,
+                                    model_name,
+                                    original_rgb,
+                                    image_presence=str(gate.get("image_presence", "") or f"{rescan_scope}_figure"),
+                                    target_scope=rescan_scope,
+                                )
+                                detector_source = f"{rescan_scope}_panel_long_firstpass_model"
+                    else:
+                        payload = _call_inline_figure_model(api_key_value, model_name, image_path, field_name, hint_text)
             except Exception:
                 model_failed = True
                 payload = {}
-        detector_source = "vision_model"
+                detector_source = f"{rescan_scope}_panel_long_firstpass_failed" if use_panel_long_branch else "vision_model_failed"
+        branch_trace_entry["model_attempted"] = model_attempted
+        branch_trace_entry["model_failed"] = model_failed
+        branch_trace_entry["precomputed_segment_box_count"] = len(precomputed_segment_boxes)
+        branch_trace_entry["direct_route_box_count"] = len(direct_route_boxes)
+        branch_trace_entry["detector_source_after_firstpass"] = detector_source
         with Image.open(image_path) as original:
-            boxes = [_normalize_public_image_bbox(item) for item in (payload.get("image_bboxes", []) or [])]
-            boxes = _scale_model_canvas_boxes(
-                [item for item in boxes if item],
-                model_image_width=int(payload.get("image_width", 0) or 0),
-                model_image_height=int(payload.get("image_height", 0) or 0),
-                image_width=width,
-                image_height=height,
-                image=original.copy(),
-            )
-            normalized_boxes = _sanitize_public_boxes(
-                boxes,
-                image=original.copy(),
-                image_width=width,
-                image_height=height,
-                source_field_name=field_name,
-            )
-            if api_key_value and _should_run_vertical_tile_detection(width, height, normalized_boxes):
+            if direct_route_boxes:
+                scaled_direct_route_boxes = _scale_model_canvas_boxes(
+                    direct_route_boxes,
+                    model_image_width=1000,
+                    model_image_height=1000,
+                    image_width=width,
+                    image_height=height,
+                    image=original.copy(),
+                )
+                normalized_boxes = _sanitize_public_boxes(
+                    scaled_direct_route_boxes,
+                    image=original.copy(),
+                    image_width=width,
+                    image_height=height,
+                    source_field_name=field_name,
+                )
+                if not normalized_boxes:
+                    normalized_boxes = []
+                    for coarse_item in scaled_direct_route_boxes:
+                        coarse_box = _pad_public_figure_bbox(
+                            original.copy(),
+                            coarse_item,
+                            pad_left=20,
+                            pad_right=20,
+                            pad_top=16,
+                            pad_bottom=18,
+                        )
+                        if int(coarse_box.get("w", 0) or 0) <= 24 or int(coarse_box.get("h", 0) or 0) <= 24:
+                            continue
+                        normalized_boxes.append(
+                            {
+                                **coarse_box,
+                                "review_flags": normalize_review_flags(
+                                    list(coarse_box.get("review_flags", []) or [])
+                                    + ["route_whole_panel_keep_coarse", "headless_crop_risk"]
+                                ),
+                            }
+                        )
+            elif precomputed_segment_boxes:
+                normalized_boxes = _dedupe_overlapping_public_boxes(precomputed_segment_boxes, iou_threshold=0.84)
+            else:
+                boxes = [_normalize_public_image_bbox(item) for item in (payload.get("image_bboxes", []) or [])]
+                boxes = _scale_model_canvas_boxes(
+                    [item for item in boxes if item],
+                    model_image_width=int(payload.get("image_width", 0) or 0),
+                    model_image_height=int(payload.get("image_height", 0) or 0),
+                    image_width=width,
+                    image_height=height,
+                    image=original.copy(),
+                )
+                normalized_boxes = _sanitize_public_boxes(
+                    boxes,
+                    image=original.copy(),
+                    image_width=width,
+                    image_height=height,
+                    source_field_name=field_name,
+                )
+            branch_trace_entry["normalized_box_count_after_sanitize"] = len(normalized_boxes)
+            if use_panel_long_branch and normalized_boxes:
+                normalized_boxes = [
+                    {
+                        **item,
+                        "review_flags": normalize_review_flags(list(item.get("review_flags", []) or []) + ["long_image_branch"]),
+                    }
+                    for item in normalized_boxes
+                ]
+            if api_key_value and not precomputed_segment_boxes and (use_panel_long_branch or _should_run_vertical_tile_detection(width, height, normalized_boxes)):
                 tile_boxes = _detect_public_figures_in_vertical_tiles(
                     original.copy(),
                     api_key=api_key_value,
@@ -2554,11 +3605,30 @@ def detect_public_figure_regions(
                         image_height=height,
                         source_field_name=field_name,
                     )
+                    if use_panel_long_branch:
+                        tile_boxes = [
+                            {
+                                **item,
+                                "review_flags": normalize_review_flags(list(item.get("review_flags", []) or []) + ["long_image_branch", "tile_fallback"]),
+                            }
+                            for item in tile_boxes
+                        ]
                     normalized_boxes = _dedupe_overlapping_public_boxes(normalized_boxes + tile_boxes)
+                    if use_panel_long_branch and "tile_fallback" not in detector_source:
+                        detector_source = f"{detector_source}+tile_fallback"
+                    branch_trace_entry["tile_fallback_box_count"] = len(tile_boxes)
+            if use_panel_long_branch and normalized_boxes:
+                normalized_boxes = _regroup_boxes_into_segment_panels(
+                    original.copy(),
+                    normalized_boxes,
+                    detector_source_hint=f"{rescan_scope}_panel_segment_regroup",
+                )
+                branch_trace_entry["regrouped_box_count"] = len(normalized_boxes)
         safe_empty_fallback = bool(allow_heuristic_fallback) or (model_attempted and not model_failed)
         if not normalized_boxes and safe_empty_fallback:
             normalized_boxes = _dedupe_public_boxes(_heuristic_public_figure_regions(image_path, source_field_name=field_name))
             detector_source = "heuristic_fallback" if allow_heuristic_fallback else "vision_model_empty_safe_fallback"
+            branch_trace_entry["heuristic_fallback_used"] = True
         elif not normalized_boxes:
             detector_source = "vision_model_empty" if model_attempted else "model_not_run"
             if model_failed:
@@ -2573,6 +3643,14 @@ def detect_public_figure_regions(
                 result["global_review_flags"] = normalize_review_flags(
                     list(result.get("global_review_flags", [])) + ["public_figure_model_not_run"]
                 )
+        if use_panel_long_branch and normalized_boxes:
+            normalized_boxes = [
+                {
+                    **item,
+                    "review_flags": normalize_review_flags(list(item.get("review_flags", []) or []) + ["long_image_branch"]),
+                }
+                for item in normalized_boxes
+            ]
         if normalized_boxes and api_key_value:
             with Image.open(image_path) as original:
                 refined_boxes = _refine_public_boxes_with_model(
@@ -2584,6 +3662,7 @@ def detect_public_figure_regions(
             if refined_boxes:
                 normalized_boxes = _dedupe_overlapping_public_boxes(refined_boxes, iou_threshold=0.86)
                 detector_source = f"{detector_source}+refine_model"
+                branch_trace_entry["refine_model_kept"] = True
             else:
                 normalized_boxes = [
                     {
@@ -2598,6 +3677,7 @@ def detect_public_figure_regions(
                 result["global_review_flags"] = normalize_review_flags(
                     list(result.get("global_review_flags", [])) + ["inline_figure_refine_all_rejected"]
                 )
+                branch_trace_entry["refine_model_kept"] = False
         for item in normalized_boxes:
             item["bbox_space"] = output_bbox_space
             if item.get("figure_refine_source"):
@@ -2613,9 +3693,14 @@ def detect_public_figure_regions(
         )
         result["detector"] = detector_source
         result["global_review_flags"] = normalize_review_flags(
-            list(result.get("global_review_flags", [])) + list(payload.get("global_review_flags", []) or [])
+            list(result.get("global_review_flags", []))
+            + list(payload.get("global_review_flags", []) or [])
+            + (["long_image_prepass_attempted"] if use_panel_long_branch else [])
         )
-    gate = question.get("image_need_gate") if isinstance(question.get("image_need_gate"), dict) else {}
+        branch_trace_entry["final_detector_source"] = detector_source
+        branch_trace_entry["final_box_count"] = len(normalized_boxes)
+        branch_trace_entry["global_flags_snapshot"] = list(result.get("global_review_flags", []))
+        result["branch_trace"].append(branch_trace_entry)
     gate_where = {str(item or "").strip().lower() for item in (gate.get("where", []) if isinstance(gate.get("where", []), list) else [])}
     needs_figure_detection = bool(gate.get("needs_figure_detection"))
     stem_requested = needs_figure_detection and "stem" in gate_where
@@ -2651,40 +3736,68 @@ def detect_public_figure_regions(
                 image_width=width,
                 image_height=height,
             )
+            rescan_trace_entry = {
+                "trace_kind": "zero_asset_rescan",
+                "source_field": source_field,
+                "bucket_name": bucket_name,
+                "rescan_scope": rescan_scope,
+                "image_path": str(image_path),
+                "image_width": width,
+                "image_height": height,
+                "image_presence": image_presence,
+                "use_panel_long_branch": use_panel_long_branch,
+            }
             try:
                 with Image.open(image_path) as original:
-                    if rescan_scope == "analysis" and not use_panel_long_branch:
+                    original_rgb = original.convert("RGB")
+                    precomputed_segment_boxes: list[dict] = []
+                    if use_panel_long_branch:
+                        precomputed_segment_boxes, segment_flags = _detect_public_figures_in_segmented_panels(
+                            original_rgb,
+                            api_key=api_key_value,
+                            model=model_name,
+                            image_presence=image_presence,
+                            target_scope=rescan_scope,
+                            source_field_name=source_field,
+                        )
+                        payload = {"image_bboxes": precomputed_segment_boxes, "global_review_flags": segment_flags}
+                    elif rescan_scope == "analysis":
                         payload = _call_analysis_figure_rescan_model(
                             api_key_value,
                             model_name,
-                            original.convert("RGB"),
+                            original_rgb,
                             image_presence,
                         )
                     else:
                         payload = _call_public_figure_rescan_model(
                             api_key_value,
                             model_name,
-                            original.convert("RGB"),
+                            original_rgb,
                             image_presence=image_presence,
                             target_scope=rescan_scope,
                         )
-                    raw_boxes = [_normalize_public_image_bbox(item) for item in (payload.get("image_bboxes", []) or [])]
-                    if "number_line" in image_presence:
-                        raw_boxes = [
-                            {
-                                **item,
-                                "review_flags": normalize_review_flags(list(item.get("review_flags", []) or []) + ["number_line"]),
-                            }
-                            for item in raw_boxes
-                        ]
-                    rescanned = _scale_model_canvas_boxes(
-                        [item for item in raw_boxes if item],
-                        model_image_width=int(payload.get("image_width", 0) or 0),
-                        model_image_height=int(payload.get("image_height", 0) or 0),
-                        image_width=width,
-                        image_height=height,
-                        image=original.copy(),
-                    )
+                    if precomputed_segment_boxes:
+                        rescanned = _dedupe_overlapping_public_boxes(precomputed_segment_boxes, iou_threshold=0.84)
+                    else:
+                        raw_boxes = [_normalize_public_image_bbox(item) for item in (payload.get("image_bboxes", []) or [])]
+                        if "number_line" in image_presence:
+                            raw_boxes = [
+                                {
+                                    **item,
+                                    "review_flags": normalize_review_flags(list(item.get("review_flags", []) or []) + ["number_line"]),
+                                }
+                                for item in raw_boxes
+                            ]
+                        rescanned = _scale_model_canvas_boxes(
+                            [item for item in raw_boxes if item],
+                            model_image_width=int(payload.get("image_width", 0) or 0),
+                            model_image_height=int(payload.get("image_height", 0) or 0),
+                            image_width=width,
+                            image_height=height,
+                            image=original.copy(),
+                        )
+                    rescan_trace_entry["precomputed_segment_box_count"] = len(precomputed_segment_boxes)
+                    rescan_trace_entry["rescanned_box_count"] = len(rescanned)
                     accepted = []
                     for item in rescanned:
                         flags = set(str(flag) for flag in (item.get("review_flags", []) or []))
@@ -2704,7 +3817,7 @@ def detect_public_figure_regions(
                                 ),
                             }
                         )
-                    if not accepted and use_panel_long_branch and api_key_value and rescan_scope == "stem":
+                    if not accepted and use_panel_long_branch and api_key_value and rescan_scope == "stem" and not precomputed_segment_boxes:
                         tile_boxes = _detect_public_figures_in_vertical_tiles(
                             original.copy(),
                             api_key=api_key_value,
@@ -2734,6 +3847,31 @@ def detect_public_figure_regions(
                                 if _looks_figure_like_bbox(item, image_width=width, image_height=height)
                                 and not _looks_like_text_false_positive(original.copy(), item)
                             ]
+                    if not accepted and api_key_value and rescan_scope == "stem" and "number_line" in image_presence:
+                        focus_boxes = _run_number_line_focus_rescan(
+                            original.copy(),
+                            api_key=api_key_value,
+                            model=model_name,
+                            source_field=source_field,
+                        )
+                        accepted = [
+                            {
+                                **item,
+                                "review_flags": normalize_review_flags(
+                                    list(item.get("review_flags", []) or [])
+                                    + [f"{rescan_scope}_zero_asset_rescan", "number_line_focus_rescan"]
+                                ),
+                            }
+                            for item in focus_boxes
+                            if _looks_figure_like_bbox(item, image_width=width, image_height=height)
+                        ]
+                    if accepted and use_panel_long_branch:
+                        accepted = _regroup_boxes_into_segment_panels(
+                            original.copy(),
+                            accepted,
+                            detector_source_hint=f"{rescan_scope}_zero_asset_rescan_regroup",
+                        )
+                    rescan_trace_entry["accepted_box_count_before_refine"] = len(accepted)
                     if accepted:
                         refined_accepted = accepted
                         if api_key_value:
@@ -2754,6 +3892,7 @@ def detect_public_figure_regions(
                                     }
                                     for item in refined
                                 ]
+                                rescan_trace_entry["refine_model_kept"] = True
                             else:
                                 refined_accepted = [
                                     {
@@ -2765,18 +3904,27 @@ def detect_public_figure_regions(
                                     }
                                     for item in accepted
                                 ]
+                                rescan_trace_entry["refine_model_kept"] = False
                         result[bucket_name] = _dedupe_overlapping_public_boxes(
                             list(result.get(bucket_name, []) or []) + refined_accepted,
                             iou_threshold=0.82,
                         )
                         result["detector"] = f"{rescan_scope}_zero_asset_rescan_model+refine_model"
+                        rescan_trace_entry["accepted_box_count_final"] = len(refined_accepted)
+                    else:
+                        rescan_trace_entry["accepted_box_count_final"] = 0
                     result["global_review_flags"] = normalize_review_flags(
                         list(result.get("global_review_flags", []))
                         + list(payload.get("global_review_flags", []) or [])
                         + [f"{rescan_scope}_zero_asset_rescan_attempted"]
                     )
+                    rescan_trace_entry["global_flags_snapshot"] = list(result.get("global_review_flags", []))
+                    result["branch_trace"].append(rescan_trace_entry)
             except Exception:
                 result["global_review_flags"] = normalize_review_flags(
                     list(result.get("global_review_flags", [])) + [f"{rescan_scope}_zero_asset_rescan_failed"]
                 )
+                rescan_trace_entry["error"] = "exception"
+                rescan_trace_entry["global_flags_snapshot"] = list(result.get("global_review_flags", []))
+                result["branch_trace"].append(rescan_trace_entry)
     return result

@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from PIL import Image, ImageStat
+from PIL import Image, ImageFilter, ImageStat
 
 from compose_legacy_stem_md import compose_legacy_stem_md
 from question_visual_structure_contract import SCHEMA_VERSION, normalize_review_flags
@@ -26,6 +26,17 @@ IMAGE_FIELDS = (
     ("stem_image", "evidence_only", "stem_source"),
     ("analysis_image", "evidence_only", "analysis_source"),
 )
+
+EVIDENCE_ROLE_PRIORITY = {
+    "question_source": 3,
+    "stem_source": 2,
+    "analysis_source": 1,
+}
+
+VISUAL_INSERT_FIGURE_REF_RE = re.compile(
+    r"(?:如图\s*(?:\d{1,2}|[一二三四五六七八九十]+|备用图)?|图\s*(?:\d{1,2}|[一二三四五六七八九十]+|备用图))[\s,，:：]*"
+)
+VISUAL_INSERT_SUBQUESTION_RE = re.compile(r"(?:（\d+）|\(\d+\)|[①②③④⑤⑥⑦⑧⑨⑩])")
 
 
 def safe_slug(text: str) -> str:
@@ -162,7 +173,56 @@ def copy_asset(
             "local_path": str(target_path.resolve()),
             "source_path": str(source_path.resolve()),
         }
+    try:
+        with Image.open(source_path) as image:
+            review_key, review_meta = _write_review_display_copy(
+                image.convert("RGB"),
+                out_dir=out_dir,
+                storage_key=rel_path.as_posix(),
+            )
+        if review_key and review_meta:
+            asset["review_storage_key"] = review_key
+            asset["review_render"] = review_meta
+            asset["delivery_storage_key"] = review_key
+            asset["delivery_render"] = review_meta
+    except Exception:
+        pass
     return asset
+
+
+def _pick_single_evidence_asset(
+    question: dict[str, Any],
+    visual: dict[str, Any],
+    base_dir: Path,
+    out_dir: Path,
+    question_id: str,
+    include_debug_paths: bool = False,
+) -> tuple[list[dict[str, Any]], list[dict[str, str]], dict[str, Any]]:
+    missing_assets: list[dict[str, str]] = []
+    candidates: list[tuple[str, str, Path]] = []
+    for field, _placement_field, role in IMAGE_FIELDS:
+        raw = str(visual.get(field) or question.get(field) or "").strip()
+        if not raw:
+            continue
+        source_path = resolve_path(raw, base_dir)
+        if not source_path.exists():
+            missing_assets.append({"field": field, "path": str(source_path)})
+            continue
+        candidates.append((field, role, source_path))
+
+    if not candidates:
+        return [], missing_assets, {}
+
+    field, role, source_path = candidates[0]
+    selected_asset = copy_asset(source_path, out_dir, question_id, role, "evidence_only", include_debug_paths)
+    selected_asset["evidence_source_field"] = field
+    selected_meta = {
+        "selected_evidence_asset_id": str(selected_asset.get("asset_id", "") or ""),
+        "selected_evidence_role": role,
+        "selected_evidence_source_field": field,
+        "candidate_count": len(candidates),
+    }
+    return [selected_asset], missing_assets, selected_meta
 
 
 def _resolve_bbox_source(question: dict[str, Any], bbox_space: str, base_dir: Path) -> Path | None:
@@ -173,6 +233,60 @@ def _resolve_bbox_source(question: dict[str, Any], bbox_space: str, base_dir: Pa
     if not raw:
         return None
     return resolve_path(raw, base_dir)
+
+
+def _is_formal_export_asset(asset: dict[str, Any]) -> bool:
+    placement = str(asset.get("placement", asset.get("placement_scope", "")) or "").strip()
+    return placement != "evidence_only"
+
+
+def _preferred_source_roles(source_role: str) -> list[str]:
+    normalized = str(source_role or "").strip()
+    if normalized == "stem_image":
+        return ["stem_source", "question_source"]
+    if normalized == "analysis_image":
+        return ["analysis_source", "question_source"]
+    return ["question_source", "stem_source", "analysis_source"]
+
+
+def _backfill_formal_asset_source_refs(all_assets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    evidence_assets = [asset for asset in all_assets if not _is_formal_export_asset(asset)]
+    if not evidence_assets:
+        return all_assets
+
+    by_source_field: dict[str, dict[str, Any]] = {}
+    by_asset_role: dict[str, dict[str, Any]] = {}
+    for asset in evidence_assets:
+        source_field = str(asset.get("evidence_source_field", "") or "").strip()
+        if source_field and source_field not in by_source_field:
+            by_source_field[source_field] = asset
+        asset_role = str(asset.get("asset_role", asset.get("role", "")) or "").strip()
+        if asset_role and asset_role not in by_asset_role:
+            by_asset_role[asset_role] = asset
+
+    for asset in all_assets:
+        if not _is_formal_export_asset(asset):
+            continue
+        if str(asset.get("source_image_asset_id", "") or "").strip() or str(asset.get("source_image_storage_key", "") or "").strip():
+            continue
+        source_role = str(asset.get("source_image_role", "") or asset.get("bbox_space", "") or "").strip()
+        source_asset = by_source_field.get(source_role)
+        if source_asset is None:
+            for candidate_role in _preferred_source_roles(source_role):
+                if candidate_role in by_asset_role:
+                    source_asset = by_asset_role[candidate_role]
+                    break
+        if source_asset is None and len(evidence_assets) == 1:
+            source_asset = evidence_assets[0]
+        if source_asset is None:
+            continue
+        asset["source_image_asset_id"] = str(
+            asset.get("source_image_asset_id", "") or source_asset.get("asset_id", "") or ""
+        ).strip()
+        asset["source_image_storage_key"] = str(
+            asset.get("source_image_storage_key", "") or source_asset.get("storage_key", "") or ""
+        ).strip()
+    return all_assets
 
 
 def _is_suspicious_crop(image: Image.Image) -> bool:
@@ -318,6 +432,156 @@ def _average_hash(path: Path, size: int = 8) -> str:
     return f"{int(bits, 2):016x}"
 
 
+def _review_scale_for_image(image: Image.Image) -> float:
+    long_edge = max(int(image.width or 0), int(image.height or 0))
+    if long_edge <= 0:
+        return 1.0
+    target_long_edge = 960
+    scale = target_long_edge / long_edge
+    return max(1.0, min(4.0, scale))
+
+
+def _dense_projection_bands(values: list[float], *, threshold: float, min_len: int = 2, gap_merge: int = 2) -> list[tuple[int, int]]:
+    bands: list[tuple[int, int]] = []
+    start: int | None = None
+    for idx, value in enumerate(values):
+        if value >= threshold:
+            if start is None:
+                start = idx
+        elif start is not None:
+            if idx - start >= min_len:
+                bands.append((start, idx - 1))
+            start = None
+    if start is not None and len(values) - start >= min_len:
+        bands.append((start, len(values) - 1))
+
+    if not bands:
+        return []
+
+    merged = [bands[0]]
+    for start, end in bands[1:]:
+        prev_start, prev_end = merged[-1]
+        if start - prev_end - 1 <= gap_merge:
+            merged[-1] = (prev_start, end)
+        else:
+            merged.append((start, end))
+    return merged
+
+
+def _clean_delivery_vertical_edges(image: Image.Image) -> tuple[Image.Image, dict[str, Any] | None]:
+    if image.height < 80 or image.width < 80:
+        return image, None
+
+    gray = image.convert("L")
+    threshold = 220
+    row_ratios: list[float] = []
+    for y in range(gray.height):
+        dark = 0
+        for x in range(gray.width):
+            if gray.getpixel((x, y)) < threshold:
+                dark += 1
+        row_ratios.append(dark / max(gray.width, 1))
+
+    bands = _dense_projection_bands(
+        row_ratios,
+        threshold=0.012,
+        min_len=max(2, int(gray.height * 0.015)),
+        gap_merge=max(2, int(gray.height * 0.01)),
+    )
+    if len(bands) < 2:
+        return image, None
+
+    pad = max(2, int(gray.height * 0.01))
+    edge_band_max = max(10, int(gray.height * 0.08))
+    gap_min = max(4, int(gray.height * 0.025))
+    top_trim = 0
+    bottom_trim = gray.height
+
+    first_start, first_end = bands[0]
+    second_start, second_end = bands[1]
+    first_len = first_end - first_start + 1
+    second_len = second_end - second_start + 1
+    first_gap = second_start - first_end - 1
+    first_mean = sum(row_ratios[first_start:first_end + 1]) / max(first_len, 1)
+    first_max = max(row_ratios[first_start:first_end + 1])
+    if (
+        first_start <= 1
+        and first_len <= edge_band_max
+        and first_gap >= gap_min
+        and second_len >= first_len * 2
+        and first_mean >= 0.12
+        and first_max >= 0.2
+    ):
+        top_trim = max(0, second_start - pad)
+
+    last_start, last_end = bands[-1]
+    prev_start, prev_end = bands[-2]
+    last_len = last_end - last_start + 1
+    prev_len = prev_end - prev_start + 1
+    last_gap = last_start - prev_end - 1
+    last_mean = sum(row_ratios[last_start:last_end + 1]) / max(last_len, 1)
+    last_max = max(row_ratios[last_start:last_end + 1])
+    if (
+        last_end >= gray.height - 2
+        and last_len <= edge_band_max
+        and last_gap >= gap_min
+        and prev_len >= last_len * 1.2
+        and last_mean >= 0.1
+        and last_max >= 0.18
+    ):
+        bottom_trim = min(gray.height, prev_end + 1 + pad)
+
+    if top_trim <= 0 and bottom_trim >= gray.height:
+        return image, None
+    if bottom_trim - top_trim < int(gray.height * 0.55):
+        return image, None
+
+    cleaned = image.crop((0, top_trim, image.width, bottom_trim))
+    return cleaned, {
+        "crop_box": [0, top_trim, image.width, bottom_trim],
+        "bands": bands,
+        "mode": "vertical_edge_clean",
+    }
+
+
+def _write_review_display_copy(
+    image: Image.Image,
+    *,
+    out_dir: Path,
+    storage_key: str,
+) -> tuple[str | None, dict[str, Any] | None]:
+    cleaned_image, clean_meta = _clean_delivery_vertical_edges(image)
+    scale = _review_scale_for_image(cleaned_image)
+    if scale <= 1.05 and clean_meta is None:
+        return None, None
+
+    review_key = (Path("_delivery_assets") / Path(storage_key)).as_posix()
+    review_path = out_dir / review_key
+    review_path.parent.mkdir(parents=True, exist_ok=True)
+
+    review_width = max(1, int(round(cleaned_image.width * scale)))
+    review_height = max(1, int(round(cleaned_image.height * scale)))
+    resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS")
+    review_image = cleaned_image.resize((review_width, review_height), resample=resampling)
+    review_image = review_image.filter(ImageFilter.UnsharpMask(radius=1.2, percent=135, threshold=2))
+
+    suffix = review_path.suffix.lower()
+    save_kwargs: dict[str, Any] = {}
+    if suffix in {".jpg", ".jpeg"}:
+        save_kwargs.update({"quality": 95, "subsampling": 0})
+    review_image.save(review_path, **save_kwargs)
+    meta: dict[str, Any] = {
+        "scale": round(scale, 2),
+        "width": review_width,
+        "height": review_height,
+        "target_long_edge": 960,
+        "mode": "review_upscale_unsharp",
+    }
+    if clean_meta:
+        meta["edge_clean"] = clean_meta
+    return review_key, meta
+
+
 def _hamming_distance(a: str, b: str) -> int:
     try:
         return (int(a, 16) ^ int(b, 16)).bit_count()
@@ -359,6 +623,11 @@ def dedupe_materialized_assets(assets: list[dict[str, Any]], out_dir: Path) -> t
 
         duplicate_of: dict[str, Any] | None = None
         for existing_asset, existing_sig, existing_size in signatures:
+            if str(asset.get("panel_group_id", "") or "").strip() and str(existing_asset.get("panel_group_id", "") or "").strip():
+                if str(asset.get("panel_group_id", "") or "").strip() != str(existing_asset.get("panel_group_id", "") or "").strip():
+                    continue
+            if int(asset.get("panel_subfigure_count", 0) or 0) > 1 or int(existing_asset.get("panel_subfigure_count", 0) or 0) > 1:
+                continue
             if size != existing_size:
                 continue
             if _hamming_distance(signature, existing_sig) <= 1:
@@ -429,6 +698,8 @@ def materialize_staged_asset(
     y = max(int(bbox.get("y", 0) or 0), 0)
     w = max(int(bbox.get("w", 0) or 0), 0)
     h = max(int(bbox.get("h", 0) or 0), 0)
+    review_key: str | None = None
+    review_meta: dict[str, Any] | None = None
     try:
         with Image.open(source_path) as image:
             crop = image.crop((x, y, min(x + w, image.width), min(y + h, image.height))).convert("RGB")
@@ -444,6 +715,11 @@ def materialize_staged_asset(
                 return asset
             bbox_audit = _audit_materialized_bbox(asset, source_image=image, crop=crop, bbox=bbox)
             crop.save(target_path)
+            review_key, review_meta = _write_review_display_copy(
+                crop,
+                out_dir=out_dir,
+                storage_key=storage_key,
+            )
     except Exception:
         asset["materialized"] = False
         asset["file_status"] = "failed"
@@ -460,6 +736,11 @@ def materialize_staged_asset(
     if str(asset.get("detector_source", "") or "").strip() in {"", "unknown"}:
         audit_flags.append("detector_source_missing")
     asset["review_flags"] = normalize_review_flags(list(asset.get("review_flags", []) or []) + audit_flags)
+    if review_key and review_meta:
+        asset["review_storage_key"] = review_key
+        asset["review_render"] = review_meta
+        asset["delivery_storage_key"] = review_key
+        asset["delivery_render"] = review_meta
     if include_debug_paths:
         asset["debug"] = {
             "local_path": str(target_path.resolve()),
@@ -470,6 +751,7 @@ def materialize_staged_asset(
 
 def _build_qvs(record: dict[str, Any], question: dict[str, Any], visual: dict[str, Any], all_assets: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[str, Any]]:
     base_qvs = visual.get("question_visual_structure", {}) if isinstance(visual.get("question_visual_structure"), dict) else {}
+    all_assets = _backfill_formal_asset_source_refs(all_assets)
     runtime_run_id = str(
         base_qvs.get("runtime_run_id", "")
         or question.get("runtime_run_id", "")
@@ -495,9 +777,13 @@ def _build_qvs(record: dict[str, Any], question: dict[str, Any], visual: dict[st
         "answer_md": str(base_qvs.get("answer_md", record["answer_text_md"]) or record["answer_text_md"]),
         "analysis_md": str(base_qvs.get("analysis_md", record["analysis_text_md"]) or record["analysis_text_md"]),
         "legacy_stem_md": str(base_qvs.get("legacy_stem_md", "") or ""),
+        "inline_asset_anchor_mode": str(base_qvs.get("inline_asset_anchor_mode", "") or ""),
         "gating": base_qvs.get("gating", question.get("gating_result", {})) if isinstance(base_qvs.get("gating", question.get("gating_result", {})), dict) else {},
         "options": [item for item in (base_qvs.get("options", []) or []) if isinstance(item, dict)],
         "content_blocks": [item for item in (base_qvs.get("content_blocks", []) or []) if isinstance(item, dict)],
+        "long_image_anchor_plan": [item for item in (base_qvs.get("long_image_anchor_plan", []) or []) if isinstance(item, dict)],
+        "visual_insert_anchor_plan": [item for item in (base_qvs.get("visual_insert_anchor_plan", []) or []) if isinstance(item, dict)],
+        "visual_insert_anchor_slots": [item for item in (base_qvs.get("visual_insert_anchor_slots", []) or []) if isinstance(item, dict)],
         "visual_assets": all_assets,
         "review_flags": normalize_review_flags(list(base_qvs.get("review_flags", []) or []) + asset_flags),
     }
@@ -801,13 +1087,48 @@ def _split_stem_option_image_labels(text: str, asset_count: int) -> tuple[str, l
     return prefix, labels, suffix
 
 
-def build_display_blocks(record: dict[str, Any]) -> list[dict[str, Any]]:
-    blocks: list[dict[str, Any]] = []
+def _assets_by_id(record: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {
+        str(asset.get("asset_id", "") or ""): asset
+        for asset in (record.get("assets", []) or [])
+        if isinstance(asset, dict) and str(asset.get("asset_id", "") or "").strip()
+    }
+
+
+def _selected_scope_asset_ids(record: dict[str, Any], scope: str) -> list[str]:
+    selected = record.get("selected_scope_asset_ids", {}) if isinstance(record.get("selected_scope_asset_ids"), dict) else {}
+    raw_ids = selected.get(scope, []) if isinstance(selected.get(scope), list) else []
+    return [str(item or "").strip() for item in raw_ids if str(item or "").strip()]
+
+
+def _selected_option_asset_ids_by_key(record: dict[str, Any]) -> dict[str, list[str]]:
+    selected = record.get("selected_scope_asset_ids", {}) if isinstance(record.get("selected_scope_asset_ids"), dict) else {}
+    raw = selected.get("option_by_key", {}) if isinstance(selected.get("option_by_key"), dict) else {}
+    normalized: dict[str, list[str]] = {}
+    for key, values in raw.items():
+        option_key = str(key or "").strip().upper()
+        if not option_key or not isinstance(values, list):
+            continue
+        normalized[option_key] = [str(item or "").strip() for item in values if str(item or "").strip()]
+    return normalized
+
+
+def _selected_option_assets_by_key(record: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
+    explicit = _selected_option_asset_ids_by_key(record)
+    by_id = _assets_by_id(record)
+    if explicit:
+        resolved: dict[str, list[dict[str, Any]]] = {}
+        for option_key, asset_ids in explicit.items():
+            resolved[option_key] = [by_id[item] for item in asset_ids if item in by_id]
+        return resolved
+
+    grouped: dict[str, list[dict[str, Any]]] = {}
     option_assets = sorted(
         [
             a
-            for a in record["assets"]
-            if str(a.get("placement_scope", "") or a.get("placement", "") or "") == "option_inline"
+            for a in record.get("assets", [])
+            if isinstance(a, dict)
+            and str(a.get("placement_scope", "") or a.get("placement", "") or "") == "option_inline"
             and bool(a.get("materialized", False))
             and str(a.get("file_status", "") or "") != "failed"
         ],
@@ -816,6 +1137,384 @@ def build_display_blocks(record: dict[str, Any]) -> list[dict[str, Any]]:
             _asset_sort_key(asset),
         ),
     )
+    for asset in option_assets:
+        option_key = str(asset.get("option_key", "") or "").strip().upper()
+        if not option_key:
+            continue
+        grouped.setdefault(option_key, []).append(asset)
+    return grouped
+
+
+def _resolve_selected_assets(record: dict[str, Any], scope: str) -> list[dict[str, Any]]:
+    selected_ids = _selected_scope_asset_ids(record, scope)
+    if selected_ids:
+        by_id = _assets_by_id(record)
+        return [by_id[item] for item in selected_ids if item in by_id]
+    placement_scope = "after_stem" if scope == "stem" else "after_analysis"
+    return sorted(
+        [
+            a
+            for a in record["assets"]
+            if str(a.get("placement_scope", "") or a.get("placement", "") or "") == placement_scope
+            and bool(a.get("materialized", False))
+            and str(a.get("file_status", "") or "") != "failed"
+        ],
+        key=_asset_sort_key,
+    )
+
+
+def _visual_anchor_boundary(text: str, end: int) -> int:
+    value = str(text or "")
+    index = int(end or 0)
+    while index < len(value) and value[index] in " \t\r\n，,。；;：:、)]）】》\"'":
+        index += 1
+    return index
+
+
+def _extract_visual_insert_anchor_slots_for_field(field: str, text_md: str) -> list[dict[str, Any]]:
+    value = str(text_md or "").strip()
+    if not value:
+        return []
+    raw_slots: list[dict[str, Any]] = []
+    for match in VISUAL_INSERT_FIGURE_REF_RE.finditer(value):
+        raw_slots.append(
+            {
+                "slot_type": "figure_ref",
+                "start": match.start(),
+                "end": _visual_anchor_boundary(value, match.end()),
+            }
+        )
+    for match in VISUAL_INSERT_SUBQUESTION_RE.finditer(value):
+        raw_slots.append(
+            {
+                "slot_type": "subquestion_mark",
+                "start": match.start(),
+                "end": _visual_anchor_boundary(value, match.end()),
+            }
+        )
+    raw_slots.sort(key=lambda item: (int(item["start"]), -(int(item["end"]) - int(item["start"]))))
+
+    merged: list[dict[str, Any]] = []
+    for item in raw_slots:
+        start = int(item["start"])
+        end = int(item["end"])
+        if end <= start:
+            continue
+        if merged and start < int(merged[-1]["end"]):
+            continue
+        merged.append(item)
+
+    slots: list[dict[str, Any]] = []
+    for idx, item in enumerate(merged, start=1):
+        start = int(item["start"])
+        end = int(item["end"])
+        anchor_text = value[start:end].strip()
+        if not anchor_text:
+            continue
+        slots.append(
+            {
+                "slot_id": f"{field}_slot_{idx:03d}",
+                "field": field,
+                "slot_type": str(item["slot_type"]),
+                "anchor_text": anchor_text,
+                "start": start,
+                "end": end,
+            }
+        )
+    return slots
+
+
+def build_visual_insert_anchor_slots(record: dict[str, Any]) -> list[dict[str, Any]]:
+    slots: list[dict[str, Any]] = []
+    for field in ("stem", "answer", "analysis"):
+        slots.extend(_extract_visual_insert_anchor_slots_for_field(field, str(record.get(f"{field}_text_md", "") or "")))
+    return slots
+
+
+def render_visual_insert_anchor_slots_for_prompt(record: dict[str, Any]) -> str:
+    slots = build_visual_insert_anchor_slots(record)
+    if not slots:
+        return "- none"
+    lines: list[str] = []
+    for item in slots:
+        anchor_text = str(item.get("anchor_text", "") or "").replace('"', '\\"')
+        lines.append(
+            f'- field={str(item.get("field", "") or "").strip()}; '
+            f'slot_id={str(item.get("slot_id", "") or "").strip()}; '
+            f'slot_type={str(item.get("slot_type", "") or "").strip()}; '
+            f'anchor_text="{anchor_text}"'
+        )
+    return "\n".join(lines)
+
+
+def build_content_blocks_from_visual_insert_anchor_plan(
+    record: dict[str, Any],
+    placements: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    assets_by_id = _assets_by_id(record)
+    slot_map = {
+        str(item.get("slot_id", "") or "").strip(): item
+        for item in build_visual_insert_anchor_slots(record)
+        if str(item.get("slot_id", "") or "").strip()
+    }
+    grouped: dict[str, list[dict[str, Any]]] = {"stem": [], "answer": [], "analysis": []}
+    for item in placements:
+        if not isinstance(item, dict):
+            continue
+        asset_id = str(item.get("asset_id", "") or "").strip()
+        target_field = str(item.get("target_field", "") or "").strip()
+        if not asset_id or target_field not in grouped or asset_id not in assets_by_id:
+            continue
+        grouped[target_field].append(item)
+
+    block_order = 0
+    text_index: dict[str, int] = {"stem": 1, "answer": 1, "analysis": 1}
+    image_index: dict[str, int] = {"stem": 1, "answer": 1, "analysis": 1}
+    blocks: list[dict[str, Any]] = []
+
+    def append_markdown(scope: str, text_md: str) -> None:
+        nonlocal block_order
+        content = str(text_md or "").strip()
+        if not content:
+            return
+        block_order += 1
+        idx = text_index[scope]
+        text_index[scope] += 1
+        blocks.append(
+            {
+                "block_id": f"blk_visual_anchor_{scope}_md_{idx:03d}",
+                "block_order": block_order,
+                "scope": scope,
+                "block_type": "markdown",
+                "text_md": content,
+                "asset_id": None,
+                "display_ref": None,
+                "confidence": 1.0,
+                "review_flags": ["visual_insert_anchor_review_applied"],
+            }
+        )
+
+    def append_image(scope: str, asset: dict[str, Any], placement: dict[str, Any]) -> None:
+        nonlocal block_order
+        block_order += 1
+        idx = image_index[scope]
+        image_index[scope] += 1
+        blocks.append(
+            {
+                "block_id": f"blk_visual_anchor_{scope}_img_{idx:03d}",
+                "block_order": block_order,
+                "scope": scope,
+                "block_type": "image",
+                "text_md": None,
+                "asset_id": str(asset.get("asset_id", "") or "").strip(),
+                "display_ref": str(asset.get("display_ref", "") or "").strip(),
+                "storage_key": str(asset.get("storage_key", "") or "").strip(),
+                "asset_role": str(asset.get("asset_role", asset.get("role", "")) or "").strip(),
+                "confidence": float(placement.get("confidence", 0.0) or 0.0),
+                "review_flags": normalize_review_flags(
+                    list(placement.get("review_flags", []) or []) + ["visual_insert_anchor_review_applied"]
+                ),
+                "anchor_mode": str(placement.get("anchor_mode", "") or "").strip(),
+                "anchor_slot_id": str(placement.get("anchor_slot_id", "") or "").strip(),
+                "anchor_text": str(placement.get("anchor_text", "") or "").strip(),
+            }
+        )
+
+    for field in ("stem", "answer", "analysis"):
+        value = str(record.get(f"{field}_text_md", "") or "").strip()
+        field_placements = grouped[field]
+        if not field_placements:
+            append_markdown(field, value)
+            continue
+
+        cursor = 0
+        positioned: list[tuple[int, int, int, dict[str, Any], dict[str, Any], dict[str, Any]]] = []
+        tail_assets: list[tuple[dict[str, Any], dict[str, Any]]] = []
+        for placement_index, placement in enumerate(field_placements):
+            asset = assets_by_id.get(str(placement.get("asset_id", "") or "").strip())
+            if asset is None:
+                continue
+            anchor_mode = str(placement.get("anchor_mode", "") or "").strip()
+            anchor_slot_id = str(placement.get("anchor_slot_id", "") or "").strip()
+            anchor_text = str(placement.get("anchor_text", "") or "").strip()
+            if value and anchor_mode == "after_anchor_slot" and anchor_slot_id:
+                slot = slot_map.get(anchor_slot_id)
+                if isinstance(slot, dict) and str(slot.get("field", "") or "").strip() == field:
+                    positioned.append(
+                        (
+                            int(slot.get("start", 0) or 0),
+                            int(slot.get("end", 0) or 0),
+                            placement_index,
+                            asset,
+                            placement,
+                            slot,
+                        )
+                    )
+                    continue
+            if value and anchor_mode == "after_anchor_text" and anchor_text:
+                pos = value.find(anchor_text)
+                if pos >= 0:
+                    boundary = _visual_anchor_boundary(value, pos + len(anchor_text))
+                    positioned.append(
+                        (
+                            pos,
+                            boundary,
+                            placement_index,
+                            asset,
+                            placement,
+                            {
+                                "slot_id": "",
+                                "field": field,
+                                "slot_type": "text_fallback",
+                                "anchor_text": anchor_text,
+                                "start": pos,
+                                "end": boundary,
+                            },
+                        )
+                    )
+                    continue
+            tail_assets.append((asset, placement))
+
+        positioned.sort(key=lambda item: (item[0], item[1], item[2]))
+        for _, end, _, asset, placement, slot in positioned:
+            boundary = _visual_anchor_boundary(value, end)
+            if boundary <= cursor:
+                fallback_placement = dict(placement)
+                fallback_placement["review_flags"] = normalize_review_flags(
+                    list(fallback_placement.get("review_flags", []) or []) + ["visual_insert_anchor_slot_overlap"]
+                )
+                tail_assets.append((asset, fallback_placement))
+                continue
+            append_markdown(field, value[cursor:boundary])
+            placement_with_slot = dict(placement)
+            placement_with_slot["anchor_slot_id"] = str(slot.get("slot_id", "") or "").strip()
+            placement_with_slot["anchor_text"] = str(slot.get("anchor_text", placement.get("anchor_text", "")) or "").strip()
+            append_image(field, asset, placement_with_slot)
+            cursor = boundary
+
+        append_markdown(field, value[cursor:])
+        for asset, placement in tail_assets:
+            append_image(field, asset, placement)
+
+    return blocks
+
+
+def _build_display_blocks_from_qvs(record: dict[str, Any]) -> list[dict[str, Any]]:
+    qvs = record.get("question_visual_structure", {}) if isinstance(record.get("question_visual_structure"), dict) else {}
+    if str(qvs.get("inline_asset_anchor_mode", "") or "").strip() != "slot_reflow_v1":
+        return []
+    raw_blocks = [item for item in (qvs.get("content_blocks", []) or []) if isinstance(item, dict)]
+    if not raw_blocks:
+        return []
+
+    assets_by_id = _assets_by_id(record)
+    stem_assets = _resolve_selected_assets(record, "stem")
+    analysis_assets = _resolve_selected_assets(record, "analysis")
+    option_assets_by_key = _selected_option_assets_by_key(record)
+    used_asset_ids: set[str] = set()
+
+    def take_next(candidates: list[dict[str, Any]]) -> dict[str, Any] | None:
+        for asset in candidates:
+            aid = str(asset.get("asset_id", "") or "").strip()
+            if aid and aid not in used_asset_ids:
+                used_asset_ids.add(aid)
+                return asset
+        return None
+
+    def resolve_image_asset(block: dict[str, Any], scope: str, option_key: str) -> dict[str, Any] | None:
+        raw_asset_id = str(block.get("asset_id", "") or "").strip()
+        exact_asset = assets_by_id.get(raw_asset_id)
+        if exact_asset is not None:
+            aid = str(exact_asset.get("asset_id", "") or "").strip()
+            if aid and aid not in used_asset_ids:
+                used_asset_ids.add(aid)
+                return exact_asset
+
+        if scope == "option":
+            return take_next(option_assets_by_key.get(option_key, []))
+
+        asset_role = str(block.get("asset_role", "") or "").strip()
+        candidate_groups: list[list[dict[str, Any]]] = []
+        if scope == "stem" or asset_role == "stem":
+            candidate_groups.append(stem_assets)
+            candidate_groups.append(analysis_assets)
+        elif scope in {"analysis", "answer"} or asset_role == "analysis":
+            candidate_groups.append(analysis_assets)
+            candidate_groups.append(stem_assets)
+        else:
+            candidate_groups.append(stem_assets)
+            candidate_groups.append(analysis_assets)
+
+        for group in candidate_groups:
+            asset = take_next(group)
+            if asset is not None:
+                return asset
+        return None
+
+    blocks: list[dict[str, Any]] = []
+    for block in raw_blocks:
+        block_type = str(block.get("block_type", "") or "").strip()
+        scope = str(block.get("scope", "") or "").strip()
+        option_key = str(block.get("option_key", "") or "").strip().upper()
+        field = "stem" if scope == "option" else scope
+
+        if block_type == "markdown":
+            content = str(block.get("text_md", "") or "").strip()
+            if content:
+                blocks.append({"type": "markdown", "field": field, "content": content})
+            continue
+
+        if block_type != "image":
+            continue
+
+        asset = resolve_image_asset(block, scope, option_key)
+        if asset is None:
+            continue
+
+        blocks.append(
+            {
+                "type": "image",
+                "field": field,
+                "asset_id": str(asset.get("asset_id", "") or "").strip(),
+                "display_ref": str(asset.get("display_ref", "") or "").strip(),
+            }
+        )
+    return blocks
+
+
+def build_display_blocks(record: dict[str, Any]) -> list[dict[str, Any]]:
+    qvs_blocks = _build_display_blocks_from_qvs(record)
+    if qvs_blocks:
+        return qvs_blocks
+
+    blocks: list[dict[str, Any]] = []
+    selected_option_by_key = _selected_option_asset_ids_by_key(record)
+    if selected_option_by_key:
+        by_id = _assets_by_id(record)
+        option_assets: list[dict[str, Any]] = []
+        ordered_option_keys = sorted(
+            selected_option_by_key.keys(),
+            key=lambda value: {"A": 1, "B": 2, "C": 3, "D": 4}.get(value, 99),
+        )
+        for option_key in ordered_option_keys:
+            for asset_id in selected_option_by_key.get(option_key, []):
+                asset = by_id.get(asset_id)
+                if asset is not None:
+                    option_assets.append(asset)
+    else:
+        option_assets = sorted(
+            [
+                a
+                for a in record["assets"]
+                if str(a.get("placement_scope", "") or a.get("placement", "") or "") == "option_inline"
+                and bool(a.get("materialized", False))
+                and str(a.get("file_status", "") or "") != "failed"
+            ],
+            key=lambda asset: (
+                {"A": 1, "B": 2, "C": 3, "D": 4}.get(str(asset.get("option_key", "") or "").strip().upper(), 99),
+                _asset_sort_key(asset),
+            ),
+        )
     if option_assets:
         option_prefix, option_labels, option_suffix = _split_stem_option_image_labels(record["stem_text_md"], len(option_assets))
         if option_labels:
@@ -845,10 +1544,7 @@ def build_display_blocks(record: dict[str, Any]) -> list[dict[str, Any]]:
                     blocks.append({"type": "markdown", "field": "stem", "content": f"{label}."})
                 blocks.append({"type": "image", "field": "stem", "asset_id": asset["asset_id"], "display_ref": asset["display_ref"]})
     else:
-        stem_assets = sorted(
-            [a for a in record["assets"] if a["placement"] == "after_stem"],
-            key=_asset_sort_key,
-        )
+        stem_assets = _resolve_selected_assets(record, "stem")
         option_prefix, option_labels, option_suffix = _split_stem_option_image_labels(record["stem_text_md"], len(stem_assets))
         if option_labels:
             if option_prefix:
@@ -872,10 +1568,7 @@ def build_display_blocks(record: dict[str, Any]) -> list[dict[str, Any]]:
     if record["answer_text_md"].strip():
         blocks.append({"type": "markdown", "field": "answer", "content": record["answer_text_md"]})
 
-    analysis_assets = sorted(
-        [a for a in record["assets"] if a["placement"] == "after_analysis"],
-        key=_asset_sort_key,
-    )
+    analysis_assets = _resolve_selected_assets(record, "analysis")
     analysis_intro, analysis_sections = _split_numbered_sections_v3(record["analysis_text_md"])
     if analysis_assets and analysis_sections:
         if analysis_intro:
@@ -915,19 +1608,14 @@ def build_records(
     for index, question in enumerate(questions, start=1):
         question_id = str(question.get("question_id", "") or f"q_{index:03d}").strip()
         visual = visual_by_qid.get(question_id, {})
-        assets: list[dict[str, Any]] = []
-        missing_assets: list[dict[str, str]] = []
-
-        for field, placement_field, role in IMAGE_FIELDS:
-            raw = str(visual.get(field) or question.get(field) or "").strip()
-            if not raw:
-                continue
-            source_path = resolve_path(raw, base_dir)
-            if not source_path.exists():
-                missing_assets.append({"field": field, "path": str(source_path)})
-                continue
-            placement = "evidence_only"
-            assets.append(copy_asset(source_path, out_dir, question_id, role, placement, include_debug_paths))
+        assets, missing_assets, evidence_meta = _pick_single_evidence_asset(
+            question,
+            visual,
+            base_dir,
+            out_dir,
+            question_id,
+            include_debug_paths=include_debug_paths,
+        )
 
         staged_assets = [dict(item) for item in (question.get("staged_visual_assets", []) or []) if isinstance(item, dict)]
         materialized_staged_assets = [
@@ -958,7 +1646,15 @@ def build_records(
             "assets": all_assets,
             "missing_assets": missing_assets,
             "removed_duplicate_assets": removed_duplicate_assets,
+            "selected_scope_asset_ids": {
+                "evidence": [str(evidence_meta.get("selected_evidence_asset_id", "") or "")] if str(evidence_meta.get("selected_evidence_asset_id", "") or "") else [],
+                "stem": [],
+                "analysis": [],
+                "option_by_key": {},
+            },
         }
+        if evidence_meta:
+            record["evidence_selection"] = evidence_meta
         if include_debug_paths:
             record["debug_source_refs"] = {
                 "source_json": str(source_json.resolve()),
@@ -978,6 +1674,18 @@ def build_records(
 
 def render_md(text: str) -> str:
     repaired = str(text or "")
+    repaired = re.sub(r"\\r\\n", "\n", repaired)
+    repaired = re.sub(
+        r"\\n(?=\s*(?:[A-D][.．、]|[①②③④⑤⑥⑦⑧⑨⑩]|[（(]\d+[）)]|##\s|【|图\d|第\d+题|解[:：]|证明[:：]|分析[:：]))",
+        "\n",
+        repaired,
+    )
+    repaired = re.sub(
+        r"\\r(?=\s*(?:[A-D][.．、]|[①②③④⑤⑥⑦⑧⑨⑩]|[（(]\d+[）)]|##\s|【|图\d|第\d+题|解[:：]|证明[:：]|分析[:：]))",
+        "\n",
+        repaired,
+    )
+    repaired = re.sub(r"\?([A-Z]{3,6})\b", lambda m: "\u25b1" + m.group(1), repaired)
     repaired = repair_latex_for_render(repaired)
     escaped = html.escape(repaired)
     escaped = re.sub(r"^## (.+)$", r"<h4>\1</h4>", escaped, flags=re.MULTILINE)
@@ -1006,7 +1714,7 @@ def repair_latex_for_render(text: str) -> str:
 
 
 def asset_url(asset: dict[str, Any]) -> str:
-    return html.escape(asset["storage_key"])
+    return html.escape(str(asset.get("delivery_storage_key", asset.get("review_storage_key", asset["storage_key"]))))
 
 
 def asset_meta_badges(asset: dict[str, Any]) -> str:
@@ -1028,6 +1736,11 @@ def asset_meta_badges(asset: dict[str, Any]) -> str:
     external_label_text = str(asset.get("external_label_text", "") or "").strip()
     if external_label_text:
         badges.append(f"<span class='badge ok'>{html.escape(external_label_text)}</span>")
+    review_render = asset.get("delivery_render", asset.get("review_render", {}))
+    review_render = review_render if isinstance(review_render, dict) else {}
+    review_scale = float(review_render.get("scale", 0) or 0)
+    if review_scale > 1.05:
+        badges.append(f"<span class='badge ok'>delivery x{review_scale:g}</span>")
     return "".join(badges)
 
 
@@ -1055,6 +1768,12 @@ def asset_audit_caption(asset: dict[str, Any]) -> str:
     detector_source = str(asset.get("detector_source", "") or "").strip()
     if detector_source:
         parts.append(f"source={detector_source}")
+    panel_group_id = str(asset.get("panel_group_id", "") or "").strip()
+    if panel_group_id:
+        parts.append(f"group={panel_group_id}")
+    panel_subfigure_count = int(asset.get("panel_subfigure_count", 0) or 0)
+    if panel_subfigure_count > 1:
+        parts.append(f"subfigures={panel_subfigure_count}")
     suspect_reasons = audit.get("suspect_reasons", []) if isinstance(audit.get("suspect_reasons"), list) else []
     if suspect_reasons:
         parts.append("risk=" + ",".join(str(item) for item in suspect_reasons[:4]))
@@ -1064,6 +1783,26 @@ def asset_audit_caption(asset: dict[str, Any]) -> str:
 def render_text_block(text: str) -> str:
     body = render_md(text)
     return f"<div class='md'>{body}</div>" if body else ""
+
+
+def _asset_render_size(asset: dict[str, Any]) -> tuple[int, int]:
+    meta = asset.get("delivery_render", asset.get("review_render", {}))
+    meta = meta if isinstance(meta, dict) else {}
+    return int(meta.get("width", 0) or 0), int(meta.get("height", 0) or 0)
+
+
+def _prefer_stacked_image_group(assets: list[dict[str, Any]]) -> bool:
+    if len(assets) <= 1:
+        return False
+    if len(assets) >= 3:
+        return True
+    for asset in assets:
+        width, height = _asset_render_size(asset)
+        if width >= 560 or height >= 420:
+            return True
+        if int(asset.get("panel_subfigure_count", 0) or 0) > 1:
+            return True
+    return False
 
 
 def render_display_blocks_html(record: dict[str, Any]) -> str:
@@ -1152,6 +1891,7 @@ def render_display_blocks_html_v2(record: dict[str, Any]) -> str:
 
         if block_type == "image":
             cards: list[str] = []
+            card_assets: list[dict[str, Any]] = []
             while index < len(blocks):
                 image_block = blocks[index]
                 if str(image_block.get("type", "") or "").strip() != "image" or str(image_block.get("field", "") or "").strip() != field:
@@ -1159,6 +1899,7 @@ def render_display_blocks_html_v2(record: dict[str, Any]) -> str:
                 asset_id = str(image_block.get("asset_id", "") or "").strip()
                 asset = assets_by_id.get(asset_id)
                 if asset:
+                    card_assets.append(asset)
                     cards.append(
                         "<figure>"
                         f"{asset_external_label_html(asset)}"
@@ -1169,7 +1910,8 @@ def render_display_blocks_html_v2(record: dict[str, Any]) -> str:
                     )
                 index += 1
             if cards:
-                parts.append(f"<div class='image-row'>{''.join(cards)}</div>")
+                container_class = "image-stack" if _prefer_stacked_image_group(card_assets) else "image-row"
+                parts.append(f"<div class='{container_class}'>{''.join(cards)}</div>")
             continue
 
         index += 1
@@ -1273,6 +2015,7 @@ def write_html(out_path: Path, payload: dict[str, Any]) -> None:
     .asset-label {{ display: inline-block; margin: 0 0 8px; padding: 3px 8px; border-radius: 6px; background: #101828; color: #fff; font-size: 13px; font-weight: 700; }}
     .option-label {{ background: #175cd3; }}
     .image-row {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 12px; }}
+    .image-stack {{ display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }}
     figure {{ margin: 0 0 12px; padding: 10px; border: 1px solid #e7edf8; border-radius: 12px; background: #fff; }}
     img {{ max-width: 100%; height: auto; display: block; border-radius: 8px; background: #fff; }}
     figcaption {{ margin-top: 8px; color: #667085; font-size: 12px; word-break: break-all; }}
@@ -1402,6 +2145,7 @@ def write_html_clean(out_path: Path, payload: dict[str, Any]) -> None:
     .asset-label {{ display: inline-block; margin: 0 0 8px; padding: 3px 8px; border-radius: 6px; background: #101828; color: #fff; font-size: 13px; font-weight: 700; }}
     .option-label {{ background: #175cd3; }}
     .image-row {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 12px; }}
+    .image-stack {{ display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }}
     figure {{ margin: 0 0 12px; padding: 10px; border: 1px solid #e7edf8; border-radius: 12px; background: #fff; }}
     img {{ max-width: 100%; height: auto; display: block; border-radius: 8px; background: #fff; }}
     figcaption {{ margin-top: 8px; color: #667085; font-size: 12px; word-break: break-all; }}
@@ -1468,6 +2212,7 @@ def main() -> None:
             "deploy_fields_are_relative": True,
             "asset_storage_key_base": "bundle_root",
             "asset_storage_key_strategy": "question_assets/{question_uid}/{runtime_run_id}/...",
+            "delivery_storage_key_strategy": "_delivery_assets/{storage_key}",
             "debug_absolute_paths_included": bool(args.include_debug_paths),
         },
         "question_count": len(records),

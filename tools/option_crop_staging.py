@@ -145,6 +145,15 @@ def _infer_public_figure_role(
     return "stem", "after_stem", ["public_stem_image_detected", "question_image_stem_region"]
 
 
+def _same_source_public_figure_context(question: dict) -> bool:
+    image_values = [
+        str(question.get(key, "") or "").strip()
+        for key in ("question_image", "stem_image", "analysis_image")
+        if str(question.get(key, "") or "").strip()
+    ]
+    return bool(image_values) and len(set(image_values)) <= 1
+
+
 def _make_asset(
     *,
     question_uid: str,
@@ -201,6 +210,24 @@ def _make_asset(
         "crop_policy": str(crop_policy or "").strip() or "default",
         "external_label_kind": str(external_label_kind or "").strip(),
         "external_label_text": str(external_label_text or "").strip(),
+        "panel_group_id": str(bbox_json.get("panel_group_id", "") or "").strip() if isinstance(bbox_json, dict) else "",
+        "panel_segment_index": int(bbox_json.get("panel_segment_index", 0) or 0) if isinstance(bbox_json, dict) else 0,
+        "panel_subfigure_count": int(bbox_json.get("panel_subfigure_count", 0) or 0) if isinstance(bbox_json, dict) else 0,
+        "panel_subfigure_bboxes": list(bbox_json.get("panel_subfigure_bboxes", []) or []) if isinstance(bbox_json, dict) else [],
+        "panel_segment_bbox_json": dict(bbox_json.get("panel_segment_bbox_json", {}) or {}) if isinstance(bbox_json, dict) and isinstance(bbox_json.get("panel_segment_bbox_json"), dict) else {},
+        "candidate_anchor_source": str(bbox_json.get("candidate_anchor_source", "") or "").strip() if isinstance(bbox_json, dict) else "",
+        "candidate_anchor_scope": role if role in {"stem", "analysis"} else (str(bbox_json.get("candidate_anchor_scope", "") or "").strip() if isinstance(bbox_json, dict) else ""),
+        "candidate_anchor_scope_preference": (
+            "answer_first"
+            if role == "analysis"
+            else ("stem_only" if role == "stem" else (str(bbox_json.get("candidate_anchor_scope_preference", "") or "").strip() if isinstance(bbox_json, dict) else ""))
+        ),
+        "candidate_anchor_order": int(bbox_json.get("candidate_anchor_order", 0) or 0) if isinstance(bbox_json, dict) else 0,
+        "candidate_anchor_key": (
+            f"{role}_{int(bbox_json.get('candidate_anchor_order', ordinal) or ordinal):03d}"
+            if role in {"stem", "analysis"}
+            else (str(bbox_json.get("candidate_anchor_key", "") or "").strip() if isinstance(bbox_json, dict) else "")
+        ),
     }
 
 
@@ -212,6 +239,21 @@ def build_staged_visual_assets(question: dict, detection: dict) -> list[dict]:
     evidence_ordinal = 1
     stem_figure_ordinal = 1
     analysis_figure_ordinal = 1
+    figure_scope = question.get("figure_detection_scope") if isinstance(question.get("figure_detection_scope"), dict) else {}
+    if not figure_scope:
+        gate = question.get("image_need_gate") if isinstance(question.get("image_need_gate"), dict) else {}
+        where = {
+            str(item or "").strip().lower()
+            for item in (gate.get("where", []) if isinstance(gate.get("where", []), list) else [])
+            if str(item or "").strip()
+        }
+        if bool(gate.get("needs_figure_detection", False)):
+            figure_scope = {
+                "stem": "stem" in where or not where,
+                "analysis": "analysis" in where or "answer" in where or "solution" in where,
+            }
+    planner_stem_only = bool(figure_scope.get("stem")) and not bool(figure_scope.get("analysis"))
+    preserve_public_stem_role = bool(question.get("long_image_prepass_attempted")) or _same_source_public_figure_context(question)
 
     for block in detection.get("option_visual_blocks", []) or []:
         option_key = str(block.get("option_key", "") or "").upper()
@@ -326,13 +368,18 @@ def build_staged_visual_assets(question: dict, detection: dict) -> list[dict]:
         bbox_space = str(bbox.get("bbox_space", "") or "stem_image")
         source_image_role, source_path = _resolve_source_image(question, bbox_space)
         width, height = _image_size(source_path)
-        role, placement_scope, role_flags = _infer_public_figure_role(
-            bbox=bbox if isinstance(bbox, dict) else {},
-            bbox_space=bbox_space,
-            source_image_role=source_image_role,
-            source_path=source_path,
-            image_height=height,
-        )
+        if planner_stem_only or preserve_public_stem_role:
+            role, placement_scope, role_flags = "stem", "after_stem", ["public_stem_image_detected"]
+            if preserve_public_stem_role and not planner_stem_only:
+                role_flags.append("public_role_preserved_same_source_long")
+        else:
+            role, placement_scope, role_flags = _infer_public_figure_role(
+                bbox=bbox if isinstance(bbox, dict) else {},
+                bbox_space=bbox_space,
+                source_image_role=source_image_role,
+                source_path=source_path,
+                image_height=height,
+            )
         staged.append(
             _make_asset(
                 question_uid=question_uid,
@@ -351,7 +398,9 @@ def build_staged_visual_assets(question: dict, detection: dict) -> list[dict]:
                 placement_scope=placement_scope,
                 review_flags=role_flags,
                 detector_source=_infer_detector_source(bbox if isinstance(bbox, dict) else {}),
-                crop_policy="figure_body_only",
+                crop_policy="panel_group_preserve_layout"
+                if int((bbox or {}).get("panel_subfigure_count", 0) or 0) > 1 or "panel_kept" in set(str(flag) for flag in ((bbox or {}).get("review_flags", []) or []))
+                else "figure_body_only",
             )
         )
         stem_figure_ordinal += 1
@@ -379,7 +428,9 @@ def build_staged_visual_assets(question: dict, detection: dict) -> list[dict]:
                 placement_scope="after_analysis",
                 review_flags=list(bbox.get("review_flags", []) or []) + ["public_analysis_image_detected"],
                 detector_source=_infer_detector_source(bbox if isinstance(bbox, dict) else {}),
-                crop_policy="figure_body_only",
+                crop_policy="panel_group_preserve_layout"
+                if int((bbox or {}).get("panel_subfigure_count", 0) or 0) > 1 or "panel_kept" in set(str(flag) for flag in ((bbox or {}).get("review_flags", []) or []))
+                else "figure_body_only",
             )
         )
         analysis_figure_ordinal += 1

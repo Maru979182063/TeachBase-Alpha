@@ -74,6 +74,9 @@ function normalizeVisualAsset(asset) {
   normalized.attach_status = String(normalized.attach_status || "").trim() || "attached";
   normalized.file_status = String(normalized.file_status || "").trim() || "planned";
   normalized.placement_scope = String(normalized.placement_scope || normalized.placement || "").trim();
+  normalized.source_image_role = String(normalized.source_image_role || "").trim();
+  normalized.source_image_asset_id = String(normalized.source_image_asset_id || "").trim();
+  normalized.source_image_storage_key = String(normalized.source_image_storage_key || "").trim();
   normalized.review_flags = normalizeStringArray(normalized.review_flags);
   return normalized;
 }
@@ -90,6 +93,92 @@ function collectDuplicateAssetIds(assets = []) {
   return [...counts.entries()]
     .filter(([, count]) => count > 1)
     .map(([assetId]) => assetId);
+}
+
+function isEvidenceOnlyVisualAsset(asset) {
+  return String(asset?.placement_scope || "").trim() === "evidence_only";
+}
+
+function isFormalVisualAsset(asset) {
+  return Boolean(asset) && !isEvidenceOnlyVisualAsset(asset);
+}
+
+function evidenceRoleCandidatesForSourceRole(sourceRole = "") {
+  const normalized = String(sourceRole || "").trim();
+  if (normalized === "stem_image") {
+    return ["stem_source", "question_source"];
+  }
+  if (normalized === "analysis_image") {
+    return ["analysis_source", "question_source"];
+  }
+  return ["question_source", "stem_source", "analysis_source"];
+}
+
+function buildEvidenceSourceIndex(assets = []) {
+  const bySourceRole = new Map();
+  const byAssetRole = new Map();
+  const evidenceAssets = [];
+  for (const asset of assets) {
+    if (!isEvidenceOnlyVisualAsset(asset)) {
+      continue;
+    }
+    evidenceAssets.push(asset);
+    const sourceField = String(asset.evidence_source_field || "").trim();
+    if (sourceField && !bySourceRole.has(sourceField)) {
+      bySourceRole.set(sourceField, asset);
+    }
+    const assetRole = String(asset.asset_role || asset.role || "").trim();
+    if (assetRole && !byAssetRole.has(assetRole)) {
+      byAssetRole.set(assetRole, asset);
+    }
+  }
+  return {
+    bySourceRole,
+    byAssetRole,
+    evidenceAssets,
+  };
+}
+
+function backfillFormalAssetSourceRefs(assets = []) {
+  const evidenceIndex = buildEvidenceSourceIndex(assets);
+  return assets.map((asset) => {
+    if (!isFormalVisualAsset(asset)) {
+      return asset;
+    }
+    if (
+      String(asset.source_image_asset_id || "").trim() ||
+      String(asset.source_image_storage_key || "").trim()
+    ) {
+      return asset;
+    }
+    const sourceRole =
+      String(asset.source_image_role || "").trim() ||
+      String(asset.bbox_space || "").trim();
+    let sourceAsset = evidenceIndex.bySourceRole.get(sourceRole) || null;
+    if (!sourceAsset) {
+      for (const candidateRole of evidenceRoleCandidatesForSourceRole(sourceRole)) {
+        if (evidenceIndex.byAssetRole.has(candidateRole)) {
+          sourceAsset = evidenceIndex.byAssetRole.get(candidateRole);
+          break;
+        }
+      }
+    }
+    if (!sourceAsset && evidenceIndex.evidenceAssets.length === 1) {
+      sourceAsset = evidenceIndex.evidenceAssets[0];
+    }
+    if (!sourceAsset) {
+      return asset;
+    }
+    return {
+      ...asset,
+      source_image_asset_id:
+        String(asset.source_image_asset_id || "").trim() ||
+        String(sourceAsset.asset_id || "").trim(),
+      source_image_storage_key:
+        String(asset.source_image_storage_key || "").trim() ||
+        String(sourceAsset.storage_key || "").trim(),
+    };
+  });
 }
 
 function stripNonPortableFields(value) {
@@ -134,9 +223,11 @@ export function normalizeQuestionVisualStructure(questionVisualStructure = {}, o
     content_blocks: Array.isArray(base.content_blocks)
       ? base.content_blocks.filter((item) => item && typeof item === "object" && !Array.isArray(item)).map((item) => deepCloneJson(item))
       : [],
-    visual_assets: (Array.isArray(base.visual_assets) ? base.visual_assets : [])
+    visual_assets: backfillFormalAssetSourceRefs(
+      (Array.isArray(base.visual_assets) ? base.visual_assets : [])
       .map((item) => normalizeVisualAsset(item))
-      .filter(Boolean),
+      .filter(Boolean)
+    ),
     review_flags: normalizeStringArray(base.review_flags),
   };
   if (!normalized.question_uid) {
@@ -450,10 +541,13 @@ export function validateQuestionVisualSourceRefs(sourceRefsJson = {}, options = 
     if (String(asset.display_ref || "").trim() && asset.display_ref !== `asset://${asset.asset_id}`) {
       warnings.push(`asset_display_ref_noncanonical:${asset.asset_id}`);
     }
-    if (!String(asset.bbox_space || "").trim()) {
+    // Evidence-only source crops are traceability artifacts, not renderable
+    // lesson assets, so they do not need export-facing bbox/source anchors.
+    if (!isEvidenceOnlyVisualAsset(asset) && !String(asset.bbox_space || "").trim()) {
       errors.push(`bbox_space_missing:${asset.asset_id || "unknown"}`);
     }
     if (
+      !isEvidenceOnlyVisualAsset(asset) &&
       !String(asset.source_image_asset_id || "").trim() &&
       !String(asset.source_image_storage_key || "").trim()
     ) {
@@ -470,6 +564,12 @@ export function validateQuestionVisualSourceRefs(sourceRefsJson = {}, options = 
       String(asset.option_key || "").trim()
     ) {
       errors.push(`analysis_asset_option_key_forbidden:${asset.asset_id || "unknown"}`);
+    }
+    if (isFormalVisualAsset(asset) && String(asset.attach_status || "").trim() !== "attached") {
+      errors.push(`formal_asset_not_attached:${asset.asset_id || "unknown"}`);
+    }
+    if (isFormalVisualAsset(asset) && String(asset.file_status || "").trim() !== "materialized") {
+      errors.push(`formal_asset_not_materialized:${asset.asset_id || "unknown"}`);
     }
   }
 

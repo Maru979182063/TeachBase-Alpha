@@ -41,13 +41,90 @@ def count_option_texts(record: dict[str, Any]) -> int:
     return len([item for item in options if isinstance(item, dict) and str(item.get("option_key", "") or "").strip()])
 
 
+def selected_scope_asset_ids(record: dict[str, Any], scope: str) -> list[str]:
+    selected = record.get("selected_scope_asset_ids", {}) if isinstance(record.get("selected_scope_asset_ids"), dict) else {}
+    values = selected.get(scope, []) if isinstance(selected.get(scope), list) else []
+    return [str(item or "").strip() for item in values if str(item or "").strip()]
+
+
+def selected_option_asset_ids(record: dict[str, Any]) -> list[str]:
+    selected = record.get("selected_scope_asset_ids", {}) if isinstance(record.get("selected_scope_asset_ids"), dict) else {}
+    raw = selected.get("option_by_key", {}) if isinstance(selected.get("option_by_key"), dict) else {}
+    values: list[str] = []
+    for items in raw.values():
+        if not isinstance(items, list):
+            continue
+        values.extend([str(item or "").strip() for item in items if str(item or "").strip()])
+    return values
+
+
+def display_blocks(record: dict[str, Any]) -> list[dict[str, Any]]:
+    blocks = record.get("display_blocks", [])
+    return [item for item in blocks if isinstance(item, dict)] if isinstance(blocks, list) else []
+
+
+def rendered_image_asset_ids(record: dict[str, Any], fields: set[str]) -> list[str]:
+    values: list[str] = []
+    for block in display_blocks(record):
+        if str(block.get("type", "") or "").strip() != "image":
+            continue
+        field = str(block.get("field", "") or "").strip()
+        asset_id = str(block.get("asset_id", "") or "").strip()
+        if field in fields and asset_id:
+            values.append(asset_id)
+    return values
+
+
+def field_has_rendered_content(record: dict[str, Any], fields: set[str]) -> bool:
+    for block in display_blocks(record):
+        field = str(block.get("field", "") or "").strip()
+        if field not in fields:
+            continue
+        if str(block.get("type", "") or "").strip() == "image" and str(block.get("asset_id", "") or "").strip():
+            return True
+        if str(block.get("type", "") or "").strip() == "markdown" and str(block.get("content", "") or "").strip():
+            return True
+    return False
+
+
 def audit_record(record: dict[str, Any]) -> dict[str, Any]:
     qid = str(record.get("question_id", "") or "")
     assets = [a for a in (record.get("assets", []) or []) if isinstance(a, dict)]
+    assets_by_id = {
+        str(a.get("asset_id", "") or "").strip(): a
+        for a in assets
+        if str(a.get("asset_id", "") or "").strip()
+    }
     cropped = [a for a in assets if is_cropped_asset(a) and is_materialized(a)]
-    stem_assets = [a for a in cropped if asset_placement(a) == "after_stem" or asset_role(a) == "stem"]
-    analysis_assets = [a for a in cropped if asset_placement(a) == "after_analysis" or asset_role(a) == "analysis"]
-    option_assets = [a for a in cropped if asset_placement(a) == "option_inline" or asset_role(a) == "option"]
+    stem_selected_ids = selected_scope_asset_ids(record, "stem")
+    analysis_selected_ids = selected_scope_asset_ids(record, "analysis")
+    option_selected_ids = selected_option_asset_ids(record)
+    rendered_stem_ids = rendered_image_asset_ids(record, {"stem"})
+    rendered_explanation_ids = rendered_image_asset_ids(record, {"answer", "analysis"})
+    rendered_option_ids = rendered_image_asset_ids(record, {"option"})
+
+    stem_assets = (
+        [assets_by_id[item] for item in stem_selected_ids if item in assets_by_id]
+        if stem_selected_ids
+        else [a for a in cropped if asset_placement(a) == "after_stem" or asset_role(a) == "stem"]
+    )
+    analysis_assets = (
+        [assets_by_id[item] for item in analysis_selected_ids if item in assets_by_id]
+        if analysis_selected_ids
+        else [a for a in cropped if asset_placement(a) == "after_analysis" or asset_role(a) == "analysis"]
+    )
+    option_assets = (
+        [assets_by_id[item] for item in option_selected_ids if item in assets_by_id]
+        if option_selected_ids
+        else [a for a in cropped if asset_placement(a) == "option_inline" or asset_role(a) == "option"]
+    )
+
+    if rendered_stem_ids:
+        stem_assets = [assets_by_id[item] for item in rendered_stem_ids if item in assets_by_id]
+    if rendered_explanation_ids:
+        analysis_assets = [assets_by_id[item] for item in rendered_explanation_ids if item in assets_by_id]
+    if rendered_option_ids:
+        option_assets = [assets_by_id[item] for item in rendered_option_ids if item in assets_by_id]
 
     gate = record.get("image_need_gate", {}) if isinstance(record.get("image_need_gate"), dict) else {}
     scope = record.get("figure_detection_scope", {}) if isinstance(record.get("figure_detection_scope"), dict) else {}
@@ -57,6 +134,7 @@ def audit_record(record: dict[str, Any]) -> dict[str, Any]:
     scope_option = bool(scope.get("option", False))
     scope_stem = bool(scope.get("stem", False))
     scope_analysis = bool(scope.get("analysis", False))
+    explanation_content_present = field_has_rendered_content(record, {"answer", "analysis"})
 
     issues: list[str] = []
     warnings: list[str] = []
@@ -68,11 +146,11 @@ def audit_record(record: dict[str, Any]) -> dict[str, Any]:
         issues.append("figure_detection_zero_assets")
     if scope_stem and not stem_assets and not option_assets:
         issues.append("stem_scope_no_stem_or_option_asset")
-    if scope_analysis and not analysis_assets:
+    if scope_analysis and explanation_content_present and not analysis_assets:
         issues.append("analysis_scope_no_analysis_asset")
     if stem_requires_image and not stem_assets and not option_assets:
         issues.append("stem_requires_image_no_asset")
-    if analysis_requires_image and not analysis_assets:
+    if analysis_requires_image and explanation_content_present and not analysis_assets:
         issues.append("analysis_requires_image_no_asset")
 
     option_count = count_option_texts(record)

@@ -37,6 +37,168 @@ prompts:
         "confidence": 0.0,
         "reason": "一句话说明为什么"
       }
+  runtime_route_planner:
+    prompt_version: "runtime_route_planner_cn_v0.1"
+    system_prompt: |
+      你是教师讲义转录 runtime 的分流 planner。
+      你不负责逐题转录，只负责根据切题后的样本图和统计信号，判断这份讲义后续更适合走哪条转录分支。
+      只返回 JSON，不要解释，不要 markdown。
+    user_template: |
+      任务：根据当前讲义切题后的样本图与统计信息，为后续转录选择主分支。
+
+      只允许输出以下 route 之一：
+      - "split_text_layer_first": 优先使用 PDF 文本层/结构化文本；OCR 只做兜底；不再默认跑整题视觉转录。
+      - "split_text_then_visual_supplement": 先使用 PDF 文本层/结构化文本，再只对低置信或疑难题做视觉补录，然后合并回正式结果。
+      - "vision_primary": 继续使用整题视觉转录主链路，图片为主，文本层只作为提示。
+
+      判定原则：
+      1. 如果样本明显是英语/语文类大段正文、版式标准、公式很少，而且 PDF 文本层统计明显更好，同时仍有一部分题目低置信、空字段、结构标记不稳，优先 "split_text_then_visual_supplement"。
+      2. 如果样本明显是英语/语文类大段正文，而且 PDF 文本层统计很好、几乎没有低置信问题，优先 "split_text_layer_first"。
+      3. 如果样本主体是数学/理科，存在大量公式、符号、几何图、函数图、复杂题号层级、手写、扫描痕迹、装饰字，优先 "vision_primary"。
+      4. 不要因为单个小图就把整份英语讲义强行切到 "vision_primary"。
+      5. 如果证据不足，默认更保守地输出 "vision_primary"。
+
+      输入统计：
+      - requested_profile: {{REQUESTED_PROFILE}}
+      - question_count: {{QUESTION_COUNT}}
+      - source_counter_json: {{SOURCE_COUNTER_JSON}}
+      - confidence_counter_json: {{CONFIDENCE_COUNTER_JSON}}
+      - sample_question_ids_json: {{SAMPLE_QUESTION_IDS_JSON}}
+
+      输出 JSON：
+      {
+        "route": "split_text_layer_first|split_text_then_visual_supplement|vision_primary",
+        "subject_guess": "english|math|mixed|other",
+        "ocr_policy": "fallback_only|not_recommended|use_if_text_layer_missing",
+        "visual_policy": "skip_full_visual|run_full_visual",
+        "confidence": 0.0,
+        "reason": "一句话说明核心依据"
+      }
+  english_unit_planner:
+    prompt_version: "english_unit_planner_cn_v0.1"
+    system_prompt: |
+      你是英语教师讲义切分前的结构 planner。
+      你只负责判断当前这个切分段更像单题单元还是非题结构单元。
+      只返回 JSON，不要解释，不要 markdown。
+    user_template: |
+      任务：判断当前英语讲义切分段属于哪类单元，并决定后续是否继续按题号切题。
+
+      可选 unit_kind 只有：
+      - "question_unit": 主要是题目、例题、练习题，应该继续切到单题
+      - "knowledge_unit": 主要是知识梳理、规则讲解、要点回顾，不应切题
+      - "table_panel": 主要是表格、对照表、矩阵式知识块，不应切题
+      - "tree_panel": 主要是树状图、关系图、分支图，不应切题
+      - "mixed_panel": 同时含题和结构图，暂时保守留给后续 question 分支处理
+
+      输入上下文：
+      - segment_id: {{SEGMENT_ID}}
+      - component_kind: {{COMPONENT_KIND}}
+      - component_label: {{COMPONENT_LABEL}}
+      - checkpoint: {{CHECKPOINT}}
+
+      判断原则：
+      1. 如果这是正文知识讲解、规则总结、词法句法梳理、树状结构、图表结构，不要硬判成题。
+      2. 如果这是标准例题、选择题、填空题、阅读题、练习题，判为 question_unit。
+      3. 如果既有题目文字又明显带知识结构面板，判为 mixed_panel。
+      4. 不确定时，优先 mixed_panel，不要误判成纯 question_unit。
+
+      输出 JSON：
+      {
+        "unit_kind": "question_unit|knowledge_unit|table_panel|tree_panel|mixed_panel",
+        "should_split_questions": true,
+        "confidence": 0.0,
+        "reason": "一句话说明主要依据"
+      }
+  english_panel_planner:
+    prompt_version: "english_panel_planner_en_v0.1"
+    system_prompt: |
+      You are a visual layout planner for English K12 teacher handouts.
+      The image is a stacked canvas made from one teaching component group.
+      Your job is to classify large visual panels before question splitting.
+      Do not transcribe the text. Do not solve questions. Return JSON only.
+    user_template: |
+      Inspect the canvas and output large panels in reading order.
+
+      Context:
+      - group_id: {{GROUP_ID}}
+      - component_kind: {{COMPONENT_KIND}}
+      - component_label: {{COMPONENT_LABEL}}
+      - checkpoint: {{CHECKPOINT}}
+      - page_span: {{PAGE_SPAN}}
+
+      Panel types:
+      - single_question: one complete question or one complete example.
+      - multi_question_panel: a panel containing multiple numbered questions or many choices that must be split later.
+      - knowledge_panel: grammar notes, tables, method summary, tree diagrams, answer table, vocabulary/knowledge explanation, no standalone question to enter the question bank.
+      - mixed_panel: question content and non-question teaching content are visibly mixed and need a second pass.
+
+      Rules:
+      1. Prefer a panel bbox that covers a coherent unit. Do not split a multi-question exercise area into many small boxes here.
+      2. If a grammar table or tree diagram is teaching material rather than a question, mark it as knowledge_panel.
+      3. If a question continues across adjacent stacked page fragments, use one panel bbox covering all visible continuation parts.
+      4. If one large exercise block contains many questions, use one multi_question_panel bbox. The next node will split it.
+      5. Exclude page headers, page numbers, unrelated decorative bars, and empty margins when possible.
+      6. Treat the whole canvas as a normalized 1000 x 1000 coordinate system.
+      7. Top-left is (0, 0), bottom-right is (1000, 1000). All bbox x/y/w/h values must use this normalized coordinate system.
+
+      Output schema:
+      {
+        "image_width": 1000,
+        "image_height": 1000,
+        "panels": [
+          {
+            "panel_type": "single_question|multi_question_panel|knowledge_panel|mixed_panel",
+            "bbox": {"x": 0, "y": 0, "w": 0, "h": 0},
+            "confidence": 0.0,
+            "reason": "short visual reason"
+          }
+        ]
+      }
+  english_question_splitter:
+    prompt_version: "english_question_splitter_grounding1000_en_v0.2"
+    system_prompt: |
+      You split an English K12 handout panel into question-sized visual crops.
+      The image is the only source of truth. Do not transcribe or solve.
+      Return strict JSON only.
+    user_template: |
+      Split the provided panel into standalone question boxes.
+
+      Context:
+      - group_id: {{GROUP_ID}}
+      - component_kind: {{COMPONENT_KIND}}
+      - component_label: {{COMPONENT_LABEL}}
+      - checkpoint: {{CHECKPOINT}}
+      - page_span: {{PAGE_SPAN}}
+
+      Coordinate contract:
+      1. Treat the whole input image as a normalized 1000 x 1000 canvas.
+      2. Top-left is (0, 0), bottom-right is (1000, 1000).
+      3. All bbox x/y/w/h values must use this normalized coordinate system.
+      4. Output image_width=1000 and image_height=1000.
+
+      Hard rules:
+      1. A valid question bbox must include a visible question head: a question number, example marker, exercise marker, or the first complete question sentence.
+      2. Do not output headless fragments. If an area only contains answer/explanation continuation without the question head, do not create a separate question for it.
+      3. Stop before the next visible question head. Never include the next question's first line in the current question box.
+      4. Keep the current question's answer, translation, and analysis if they visibly belong to that question.
+      5. For dense numbered exercises, prefer tight boxes from one question head to just before the next question head.
+      6. For a cross-page continuation, include it only when it visibly continues the same question's answer or analysis.
+      7. Exclude page headers, page numbers, blank margins, and unrelated knowledge summaries.
+      8. If no reliable standalone question exists, return questions=[].
+
+      Output schema:
+      {
+        "image_width": 1000,
+        "image_height": 1000,
+        "questions": [
+          {
+            "local_number": "1",
+            "bbox": {"x": 0, "y": 0, "w": 0, "h": 0},
+            "confidence": 0.0,
+            "reason": "short visual reason"
+          }
+        ]
+      }
   transcription:
     active_variant: "v7"
     system_prompt: |
@@ -622,6 +784,73 @@ prompts:
           {"field": "stem|answer|analysis|handwriting", "text": "...", "reason": "formula|symbol|diagram|table|cropped|handwriting_unclear|logic_conflict|other"}
         ]
       }
+  format_normalize:
+    prompt_version: "format_normalize_v0.1"
+    system_prompt: |
+      You standardize already-mapped K12 math transcription fields into stable Markdown plus LaTeX.
+      You are not doing a fresh transcription pass.
+      You may use the images only to confirm formatting when the provided text is structurally broken.
+      Do not paraphrase, do not solve, do not add missing content, and do not move content across fields.
+      Return strict JSON only.
+    user_template: |
+      Task: standardize the provided field-mapped result into storage-safe Markdown + LaTeX.
+
+      You may receive up to three images in this order:
+      1. question_image: the full question crop
+      2. stem_image: the stem-focused crop when available
+      3. analysis_image: the answer/analysis-focused crop when available
+
+      Input field-mapped JSON:
+      {{FIELD_MAPPING_JSON}}
+
+      Context:
+      {{CONTEXT_LINES}}
+
+      Optional helper hints. Ignore them when they conflict with the image:
+      {{HINT_LINES}}
+
+      Rules:
+      1. Preserve field boundaries exactly: stem stays in stem_text_md, answer stays in answer_text_md, analysis stays in analysis_text_md, handwriting stays in handwriting_text_md.
+      2. Preserve visible content. Do not summarize, infer, or delete readable math objects.
+      3. Standardize Markdown + LaTeX only when the target form is clear.
+      4. Always use $...$ for inline math and $$...$$ for display math.
+      5. Never use \(...\), \[...\], \left, or \right.
+      6. Fix clearly broken math formatting when the intended form is obvious from the text or image, such as:
+         - malformed not-equal / less-or-equal / greater-or-equal commands,
+         - malformed set membership commands,
+         - systems that should use cases/aligned,
+         - column vectors that should use pmatrix or bmatrix,
+         - split option formulas that should stay in one inline formula,
+         - bare vector commands such as \vec a that should become \vec{a}.
+      7. If the intended form is not clear, keep the current text and record it in unresolved_format_spans.
+      8. Keep pure choice answers like A, C, BD, ABCD as plain text, not in math mode.
+      9. Do not silently change numeric values, operators, point labels, option labels, or geometric object names unless the image evidence is clear.
+      10. If no change is needed, return the fields unchanged and format_fix_log as an empty array.
+
+      Output schema:
+      {
+        "record_id": "...",
+        "question_id": "...",
+        "stem_text_md": "...",
+        "answer_text_md": "...",
+        "analysis_text_md": "...",
+        "handwriting_text_md": "...",
+        "stem_requires_image": true,
+        "analysis_requires_image": true,
+        "handwriting_requires_review": true,
+        "handwriting_consistency": {
+          "status": "consistent|inconsistent|uncertain|not_checked",
+          "summary": "...",
+          "conflict_spans": []
+        },
+        "uncertain_spans": [],
+        "format_fix_log": [
+          {"field":"stem|answer|analysis|handwriting","before":"...","after":"...","reason":"markdown_latex_standardize|layout_restore|operator_fix","confidence":0.0}
+        ],
+        "unresolved_format_spans": [
+          {"field":"stem|answer|analysis|handwriting","text":"...","reason":"still_ambiguous"}
+        ]
+      }
   refine:
     prompt_version: "local_refine_v0.1"
     user_template: |
@@ -792,7 +1021,7 @@ prompts:
         "global_review_flags": []
       }
   public_figure_rescan:
-    prompt_version: "public_figure_rescan_panelfirst_cn_grounding1000_v0.1"
+    prompt_version: "public_figure_rescan_panelfirst_cn_grounding1000_v0.2"
     system_prompt: |
       你只做数学题题内图片的漏检复扫。
       输入是一整张题目截图，planner 已经判断指定区域存在题内图形，但前一轮检测漏掉了或切得不稳定。
@@ -820,6 +1049,12 @@ prompts:
       - 函数图像、坐标轴、数轴、几何图、立体图、统计图、表格、辅助线、步骤图、图内点名/字母/数字标注。
       - 紧贴图形的 图1/图2/图3/图4、步骤编号、面板内必要标签。
 
+      关键约束：
+      - 不允许只框“图1/图2/图3/图4/备用图”等底部标签行；bbox 必须覆盖这些标签上方对应的图形本体。
+      - 如果看到的是横向并列或纵向连续的小图面板，bbox 的上边界必须包含各小图主体，不能只贴着底部说明文字。
+      - 如果一个候选框几乎横跨整行，但只落在底部标签/说明文字区域，这个框是错误的，不要输出。
+      - 如果你不确定面板边界，宁可把上方图形整体多保留一点，也不要只返回下方标签带。
+
       必须排除：
       - 题干正文、解析正文、红色教师讲解文字、页眉页脚、题号、纯公式推导行。
 
@@ -845,8 +1080,66 @@ prompts:
         ],
         "global_review_flags": []
       }
+  public_figure_route_review:
+    prompt_version: "public_figure_route_review_cn_grounding1000_v0.1"
+    system_prompt: |
+      你只做数学题题内图片检测前的路由复核。
+      输入是一整张题图。
+      你的任务不是转录文字，也不是切很多小框，而是判断这张图更适合哪种检测策略。
+      只返回严格 JSON。
+    user_template: |
+      target_scope: {{TARGET_SCOPE}}
+      planner 判断的图形类型：{{IMAGE_PRESENCE}}
+      source_field: {{SOURCE_FIELD}}
+      same_long_source: {{SAME_LONG_SOURCE}}
+      image_width: {{IMAGE_WIDTH}}
+      image_height: {{IMAGE_HEIGHT}}
+
+      任务：
+      判断这张题图接下来更适合哪种策略：
+
+      1. whole_panel_bbox
+         适用于：
+         - 题干里有一张公共配图，需要整体保留；
+         - 图形本体本来就是一个整体面板；
+         - 如果拆开会丢掉整体关系、坐标轴、数轴、并列圆/点/箭头、紧贴图形的标签。
+
+      2. panel_long_branch
+         适用于：
+         - 真正的超长题图、长解析图、上下堆叠的多步骤图组；
+         - 一张图里有多个纵向连续或分段出现的图组，直接整图检测容易漏掉上半部分或下半部分。
+
+      3. normal_detection
+         适用于：
+         - 题图并不长；
+         - 图形天然独立；
+         - 不需要强行整块保留，也不需要长图分段。
+
+      关键判断要求：
+      - 如果这是一道短题，但 question_image / stem_image / analysis_image 只是碰巧共用同一张图，不要因此误判为 panel_long_branch。
+      - 如果这是短题里的公共题干图，优先考虑 whole_panel_bbox。
+      - 如果你选择 whole_panel_bbox，必须输出一个 panel_bbox，覆盖完整图形本体及图内必要标签。
+      - 如果你选择 normal_detection 或 panel_long_branch，panel_bbox 置空即可。
+
+      坐标要求：
+      1. 把整张输入图看成 1000 x 1000 的归一化画布。
+      2. 左上角是 (0,0)，右下角是 (1000,1000)。
+      3. 如果输出 panel_bbox，坐标也用这个归一化坐标系。
+
+      Output schema:
+      {
+        "route_mode": "whole_panel_bbox|panel_long_branch|normal_detection",
+        "panel_bbox": {
+          "x": 0,
+          "y": 0,
+          "w": 0,
+          "h": 0
+        },
+        "confidence": 0.0,
+        "review_flags": []
+      }
   inline_figure_refine:
-    prompt_version: "inline_figure_refine_cn_grounding1000_v0.1"
+    prompt_version: "inline_figure_refine_cn_grounding1000_v0.2"
     system_prompt: |
       你只做数学题内配图的二次精切。
       输入是一张候选小裁片，里面可能包含真正的函数图、几何图、统计图，也可能混入题干文字、红色解析、选项编号、页眉页脚。
@@ -861,16 +1154,19 @@ prompts:
       4. bbox 只针对当前候选裁片，不是原始整题图。
 
       什么必须保留：
-      - 坐标轴、箭头、曲线、几何线段、辅助线、点名、图内字母、图内坐标、图1/图2/图3这类紧贴图形的图注。
+      - 坐标轴、箭头、曲线、几何线段、辅助线、点名、图内字母、图内坐标、图1/图2/图3/备用图这类紧贴图形的图注。
+      - 特别注意：如果 A/B/C/D、x/y、P/Q/M/N 等字母是图内点名、端点标签、轴旁字母、图内标注，必须保留，不能因为贴边就裁掉。
 
       什么必须去掉：
-      - 题干文字、解析文字、红色讲解文字、公式推导行、选项编号 A/B/C/D、蓝色页眉、页码、空白边。
+      - 题干文字、解析文字、红色讲解文字、公式推导行、蓝色页眉、页码、空白边。
+      - 只有当 A./B./C./D. 明确是图外行首的选项前缀、且与图形主体没有连接关系时，才可以不纳入 bbox。
 
       判断规则：
       1. 如果候选裁片主要是文字/公式/解析，不是图形，返回 is_valid_figure=false。
       2. 如果确实有图形，但边上混了文字，返回只框图形本体的新 bbox。
-      3. 宁可略微贴紧，也不要把大段题干或解析文字框进去。
+      3. 宁可略宽一点，也不要为了贴紧而裁掉图形边缘点名、轴字母、图注标签。
       4. 不要裁掉坐标轴箭头、几何顶点、曲线端点、点名标签。
+      5. 如果你无法确定某个 A/B/C/D 是选项前缀还是图内点名，默认按图内点名保留。
 
       Output schema:
       {
@@ -917,6 +1213,73 @@ prompts:
         "bbox": {"x": 0, "y": 0, "w": 0, "h": 0},
         "confidence": 0.0,
         "review_flags": []
+      }
+
+  visual_insert_anchor_review:
+    prompt_version: "visual_insert_anchor_review_v0.3"
+    system_prompt: |
+      You review one Chinese K12 math question and several already-cropped figure assets.
+      Your only task is to decide where each asset should be inserted back into the structured fields.
+      Return strict JSON only.
+      Do not solve the question.
+      Do not rewrite the full text.
+      Do not output markdown or commentary.
+    user_template: |
+      Task:
+      Given:
+      1. the full question image,
+      2. the current stem / answer / analysis texts,
+      3. several cropped figure assets with stable asset_id values,
+      decide the best insertion anchor for each asset.
+
+      Available fields:
+      - stem
+      - answer
+      - analysis
+
+      Rules:
+      1. Use each asset_id exactly as provided.
+      2. For each asset, choose exactly one target_field.
+      3. If there is a reliable explicit slot such as 如图 / 图1 / 图2 / ① / （2）, you may use anchor_mode=after_anchor_slot and choose one exact anchor_slot_id.
+      4. If the right location is more specific than the available slot roster, use anchor_mode=after_anchor_text and copy one exact visible anchor_text substring from the target field snapshot.
+      5. Use field_tail only when neither a reliable anchor_slot_id nor a reliable exact anchor_text can be chosen.
+      6. If multiple slots contain similar text like 如图 or 图1, do not guess by plain text alone. Prefer after_anchor_text when you need finer placement.
+      7. For after_anchor_text, anchor_text must be an exact substring copied from the target field snapshot, not rewritten or paraphrased.
+      8. Keep the asset order consistent with the visual reading order when multiple assets belong to the same field.
+      9. If the current cropped asset obviously belongs to the stem panel, keep it in stem.
+      10. If the current cropped asset obviously belongs to the answer / solution / proof steps, place it in answer or analysis accordingly.
+      11. If you are unsure between answer and analysis, prefer analysis and add a review flag.
+
+      Field text snapshot:
+      STEM:
+      {{STEM_TEXT}}
+
+      ANSWER:
+      {{ANSWER_TEXT}}
+
+      ANALYSIS:
+      {{ANALYSIS_TEXT}}
+
+      Available anchor slots:
+      {{ANCHOR_SLOTS}}
+
+      Asset roster:
+      {{ASSET_LINES}}
+
+      Output schema:
+      {
+        "placements": [
+          {
+            "asset_id": "asset_001",
+            "target_field": "stem|answer|analysis",
+            "anchor_mode": "after_anchor_slot|after_anchor_text|field_tail",
+            "anchor_slot_id": "",
+            "anchor_text": "",
+            "confidence": 0.0,
+            "review_flags": []
+          }
+        ],
+        "global_review_flags": []
       }
 
   analysis_figure_rescan:

@@ -11,7 +11,7 @@ import visual_transcription_core as vision_core
 
 PipelineFn = Callable[..., Any]
 
-PIPELINE_VERSION = "vision_pipeline_v0.3"
+PIPELINE_VERSION = "vision_pipeline_v0.4"
 PIPELINE_TOPOLOGY = {
     "version": PIPELINE_VERSION,
     "final_contract": "general_vision_v0.1",
@@ -34,15 +34,24 @@ PIPELINE_TOPOLOGY = {
         {
             "layer": 4,
             "mode": "serial",
-            "nodes": ["math_normalize_node"],
+            "nodes": [
+                "format_normalize_prompt_node",
+                "format_normalize_model_node",
+                "format_normalize_parse_node",
+            ],
         },
         {
             "layer": 5,
+            "mode": "serial",
+            "nodes": ["math_normalize_node"],
+        },
+        {
+            "layer": 6,
             "mode": "parallel",
             "nodes": ["render_contract_node", "quality_audit_node"],
         },
         {
-            "layer": 6,
+            "layer": 7,
             "mode": "serial",
             "nodes": ["record_assemble_node"],
         },
@@ -124,6 +133,24 @@ def run_field_mapping_prompt_node(
     return {
         "prompt": prompt,
         "raw_blocks_count": len(raw_blocks_payload.get("visible_blocks", []) or []),
+    }
+
+
+def run_format_normalize_prompt_node(
+    *,
+    question: dict[str, Any],
+    record_id: str,
+    field_mapping_payload: dict[str, Any],
+    prompt_builder: PipelineFn,
+) -> dict[str, Any]:
+    prompt = str(prompt_builder(question, record_id, field_mapping_payload))
+    return {
+        "prompt": prompt,
+        "field_presence": sorted(
+            key
+            for key in ("stem_text_md", "answer_text_md", "analysis_text_md", "handwriting_text_md")
+            if isinstance(field_mapping_payload.get(key), str) and field_mapping_payload.get(key, "").strip()
+        ),
     }
 
 
@@ -270,6 +297,8 @@ def run_question_pipeline(
     raw_blocks_call_model_fn: PipelineFn,
     field_mapping_prompt_builder: PipelineFn,
     field_mapping_call_model_fn: PipelineFn,
+    format_normalize_prompt_builder: PipelineFn,
+    format_normalize_call_model_fn: PipelineFn,
     extract_json_fn: PipelineFn,
 ) -> dict[str, Any]:
     pipeline_trace: dict[str, Any] = {
@@ -337,6 +366,7 @@ def run_question_pipeline(
     started_perf = time.perf_counter()
     raw_blocks_model_result: dict[str, Any] | None = None
     field_mapping_model_result: dict[str, Any] | None = None
+    format_normalize_model_result: dict[str, Any] | None = None
     try:
         model_node = _run_named_node(
             "raw_blocks_model_node",
@@ -392,6 +422,39 @@ def run_question_pipeline(
         pipeline_trace["nodes"].append(field_parse_node)
         parsed_payload = field_parse_node["result"]
 
+        format_prompt_node = _run_named_node(
+            "format_normalize_prompt_node",
+            run_format_normalize_prompt_node,
+            question=question,
+            record_id=record_id,
+            field_mapping_payload=parsed_payload,
+            prompt_builder=format_normalize_prompt_builder,
+        )
+        pipeline_trace["nodes"].append(format_prompt_node)
+        prepared_payload["format_normalize_prompt"] = str(format_prompt_node["result"].get("prompt", "") or "")
+        prepared_payload["field_mapping_payload"] = parsed_payload
+
+        format_model_node = _run_named_node(
+            "format_normalize_model_node",
+            run_raw_transcription_node,
+            api_key=api_key,
+            model_name=model_name,
+            prompt=str(format_prompt_node["result"]["prompt"]),
+            image_paths=list(structure_result["image_paths"]),
+            call_model_fn=format_normalize_call_model_fn,
+        )
+        pipeline_trace["nodes"].append(format_model_node)
+        format_normalize_model_result = format_model_node["result"]
+
+        format_parse_node = _run_named_node(
+            "format_normalize_parse_node",
+            run_json_parse_node,
+            str(format_normalize_model_result.get("raw_content", "") or ""),
+            extract_json_fn,
+        )
+        pipeline_trace["nodes"].append(format_parse_node)
+        parsed_payload = format_parse_node["result"]
+
         normalize_node = _run_named_node(
             "math_normalize_node",
             run_math_normalize_node,
@@ -440,6 +503,7 @@ def run_question_pipeline(
                         (raw_blocks_model_result or {}).get("usage", {}) or {}
                     ).get(key, 0)
                     + ((field_mapping_model_result or {}).get("usage", {}) or {}).get(key, 0)
+                    + ((format_normalize_model_result or {}).get("usage", {}) or {}).get(key, 0)
                     for key in (
                         "prompt_tokens",
                         "completion_tokens",
@@ -467,6 +531,8 @@ def run_question_pipeline(
             "raw_blocks_content": str((raw_blocks_model_result or {}).get("raw_content", "") or ""),
             "field_mapping_response": (field_mapping_model_result or {}).get("raw_response", {}),
             "field_mapping_content": str((field_mapping_model_result or {}).get("raw_content", "") or ""),
+            "format_normalize_response": (format_normalize_model_result or {}).get("raw_response", {}),
+            "format_normalize_content": str((format_normalize_model_result or {}).get("raw_content", "") or ""),
             "record": assemble_node["result"],
         }
     except Exception as exc:  # noqa: BLE001
@@ -476,6 +542,7 @@ def run_question_pipeline(
             key: (
                 ((raw_blocks_model_result or {}).get("usage", {}) or {}).get(key, 0)
                 + ((field_mapping_model_result or {}).get("usage", {}) or {}).get(key, 0)
+                + ((format_normalize_model_result or {}).get("usage", {}) or {}).get(key, 0)
             )
             for key in (
                 "prompt_tokens",
@@ -492,6 +559,8 @@ def run_question_pipeline(
             "raw_blocks_content": str((raw_blocks_model_result or {}).get("raw_content", "") or ""),
             "field_mapping_response": (field_mapping_model_result or {}).get("raw_response", {}),
             "field_mapping_content": str((field_mapping_model_result or {}).get("raw_content", "") or ""),
+            "format_normalize_response": (format_normalize_model_result or {}).get("raw_response", {}),
+            "format_normalize_content": str((format_normalize_model_result or {}).get("raw_content", "") or ""),
             "record": build_failure_record(
                 record_id=record_id,
                 question_id=str(item["question_id"]),

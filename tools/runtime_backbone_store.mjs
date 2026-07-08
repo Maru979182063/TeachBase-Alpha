@@ -19,6 +19,10 @@ import {
   looksLikeVisualQuestionManifest,
   normalizeLessonDraftBundle,
 } from "./runtime_visual_split_adapter.mjs";
+import {
+  adaptRuntimeManifestToLessonDraftBundle,
+  looksLikeRuntimeManifest,
+} from "./runtime_manifest_to_lesson_bundle_adapter.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -133,6 +137,33 @@ function buildDifficultyPayload(input, trackProfile, options = {}) {
 }
 
 function normalizeBundleImportPayload(payload = {}) {
+  const runtimeManifestCandidate =
+    payload?.runtime_manifest ||
+    payload?.runtimeManifest ||
+    (looksLikeRuntimeManifest(payload?.manifest) ? payload.manifest : null) ||
+    (looksLikeRuntimeManifest(payload?.bundle) ? payload.bundle : null) ||
+    (looksLikeRuntimeManifest(payload) ? payload : null);
+  if (
+    payload?.payload_type === "runtime_manifest" ||
+    payload?.payloadType === "runtime_manifest" ||
+    runtimeManifestCandidate
+  ) {
+    return adaptRuntimeManifestToLessonDraftBundle(runtimeManifestCandidate || payload, {
+      bundle_id: payload.bundle_id || payload.bundleId,
+      lesson_id: payload.lesson_id || payload.lessonId || payload.lesson?.lesson_id,
+      title: payload.title || payload.lesson?.title || payload.lesson?.lesson_title,
+      subject: payload.subject || payload.lesson?.subject,
+      stage: payload.stage || payload.lesson?.stage,
+      track_code: payload.track_code || payload.trackCode || payload.lesson?.track_code,
+      grade: payload.grade || payload.lesson?.grade,
+      season: payload.season || payload.lesson?.season,
+      runtime_run_id: payload.runtime_run_id || payload.runtimeRunId || payload.run_name,
+      base_dir: payload.base_dir || payload.baseDir,
+      manifest_path: payload.manifest_path || payload.manifestPath,
+      document_metadata: payload.document_metadata || payload.documentMetadata,
+      source_document_refs: payload.source_document_refs || payload.sourceDocumentRefs,
+    });
+  }
   if (looksLikeVisualQuestionManifest(payload?.bundle)) {
     return adaptQuestionAssetManifestToLessonDraftBundle(payload.bundle, {
       bundle_id: payload.bundle_id || payload.bundleId,

@@ -19,6 +19,12 @@ VALID_PROFILES = {
     "senior_math_teacher",
     "junior_geometry_teacher",
 }
+VALID_ROUTES = {
+    "auto",
+    "split_text_layer_first",
+    "split_text_then_visual_supplement",
+    "vision_primary",
+}
 
 
 def safe_slug(text: str) -> str:
@@ -82,12 +88,15 @@ def main() -> None:
     parser.add_argument("--no-assetize", action="store_true", help="Skip portable question image asset bundle generation.")
     parser.add_argument("--option-anchor-mode", default="auto", help="auto | always | off")
     parser.add_argument("--max-pages", type=int, default=0, help="Optional page cap for quick testing.")
+    parser.add_argument("--transcription-route", default="auto", help="auto | split_text_layer_first | split_text_then_visual_supplement | vision_primary")
     args = parser.parse_args()
 
     pdf_path = Path(args.pdf).expanduser().resolve()
     ensure_exists(pdf_path, "pdf")
     if args.profile not in VALID_PROFILES:
         raise SystemExit(f"invalid_profile: {args.profile}")
+    if args.transcription_route not in VALID_ROUTES:
+        raise SystemExit(f"invalid_transcription_route: {args.transcription_route}")
     ensure_exists(RUNTIME_SCRIPT, "runtime_script")
 
     split_out_name, transcribe_out_name = build_default_names(pdf_path)
@@ -115,6 +124,7 @@ def main() -> None:
     env["VISUAL_TRANSCRIBE_SLEEP_SECONDS"] = str(args.sleep_seconds)
     env["QUESTION_ASSETIZE_ENABLE"] = "0" if args.no_assetize else "1"
     env["OPTION_ANCHOR_MODE"] = str(args.option_anchor_mode or "auto")
+    env["VISUAL_TRANSCRIBE_ROUTE"] = str(args.transcription_route or "auto")
     if args.limit > 0:
         env["VISUAL_TRANSCRIBE_LIMIT"] = str(args.limit)
     if args.max_pages > 0:
@@ -127,11 +137,15 @@ def main() -> None:
     option_prepare_stage = result.get("option_prepare_stage", {}) or {}
     transcribe_stage = result.get("visual_transcribe_stage", {}) or {}
     asset_stage = result.get("question_asset_stage", {}) or {}
+    planner_stage = result.get("runtime_route_planner_stage", {}) or {}
+    split_text_layer_stage = result.get("split_text_layer_stage", {}) or {}
 
     summary = {
         "entry": "run_teacher_handout_full_flow.py",
         "pdf": str(pdf_path),
         "profile": args.profile,
+        "requested_transcription_route": args.transcription_route,
+        "actual_transcription_route": result.get("transcription_route", ""),
         "split_only": args.split_only,
         "prepare_only": args.prepare_only,
         "model": args.model if transcribe_enable else "",
@@ -141,11 +155,17 @@ def main() -> None:
         "split_question_count": split_stage.get("questions", 0),
         "split_transcription_json": split_stage.get("transcription_json", ""),
         "prepared_source_json": option_prepare_stage.get("prepared_source_json", ""),
+        "planner_status": planner_stage.get("status", ""),
+        "planner_mode": planner_stage.get("planner_mode", ""),
+        "planner_reason": planner_stage.get("reason", ""),
+        "planner_confidence": planner_stage.get("confidence", 0),
         "transcribe_out_dir": transcribe_stage.get("out_dir", ""),
         "transcribe_question_count": transcribe_stage.get("question_count", 0),
         "transcribe_ok_count": transcribe_stage.get("ok_count", 0),
         "transcribe_failed_count": transcribe_stage.get("failed_count", 0),
         "pipeline_topology": transcribe_stage.get("pipeline_topology", {}),
+        "split_text_layer_status": split_text_layer_stage.get("status", ""),
+        "split_text_layer_source_json": split_text_layer_stage.get("source_json", ""),
         "question_asset_out_dir": asset_stage.get("out_dir", ""),
         "question_asset_manifest": asset_stage.get("manifest", ""),
         "question_asset_review_html": asset_stage.get("html", ""),

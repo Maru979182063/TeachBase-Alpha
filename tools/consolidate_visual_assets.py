@@ -31,10 +31,23 @@ def placement(asset: dict[str, Any]) -> str:
     return str(asset.get("placement_scope") or asset.get("placement") or "").strip()
 
 
+def is_panel_group_asset(asset: dict[str, Any]) -> bool:
+    if str(asset.get("crop_policy", "") or "").strip() == "panel_group_preserve_layout":
+        return True
+    if str(asset.get("panel_group_id", "") or "").strip():
+        return True
+    if int(asset.get("panel_subfigure_count", 0) or 0) > 0:
+        return True
+    flags = {str(flag) for flag in (asset.get("review_flags", []) or [])}
+    return "panel_kept" in flags or "panel_subfigure_union" in flags
+
+
 def is_candidate(asset: dict[str, Any]) -> bool:
     if asset_role(asset) in {"question_source", "stem_source", "analysis_source", "evidence"}:
         return False
     if placement(asset) == "option_inline":
+        return False
+    if is_panel_group_asset(asset):
         return False
     if not bool(asset.get("materialized")) or str(asset.get("file_status", "")) != "materialized":
         return False

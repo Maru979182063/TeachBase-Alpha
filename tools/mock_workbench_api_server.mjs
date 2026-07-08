@@ -32,6 +32,81 @@ const adminToken = process.env.RUNTIME_ADMIN_TOKEN || "";
 const rateLimitWindowMs = Number(process.env.RUNTIME_RATE_LIMIT_WINDOW_MS || 2000);
 const rateLimitMaxRequests = Number(process.env.RUNTIME_RATE_LIMIT_MAX_REQUESTS || 8);
 const rateLimitBuckets = new Map();
+const EXPORT_VERSION_ALIASES = new Map([
+  ["基础版", "基础版"],
+  ["base", "基础版"],
+  ["basic", "基础版"],
+  ["student", "基础版"],
+  ["常用版", "常用版"],
+  ["common", "常用版"],
+  ["standard", "常用版"],
+  ["进阶版", "进阶版"],
+  ["advanced", "进阶版"],
+  ["pro", "进阶版"],
+  ["答案版", "答案版"],
+  ["answer", "答案版"],
+]);
+const SUPPORTED_EXPORT_VERSIONS = new Set(["基础版", "常用版", "进阶版"]);
+const EXPORT_AUDIENCE_ALIASES = new Map([
+  ["学生版", "学生版"],
+  ["student", "学生版"],
+  ["learner", "学生版"],
+  ["教师版", "教师版"],
+  ["teacher", "教师版"],
+  ["instructor", "教师版"],
+]);
+const SUPPORTED_EXPORT_AUDIENCES = new Set(["学生版", "教师版"]);
+
+/**
+ * 导出请求常带演示期别名；这里先统一成 exporter 真正识别的枚举，
+ * 让 API 层对外保持兼容，对内仍然走稳定的固定标签。
+ */
+function normalizeExportLabel(value, aliases, supportedValues, errorPrefix) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return null;
+  }
+  const normalized = aliases.get(raw) || aliases.get(raw.toLowerCase()) || raw;
+  if (!supportedValues.has(normalized)) {
+    throw new Error(`${errorPrefix}:${raw}`);
+  }
+  return normalized;
+}
+
+function normalizeExportLabelArray(values, aliases, supportedValues, errorPrefix) {
+  const source = Array.isArray(values) ? values : [];
+  const normalized = [];
+  const seen = new Set();
+  for (const value of source) {
+    const label = normalizeExportLabel(value, aliases, supportedValues, errorPrefix);
+    if (!label || seen.has(label)) {
+      continue;
+    }
+    seen.add(label);
+    normalized.push(label);
+  }
+  return normalized;
+}
+
+function normalizeQuestionVersionTags(values) {
+  return normalizeExportLabelArray(
+    values,
+    EXPORT_VERSION_ALIASES,
+    SUPPORTED_EXPORT_VERSIONS,
+    "unsupported_export_version"
+  );
+}
+
+function normalizeQuestionVersionOverrides(overrides) {
+  if (!overrides || typeof overrides !== "object" || Array.isArray(overrides)) {
+    return {};
+  }
+  const normalized = {};
+  for (const [questionId, value] of Object.entries(overrides)) {
+    normalized[questionId] = normalizeQuestionVersionTags(Array.isArray(value) ? value : [value]);
+  }
+  return normalized;
+}
 
 function readHistory() {
   if (!fs.existsSync(historyPath)) return [];
@@ -89,6 +164,7 @@ function toSafeError(error) {
     ["invalid_bundle_task_entry", 400],
     ["invalid_bundle_task_checkpoint_override_mode", 400],
     ["missing_local_task_id", 400],
+    ["export_generated_no_files", 400],
     ["material_build_track_mismatch", 409],
     ["component_patch_not_pending", 409],
     ["component_patch_conflict", 409],
@@ -100,6 +176,12 @@ function toSafeError(error) {
     };
   }
   if (message.startsWith("unsupported_runtime_store:")) {
+    return { status: 400, error: message };
+  }
+  if (message === "invalid_runtime_manifest_payload") {
+    return { status: 400, error: message };
+  }
+  if (message.startsWith("unsupported_export_version:") || message.startsWith("unsupported_export_audience:")) {
     return { status: 400, error: message };
   }
   if (message.startsWith("track_profile_") || message.startsWith("track_subject_") || message.startsWith("track_stage_")) {
@@ -232,10 +314,13 @@ function assertActorRole(actor, allowedPatterns) {
  * API 接受灵活的演示输入，但导出器依赖这个稳定形态。
  */
 function buildPayload(input) {
-  const questionVersionOverrides = input.questionVersions || {};
+  const questionVersionOverrides = normalizeQuestionVersionOverrides(input.questionVersions || {});
   const splitQuestions = (input.splitLesson?.questions || []).map((question) => ({
     ...question,
-    effectiveVersionTags: questionVersionOverrides[question.id] || question.versionTags || [],
+    versionTags: normalizeQuestionVersionTags(question.versionTags || question.effectiveVersionTags || []),
+    effectiveVersionTags:
+      questionVersionOverrides[question.id] ||
+      normalizeQuestionVersionTags(question.effectiveVersionTags || question.versionTags || []),
   }));
 
   const reviewItems = (input.reviewQueue || [])
@@ -252,8 +337,18 @@ function buildPayload(input) {
       questions: splitQuestions,
     },
     reviewItems,
-    selectedVersions: input.selectedVersions || [],
-    selectedAudiences: input.selectedAudiences || [],
+    selectedVersions: normalizeExportLabelArray(
+      input.selectedVersions,
+      EXPORT_VERSION_ALIASES,
+      SUPPORTED_EXPORT_VERSIONS,
+      "unsupported_export_version"
+    ),
+    selectedAudiences: normalizeExportLabelArray(
+      input.selectedAudiences,
+      EXPORT_AUDIENCE_ALIASES,
+      SUPPORTED_EXPORT_AUDIENCES,
+      "unsupported_export_audience"
+    ),
     selectedFormats: input.selectedFormats || [],
     includeCompass: Boolean(input.includeCompass),
   };
@@ -565,6 +660,12 @@ async function runExport(payload) {
       size: fs.statSync(file.path).size,
     }));
 
+  // Fail loudly when a requested export format yields no concrete files, so
+  // callers do not mistake a bookkeeping artifact for a usable package.
+  if ((payload.selectedFormats || []).length > 0 && normalizedFiles.length === 0) {
+    throw new Error("export_generated_no_files");
+  }
+
   const historyItem = {
     id: runId,
     createdAt: now.toISOString(),
@@ -735,6 +836,21 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await parseBody(req);
       const result = await runtimeStore.importLessonDraftBundle(body);
+      sendJson(res, 200, { ok: true, requestId, result }, { "X-Request-Id": requestId });
+      return;
+    } catch (error) {
+      handleRouteError(res, error, requestId);
+      return;
+    }
+  }
+
+  if (pathname === "/api/runtime/imports/runtime-manifest" && req.method === "POST") {
+    try {
+      const body = await parseBody(req);
+      const result = await runtimeStore.importLessonDraftBundle({
+        ...body,
+        payload_type: "runtime_manifest",
+      });
       sendJson(res, 200, { ok: true, requestId, result }, { "X-Request-Id": requestId });
       return;
     } catch (error) {

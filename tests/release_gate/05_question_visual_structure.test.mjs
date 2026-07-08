@@ -355,39 +355,60 @@ export function registerTests(register) {
           expectedError: "bbox_space_missing:qa_fixture_11_A_001",
         },
         {
-          name: "fixture_12_source_image_missing",
+          name: "fixture_12_source_image_backfilled_from_evidence",
           sourceRefsJson: buildLegacySourceRefs(
             buildQuestionVisualStructure({
-              question_uid: "fixture_12_source_image_missing",
+              question_uid: "fixture_12_source_image_backfilled_from_evidence",
               visual_assets: [
                 buildVisualAsset({
-                  questionUid: "fixture_12_source_image_missing",
-                  optionKey: "A",
-                  assetId: "qa_fixture_12_A_001",
+                  questionUid: "fixture_12_source_image_backfilled_from_evidence",
+                  placementScope: "evidence_only",
+                  assetRole: "question_source",
+                  assetId: "fixture_12__question_source",
+                  optionKey: null,
+                  sourceImageAssetId: "",
+                  sourceImageStorageKey: "",
+                }),
+                buildVisualAsset({
+                  questionUid: "fixture_12_source_image_backfilled_from_evidence",
+                  placementScope: "after_stem",
+                  assetRole: "stem",
+                  assetId: "qa_fixture_12_stem_001",
+                  optionKey: null,
+                  sourceImageRole: "question_image",
                   sourceImageAssetId: "",
                   sourceImageStorageKey: "",
                 }),
               ],
-              options: [makeOption("A", ["qa_fixture_12_A_001"])],
+              options: [makeOption("A")],
+              content_blocks: [
+                {
+                  block_id: "blk_stem_img_fixture_12",
+                  block_order: 1,
+                  scope: "stem",
+                  block_type: "image",
+                  asset_id: "qa_fixture_12_stem_001",
+                  display_ref: "asset://qa_fixture_12_stem_001",
+                },
+              ],
               legacy_stem_md:
-                "A. ![qa_fixture_12_A_001](asset://qa_fixture_12_A_001)",
+                "Observe the figure.\n\n![qa_fixture_12_stem_001](asset://qa_fixture_12_stem_001)",
             })
           ),
-          expectOk: false,
-          expectedError: "source_image_ref_missing:qa_fixture_12_A_001",
+          expectOk: true,
         },
         {
-          name: "fixture_13_asset_materialize_failed",
+          name: "fixture_13_source_image_missing",
           sourceRefsJson: buildLegacySourceRefs(
             buildQuestionVisualStructure({
-              question_uid: "fixture_13_asset_materialize_failed",
+              question_uid: "fixture_13_source_image_missing",
               visual_assets: [
                 buildVisualAsset({
-                  questionUid: "fixture_13_asset_materialize_failed",
+                  questionUid: "fixture_13_source_image_missing",
                   optionKey: "A",
                   assetId: "qa_fixture_13_A_001",
-                  fileStatus: "failed",
-                  reviewFlags: ["asset_materialize_failed"],
+                  sourceImageAssetId: "",
+                  sourceImageStorageKey: "",
                 }),
               ],
               options: [makeOption("A", ["qa_fixture_13_A_001"])],
@@ -396,28 +417,105 @@ export function registerTests(register) {
             })
           ),
           expectOk: false,
-          expectedError: "asset_not_materialized:asset://qa_fixture_13_A_001",
+          expectedError: "source_image_ref_missing:qa_fixture_13_A_001",
         },
         {
-          name: "fixture_14_absolute_storage_key",
+          name: "fixture_14_formal_asset_materialize_failed",
           sourceRefsJson: buildLegacySourceRefs(
             buildQuestionVisualStructure({
-              question_uid: "fixture_14_absolute_storage_key",
+              question_uid: "fixture_14_formal_asset_materialize_failed",
               visual_assets: [
                 buildVisualAsset({
-                  questionUid: "fixture_14_absolute_storage_key",
-                  optionKey: "A",
-                  assetId: "qa_fixture_14_A_001",
-                  storageKey: "C:/absolute/path/not_allowed.png",
+                  questionUid: "fixture_14_formal_asset_materialize_failed",
+                  placementScope: "after_analysis",
+                  assetRole: "analysis",
+                  optionKey: null,
+                  assetId: "qa_fixture_14_analysis_001",
+                  fileStatus: "failed",
                 }),
               ],
-              options: [makeOption("A", ["qa_fixture_14_A_001"])],
-              legacy_stem_md:
-                "A. ![qa_fixture_14_A_001](asset://qa_fixture_14_A_001)",
+              options: [makeOption("A")],
+              content_blocks: [
+                {
+                  block_id: "blk_analysis_img_fixture_14",
+                  block_order: 2,
+                  scope: "analysis",
+                  block_type: "image",
+                  asset_id: "qa_fixture_14_analysis_001",
+                  display_ref: "asset://qa_fixture_14_analysis_001",
+                },
+              ],
+              legacy_stem_md: "Choose the correct answer.",
             })
           ),
           expectOk: false,
-          expectedError: "asset_storage_key_not_relative:qa_fixture_14_A_001",
+          expectedError: "formal_asset_not_materialized:qa_fixture_14_analysis_001",
+        },
+        {
+          name: "fixture_15_asset_materialize_failed",
+          sourceRefsJson: buildLegacySourceRefs(
+            buildQuestionVisualStructure({
+              question_uid: "fixture_15_asset_materialize_failed",
+              visual_assets: [
+                buildVisualAsset({
+                  questionUid: "fixture_15_asset_materialize_failed",
+                  optionKey: "A",
+                  assetId: "qa_fixture_15_A_001",
+                  fileStatus: "failed",
+                  reviewFlags: ["asset_materialize_failed"],
+                }),
+              ],
+              options: [makeOption("A", ["qa_fixture_15_A_001"])],
+              legacy_stem_md:
+                "A. ![qa_fixture_15_A_001](asset://qa_fixture_15_A_001)",
+            })
+          ),
+          expectOk: false,
+          expectedError: "asset_not_materialized:asset://qa_fixture_15_A_001",
+        },
+        {
+          name: "fixture_16_absolute_storage_key",
+          sourceRefsJson: buildLegacySourceRefs(
+            buildQuestionVisualStructure({
+              question_uid: "fixture_16_evidence_only_source_asset",
+              visual_assets: [
+                buildVisualAsset({
+                  questionUid: "fixture_16_evidence_only_source_asset",
+                  placementScope: "evidence_only",
+                  assetRole: "stem_source",
+                  assetId: "fixture_16__stem_source",
+                  bboxSpace: "",
+                  bboxJson: null,
+                  sourceImageAssetId: "",
+                  sourceImageStorageKey: "",
+                }),
+              ],
+              options: [makeOption("A")],
+              legacy_stem_md: "Choose the correct answer.",
+            })
+          ),
+          expectOk: true,
+        },
+        {
+          name: "fixture_17_absolute_storage_key",
+          sourceRefsJson: buildLegacySourceRefs(
+            buildQuestionVisualStructure({
+              question_uid: "fixture_17_absolute_storage_key",
+              visual_assets: [
+                buildVisualAsset({
+                  questionUid: "fixture_17_absolute_storage_key",
+                  optionKey: "A",
+                  assetId: "qa_fixture_17_A_001",
+                  storageKey: "C:/absolute/path/not_allowed.png",
+                }),
+              ],
+              options: [makeOption("A", ["qa_fixture_17_A_001"])],
+              legacy_stem_md:
+                "A. ![qa_fixture_17_A_001](asset://qa_fixture_17_A_001)",
+            })
+          ),
+          expectOk: false,
+          expectedError: "asset_storage_key_not_relative:qa_fixture_17_A_001",
         },
       ];
 
@@ -454,20 +552,20 @@ export function registerTests(register) {
     required: true,
     async run() {
       const oldAsset = buildVisualAsset({
-        questionUid: "fixture_15_rerun",
+        questionUid: "fixture_16_rerun",
         runtimeRunId: "run_old",
         optionKey: "A",
-        assetId: "qa_fixture_15_A_001",
+        assetId: "qa_fixture_16_A_001",
       });
       const newAsset = buildVisualAsset({
-        questionUid: "fixture_15_rerun",
+        questionUid: "fixture_16_rerun",
         runtimeRunId: "run_new",
         optionKey: "A",
-        assetId: "qa_fixture_15_A_001",
+        assetId: "qa_fixture_16_A_001",
       });
       const oldRefs = buildLegacySourceRefs(
         buildQuestionVisualStructure({
-          question_uid: "fixture_15_rerun",
+          question_uid: "fixture_16_rerun",
           runtime_run_id: "run_old",
           visual_assets: [oldAsset],
           options: [makeOption("A", [oldAsset.asset_id])],
@@ -476,7 +574,7 @@ export function registerTests(register) {
       );
       const newRefs = buildLegacySourceRefs(
         buildQuestionVisualStructure({
-          question_uid: "fixture_15_rerun",
+          question_uid: "fixture_16_rerun",
           runtime_run_id: "run_new",
           visual_assets: [newAsset],
           options: [makeOption("A", [newAsset.asset_id])],
