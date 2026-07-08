@@ -9,6 +9,7 @@ from tools.cross_page_node_accumulator_v03 import NodeFragmentV03, SemanticNodeV
 from tools.semantic_block_assembler_v03 import mock_semantic_assignments_v03
 from tools.layout_block_extractor_v03 import _tile_specs
 from tools.page_render_adapter_v03 import PageManifestV03
+from tools.split_pipeline_v03 import build_legacy_bridge
 
 
 RECOVERY = Path("out/recovery")
@@ -147,3 +148,28 @@ def test_visual_rescan_tiles_target_missing_lower_region():
 def test_legacy_bridge_only_exports_audited_ready_questions():
     data = load_json(RECOVERY / "legacy_bridge_questions.json")
     assert all(q["review_status"] == "AUDITED_READY" and q["node_type"] == "question" for q in data["questions"])
+
+
+def test_legacy_bridge_uses_composite_first_question_image():
+    nodes = [
+        {
+            "node_id": "q_demo",
+            "node_type": "question",
+            "review_status": "AUDITED_READY",
+            "fragments": [{"page": 1, "bbox_px": [10, 20, 300, 400], "role": "question_body", "block_ids": ["b1"], "flags": []}],
+        }
+    ]
+    crop_records = {
+        "q_demo": {
+            "review_canvas": "crops/q_demo/review_canvas.png",
+            "question_composite": "crops/q_demo/question_composite.png",
+            "fragment_records": [{"path": "crops/q_demo/fragment_01.png", "page": 1, "role": "question_body", "bbox_px": [10, 20, 300, 400]}],
+        }
+    }
+    bridge = build_legacy_bridge(nodes, crop_records)
+    question = bridge["questions"][0]
+    assert bridge["schema"] == "legacy_bridge_questions_v0.4_composite_first"
+    assert question["question_image"] == "crops/q_demo/question_composite.png"
+    assert question["stem_image"] == question["question_image"]
+    assert question["gating_result"]["image_input_policy"] == "composite_first"
+    assert question["staged_visual_assets"][0]["attach_status"] == "evidence_only"
