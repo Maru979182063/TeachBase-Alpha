@@ -268,6 +268,66 @@ def get_visual_insert_anchor_review_prompt_bundle() -> dict[str, str]:
     }
 
 
+def get_visual_block_layout_review_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    visual_block_layout = prompts.get("visual_block_layout_review", {})
+    if not isinstance(visual_block_layout, dict):
+        raise PromptConfigError("missing_visual_block_layout_review_prompt_config")
+    return {
+        "prompt_version": str(visual_block_layout.get("prompt_version", "") or ""),
+        "system_prompt": str(visual_block_layout.get("system_prompt", "") or ""),
+        "user_template": str(visual_block_layout.get("user_template", "") or ""),
+    }
+
+
+def get_split_node_refine_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    split_node_refine = prompts.get("split_node_refine", {})
+    if not isinstance(split_node_refine, dict):
+        raise PromptConfigError("missing_split_node_refine_prompt_config")
+    return {
+        "prompt_version": str(split_node_refine.get("prompt_version", "") or ""),
+        "system_prompt": str(split_node_refine.get("system_prompt", "") or ""),
+        "user_template": str(split_node_refine.get("user_template", "") or ""),
+    }
+
+
+def get_continuation_judge_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    continuation_judge = prompts.get("continuation_judge", {})
+    if not isinstance(continuation_judge, dict):
+        raise PromptConfigError("missing_continuation_judge_prompt_config")
+    return {
+        "prompt_version": str(continuation_judge.get("prompt_version", "") or ""),
+        "system_prompt": str(continuation_judge.get("system_prompt", "") or ""),
+        "user_template": str(continuation_judge.get("user_template", "") or ""),
+    }
+
+
+def get_ownership_conflict_judge_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    ownership_conflict = prompts.get("ownership_conflict_judge", {})
+    if not isinstance(ownership_conflict, dict):
+        raise PromptConfigError("missing_ownership_conflict_judge_prompt_config")
+    return {
+        "prompt_version": str(ownership_conflict.get("prompt_version", "") or ""),
+        "system_prompt": str(ownership_conflict.get("system_prompt", "") or ""),
+        "user_template": str(ownership_conflict.get("user_template", "") or ""),
+    }
+
+
 def get_analysis_figure_rescan_prompt_bundle() -> dict[str, str]:
     config = load_prompt_config()
     prompts = config.get("prompts", {})

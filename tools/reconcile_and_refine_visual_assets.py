@@ -117,6 +117,52 @@ def _fallback_target_field(asset: dict[str, Any]) -> str:
     return "analysis" if asset_role(asset) == "analysis" else "stem"
 
 
+def _apply_visual_insert_anchor_fallback(
+    record: dict[str, Any],
+    *,
+    bundle: dict[str, Any],
+    error: str,
+    reason_flag: str,
+    attempt: int | None = None,
+) -> dict[str, Any]:
+    fallback_plan = _heuristic_visual_anchor_plan(record)
+    if fallback_plan:
+        normalized_plan = _normalize_visual_anchor_plan(record, fallback_plan)
+        qvs = record.get("question_visual_structure", {}) if isinstance(record.get("question_visual_structure"), dict) else {}
+        qvs["visual_insert_anchor_slots"] = assetize_question_images.build_visual_insert_anchor_slots(record)
+        qvs["visual_insert_anchor_plan"] = normalized_plan
+        qvs["content_blocks"] = assetize_question_images.build_content_blocks_from_visual_insert_anchor_plan(record, normalized_plan)
+        qvs["inline_asset_anchor_mode"] = "slot_reflow_v1"
+        qvs["review_flags"] = sorted(
+            set(
+                [str(flag) for flag in (qvs.get("review_flags", []) or [])]
+                + ["visual_insert_anchor_review_applied", "visual_insert_anchor_slot_order_fallback", reason_flag]
+            )
+        )
+        record["question_visual_structure"] = qvs
+        record["visual_insert_anchor_review"] = {
+            "prompt_version": bundle["prompt_version"],
+            "available_slots": qvs["visual_insert_anchor_slots"],
+            "placements": normalized_plan,
+            "global_review_flags": [reason_flag, "visual_insert_anchor_slot_order_fallback"],
+            "raw_response": {"error": str(error or "")[:500], "fallback": True},
+        }
+        return {
+            "question_id": record.get("question_id", ""),
+            "action": "visual_insert_anchor_slot_fallback_applied",
+            "asset_count": len(normalized_plan),
+            "reason": reason_flag,
+            "attempt": attempt,
+        }
+    return {
+        "question_id": record.get("question_id", ""),
+        "action": "visual_insert_anchor_model_failed",
+        "error": str(error or "")[:500],
+        "reason": reason_flag,
+        "attempt": attempt,
+    }
+
+
 def _normalize_visual_anchor_plan(record: dict[str, Any], placements: list[dict[str, Any]]) -> list[dict[str, Any]]:
     assets = _selected_visual_insert_assets(record)
     selected_ids = [asset_id(asset) for asset in assets if asset_id(asset)]
@@ -320,12 +366,365 @@ def _build_anchor_review_field_snapshots(record: dict[str, Any]) -> dict[str, st
     }
 
 
+def _is_long_question_image(record: dict[str, Any], manifest_path: Path) -> bool:
+    question_image_path = _question_image_path(record, manifest_path)
+    if not question_image_path or not question_image_path.exists():
+        return False
+    try:
+        with Image.open(question_image_path) as image:
+            width, height = image.size
+    except Exception:
+        return False
+    return height >= 1300 or height >= width * 1.55
+
+
+def _should_use_visual_block_layout_review(
+    record: dict[str, Any],
+    assets: list[dict[str, Any]],
+    *,
+    manifest_path: Path,
+) -> tuple[bool, str]:
+    if len(assets) < 3:
+        return False, "asset_count_lt_3"
+    has_group_asset = any(is_panel_group_asset(asset) for asset in assets)
+    has_long_flag = any(
+        "long_image_branch" in {str(flag) for flag in (asset.get("review_flags", []) or [])}
+        for asset in assets
+    )
+    if not has_group_asset and not has_long_flag:
+        return False, "no_panel_or_long_asset"
+    if not _is_long_question_image(record, manifest_path):
+        return False, "question_image_not_long"
+    return True, "long_panel_group"
+
+
+def _split_text_segments(field: str, text_md: str) -> list[dict[str, Any]]:
+    value = str(text_md or "").strip()
+    if not value:
+        return []
+    cut_points: set[int] = set()
+    cursor = 0
+    for line in value.splitlines(keepends=True):
+        cursor += len(line)
+        cut_points.add(cursor)
+    try:
+        for slot in assetize_question_images._extract_visual_insert_anchor_slots_for_field(field, value):
+            cut_points.add(int(slot.get("end", 0) or 0))
+    except Exception:
+        pass
+    segments: list[dict[str, Any]] = []
+    index = 1
+    start = 0
+    for end in sorted(point for point in cut_points if 0 < point <= len(value)):
+        segment_text = value[start:end].strip()
+        if segment_text:
+            segments.append(
+                {
+                    "segment_id": f"{field}_seg_{index:03d}",
+                    "field": field,
+                    "text_md": segment_text,
+                    "index": index,
+                }
+            )
+            index += 1
+        start = end
+    segment_text = value[start:].strip()
+    if segment_text:
+        segments.append(
+            {
+                "segment_id": f"{field}_seg_{index:03d}",
+                "field": field,
+                "text_md": segment_text,
+                "index": index,
+            }
+        )
+    return segments
+
+
+def _build_visual_block_text_segments(record: dict[str, Any]) -> list[dict[str, Any]]:
+    segments: list[dict[str, Any]] = []
+    for field in ("stem", "answer", "analysis"):
+        segments.extend(_split_text_segments(field, str(record.get(f"{field}_text_md", "") or "")))
+    return segments
+
+
+def _render_visual_block_segments_for_prompt(segments: list[dict[str, Any]]) -> str:
+    lines: list[str] = []
+    for segment in segments:
+        text = str(segment.get("text_md", "") or "").replace("\n", " / ")
+        if len(text) > 420:
+            text = text[:420].rstrip() + "..."
+        lines.append(
+            f'- segment_id={segment["segment_id"]}; field={segment["field"]}; text="{text}"'
+        )
+    return "\n".join(lines)
+
+
+def _build_content_blocks_from_visual_block_layout(
+    record: dict[str, Any],
+    raw_blocks: list[dict[str, Any]],
+    *,
+    segments: list[dict[str, Any]],
+    expected_asset_ids: list[str],
+) -> tuple[list[dict[str, Any]] | None, list[str]]:
+    segment_by_id = {str(item.get("segment_id", "") or ""): item for item in segments}
+    expected_segment_ids = [str(item.get("segment_id", "") or "") for item in segments]
+    asset_by_id = assetize_question_images._assets_by_id(record)
+    expected_assets = [asset_id for asset_id in expected_asset_ids if asset_id in asset_by_id]
+    seen_segments: list[str] = []
+    seen_assets: list[str] = []
+    blocks: list[dict[str, Any]] = []
+    flags: list[str] = []
+    block_order = 0
+    md_index: dict[str, int] = {"stem": 1, "answer": 1, "analysis": 1}
+    image_index: dict[str, int] = {"stem": 1, "answer": 1, "analysis": 1}
+
+    def append_markdown(field: str, text_md: str) -> None:
+        nonlocal block_order
+        content = str(text_md or "").strip()
+        if not content:
+            return
+        block_order += 1
+        idx = md_index[field]
+        md_index[field] += 1
+        blocks.append(
+            {
+                "block_id": f"blk_visual_block_{field}_md_{idx:03d}",
+                "block_order": block_order,
+                "scope": field,
+                "block_type": "markdown",
+                "text_md": content,
+                "asset_id": None,
+                "display_ref": None,
+                "confidence": 1.0,
+                "review_flags": ["visual_block_layout_review_applied"],
+            }
+        )
+
+    def append_image(field: str, asset: dict[str, Any]) -> None:
+        nonlocal block_order
+        if field not in {"stem", "answer", "analysis"}:
+            field = _fallback_target_field(asset)
+        block_order += 1
+        idx = image_index[field]
+        image_index[field] += 1
+        blocks.append(
+            {
+                "block_id": f"blk_visual_block_{field}_img_{idx:03d}",
+                "block_order": block_order,
+                "scope": field,
+                "block_type": "image",
+                "text_md": None,
+                "asset_id": asset_id(asset),
+                "display_ref": str(asset.get("display_ref", "") or "").strip(),
+                "storage_key": str(asset.get("storage_key", "") or "").strip(),
+                "asset_role": asset_role(asset),
+                "confidence": 1.0,
+                "review_flags": ["visual_block_layout_review_applied"],
+                "anchor_mode": "block_layout",
+            }
+        )
+
+    current_field = "stem"
+    for item in raw_blocks:
+        if not isinstance(item, dict):
+            continue
+        block_type = str(item.get("block_type", item.get("type", "")) or "").strip()
+        if block_type in {"text", "markdown"}:
+            sid = str(item.get("segment_id", "") or "").strip()
+            segment = segment_by_id.get(sid)
+            if segment is None:
+                flags.append(f"unknown_segment:{sid}")
+                continue
+            seen_segments.append(sid)
+            current_field = str(segment.get("field", "") or "").strip() or current_field
+            append_markdown(current_field, str(segment.get("text_md", "") or ""))
+            continue
+        if block_type == "image":
+            aid = str(item.get("asset_id", "") or "").strip()
+            asset = asset_by_id.get(aid)
+            if asset is None or aid not in expected_assets:
+                flags.append(f"unknown_asset:{aid}")
+                continue
+            seen_assets.append(aid)
+            field = str(item.get("field", item.get("scope", "")) or "").strip() or current_field
+            append_image(field, asset)
+
+    if seen_segments != expected_segment_ids:
+        flags.append("segment_sequence_mismatch")
+    if sorted(seen_assets) != sorted(expected_assets):
+        flags.append("asset_set_mismatch")
+    if len(seen_assets) != len(set(seen_assets)):
+        flags.append("duplicate_asset_in_blocks")
+    if len(seen_segments) != len(set(seen_segments)):
+        flags.append("duplicate_segment_in_blocks")
+    if flags:
+        return None, normalize_review_flags(flags)
+    return blocks, []
+
+
+def _call_visual_block_layout_review(
+    record: dict[str, Any],
+    *,
+    manifest_path: Path,
+    api_key: str,
+    model: str,
+    model_timeout: int = 60,
+) -> dict[str, Any] | None:
+    assets = _selected_visual_insert_assets(record)
+    should_use, reason = _should_use_visual_block_layout_review(record, assets, manifest_path=manifest_path)
+    if not should_use:
+        return None
+    if not api_key:
+        return {"question_id": record.get("question_id", ""), "action": "visual_block_layout_model_not_run_missing_api_key", "reason": reason}
+    if len(assets) > 10:
+        return {"question_id": record.get("question_id", ""), "action": "visual_block_layout_skipped_too_many_assets", "asset_count": len(assets)}
+    question_image_path = _question_image_path(record, manifest_path)
+    if not question_image_path or not question_image_path.exists():
+        return {"question_id": record.get("question_id", ""), "action": "visual_block_layout_missing_question_image"}
+    segments = _build_visual_block_text_segments(record)
+    if not segments:
+        return {"question_id": record.get("question_id", ""), "action": "visual_block_layout_no_text_segments"}
+    if len(segments) > 180:
+        return {"question_id": record.get("question_id", ""), "action": "visual_block_layout_skipped_too_many_segments", "segment_count": len(segments)}
+
+    bundle = vision_prompt_store.get_visual_block_layout_review_prompt_bundle()
+    asset_lines: list[str] = []
+    content: list[dict[str, Any]] = [
+        {
+            "type": "text",
+            "text": "",
+        },
+        {
+            "type": "image_url",
+            "image_url": {"url": option_anchor_detection._image_to_data_url(question_image_path)},
+        },
+    ]
+    expected_asset_ids: list[str] = []
+    for asset in assets:
+        aid = asset_id(asset)
+        crop_path = local_path(asset, manifest_path)
+        if not aid or not crop_path or not crop_path.exists():
+            continue
+        expected_asset_ids.append(aid)
+        asset_lines.append(
+            f"- asset_id={aid}; current_role={asset_role(asset)}; candidate_anchor_key={str(asset.get('candidate_anchor_key', '') or '').strip()}; candidate_anchor_order={int(asset.get('candidate_anchor_order', 0) or 0)}"
+        )
+        content.append({"type": "text", "text": f"Asset crop: {asset_lines[-1]}"})
+        content.append({"type": "image_url", "image_url": {"url": option_anchor_detection._image_to_data_url(crop_path)}})
+    if not expected_asset_ids:
+        return {"question_id": record.get("question_id", ""), "action": "visual_block_layout_no_materialized_assets"}
+
+    prompt_text = vision_prompt_store.render_template(
+        bundle["user_template"],
+        {
+            "TEXT_SEGMENTS": _render_visual_block_segments_for_prompt(segments),
+            "ASSET_LINES": "\n".join(asset_lines),
+        },
+    )
+    content[0] = {"type": "text", "text": prompt_text}
+    body = {
+        "model": model,
+        "temperature": 0.0,
+        "messages": [
+            {"role": "system", "content": bundle["system_prompt"]},
+            {"role": "user", "content": content},
+        ],
+    }
+    request = urllib.request.Request(
+        option_anchor_detection.API_URL,
+        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
+        method="POST",
+    )
+    last_error = ""
+    raw = ""
+    for attempt in range(1, 4):
+        try:
+            with urllib.request.urlopen(request, timeout=max(10, int(model_timeout or 60))) as response:
+                raw = response.read().decode("utf-8")
+            break
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")
+            last_error = f"http_{exc.code}: {detail}"[:300]
+            if exc.code not in {408, 409, 425, 429, 500, 502, 503, 504} or attempt >= 3:
+                return {
+                    "question_id": record.get("question_id", ""),
+                    "action": "visual_block_layout_http_error",
+                    "error": last_error,
+                    "attempt": attempt,
+                }
+        except Exception as exc:
+            last_error = str(exc)[:300]
+            if attempt >= 3:
+                return {
+                    "question_id": record.get("question_id", ""),
+                    "action": "visual_block_layout_model_failed",
+                    "error": last_error,
+                    "attempt": attempt,
+                }
+        time.sleep(2 * attempt)
+
+    payload = json.loads(raw)
+    parsed = option_anchor_detection._extract_json_block(payload["choices"][0]["message"]["content"])
+    raw_blocks = parsed.get("blocks", []) if isinstance(parsed.get("blocks", []), list) else []
+    content_blocks, validation_flags = _build_content_blocks_from_visual_block_layout(
+        record,
+        raw_blocks,
+        segments=segments,
+        expected_asset_ids=expected_asset_ids,
+    )
+    if content_blocks is None:
+        record["visual_block_layout_review"] = {
+            "prompt_version": bundle["prompt_version"],
+            "trigger_reason": reason,
+            "segments": segments,
+            "raw_response": payload,
+            "global_review_flags": validation_flags,
+        }
+        return {
+            "question_id": record.get("question_id", ""),
+            "action": "visual_block_layout_rejected",
+            "reason": reason,
+            "review_flags": validation_flags,
+        }
+
+    qvs = record.get("question_visual_structure", {}) if isinstance(record.get("question_visual_structure"), dict) else {}
+    qvs["visual_block_layout_segments"] = segments
+    qvs["visual_block_layout_plan"] = raw_blocks
+    qvs["content_blocks"] = content_blocks
+    qvs["inline_asset_anchor_mode"] = "slot_reflow_v1"
+    qvs["review_flags"] = sorted(
+        set([str(flag) for flag in (qvs.get("review_flags", []) or [])] + ["visual_block_layout_review_applied"])
+    )
+    record["question_visual_structure"] = qvs
+    record["visual_block_layout_review"] = {
+        "prompt_version": bundle["prompt_version"],
+        "trigger_reason": reason,
+        "segments": segments,
+        "blocks": raw_blocks,
+        "global_review_flags": [str(flag) for flag in (parsed.get("global_review_flags", []) or []) if str(flag).strip()],
+        "raw_response": payload,
+    }
+    return {
+        "question_id": record.get("question_id", ""),
+        "action": "visual_block_layout_review_applied",
+        "reason": reason,
+        "asset_count": len(expected_asset_ids),
+        "segment_count": len(segments),
+    }
+
+
 def _call_visual_insert_anchor_review(
     record: dict[str, Any],
     *,
     manifest_path: Path,
     api_key: str,
     model: str,
+    model_timeout: int = 60,
 ) -> dict[str, Any]:
     assets = _selected_visual_insert_assets(record)
     if not assets:
@@ -413,7 +812,7 @@ def _call_visual_insert_anchor_review(
     raw = ""
     for attempt in range(1, 4):
         try:
-            with urllib.request.urlopen(request, timeout=240) as response:
+            with urllib.request.urlopen(request, timeout=max(10, int(model_timeout or 60))) as response:
                 raw = response.read().decode("utf-8")
             break
         except urllib.error.HTTPError as exc:
@@ -429,40 +828,25 @@ def _call_visual_insert_anchor_review(
         except Exception as exc:
             last_error = str(exc)[:300]
             if attempt >= 3:
-                fallback_plan = _heuristic_visual_anchor_plan(record)
-                if fallback_plan:
-                    normalized_plan = _normalize_visual_anchor_plan(record, fallback_plan)
-                    qvs = record.get("question_visual_structure", {}) if isinstance(record.get("question_visual_structure"), dict) else {}
-                    qvs["visual_insert_anchor_slots"] = assetize_question_images.build_visual_insert_anchor_slots(record)
-                    qvs["visual_insert_anchor_plan"] = normalized_plan
-                    qvs["content_blocks"] = assetize_question_images.build_content_blocks_from_visual_insert_anchor_plan(record, normalized_plan)
-                    qvs["inline_asset_anchor_mode"] = "slot_reflow_v1"
-                    qvs["review_flags"] = sorted(
-                        set([str(flag) for flag in (qvs.get("review_flags", []) or [])] + ["visual_insert_anchor_review_applied", "visual_insert_anchor_slot_order_fallback"])
-                    )
-                    record["question_visual_structure"] = qvs
-                    record["visual_insert_anchor_review"] = {
-                        "prompt_version": bundle["prompt_version"],
-                        "available_slots": qvs["visual_insert_anchor_slots"],
-                        "placements": normalized_plan,
-                        "global_review_flags": ["visual_insert_anchor_model_failed", "visual_insert_anchor_slot_order_fallback"],
-                        "raw_response": {"error": last_error, "fallback": True},
-                    }
-                    return {
-                        "question_id": record.get("question_id", ""),
-                        "action": "visual_insert_anchor_slot_fallback_applied",
-                        "asset_count": len(normalized_plan),
-                        "attempt": attempt,
-                    }
-                return {
-                    "question_id": record.get("question_id", ""),
-                    "action": "visual_insert_anchor_model_failed",
-                    "error": last_error,
-                    "attempt": attempt,
-                }
+                return _apply_visual_insert_anchor_fallback(
+                    record,
+                    bundle=bundle,
+                    error=last_error,
+                    reason_flag="visual_insert_anchor_model_failed",
+                    attempt=attempt,
+                )
         time.sleep(2 * attempt)
-    payload = json.loads(raw)
-    parsed = option_anchor_detection._extract_json_block(payload["choices"][0]["message"]["content"])
+    try:
+        payload = json.loads(raw)
+        parsed = option_anchor_detection._extract_json_block(payload["choices"][0]["message"]["content"])
+    except Exception as exc:
+        return _apply_visual_insert_anchor_fallback(
+            record,
+            bundle=bundle,
+            error=f"visual_insert_anchor_bad_json: {exc}",
+            reason_flag="visual_insert_anchor_bad_json_fallback",
+            attempt=None,
+        )
     placements = parsed.get("placements", []) if isinstance(parsed.get("placements", []), list) else []
     normalized_plan = _normalize_visual_anchor_plan(record, placements)
     qvs = record.get("question_visual_structure", {}) if isinstance(record.get("question_visual_structure"), dict) else {}
@@ -826,9 +1210,14 @@ def refine_asset(
         with Image.open(path) as im:
             image = im.convert("RGB")
             width, height = image.size
+            debug["final_refine_contract"] = "single_candidate_refine_v0.1"
+            debug["final_refine_input_width"] = width
+            debug["final_refine_input_height"] = height
             payload = option_anchor_detection._call_inline_figure_refine_model(api_key, model, image)
             asset["final_asset_quality_model_payload"] = payload
             if not bool(payload.get("is_valid_figure", True)):
+                debug["final_refine_action"] = "model_invalid_figure"
+                asset["debug"] = debug
                 asset["review_flags"] = sorted(set(flags + ["final_asset_quality_model_invalid_figure"]))
                 return {"question_id": qid, "asset_id": aid, "action": "model_invalid_figure"}
             bbox = valid_bbox(
@@ -839,11 +1228,17 @@ def refine_asset(
                 canvas_height=int(payload.get("image_height", 0) or 0),
             )
             if not bbox:
+                debug["final_refine_action"] = "bbox_invalid"
+                asset["debug"] = debug
                 asset["review_flags"] = sorted(set(flags + ["final_asset_quality_bbox_invalid"]))
                 return {"question_id": qid, "asset_id": aid, "action": "bbox_invalid"}
             x1, y1, x2, y2 = bbox
             area_ratio = ((x2 - x1) * (y2 - y1)) / max(width * height, 1)
             if area_ratio < 0.55:
+                debug["final_refine_action"] = "shrink_rejected_keep_current"
+                debug["final_refine_rejected_bbox"] = {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+                debug["final_refine_rejected_area_ratio"] = round(area_ratio, 4)
+                asset["debug"] = debug
                 asset["review_flags"] = sorted(set(flags + ["final_asset_quality_shrink_rejected_keep_current"]))
                 return {
                     "question_id": qid,
@@ -852,6 +1247,8 @@ def refine_asset(
                     "area_ratio": round(area_ratio, 4),
                 }
             if area_ratio > 0.985 and x1 <= 2 and y1 <= 2:
+                debug["final_refine_action"] = "checked_no_change"
+                asset["debug"] = debug
                 asset["review_flags"] = sorted(set(flags + ["final_asset_quality_checked_no_change"]))
                 return {"question_id": qid, "asset_id": aid, "action": "checked_no_change"}
             refined_bbox = expand_bbox_for_safe_crop((x1, y1, x2, y2), width, height)
@@ -866,6 +1263,7 @@ def refine_asset(
             debug["final_refine_input_source"] = refine_input_source
             debug["final_refine_original_bbox"] = {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
             debug["final_refine_expanded_bbox"] = {"x1": rx1, "y1": ry1, "x2": rx2, "y2": ry2}
+            debug["final_refine_action"] = "refined_by_model"
             asset["debug"] = debug
             asset["storage_key"] = str(refined_path.relative_to(out_dir)).replace("\\", "/")
             asset["image_width"] = refined.width
@@ -879,6 +1277,9 @@ def refine_asset(
                 "refine_input_source": refine_input_source,
             }
     except Exception as exc:
+        debug["final_refine_action"] = "model_failed"
+        debug["final_refine_error"] = str(exc)[:240]
+        asset["debug"] = debug
         asset["review_flags"] = sorted(set(flags + ["final_asset_quality_model_failed"]))
         return {"question_id": qid, "asset_id": aid, "action": "model_failed", "error": str(exc)[:240]}
 
@@ -936,6 +1337,7 @@ def main() -> None:
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--api-key", default=os.environ.get("ARK_API_KEY", ""))
     parser.add_argument("--model", default="doubao-seed-2-0-lite-260428")
+    parser.add_argument("--model-timeout", type=int, default=60)
     parser.add_argument("--skip-model-refine", action="store_true")
     parser.add_argument("--skip-visual-insert-anchor-review", action="store_true")
     args = parser.parse_args()
@@ -980,14 +1382,25 @@ def main() -> None:
         selection_actions.extend(compact_evidence_assets(record))
         selection_actions.extend(select_delivery_assets(record))
         if not args.skip_visual_insert_anchor_review:
-            visual_anchor_actions.append(
-                _call_visual_insert_anchor_review(
-                    record,
-                    manifest_path=manifest_path,
-                    api_key=str(args.api_key or ""),
-                    model=str(args.model or ""),
-                )
+            block_layout_action = _call_visual_block_layout_review(
+                record,
+                manifest_path=manifest_path,
+                api_key=str(args.api_key or ""),
+                model=str(args.model or ""),
+                model_timeout=int(args.model_timeout or 60),
             )
+            if block_layout_action is not None:
+                visual_anchor_actions.append(block_layout_action)
+            if not block_layout_action or str(block_layout_action.get("action", "") or "") != "visual_block_layout_review_applied":
+                visual_anchor_actions.append(
+                    _call_visual_insert_anchor_review(
+                        record,
+                        manifest_path=manifest_path,
+                        api_key=str(args.api_key or ""),
+                        model=str(args.model or ""),
+                        model_timeout=int(args.model_timeout or 60),
+                    )
+                )
         try:
             record["display_blocks"] = assetize_question_images.build_display_blocks(record)
             record["display_markdown"] = (

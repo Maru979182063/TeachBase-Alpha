@@ -562,17 +562,21 @@ def run_runtime_route_planner(
     return summary
 
 
-def run_subprocess(command: list[str], env: dict[str, str]) -> dict:
-    completed = subprocess.run(
-        command,
-        cwd=str(WORKSPACE_ROOT),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        env=env,
-        check=False,
-    )
+def run_subprocess(command: list[str], env: dict[str, str], timeout_seconds: float | None = None) -> dict:
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=str(WORKSPACE_ROOT),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=env,
+            check=False,
+            timeout=timeout_seconds,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"command_timeout_after_{timeout_seconds}s: {' '.join(command)}") from exc
     if completed.returncode != 0:
         raise RuntimeError(
             f"command_failed rc={completed.returncode}\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
@@ -711,7 +715,9 @@ def run_prepare_option_source_stage(
     api_key = str(os.environ.get("ARK_API_KEY", "") or "").strip()
     if api_key:
         command.extend(["--api-key", api_key])
-    result = run_subprocess(command, env=env)
+    timeout_raw = str(os.environ.get("OPTION_PREPARE_TIMEOUT_SECONDS", "") or "").strip()
+    timeout_seconds = float(timeout_raw) if timeout_raw else 240.0
+    result = run_subprocess(command, env=env, timeout_seconds=timeout_seconds)
     result["prepared_source_json"] = str(prepared_path)
     return result
 

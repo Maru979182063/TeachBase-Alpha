@@ -12,7 +12,13 @@ if VENDOR_DIR.exists():
 
 import fitz
 
-from tools.split_pipeline_v03 import build_legacy_bridge, run_split_v03_for_doc, summarize_nodes, write_json
+from tools.split_pipeline_v03 import (
+    build_legacy_bridge,
+    build_review_repair_pool,
+    run_split_v03_for_doc,
+    summarize_nodes,
+    write_json,
+)
 
 
 EXPECTED_PAGE_COUNTS = {"math": 26, "english": 24, "biology": 39}
@@ -87,6 +93,8 @@ def run(args: argparse.Namespace) -> int:
     audit_records = []
     for result in all_doc_results.values():
         audit_records.extend(result["audit_records"])
+    repair_pool = build_review_repair_pool(all_nodes, all_crop_records, audit_records)
+    write_json(out / "review_repair_pool.json", repair_pool)
     write_json(out / "audit" / "audit_report.json", {"schema": "audit_report_v0.3", "records": audit_records})
 
     gate_status = {
@@ -99,6 +107,10 @@ def run(args: argparse.Namespace) -> int:
         "G_cross_page_accumulator": gate(any(len(n.get("fragments", [])) > 1 for n in all_nodes) and any(e["event"] == "attach_to_existing" for e in all_trace), ["open_node_trace has attach_to_existing and multi-fragment nodes"]),
         "H_auditor": gate(all(r["status"] in {"AUDITED_READY", "NEEDS_REVIEW", "QUARANTINED"} for r in audit_records), ["all nodes audited with v03 statuses"]),
         "I_legacy_bridge": gate(all(q["review_status"] == "AUDITED_READY" and q["node_type"] == "question" for q in bridge["questions"]), ["legacy bridge only exports AUDITED_READY question nodes"]),
+        "J_review_repair_pool": gate(
+            any(item.get("review_status") != "AUDITED_READY" for item in repair_pool["items"]),
+            ["non-ready semantic nodes are preserved in review_repair_pool.json instead of being silently dropped"],
+        ),
     }
     page_count_gate = all(fixtures[k]["page_count"] == EXPECTED_PAGE_COUNTS[k] for k in EXPECTED_PAGE_COUNTS)
     if not page_count_gate:
@@ -126,6 +138,7 @@ def run(args: argparse.Namespace) -> int:
             str(out / "nodes" / "semantic_nodes.json"),
             str(out / "audit" / "audit_report.json"),
             str(out / "legacy_bridge_questions.json"),
+            str(out / "review_repair_pool.json"),
             str(out / "debug" / "open_node_trace.json"),
             str(out / "debug" / "blocks_overlay"),
         ],

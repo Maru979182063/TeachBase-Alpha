@@ -3,12 +3,22 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
+import traceback
 from datetime import datetime
 from pathlib import Path
 
-import option_anchor_detection
 import option_choice_gating
 import option_crop_staging
+
+
+DEFAULT_OPTION_ANCHOR_MODEL = "doubao-seed-2-0-lite-260428"
+
+
+def _option_anchor_detection():
+    import option_anchor_detection
+
+    return option_anchor_detection
 
 
 def safe_slug(text: str) -> str:
@@ -170,6 +180,27 @@ def write_json(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def safe_progress_print(payload: object) -> None:
+    """Progress printing must never turn a completed question into a failed one."""
+    try:
+        print(json.dumps(payload, ensure_ascii=False), flush=True)
+    except OSError as exc:
+        try:
+            print(
+                json.dumps(
+                    {
+                        "event": "progress_print_failed",
+                        "error": str(exc),
+                    },
+                    ensure_ascii=False,
+                ),
+                file=sys.stderr,
+                flush=False,
+            )
+        except Exception:
+            pass
+
+
 def append_jsonl(path: Path | None, payload: object) -> None:
     if path is None:
         return
@@ -246,6 +277,7 @@ def build_prepared_payload(
     model: str = "",
     require_vision_figure_model: bool = False,
     allow_heuristic_figure_fallback: bool = True,
+    semantic_bridge_enable_image_detection: bool = False,
     progress_path: Path | None = None,
     partial_path: Path | None = None,
 ) -> dict:
@@ -275,23 +307,102 @@ def build_prepared_payload(
                 "question_id": question_id,
             },
         )
-        print(
-            json.dumps(
-                {
-                    "event": "question_started",
-                    "index": index,
-                    "total_count": total_count,
-                    "question_id": question_id,
-                },
-                ensure_ascii=False,
-            ),
-            flush=True,
+        safe_progress_print(
+            {
+                "event": "question_started",
+                "index": index,
+                "total_count": total_count,
+                "question_id": question_id,
+            }
         )
         enriched = dict(question)
         question_uid = make_question_uid(source_json_path, question, index)
         try:
             enriched["question_uid"] = question_uid
             enriched["runtime_run_id"] = runtime_run_id
+            bridge_contract = question.get("bridge_contract", {}) if isinstance(question.get("bridge_contract"), dict) else {}
+            if (
+                str(bridge_contract.get("option_prepare_policy", "") or "") == "do_not_detect_on_composite"
+                and not semantic_bridge_enable_image_detection
+            ):
+                planner_scope = {
+                    "option": False,
+                    "stem": False,
+                    "analysis": False,
+                    "reason": "semantic_v03_bridge_uses_composite_for_transcription_only",
+                }
+                gating = {
+                    "should_run_option_detection": False,
+                    "gate_reason": planner_scope["reason"],
+                    "planner_scope": planner_scope,
+                }
+                detection = _empty_detection()
+                detection["global_review_flags"] = [
+                    "option_prepare_skipped_composite_input",
+                    "asset_detection_must_use_bridge_fragments",
+                ]
+                staged_assets: list[dict] = []
+                enriched["option_anchor_mode"] = option_anchor_mode
+                enriched["figure_detection_scope"] = planner_scope
+                enriched["gating_result"] = gating
+                enriched["option_visual_blocks"] = []
+                enriched["stem_image_bboxes"] = []
+                enriched["analysis_image_bboxes"] = []
+                enriched["unassigned_image_bboxes"] = []
+                enriched["option_detection_review_flags"] = detection["global_review_flags"]
+                enriched["figure_branch_trace"] = []
+                enriched["staged_visual_assets"] = staged_assets
+                enriched_questions.append(enriched)
+                debug_rows.append(
+                    {
+                        "question_id": question.get("question_id", ""),
+                        "question_uid": question_uid,
+                        "runtime_run_id": runtime_run_id,
+                        "figure_detection_scope": planner_scope,
+                        "gating": gating,
+                        "detection": detection,
+                        "staged_visual_assets": staged_assets,
+                    }
+                )
+                write_partial_payload(
+                    partial_path,
+                    payload,
+                    source_json_path=source_json_path,
+                    runtime_run_id=runtime_run_id,
+                    option_anchor_mode=option_anchor_mode,
+                    require_vision_figure_model=require_vision_figure_model,
+                    allow_heuristic_figure_fallback=allow_heuristic_figure_fallback,
+                    enriched_questions=enriched_questions,
+                    debug_rows=debug_rows,
+                    current_index=index,
+                    total_count=total_count,
+                )
+                elapsed = round((datetime.now() - started_at).total_seconds(), 3)
+                append_jsonl(
+                    progress_path,
+                    {
+                        "event": "question_completed",
+                        "time": datetime.now().isoformat(timespec="seconds"),
+                        "index": index,
+                        "total_count": total_count,
+                        "question_id": question_id,
+                        "elapsed_seconds": elapsed,
+                        "staged_asset_count": 0,
+                        "review_flags": detection["global_review_flags"],
+                    },
+                )
+                safe_progress_print(
+                    {
+                        "event": "question_completed",
+                        "index": index,
+                        "total_count": total_count,
+                        "question_id": question_id,
+                        "elapsed_seconds": elapsed,
+                        "staged_asset_count": 0,
+                        "prepare_policy": "skipped_composite_input",
+                    }
+                )
+                continue
             planner_scope = _planner_scope(question)
 
             if planner_scope.get("option", True):
@@ -312,7 +423,7 @@ def build_prepared_payload(
                         "planner_override_reason": "image_need_gate_options",
                         "planner_scope": planner_scope,
                     }
-                detection = option_anchor_detection.detect_option_anchors(
+                detection = _option_anchor_detection().detect_option_anchors(
                     question,
                     gating,
                     api_key=api_key,
@@ -327,7 +438,7 @@ def build_prepared_payload(
                 detection = _empty_detection()
 
             if planner_scope.get("stem", True) or planner_scope.get("analysis", True):
-                public_figures = option_anchor_detection.detect_public_figure_regions(
+                public_figures = _option_anchor_detection().detect_public_figure_regions(
                     question,
                     api_key=api_key,
                     model=model,
@@ -423,19 +534,15 @@ def build_prepared_payload(
                     "review_flags": detection.get("global_review_flags", []) or [],
                 },
             )
-            print(
-                json.dumps(
-                    {
-                        "event": "question_completed",
-                        "index": index,
-                        "total_count": total_count,
-                        "question_id": question_id,
-                        "elapsed_seconds": elapsed,
-                        "staged_asset_count": len(staged_assets),
-                    },
-                    ensure_ascii=False,
-                ),
-                flush=True,
+            safe_progress_print(
+                {
+                    "event": "question_completed",
+                    "index": index,
+                    "total_count": total_count,
+                    "question_id": question_id,
+                    "elapsed_seconds": elapsed,
+                    "staged_asset_count": len(staged_assets),
+                }
             )
         except Exception as exc:
             append_jsonl(
@@ -447,6 +554,7 @@ def build_prepared_payload(
                     "total_count": total_count,
                     "question_id": question_id,
                     "error": str(exc),
+                    "traceback": traceback.format_exc(),
                 },
             )
             write_partial_payload(
@@ -462,18 +570,14 @@ def build_prepared_payload(
                 current_index=index,
                 total_count=total_count,
             )
-            print(
-                json.dumps(
-                    {
-                        "event": "question_failed",
-                        "index": index,
-                        "total_count": total_count,
-                        "question_id": question_id,
-                        "error": str(exc),
-                    },
-                    ensure_ascii=False,
-                ),
-                flush=True,
+            safe_progress_print(
+                {
+                    "event": "question_failed",
+                    "index": index,
+                    "total_count": total_count,
+                    "question_id": question_id,
+                    "error": str(exc),
+                }
             )
             raise
 
@@ -486,6 +590,7 @@ def build_prepared_payload(
         "option_anchor_mode": option_anchor_mode,
         "require_vision_figure_model": require_vision_figure_model,
         "allow_heuristic_figure_fallback": allow_heuristic_figure_fallback,
+        "semantic_bridge_enable_image_detection": semantic_bridge_enable_image_detection,
         "questions": enriched_questions,
         "option_visual_debug": debug_rows,
     }
@@ -497,7 +602,7 @@ def main() -> None:
     parser.add_argument("--out-json", required=True)
     parser.add_argument("--option-anchor-mode", default="auto")
     parser.add_argument("--api-key", default=os.environ.get("ARK_API_KEY", ""))
-    parser.add_argument("--model", default=option_anchor_detection.DEFAULT_MODEL)
+    parser.add_argument("--model", default=DEFAULT_OPTION_ANCHOR_MODEL)
     parser.add_argument(
         "--require-vision-figure-model",
         action="store_true",
@@ -509,6 +614,12 @@ def main() -> None:
         action="store_true",
         default=str(os.environ.get("VISUAL_FIGURE_DISABLE_HEURISTIC_FALLBACK", "") or "").strip() == "1",
         help="Do not use heuristic public-figure detection when the model returns no boxes.",
+    )
+    parser.add_argument(
+        "--semantic-bridge-enable-image-detection",
+        action="store_true",
+        default=str(os.environ.get("SEMANTIC_BRIDGE_ENABLE_IMAGE_DETECTION", "") or "").strip() == "1",
+        help="Allow semantic_v03 composite bridge records to run figure detection before transcription/assets.",
     )
     args = parser.parse_args()
 
@@ -527,9 +638,10 @@ def main() -> None:
         source_json,
         option_anchor_mode=str(args.option_anchor_mode or "auto"),
         api_key=api_key,
-        model=str(args.model or option_anchor_detection.DEFAULT_MODEL),
+        model=str(args.model or DEFAULT_OPTION_ANCHOR_MODEL),
         require_vision_figure_model=bool(args.require_vision_figure_model),
         allow_heuristic_figure_fallback=not bool(args.disable_heuristic_figure_fallback),
+        semantic_bridge_enable_image_detection=bool(args.semantic_bridge_enable_image_detection),
         progress_path=progress_path,
         partial_path=partial_path,
     )

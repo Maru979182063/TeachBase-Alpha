@@ -45,6 +45,58 @@ def write_json(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def append_jsonl(path: Path, payload: object) -> None:
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+
+def write_live_progress(
+    out_dir: Path,
+    *,
+    total: int,
+    records: list[dict],
+    current_index: int,
+    current_item: dict | None,
+    current_record_id: str = "",
+    phase: str = "",
+    started_at: str = "",
+    extra: dict | None = None,
+) -> None:
+    ok_count = sum(1 for item in records if item.get("status") == "ok")
+    failed_count = sum(1 for item in records if item.get("status") == "failed")
+    prepared_count = sum(1 for item in records if item.get("status") == "prepared")
+    payload = {
+        "schema": "visual_transcription_live_progress_v0.1",
+        "updated_at": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+        "phase": phase,
+        "total": int(total),
+        "completed": len(records),
+        "remaining": max(0, int(total) - len(records)),
+        "ok_count": ok_count,
+        "failed_count": failed_count,
+        "prepared_count": prepared_count,
+        "current_index": int(current_index),
+        "current_question_id": str((current_item or {}).get("question_id", "") or ""),
+        "current_record_id": str(current_record_id or ""),
+        "current_started_at": started_at,
+        "last_records": [
+            {
+                "question_id": str(item.get("question_id", "") or ""),
+                "record_id": str(item.get("record_id", "") or ""),
+                "status": str(item.get("status", "") or ""),
+                "error": str(item.get("error", "") or "")[:240],
+                "latency_seconds": item.get("latency_seconds", 0),
+            }
+            for item in records[-8:]
+        ],
+        "extra": extra or {},
+    }
+    tmp = out_dir / "live_progress.tmp.json"
+    write_json(tmp, payload)
+    tmp.replace(out_dir / "live_progress.json")
+    append_jsonl(out_dir / "live_progress_events.jsonl", payload)
+
+
 def restore_latex_control_prefixes(value: object) -> object:
     if isinstance(value, str):
         # Some model outputs use raw LaTeX like \triangle or \because inside JSON strings.
@@ -678,7 +730,10 @@ def call_model_with_system(api_key: str, model: str, system_prompt: str, prompt:
             break
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")
-            raise RuntimeError(f"http_{exc.code}: {detail}") from exc
+            last_error = RuntimeError(f"http_{exc.code}: {detail}")
+            if exc.code not in {408, 409, 425, 429, 500, 502, 503, 504} or attempt >= 2:
+                raise last_error from exc
+            time.sleep(1.0 + attempt * 1.5)
         except (urllib.error.URLError, http.client.RemoteDisconnected, ConnectionResetError) as exc:
             last_error = exc
             if attempt >= 2:
@@ -908,10 +963,30 @@ def main() -> None:
 
     source_cache: dict[str, dict[str, dict]] = {}
     records: list[dict] = []
+    write_live_progress(
+        out_dir,
+        total=len(items),
+        records=records,
+        current_index=0,
+        current_item=None,
+        phase="initialized",
+        extra={"prepare_only": bool(args.prepare_only), "model": args.model},
+    )
 
-    for item in items:
+    for index, item in enumerate(items, start=1):
         source_json_path = Path(item["source_transcription_json"]).resolve()
         record_id = derive_record_id(item, source_json_path)
+        current_started_at = datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+        write_live_progress(
+            out_dir,
+            total=len(items),
+            records=records,
+            current_index=index,
+            current_item=item,
+            current_record_id=record_id,
+            phase="question_started",
+            started_at=current_started_at,
+        )
         if str(source_json_path) not in source_cache:
             source_cache[str(source_json_path)] = load_source_questions(source_json_path)
         source_questions = source_cache[str(source_json_path)]
@@ -927,6 +1002,16 @@ def main() -> None:
                     "tag": item.get("tag", ""),
                 }
             )
+            write_live_progress(
+                out_dir,
+                total=len(items),
+                records=records,
+                current_index=index,
+                current_item=item,
+                current_record_id=record_id,
+                phase="question_finished",
+                started_at=current_started_at,
+            )
             continue
 
         if not args.prepare_only and not args.api_key:
@@ -939,6 +1024,16 @@ def main() -> None:
                     "error": "missing_api_key",
                     "tag": item.get("tag", ""),
                 }
+            )
+            write_live_progress(
+                out_dir,
+                total=len(items),
+                records=records,
+                current_index=index,
+                current_item=item,
+                current_record_id=record_id,
+                phase="question_finished",
+                started_at=current_started_at,
             )
             continue
 
@@ -1002,6 +1097,17 @@ def main() -> None:
             (raw_dir / f"{record_id}.{target_name}").write_text(format_normalize_content, encoding="utf-8")
 
         records.append(record)
+        write_live_progress(
+            out_dir,
+            total=len(items),
+            records=records,
+            current_index=index,
+            current_item=item,
+            current_record_id=record_id,
+            phase="question_finished",
+            started_at=current_started_at,
+            extra={"status": status},
+        )
         time.sleep(max(args.sleep_seconds, 0.0))
 
     ok_records = [item for item in records if item["status"] == "ok"]
@@ -1039,6 +1145,19 @@ def main() -> None:
             )
         )
     write_json(out_dir / "visual_transcription_compact.json", compact)
+    write_live_progress(
+        out_dir,
+        total=len(items),
+        records=records,
+        current_index=len(items),
+        current_item=None,
+        phase="completed",
+        extra={
+            "ok_count": summary["ok_count"],
+            "failed_count": summary["failed_count"],
+            "prepared_count": summary["prepared_count"],
+        },
+    )
     print_json(
         {
             "out_dir": str(out_dir),

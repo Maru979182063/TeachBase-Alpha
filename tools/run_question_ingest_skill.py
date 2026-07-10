@@ -134,6 +134,85 @@ def split_list(items: list[str], shard_count: int) -> list[list[str]]:
     return [items[index::shard_count] for index in range(shard_count)]
 
 
+def failed_question_ids(results_path: Path | None) -> list[str]:
+    failed_ids: list[str] = []
+    seen: set[str] = set()
+    for record in load_records(results_path):
+        if str(record.get("status", "") or "") == "ok":
+            continue
+        question_id = str(record.get("question_id") or record.get("record_id") or "").strip()
+        if question_id and question_id not in seen:
+            seen.add(question_id)
+            failed_ids.append(question_id)
+    return failed_ids
+
+
+def run_transcription_shards(
+    *,
+    args: argparse.Namespace,
+    paths: dict[str, Path],
+    env: dict[str, str],
+    question_ids: list[str],
+    run_prefix: str,
+    log_prefix: str,
+) -> list[Path]:
+    shard_dirs: list[Path] = []
+    futures: list[concurrent.futures.Future] = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.transcription_concurrency)) as pool:
+        for index, shard_ids in enumerate(split_list(question_ids, args.transcription_concurrency), start=1):
+            if not shard_ids:
+                continue
+            shard_manifest = paths["transcription_dir"] / f"{run_prefix}_manifest_{index:02d}.json"
+            build_manifest(paths["abs_source_json"], shard_manifest, shard_ids, f"{run_prefix}_{index:02d}")
+            shard_out = paths["transcription_dir"] / f"{run_prefix}_{index:02d}"
+            shard_dirs.append(shard_out)
+            cmd = [
+                sys.executable,
+                "tools/teacher_handout_visual_transcribe_doubao.py",
+                "--manifest",
+                str(shard_manifest),
+                "--model",
+                args.model,
+                "--out-dir",
+                str(shard_out),
+                "--sleep-seconds",
+                str(args.sleep_seconds),
+            ]
+            futures.append(
+                pool.submit(
+                    run_cmd,
+                    cmd,
+                    cwd=paths["workspace"],
+                    env=env,
+                    log_path=paths["logs"] / f"{log_prefix}_{index:02d}.log",
+                    timeout=None,
+                )
+            )
+        for future in concurrent.futures.as_completed(futures):
+            result = future.result()
+            if result["returncode"] != 0:
+                raise RuntimeError(f"{log_prefix}_failed: {result['log_path']}")
+    return shard_dirs
+
+
+def merge_transcription_runs(
+    *,
+    paths: dict[str, Path],
+    env: dict[str, str],
+    run_dirs: list[Path],
+    out_dir: Path,
+    log_name: str,
+) -> Path:
+    cmd = [sys.executable, "tools/merge_visual_transcription_results.py"]
+    for run_dir in run_dirs:
+        cmd += ["--run-dir", str(run_dir)]
+    cmd += ["--out-dir", str(out_dir)]
+    result = run_cmd(cmd, cwd=paths["workspace"], env=env, log_path=paths["logs"] / log_name)
+    if result["returncode"] != 0:
+        raise RuntimeError(f"merge_transcription_failed: {result['log_path']}")
+    return out_dir / "visual_transcription_results.json"
+
+
 def _same_long_source(question: dict[str, Any]) -> bool:
     question_image_raw = str(question.get("question_image", "") or "").strip()
     stem_image_raw = str(question.get("stem_image", "") or "").strip()
@@ -295,54 +374,67 @@ def run_transcription_retries(args: argparse.Namespace, paths: dict[str, Path], 
     if not retry_ids or args.skip_transcription_retry:
         return existing_results_path
 
-    shard_dirs: list[Path] = []
-    futures: list[concurrent.futures.Future] = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.transcription_concurrency)) as pool:
-        for index, shard_ids in enumerate(split_list(retry_ids, args.transcription_concurrency), start=1):
-            if not shard_ids:
-                continue
-            shard_manifest = paths["transcription_dir"] / f"retry_manifest_{index:02d}.json"
-            build_manifest(paths["abs_source_json"], shard_manifest, shard_ids, f"retry_shard_{index:02d}")
-            shard_out = paths["transcription_dir"] / f"retry_shard_{index:02d}"
-            shard_dirs.append(shard_out)
-            cmd = [
-                sys.executable,
-                "tools/teacher_handout_visual_transcribe_doubao.py",
-                "--manifest",
-                str(shard_manifest),
-                "--model",
-                args.model,
-                "--out-dir",
-                str(shard_out),
-                "--sleep-seconds",
-                str(args.sleep_seconds),
-            ]
-            futures.append(
-                pool.submit(
-                    run_cmd,
-                    cmd,
-                    cwd=paths["workspace"],
-                    env=env,
-                    log_path=paths["logs"] / f"03_transcription_retry_{index:02d}.log",
-                    timeout=None,
-                )
-            )
-        for future in concurrent.futures.as_completed(futures):
-            result = future.result()
-            if result["returncode"] != 0:
-                raise RuntimeError(f"transcription_retry_failed: {result['log_path']}")
+    shard_dirs = run_transcription_shards(
+        args=args,
+        paths=paths,
+        env=env,
+        question_ids=retry_ids,
+        run_prefix="transcription_shard",
+        log_prefix="03_transcription_shard",
+    )
+    merge_inputs = ([existing_results_path.parent] if existing_results_path else []) + shard_dirs
+    current_results = merge_transcription_runs(
+        paths=paths,
+        env=env,
+        run_dirs=merge_inputs,
+        out_dir=paths["transcription_dir"] / "merged",
+        log_name="04_merge_transcription.log",
+    )
 
-    merge_out = paths["transcription_dir"] / "merged"
-    cmd = [sys.executable, "tools/merge_visual_transcription_results.py"]
-    if existing_results_path:
-        cmd += ["--run-dir", str(existing_results_path.parent)]
-    for shard_out in shard_dirs:
-        cmd += ["--run-dir", str(shard_out)]
-    cmd += ["--out-dir", str(merge_out)]
-    result = run_cmd(cmd, cwd=paths["workspace"], env=env, log_path=paths["logs"] / "04_merge_transcription.log")
-    if result["returncode"] != 0:
-        raise RuntimeError(f"merge_transcription_failed: {result['log_path']}")
-    return merge_out / "visual_transcription_results.json"
+    recovery_rows: list[dict[str, Any]] = []
+    for attempt in range(1, max(0, int(args.transcription_recovery_attempts or 0)) + 1):
+        failed_ids = failed_question_ids(current_results)
+        recovery_rows.append(
+            {
+                "attempt": attempt,
+                "input_results": str(current_results),
+                "failed_count": len(failed_ids),
+                "failed_question_ids": failed_ids,
+            }
+        )
+        if not failed_ids:
+            break
+        recovery_shards = run_transcription_shards(
+            args=args,
+            paths=paths,
+            env=env,
+            question_ids=failed_ids,
+            run_prefix=f"recovery_{attempt:02d}",
+            log_prefix=f"04_transcription_recovery_{attempt:02d}",
+        )
+        current_results = merge_transcription_runs(
+            paths=paths,
+            env=env,
+            run_dirs=[current_results.parent] + recovery_shards,
+            out_dir=paths["transcription_dir"] / f"merged_recovery_{attempt:02d}",
+            log_name=f"04_merge_transcription_recovery_{attempt:02d}.log",
+        )
+        recovery_rows[-1]["output_results"] = str(current_results)
+        recovery_rows[-1]["remaining_failed_count"] = len(failed_question_ids(current_results))
+
+    final_failed_ids = failed_question_ids(current_results)
+    write_json(
+        paths["transcription_dir"] / "transcription_recovery_summary.json",
+        {
+            "schema_version": "transcription_recovery.v0.1",
+            "attempt_count": len(recovery_rows),
+            "final_results": str(current_results),
+            "final_failed_count": len(final_failed_ids),
+            "final_failed_question_ids": final_failed_ids,
+            "rows": recovery_rows,
+        },
+    )
+    return current_results
 
 
 def _record_has_format_normalize_node(record: dict[str, Any]) -> bool:
@@ -612,6 +704,8 @@ def run_asset_visual_consolidation(args: argparse.Namespace, paths: dict[str, Pa
         str(paths["asset_consolidation_dir"]),
         "--model",
         str(args.model or ""),
+        "--model-timeout",
+        str(args.model_timeout),
     ]
     result = run_cmd(cmd, cwd=paths["workspace"], env=env, log_path=paths["logs"] / "08_asset_visual_consolidation.log")
     if result["returncode"] != 0:
@@ -629,6 +723,8 @@ def run_asset_reconcile_refine(args: argparse.Namespace, paths: dict[str, Path],
         str(paths["asset_reconcile_dir"]),
         "--model",
         str(args.model or ""),
+        "--model-timeout",
+        str(args.model_timeout),
     ]
     result = run_cmd(cmd, cwd=paths["workspace"], env=env, log_path=paths["logs"] / "08_5_asset_reconcile_refine.log")
     if result["returncode"] != 0:
@@ -690,6 +786,8 @@ def summarize(paths: dict[str, Path], visual_results: Path | None) -> dict[str, 
     visual_records = load_records(visual_results)
     format_normalize_summary_path = paths["transcription_format_dir"] / "format_normalize_only_summary.json"
     format_normalize_summary = read_json(format_normalize_summary_path) if format_normalize_summary_path.exists() else {}
+    transcription_recovery_path = paths["transcription_dir"] / "transcription_recovery_summary.json"
+    transcription_recovery_summary = read_json(transcription_recovery_path) if transcription_recovery_path.exists() else {}
     return {
         "generated_at": now(),
         "status": "complete",
@@ -708,6 +806,9 @@ def summarize(paths: dict[str, Path], visual_results: Path | None) -> dict[str, 
             "question_count": len(visual_records),
             "ok_count": sum(1 for item in visual_records if item.get("status") == "ok"),
             "failed_count": sum(1 for item in visual_records if item.get("status") == "failed"),
+            "recovery_summary": str(transcription_recovery_path),
+            "recovery_final_failed_count": transcription_recovery_summary.get("final_failed_count", 0),
+            "recovery_final_failed_question_ids": transcription_recovery_summary.get("final_failed_question_ids", []),
         },
         "format_normalize_backfill": format_normalize_summary,
         "asset_bundle": {
@@ -755,6 +856,7 @@ def main() -> None:
     parser.add_argument("--figure-concurrency", type=int, default=4)
     parser.add_argument("--model-timeout", type=int, default=120)
     parser.add_argument("--model-retries", type=int, default=1)
+    parser.add_argument("--transcription-recovery-attempts", type=int, default=2)
     parser.add_argument("--sleep-seconds", type=float, default=0.05)
     parser.add_argument("--skip-transcription-retry", action="store_true")
     parser.add_argument("--skip-figure-detection", action="store_true")

@@ -13,7 +13,14 @@ if VENDOR_DIR.exists():
 
 import fitz
 
-from tools.split_pipeline_v03 import build_legacy_bridge, run_split_v03_for_doc, summarize_nodes, write_json
+from tools.split_pipeline_v03 import (
+    build_legacy_bridge,
+    build_review_repair_pool,
+    run_split_v03_for_doc,
+    summarize_nodes,
+    write_json,
+)
+from tools.split_v03_refine_review_nodes import refine_nodes
 
 
 def parse_pages(spec: str, page_count: int) -> list[int]:
@@ -96,6 +103,8 @@ def main() -> None:
     parser.add_argument("--provider", default="mock", choices=["mock", "visual"])
     parser.add_argument("--model", default="doubao-seed-2-0-lite-260428")
     parser.add_argument("--max-vlm-calls", type=int, default=0)
+    parser.add_argument("--enable-node-refine", action="store_true")
+    parser.add_argument("--max-node-refine-calls", type=int, default=12)
     args = parser.parse_args()
     if args.provider == "mock" and args.max_vlm_calls != 0:
         raise SystemExit("quick debug must run with --max-vlm-calls 0")
@@ -126,6 +135,7 @@ def main() -> None:
         actual_vlm_calls = len(list((out_dir / "debug" / "blocks_overlay" / "visual_provider_raw").glob("*/*.meta.json")))
     result["actual_vlm_calls"] = actual_vlm_calls
     bridge = build_legacy_bridge(result["nodes"], result["crop_records"])
+    repair_pool = build_review_repair_pool(result["nodes"], result["crop_records"], result.get("audit_records", []))
     write_json(out_dir / "quick_debug_result.json", {
         "schema": "split_v03_quick_debug",
         "paid_vlm_used": args.provider == "visual",
@@ -139,17 +149,33 @@ def main() -> None:
         "reading_block_count": len(result.get("reading_blocks", [])),
         "node_count": len(result["nodes"]),
         "legacy_bridge_ready_count": len(bridge["questions"]),
+        "review_repair_pool_count": len(repair_pool["items"]),
         "artifacts": [
             str(out_dir / "quick_debug_review.html"),
             str(out_dir / "debug" / "blocks_overlay" / args.doc_key),
             str(out_dir / "docs" / args.doc_key / "semantic_nodes.json"),
             str(out_dir / "docs" / args.doc_key / "blocks.json"),
             str(out_dir / "docs" / args.doc_key / "reading_blocks.json"),
+            str(out_dir / "review_repair_pool.json"),
         ],
     })
     write_json(out_dir / "legacy_bridge_questions.json", bridge)
+    write_json(out_dir / "review_repair_pool.json", repair_pool)
+    node_refine_report = None
+    if args.enable_node_refine:
+        if args.provider != "visual":
+            raise SystemExit("node refine requires --provider visual")
+        node_refine_report = refine_nodes(
+            doc_dir=out_dir / "docs" / args.doc_key,
+            semantic_nodes_path=out_dir / "docs" / args.doc_key / "semantic_nodes.json",
+            audit_path=out_dir / "docs" / args.doc_key / "audit_report.json",
+            out_dir=out_dir / "split_node_refine",
+            api_key=api_key,
+            model=args.model,
+            max_nodes=args.max_node_refine_calls,
+        )
     write_quick_review_html(out_dir, args.doc_key, result, bridge)
-    print(json.dumps({
+    payload = {
         "out": str(out_dir),
         "review": str(out_dir / "quick_debug_review.html"),
         "doc_key": args.doc_key,
@@ -158,9 +184,18 @@ def main() -> None:
         "reading_blocks": len(result.get("reading_blocks", [])),
         "nodes": len(result["nodes"]),
         "ready": len(bridge["questions"]),
+        "review_repair_pool": len(repair_pool["items"]),
         "paid_vlm_used": args.provider == "visual",
         "actual_vlm_calls": actual_vlm_calls,
-    }, ensure_ascii=False, indent=2))
+    }
+    if node_refine_report:
+        payload["node_refine"] = {
+            "actual_vlm_calls": node_refine_report.get("actual_vlm_calls", 0),
+            "ready_count": node_refine_report.get("ready_count", 0),
+            "review_repair_pool_count": node_refine_report.get("review_repair_pool_count", 0),
+            "report": str(out_dir / "split_node_refine" / "split_node_refine_report.json"),
+        }
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

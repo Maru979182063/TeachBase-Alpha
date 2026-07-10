@@ -1139,13 +1139,20 @@ prompts:
         "review_flags": []
       }
   inline_figure_refine:
-    prompt_version: "inline_figure_refine_cn_grounding1000_v0.2"
+    prompt_version: "inline_figure_refine_single_candidate_cn_grounding1000_v0.3"
     system_prompt: |
-      你只做数学题内配图的二次精切。
-      输入是一张候选小裁片，里面可能包含真正的函数图、几何图、统计图，也可能混入题干文字、红色解析、选项编号、页眉页脚。
+      你只做“单个候选图形资产”的二次精切。
+      输入已经是上游检测节点给出的一个候选裁片，不是整题图，也不是让你重新找图。
       只返回严格 JSON，不解题，不转录题目，不解释。
     user_template: |
-      任务：判断这张候选裁片里是否存在“需要单独保存的数学图形本体”，并给出精切 bbox。
+      任务：只针对当前这一张候选裁片做边界精修。
+
+      绝对禁止：
+      - 不要在当前裁片里重新寻找多张图。
+      - 不要输出多个 bbox。
+      - 不要拆分图组、不要新增图、不要补找其他图。
+      - 不要因为看到多个相似小图就选择其中一个；如果当前候选本来就是图组/panel，必须整体保留。
+      - 不要把任务改成题目理解、公式转录或答案解析。
 
       坐标要求：
       1. 把当前候选裁片看成 1000 x 1000 的归一化画布。
@@ -1156,6 +1163,7 @@ prompts:
       什么必须保留：
       - 坐标轴、箭头、曲线、几何线段、辅助线、点名、图内字母、图内坐标、图1/图2/图3/备用图这类紧贴图形的图注。
       - 特别注意：如果 A/B/C/D、x/y、P/Q/M/N 等字母是图内点名、端点标签、轴旁字母、图内标注，必须保留，不能因为贴边就裁掉。
+      - 如果候选裁片是组合图、步骤图组、多个并列小图、平行四边形大图组，必须把整个当前候选作为一个整体保留，只可微调外边界。
 
       什么必须去掉：
       - 题干文字、解析文字、红色讲解文字、公式推导行、蓝色页眉、页码、空白边。
@@ -1163,10 +1171,11 @@ prompts:
 
       判断规则：
       1. 如果候选裁片主要是文字/公式/解析，不是图形，返回 is_valid_figure=false。
-      2. 如果确实有图形，但边上混了文字，返回只框图形本体的新 bbox。
+      2. 如果确实有图形，但边上混了文字，只在当前候选内部裁掉明显文字边，不改变候选对象数量。
       3. 宁可略宽一点，也不要为了贴紧而裁掉图形边缘点名、轴字母、图注标签。
       4. 不要裁掉坐标轴箭头、几何顶点、曲线端点、点名标签。
       5. 如果你无法确定某个 A/B/C/D 是选项前缀还是图内点名，默认按图内点名保留。
+      6. 如果不确定边界是否能安全收缩，返回接近全图的 bbox，并在 review_flags 加 "single_candidate_keep_wide"。
 
       Output schema:
       {
@@ -1280,6 +1289,168 @@ prompts:
           }
         ],
         "global_review_flags": []
+      }
+
+  visual_block_layout_review:
+    prompt_version: "visual_block_layout_review_v0.1"
+    system_prompt: |
+      You are a conservative math question layout reviewer.
+      Your only job is to order existing text segments and existing image assets into final display blocks.
+      Never rewrite, summarize, translate, delete, or add math text.
+      Use only the provided segment_id values and asset_id values.
+    user_template: |
+      Task:
+      Build the final display block order for a long math question with multiple related figure assets.
+
+      Safety rules:
+      1. Every text segment listed below must appear exactly once.
+      2. Every asset_id listed below must appear exactly once.
+      3. Text segments must remain in their original order inside each field.
+      4. Field order must remain stem, answer, analysis.
+      5. Do not output text content. Output only segment_id and asset_id.
+      6. Insert an image immediately after the text segment that introduces or uses that figure.
+      7. If an asset belongs to a figure mentioned by "如图", "图1", "图2", or a local proof branch, place it after that local segment.
+      8. If unsure, keep the nearest earlier segment in the same field and add a review flag.
+
+      Text segments:
+      {{TEXT_SEGMENTS}}
+
+      Asset roster:
+      {{ASSET_LINES}}
+
+      Output schema:
+      {
+        "blocks": [
+          {"block_type": "text", "segment_id": "stem_seg_001"},
+          {"block_type": "image", "field": "stem|answer|analysis", "asset_id": "asset_001"}
+        ],
+        "global_review_flags": []
+      }
+
+  split_node_refine:
+    prompt_version: "split_node_refine_single_failed_candidate_v0.1"
+    system_prompt: |
+      你是 TeachBase split_v03 的讲义切块精修节点。
+      你只修复一个已经被上游标记为 NEEDS_REVIEW 的题目候选块。
+      输入是一张局部页面带状图，不是整份讲义，也不是让你重新切全页。
+      只返回严格 JSON，不转录题目，不解题，不输出多个候选。
+    user_template: |
+      任务：只针对当前失败题块做边界精修。
+
+      当前候选：
+      - node_id={{NODE_ID}}
+      - doc_key={{DOC_KEY}}
+      - page={{PAGE}}
+      - failure_reasons={{FAILURE_REASONS}}
+      - candidate_bbox_norm_in_current_image={{CANDIDATE_BBOX_NORM}}
+
+      当前输入图说明：
+      - 图片是当前失败题块附近的局部页面带状图。
+      - 坐标统一使用当前输入图的 0-1000 归一化坐标。
+      - candidate_bbox_norm_in_current_image 是上游候选框在当前图中的位置。
+
+      只允许做：
+      1. 如果候选吞入了下一题、下一节标题、知识点标题、强化训练标题，则缩小当前题块下边界。
+      2. 如果候选过短，只包含题干而缺少同题的答案/解析/翻译/详解，则向下扩展到同题内容结束。
+      3. 如果当前图中证据不足，返回 is_repaired=false，并给出 needs_manual_review。
+
+      禁止：
+      - 不要切分多个题。
+      - 不要新增题。
+      - 不要合并其它题。
+      - 不要转录文字。
+      - 不要把下一题题干、下一节标题、页眉、页脚、页码放进当前题块。
+
+      判断边界：
+      - 当前题块应包含题干、选项、答案、解析、翻译/详解、题内图表。
+      - 当前题块应停止在下一个同级题号、下一节标题、知识讲解标题、强化训练/课后练习标题之前。
+      - 如果是跨页尾题，图中只能修当前页可见部分，不脑补下一页。
+
+      Output schema:
+      {
+        "is_repaired": true,
+        "bbox": {"x": 0, "y": 0, "w": 0, "h": 0},
+        "confidence": 0.0,
+        "review_flags": [],
+        "reason": ""
+      }
+
+  continuation_judge:
+    prompt_version: "continuation_judge_pair_evidence_v0.1"
+    system_prompt: |
+      你是 TeachBase split_v03 的跨页/续片语义判断节点。
+      你只判断候选片段 B 是否应该接到当前题尾 A 后面。
+      不转录题目，不解题，不重新切整页，只返回严格 JSON。
+    user_template: |
+      任务：判断 B 是否是 A 的同一道题续片。
+
+      元信息：
+      - node_id={{NODE_ID}}
+      - doc_key={{DOC_KEY}}
+      - failure_reasons={{FAILURE_REASONS}}
+      - candidate_block_id={{CANDIDATE_BLOCK_ID}}
+      - candidate_flags={{CANDIDATE_FLAGS}}
+
+      输入图说明：
+      - 图中上半部分标记为 A：当前题尾/当前失败题块。
+      - 图中下半部分标记为 B：候选续片。
+      - B 可能来自当前题下方，也可能来自下一页顶部。
+
+      判断标准：
+      - 如果 B 明显继续 A 的同一题题干、选项、答案、解析、翻译、详解、证明、图表说明，则 attach。
+      - 如果 B 是下一道题、新章节标题、知识讲解、强化训练标题、页眉页脚、纯页码，必须 reject。
+      - 如果 B 可能相关但证据不够，比如只有半句、缺上下文、像另一个题的开头，则 manual_review。
+      - 不要因为 A 缺答案解析就强行接 B；必须看到 B 和 A 的语义/版式连续性。
+
+      Output schema:
+      {
+        "decision": "attach|reject|manual_review",
+        "role": "body_continuation|answer_block|analysis_block|translation_block",
+        "confidence": 0.0,
+        "reason": "",
+        "review_flags": []
+      }
+
+  ownership_conflict_judge:
+    prompt_version: "ownership_conflict_three_way_judge_v0.1"
+    system_prompt: |
+      你是 TeachBase split_v03 的候选块归属冲突裁决节点。
+      你只判断同一个候选片段 B 应该归属当前题 A，还是保留给原归属题 C。
+      不裁图，不转录，不解题，不改写内容，只返回严格 JSON。
+    user_template: |
+      任务：裁决候选片段 B 的归属。
+
+      元信息：
+      - claimant_node_id={{CLAIMANT_NODE_ID}}
+      - owner_node_id={{OWNER_NODE_ID}}
+      - candidate_block_id={{CANDIDATE_BLOCK_ID}}
+      - failure_reasons={{FAILURE_REASONS}}
+      - continuation_decision={{CONTINUATION_DECISION}}
+      - continuation_reason={{CONTINUATION_REASON}}
+
+      输入图说明：
+      - A：当前失败题的题尾或短题块。
+      - B：候选片段，上一轮模型认为它可能是 A 的续片。
+      - C：B 当前所属的题目节点证据。
+
+      你要判断：
+      1. 如果 B 明显是 A 的题干/选项/答案/解析/翻译/图表续片，且 C 看起来只是误建的无头题或重复壳，返回 move_to_claimant。
+      2. 如果 B 明显是 C 的独立题目内容，返回 keep_original_owner。
+      3. 如果 B 同时包含 A 的续片和 C 的新题开头，或者证据不足，返回 split_required。
+      4. 如果无法可靠判断，返回 manual_review。
+
+      安全要求：
+      - 不要因为 A 缺答案解析就强行挪 B。
+      - 如果 C 有清楚的新题号/新题干/独立选项，优先 keep_original_owner 或 split_required。
+      - 如果 C 没有可见题号，且 B 语义明显承接 A，允许 move_to_claimant。
+      - 只做归属裁决，不输出 bbox。
+
+      Output schema:
+      {
+        "decision": "move_to_claimant|keep_original_owner|split_required|manual_review",
+        "confidence": 0.0,
+        "reason": "",
+        "review_flags": []
       }
 
   analysis_figure_rescan:

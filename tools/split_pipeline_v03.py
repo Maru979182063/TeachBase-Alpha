@@ -15,6 +15,16 @@ from tools.reading_block_builder_v03 import build_reading_blocks_v03, write_bloc
 from tools.semantic_block_assembler_v03 import mock_semantic_assignments_v03, write_assignments
 
 
+def _portable_path(raw_path: str) -> str:
+    if not raw_path:
+        return ""
+    path = Path(str(raw_path))
+    try:
+        return str(path.resolve().relative_to(Path.cwd().resolve())).replace("/", "\\")
+    except Exception:
+        return str(raw_path)
+
+
 def run_split_v03_for_doc(
     pdf_path: str,
     doc_key: str,
@@ -88,6 +98,73 @@ def run_split_v03_for_doc(
     }
 
 
+def _audit_reason_map(audit_records: list[dict] | None = None) -> dict[str, list[str]]:
+    reasons: dict[str, list[str]] = {}
+    for record in audit_records or []:
+        node_id = str(record.get("node_id", ""))
+        if not node_id:
+            continue
+        reasons[node_id] = list(record.get("reasons", []) or [])
+    return reasons
+
+
+def _build_question_bridge_packet(node: dict, crop_records: dict, review_reasons: list[str] | None = None) -> dict:
+    crop_record = crop_records.get(node["node_id"], {}) or {}
+    composite = crop_record.get("question_composite") or crop_record.get("review_canvas", "")
+    fragment_records = crop_record.get("fragment_records", []) or []
+    bridge_fragments = []
+    for idx, fragment in enumerate(node.get("fragments", []) or [], start=1):
+        crop_fragment = fragment_records[idx - 1] if idx - 1 < len(fragment_records) else {}
+        bridge_fragments.append(
+            {
+                "fragment_id": f"{node['node_id']}_fragment_{idx:02d}",
+                "role": fragment.get("role", crop_fragment.get("role", "fragment")),
+                "page": fragment.get("page", crop_fragment.get("page")),
+                "bbox_px": fragment.get("bbox_px", crop_fragment.get("bbox_px", [])),
+                "fragment_image": _portable_path(crop_fragment.get("path", "")),
+                "coordinate_space": "page_master_px",
+                "source_image_role": "source_page",
+                "placement_scope": "evidence_only",
+                "asset_role": "question_fragment_evidence",
+                "source_block_ids": fragment.get("block_ids", []),
+                "flags": fragment.get("flags", []),
+            }
+        )
+    return {
+        "question_id": node["node_id"],
+        "question_uid": node["node_id"],
+        "node_id": node["node_id"],
+        "node_type": "question",
+        "source": "semantic_v03",
+        "text_stub": node.get("text_stub", ""),
+        "fragments": node.get("fragments", []),
+        "bridge_contract": {
+            "version": "semantic_v03_bridge_v0.5",
+            "transcription_input": "question_composite",
+            "asset_source": "bridge_fragments",
+            "coordinate_policy": "fragments_keep_page_master_px; composite_has_own_canvas_space",
+            "option_prepare_policy": "do_not_detect_on_composite",
+        },
+        "question_image": _portable_path(composite),
+        "stem_image": _portable_path(composite),
+        "analysis_image": "",
+        "transcription_image": _portable_path(composite),
+        "review_canvas": _portable_path(crop_record.get("review_canvas", composite)),
+        "question_composite": _portable_path(composite),
+        "bridge_fragments": bridge_fragments,
+        "staged_visual_assets": [],
+        "gating_result": {
+            "decision": "allow" if node.get("review_status") == "AUDITED_READY" else "review_required",
+            "image_input_policy": "composite_first",
+            "asset_detection_source": "bridge_fragments",
+            "fragment_policy": "bridge_fragments_evidence_only",
+            "requires_visual_transcription": True,
+        },
+        "review_status": node.get("review_status", ""),
+        "review_reasons": list(review_reasons or []),
+    }
+
+
 def build_legacy_bridge(nodes: list[dict], crop_records: dict) -> dict:
     questions = []
     for node in nodes:
@@ -95,47 +172,41 @@ def build_legacy_bridge(nodes: list[dict], crop_records: dict) -> dict:
             continue
         if node.get("review_status") != "AUDITED_READY":
             continue
-        crop_record = crop_records.get(node["node_id"], {}) or {}
-        composite = crop_record.get("question_composite") or crop_record.get("review_canvas", "")
-        fragment_records = crop_record.get("fragment_records", []) or []
-        staged_assets = []
-        for idx, fragment in enumerate(node.get("fragments", []) or [], start=1):
-            crop_fragment = fragment_records[idx - 1] if idx - 1 < len(fragment_records) else {}
-            staged_assets.append(
-                {
-                    "asset_id": f"{node['node_id']}_fragment_{idx:02d}",
-                    "asset_role": "question_fragment_evidence",
-                    "attach_status": "evidence_only",
-                    "role": fragment.get("role", crop_fragment.get("role", "fragment")),
-                    "page": fragment.get("page", crop_fragment.get("page")),
-                    "bbox_px": fragment.get("bbox_px", crop_fragment.get("bbox_px", [])),
-                    "asset_path": crop_fragment.get("path", ""),
-                    "source_block_ids": fragment.get("block_ids", []),
-                    "flags": fragment.get("flags", []),
-                }
-            )
-        questions.append({
-            "question_id": node["node_id"],
-            "question_uid": node["node_id"],
-            "node_id": node["node_id"],
-            "node_type": "question",
-            "source": "semantic_v03",
-            "fragments": node.get("fragments", []),
-            "question_image": composite,
-            "stem_image": composite,
-            "analysis_image": "",
-            "review_canvas": crop_record.get("review_canvas", composite),
-            "question_composite": composite,
-            "staged_visual_assets": staged_assets,
-            "gating_result": {
-                "decision": "allow",
-                "image_input_policy": "composite_first",
-                "fragment_policy": "evidence_only",
-                "requires_visual_transcription": True,
-            },
-            "review_status": "AUDITED_READY",
-        })
-    return {"schema": "legacy_bridge_questions_v0.4_composite_first", "questions": questions}
+        questions.append(_build_question_bridge_packet(node, crop_records))
+    return {"schema": "legacy_bridge_questions_v0.5_composite_plus_fragments", "questions": questions}
+
+
+def build_review_repair_pool(nodes: list[dict], crop_records: dict, audit_records: list[dict] | None = None) -> dict:
+    """Preserve non-ready semantic nodes for repair instead of silently dropping content."""
+    reasons_by_node = _audit_reason_map(audit_records)
+    items = []
+    for node in nodes:
+        status = node.get("review_status", "")
+        if status == "AUDITED_READY":
+            continue
+        reasons = reasons_by_node.get(node.get("node_id", ""), [])
+        if node.get("node_type") == "question":
+            packet = _build_question_bridge_packet(node, crop_records, reasons)
+            packet["pool_item_type"] = "question_needs_repair"
+            packet["allowed_next_actions"] = ["visual_refine", "manual_review", "rerun_split"]
+            packet["auto_ingest_allowed"] = False
+            items.append(packet)
+            continue
+        items.append(
+            {
+                "node_id": node.get("node_id", ""),
+                "node_type": node.get("node_type", ""),
+                "source": node.get("source", "semantic_v03"),
+                "text_stub": node.get("text_stub", ""),
+                "fragments": node.get("fragments", []),
+                "review_status": status,
+                "review_reasons": reasons,
+                "pool_item_type": "non_question_needs_review",
+                "allowed_next_actions": ["manual_review", "rerun_split"],
+                "auto_ingest_allowed": False,
+            }
+        )
+    return {"schema": "semantic_v03_review_repair_pool_v0.1", "items": items}
 
 
 def summarize_nodes(all_nodes: list[dict]) -> dict:

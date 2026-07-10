@@ -5,7 +5,13 @@ import json
 import os
 from pathlib import Path
 
-from tools.split_pipeline_v03 import build_legacy_bridge, run_split_v03_for_doc, summarize_nodes, write_json
+from tools.split_pipeline_v03 import (
+    build_legacy_bridge,
+    build_review_repair_pool,
+    run_split_v03_for_doc,
+    summarize_nodes,
+    write_json,
+)
 
 
 DEFAULT_PAGES = {
@@ -87,9 +93,12 @@ def main() -> None:
     pdfs = {"english": args.english_pdf, "math": args.math_pdf, "biology": args.biology_pdf}
     results: dict[str, dict] = {}
     bridges: dict[str, dict] = {}
+    repair_pools: dict[str, dict] = {}
     all_nodes = []
     all_blocks = []
     all_reading_blocks = []
+    all_crop_records: dict = {}
+    all_audit_records = []
     for doc_key, pdf in pdfs.items():
         doc_max_vlm_calls = len(DEFAULT_PAGES[doc_key]) if args.provider == "visual" else 0
         result = run_split_v03_for_doc(
@@ -103,14 +112,20 @@ def main() -> None:
             max_vlm_calls=doc_max_vlm_calls,
         )
         bridge = build_legacy_bridge(result["nodes"], result["crop_records"])
+        repair_pool = build_review_repair_pool(result["nodes"], result["crop_records"], result.get("audit_records", []))
         results[doc_key] = result
         bridges[doc_key] = bridge
+        repair_pools[doc_key] = repair_pool
         all_nodes.extend(result["nodes"])
         all_blocks.extend(result["blocks"])
         all_reading_blocks.extend(result["reading_blocks"])
+        all_crop_records.update(result["crop_records"])
+        all_audit_records.extend(result.get("audit_records", []))
         write_json(out_dir / "docs" / doc_key / "legacy_bridge_questions.json", bridge)
+        write_json(out_dir / "docs" / doc_key / "review_repair_pool.json", repair_pool)
 
     combined_bridge = {"schema": "legacy_bridge_questions_v0.3", "questions": [q for bridge in bridges.values() for q in bridge["questions"]]}
+    combined_repair_pool = build_review_repair_pool(all_nodes, all_crop_records, all_audit_records)
     actual_vlm_calls = 0
     if args.provider == "visual":
         actual_vlm_calls = len(list((out_dir / "debug" / "blocks_overlay" / "visual_provider_raw").glob("*/*.meta.json")))
@@ -131,16 +146,19 @@ def main() -> None:
         "raw_block_count": len(all_blocks),
         "reading_block_count": len(all_reading_blocks),
         "legacy_bridge_ready_count": len(combined_bridge["questions"]),
+        "review_repair_pool_count": len(combined_repair_pool["items"]),
         "artifacts": [
             str(out_dir / "sixpage_review.html"),
             str(out_dir / "debug" / "blocks_overlay"),
             str(out_dir / "debug" / "nodes_overlay"),
             str(out_dir / "docs"),
             str(out_dir / "legacy_bridge_questions.json"),
+            str(out_dir / "review_repair_pool.json"),
         ],
     }
     write_json(out_dir / "sixpage_report.json", report)
     write_json(out_dir / "legacy_bridge_questions.json", combined_bridge)
+    write_json(out_dir / "review_repair_pool.json", combined_repair_pool)
     _write_review_html(out_dir, results, bridges)
     print(json.dumps(report, ensure_ascii=False, indent=2))
 

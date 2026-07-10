@@ -139,7 +139,16 @@ def image_data_url(path: Path) -> str:
     return f"data:{mime};base64,{base64.b64encode(raw).decode('ascii')}"
 
 
-def call_pair_model(api_key: str, model: str, asset_a: dict[str, Any], path_a: Path, asset_b: dict[str, Any], path_b: Path) -> dict[str, Any]:
+def call_pair_model(
+    api_key: str,
+    model: str,
+    asset_a: dict[str, Any],
+    path_a: Path,
+    asset_b: dict[str, Any],
+    path_b: Path,
+    *,
+    timeout_seconds: int = 60,
+) -> dict[str, Any]:
     prompt = f"""你是数学题目入库流水线的“题内图片资产合并审核”节点。
 请只判断两张裁图是否代表同一个题内图形资产。
 
@@ -180,7 +189,7 @@ B: {asset_b.get('asset_id')} role={asset_role(asset_b)} placement={placement(ass
         headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=180) as response:
+    with urllib.request.urlopen(request, timeout=max(10, int(timeout_seconds or 60))) as response:
         payload = json.loads(response.read().decode("utf-8"))
     content = payload["choices"][0]["message"]["content"]
     text = str(content).strip()
@@ -209,6 +218,7 @@ def consolidate_record(
     manifest_path: Path,
     api_key: str = "",
     model: str = "",
+    model_timeout: int = 60,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     assets = [a for a in (record.get("assets", []) or []) if isinstance(a, dict)]
     keep_ids: set[str] = {str(a.get("asset_id", "")) for a in assets if str(a.get("asset_id", ""))}
@@ -240,13 +250,21 @@ def consolidate_record(
                     path_b = asset_local_path(other, manifest_path)
                     if path_a and path_b:
                         try:
-                            model_decision = call_pair_model(api_key, model, current, path_a, other, path_b)
+                            model_decision = call_pair_model(
+                                api_key,
+                                model,
+                                current,
+                                path_a,
+                                other,
+                                path_b,
+                                timeout_seconds=model_timeout,
+                            )
                         except Exception as exc:
                             model_decision = {
                                 "relation": "uncertain",
                                 "keep": "both",
                                 "confidence": 0.0,
-                                "reason": f"pair_model_failed:{type(exc).__name__}",
+                                "reason": f"pair_model_failed_keep_distinct:{type(exc).__name__}",
                             }
                         relation = str(model_decision.get("relation", "") or "")
                         confidence = float(model_decision.get("confidence", 0.0) or 0.0)
@@ -336,6 +354,7 @@ def main() -> None:
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--api-key", default=os.environ.get("ARK_API_KEY", ""))
     parser.add_argument("--model", default=os.environ.get("VISUAL_TRANSCRIBE_MODEL", "doubao-seed-2-0-lite-260428"))
+    parser.add_argument("--model-timeout", type=int, default=60)
     args = parser.parse_args()
 
     manifest_path = Path(args.manifest).expanduser().resolve()
@@ -353,6 +372,7 @@ def main() -> None:
             manifest_path=manifest_path,
             api_key=str(args.api_key or "").strip(),
             model=str(args.model or "").strip(),
+            model_timeout=int(args.model_timeout or 60),
         )
         new_questions.append(new_record)
         actions.extend(record_actions)

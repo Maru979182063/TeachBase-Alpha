@@ -76,6 +76,10 @@ def resolve_path(raw: str, base_dir: Path) -> Path:
     candidate = Path(str(raw or "").strip())
     if candidate.is_absolute():
         return candidate
+    for root in (base_dir, WORKSPACE_ROOT, Path.cwd()):
+        resolved = (root / candidate).resolve()
+        if resolved.exists():
+            return resolved
     return (base_dir / candidate).resolve()
 
 
@@ -188,6 +192,97 @@ def copy_asset(
     except Exception:
         pass
     return asset
+
+
+def copy_bridge_fragment_asset(
+    fragment: dict[str, Any],
+    source_path: Path,
+    out_dir: Path,
+    question_id: str,
+    ordinal: int,
+    include_debug_paths: bool = False,
+) -> dict[str, Any]:
+    role = "question_fragment_evidence"
+    fragment_id = str(fragment.get("fragment_id", "") or f"{question_id}_fragment_{ordinal:02d}")
+    asset_id = f"{safe_slug(question_id)}__fragment_{ordinal:02d}"
+    rel_path = Path("assets") / safe_slug(question_id) / "fragments" / f"fragment_{ordinal:02d}{image_extension(source_path)}"
+    target_path = out_dir / rel_path
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source_path, target_path)
+    asset = {
+        "asset_id": asset_id,
+        "fragment_id": fragment_id,
+        "role": role,
+        "asset_role": role,
+        "placement": "evidence_only",
+        "placement_scope": "evidence_only",
+        "attach_status": "not_attached_unassigned",
+        "option_key": None,
+        "display_ref": f"asset://{asset_id}",
+        "storage_key": rel_path.as_posix(),
+        "mime_type": "image/png" if rel_path.suffix.lower() == ".png" else f"image/{rel_path.suffix.lower().lstrip('.')}",
+        "materialized": True,
+        "file_status": "materialized",
+        "review_flags": normalize_review_flags(["semantic_v03_bridge_fragment_evidence"]),
+        "page": fragment.get("page"),
+        "bbox_px": fragment.get("bbox_px", []),
+        "coordinate_space": str(fragment.get("coordinate_space", "") or "page_master_px"),
+        "source_image_role": str(fragment.get("source_image_role", "") or "source_page"),
+        "source_block_ids": fragment.get("source_block_ids", []),
+        "fragment_role": str(fragment.get("role", "") or "fragment"),
+    }
+    if include_debug_paths:
+        asset["debug"] = {
+            "local_path": str(target_path.resolve()),
+            "source_path": str(source_path.resolve()),
+        }
+    try:
+        with Image.open(source_path) as image:
+            review_key, review_meta = _write_review_display_copy(
+                image.convert("RGB"),
+                out_dir=out_dir,
+                storage_key=rel_path.as_posix(),
+            )
+        if review_key and review_meta:
+            asset["review_storage_key"] = review_key
+            asset["review_render"] = review_meta
+            asset["delivery_storage_key"] = review_key
+            asset["delivery_render"] = review_meta
+    except Exception:
+        pass
+    return asset
+
+
+def copy_bridge_fragment_assets(
+    question: dict[str, Any],
+    base_dir: Path,
+    out_dir: Path,
+    question_id: str,
+    include_debug_paths: bool = False,
+) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    copied: list[dict[str, Any]] = []
+    missing: list[dict[str, str]] = []
+    fragments = question.get("bridge_fragments", []) if isinstance(question.get("bridge_fragments"), list) else []
+    for ordinal, fragment in enumerate([item for item in fragments if isinstance(item, dict)], start=1):
+        raw = str(fragment.get("fragment_image", "") or fragment.get("asset_path", "") or "").strip()
+        if not raw:
+            missing.append({"field": "bridge_fragments", "path": "", "fragment_id": str(fragment.get("fragment_id", "") or "")})
+            continue
+        source_path = resolve_path(raw, base_dir)
+        if not source_path.exists():
+            missing.append({"field": "bridge_fragments", "path": str(source_path), "fragment_id": str(fragment.get("fragment_id", "") or "")})
+            continue
+        copied.append(
+            copy_bridge_fragment_asset(
+                fragment,
+                source_path,
+                out_dir,
+                question_id,
+                ordinal,
+                include_debug_paths=include_debug_paths,
+            )
+        )
+    return copied, missing
 
 
 def _pick_single_evidence_asset(
@@ -839,7 +934,12 @@ def build_markdown(record: dict[str, Any]) -> str:
     return "\n\n".join(parts).strip()
 
 
-def build_qvs_display_markdown(qvs: dict[str, Any], fallback_record: dict[str, Any]) -> str:
+def build_qvs_display_markdown(
+    qvs: dict[str, Any],
+    fallback_record: dict[str, Any],
+    *,
+    include_debug_storage_key: bool = False,
+) -> str:
     parts: list[str] = []
     blocks = qvs.get("content_blocks", []) if isinstance(qvs.get("content_blocks"), list) else []
     if blocks:
@@ -866,7 +966,7 @@ def build_qvs_display_markdown(qvs: dict[str, Any], fallback_record: dict[str, A
                 image_lines: list[str] = []
                 if display_ref:
                     image_lines.append(f"![{asset_role}]({display_ref})")
-                if storage_key:
+                if include_debug_storage_key and storage_key:
                     image_lines.append(f"`storage_key: {storage_key}`")
                 if image_lines:
                     parts.append("\n".join(image_lines))
@@ -880,27 +980,19 @@ def build_qvs_display_markdown(qvs: dict[str, Any], fallback_record: dict[str, A
     if stem_md:
         parts.append("## 题干\n" + stem_md)
     for asset in stem_assets:
-        parts.append(
-            "\n".join(
-                [
-                    f"![{asset.get('role', asset.get('asset_role', 'image'))}]({asset['display_ref']})",
-                    f"`storage_key: {asset['storage_key']}`",
-                ]
-            )
-        )
+        image_lines = [f"![{asset.get('role', asset.get('asset_role', 'image'))}]({asset['display_ref']})"]
+        if include_debug_storage_key:
+            image_lines.append(f"`storage_key: {asset['storage_key']}`")
+        parts.append("\n".join(image_lines))
     if answer_md:
         parts.append("## 答案\n" + answer_md)
     if analysis_md:
         parts.append("## 解析\n" + analysis_md)
     for asset in analysis_assets:
-        parts.append(
-            "\n".join(
-                [
-                    f"![{asset.get('role', asset.get('asset_role', 'image'))}]({asset['display_ref']})",
-                    f"`storage_key: {asset['storage_key']}`",
-                ]
-            )
-        )
+        image_lines = [f"![{asset.get('role', asset.get('asset_role', 'image'))}]({asset['display_ref']})"]
+        if include_debug_storage_key:
+            image_lines.append(f"`storage_key: {asset['storage_key']}`")
+        parts.append("\n".join(image_lines))
     return "\n\n".join(parts).strip()
 
 
@@ -1616,6 +1708,14 @@ def build_records(
             question_id,
             include_debug_paths=include_debug_paths,
         )
+        bridge_fragment_assets, missing_bridge_fragments = copy_bridge_fragment_assets(
+            question,
+            base_dir,
+            out_dir,
+            question_id,
+            include_debug_paths=include_debug_paths,
+        )
+        missing_assets.extend(missing_bridge_fragments)
 
         staged_assets = [dict(item) for item in (question.get("staged_visual_assets", []) or []) if isinstance(item, dict)]
         materialized_staged_assets = [
@@ -1625,7 +1725,7 @@ def build_records(
         # Do not similarity-dedupe math figures. Set/function diagrams can be
         # visually close while carrying different labels or auxiliary lines.
         removed_duplicate_assets: list[dict[str, Any]] = []
-        all_assets = assets + materialized_staged_assets
+        all_assets = assets + bridge_fragment_assets + materialized_staged_assets
         assign_external_labels(all_assets)
 
         record = {
@@ -1648,6 +1748,7 @@ def build_records(
             "removed_duplicate_assets": removed_duplicate_assets,
             "selected_scope_asset_ids": {
                 "evidence": [str(evidence_meta.get("selected_evidence_asset_id", "") or "")] if str(evidence_meta.get("selected_evidence_asset_id", "") or "") else [],
+                "bridge_fragments": [str(asset.get("asset_id", "") or "") for asset in bridge_fragment_assets],
                 "stem": [],
                 "analysis": [],
                 "option_by_key": {},
@@ -1780,6 +1881,23 @@ def asset_audit_caption(asset: dict[str, Any]) -> str:
     return " | ".join(parts)
 
 
+def asset_figure_html(asset: dict[str, Any], asset_id: str = "", *, show_asset_debug: bool = False) -> str:
+    rendered_asset_id = asset_id or str(asset.get("asset_id", "") or "")
+    debug_html = ""
+    if show_asset_debug:
+        debug_html = (
+            f"<div class='badges'>{asset_meta_badges(asset)}</div>"
+            f"<figcaption>{html.escape(asset_audit_caption(asset))}</figcaption>"
+        )
+    return (
+        "<figure>"
+        f"{asset_external_label_html(asset)}"
+        f"<img src='{asset_url(asset)}' alt='{html.escape(rendered_asset_id)}'>"
+        f"{debug_html}"
+        "</figure>"
+    )
+
+
 def render_text_block(text: str) -> str:
     body = render_md(text)
     return f"<div class='md'>{body}</div>" if body else ""
@@ -1805,7 +1923,7 @@ def _prefer_stacked_image_group(assets: list[dict[str, Any]]) -> bool:
     return False
 
 
-def render_display_blocks_html(record: dict[str, Any]) -> str:
+def render_display_blocks_html(record: dict[str, Any], *, show_asset_debug: bool = False) -> str:
     blocks = [item for item in (record.get("display_blocks", []) or []) if isinstance(item, dict)]
     assets_by_id = {
         str(asset.get("asset_id", "") or ""): asset
@@ -1842,18 +1960,11 @@ def render_display_blocks_html(record: dict[str, Any]) -> str:
                 continue
             title = heading_map.get(field, field or str(asset.get("asset_role", "image") or "image"))
             parts.append(f"<h4>{html.escape(title)}</h4>")
-            parts.append(
-                "<figure>"
-                f"{asset_external_label_html(asset)}"
-                f"<img src='{asset_url(asset)}' alt='{html.escape(asset_id)}'>"
-                f"<div class='badges'>{asset_meta_badges(asset)}</div>"
-                f"<figcaption>{html.escape(asset_audit_caption(asset))}</figcaption>"
-                "</figure>"
-            )
+            parts.append(asset_figure_html(asset, asset_id, show_asset_debug=show_asset_debug))
     return "".join(parts)
 
 
-def render_display_blocks_html_v2(record: dict[str, Any]) -> str:
+def render_display_blocks_html_v2(record: dict[str, Any], *, show_asset_debug: bool = False) -> str:
     blocks = [item for item in (record.get("display_blocks", []) or []) if isinstance(item, dict)]
     assets_by_id = {
         str(asset.get("asset_id", "") or ""): asset
@@ -1900,14 +2011,7 @@ def render_display_blocks_html_v2(record: dict[str, Any]) -> str:
                 asset = assets_by_id.get(asset_id)
                 if asset:
                     card_assets.append(asset)
-                    cards.append(
-                        "<figure>"
-                        f"{asset_external_label_html(asset)}"
-                        f"<img src='{asset_url(asset)}' alt='{html.escape(asset_id)}'>"
-                        f"<div class='badges'>{asset_meta_badges(asset)}</div>"
-                        f"<figcaption>{html.escape(asset_audit_caption(asset))}</figcaption>"
-                        "</figure>"
-                    )
+                    cards.append(asset_figure_html(asset, asset_id, show_asset_debug=show_asset_debug))
                 index += 1
             if cards:
                 container_class = "image-stack" if _prefer_stacked_image_group(card_assets) else "image-row"
@@ -1964,7 +2068,7 @@ def write_html(out_path: Path, payload: dict[str, Any]) -> None:
                 )
             return "".join(cards)
 
-        review_html = render_display_blocks_html_v2(record)
+        review_html = render_display_blocks_html_v2(record, show_asset_debug=True)
 
         rows.append(
             "<section class='card'>"
@@ -1973,7 +2077,7 @@ def write_html(out_path: Path, payload: dict[str, Any]) -> None:
             "<div class='grid'>"
             "<div>"
             "<h3>落库结构版</h3>"
-            f"{render_display_blocks_html_v2(record)}"
+            f"{render_display_blocks_html_v2(record, show_asset_debug=True)}"
             "</div>"
             "<div>"
             "<h3>审核复写版</h3>"
@@ -2054,7 +2158,7 @@ def write_html(out_path: Path, payload: dict[str, Any]) -> None:
     out_path.write_text(doc, encoding="utf-8")
 
 
-def write_html_clean(out_path: Path, payload: dict[str, Any]) -> None:
+def write_html_clean(out_path: Path, payload: dict[str, Any], *, show_asset_debug: bool = False) -> None:
     html_assets = stage_html_assets(out_path.parent)
     katex_css_link = (
         f"<link rel=\"stylesheet\" href=\"{html.escape(html_assets['katex_css'])}\" />"
@@ -2076,38 +2180,45 @@ def write_html_clean(out_path: Path, payload: dict[str, Any]) -> None:
         cards: list[str] = []
         for asset in assets:
             cards.append(
-                "<figure>"
-                f"{asset_external_label_html(asset)}"
-                f"<img src='{asset_url(asset)}' alt='{html.escape(str(asset.get('asset_id', '')))}'>"
-                f"<div class='badges'>{asset_meta_badges(asset)}</div>"
-                f"<figcaption>{html.escape(asset_audit_caption(asset))}</figcaption>"
-                "</figure>"
+                asset_figure_html(
+                    asset,
+                    str(asset.get("asset_id", "") or ""),
+                    show_asset_debug=show_asset_debug,
+                )
             )
         return "".join(cards)
 
     rows: list[str] = []
     for record in payload["questions"]:
         evidence_assets = [a for a in record["assets"] if str(a.get("placement", "")) == "evidence_only"]
-        asset_badges = " ".join(
-            f"<span class='badge'>{html.escape(str(a.get('asset_role', a.get('role', ''))))}: {html.escape(str(a.get('display_ref', '')))}</span>"
-            for a in record["assets"]
-        )
-        missing = " ".join(
-            f"<span class='badge warn'>{html.escape(m['field'])} missing</span>"
-            for m in record["missing_assets"]
+        asset_badges = ""
+        missing = ""
+        if show_asset_debug:
+            asset_badges = " ".join(
+                f"<span class='badge'>{html.escape(str(a.get('asset_role', a.get('role', ''))))}: {html.escape(str(a.get('display_ref', '')))}</span>"
+                for a in record["assets"]
+            )
+            missing = " ".join(
+                f"<span class='badge warn'>{html.escape(m['field'])} missing</span>"
+                for m in record["missing_assets"]
+            )
+        debug_badges_html = (
+            f"<div class='badges'>{asset_badges}{missing}</div>"
+            if show_asset_debug and (asset_badges or missing)
+            else ""
         )
         rows.append(
             "<section class='card'>"
             f"<h2>{html.escape(record['question_id'])} <small>{html.escape(record['component_label'])} Q{html.escape(record['local_number'])}</small></h2>"
-            f"<div class='badges'>{asset_badges}{missing}</div>"
+            f"{debug_badges_html}"
             "<div class='grid'>"
             "<div>"
             "<h3>落库结构版</h3>"
-            f"{render_display_blocks_html_v2(record)}"
+            f"{render_display_blocks_html_v2(record, show_asset_debug=show_asset_debug)}"
             "</div>"
             "<div>"
             "<h3>审核复写版</h3>"
-            f"{render_display_blocks_html_v2(record)}"
+            f"{render_display_blocks_html_v2(record, show_asset_debug=show_asset_debug)}"
             "</div>"
             "<div>"
             "<h3>原始证据图</h3>"
@@ -2123,7 +2234,7 @@ def write_html_clean(out_path: Path, payload: dict[str, Any]) -> None:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>题目图片资产审核页</title>
+  <title>{'题目图片资产调试页' if show_asset_debug else '题目图片资产审核页'}</title>
   {katex_css_link}
   <style>
     body {{ margin: 0; background: #f6f7fb; color: #182230; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; }}
@@ -2158,7 +2269,7 @@ def write_html_clean(out_path: Path, payload: dict[str, Any]) -> None:
 </head>
 <body>
   <header>
-    <h1>题目图片资产审核页</h1>
+    <h1>{'题目图片资产调试页' if show_asset_debug else '题目图片资产审核页'}</h1>
     <p>生成时间：{html.escape(payload["generated_at"])} | 题目数：{payload["question_count"]} | 图片资产：{payload["asset_count"]}</p>
   </header>
   <main class="wrap">
@@ -2221,11 +2332,13 @@ def main() -> None:
     }
     write_json(out_dir / "question_asset_manifest_v0.1.json", payload)
     write_html_clean(out_dir / "question_asset_review.html", payload)
+    write_html_clean(out_dir / "question_asset_review_debug.html", payload, show_asset_debug=True)
 
     summary = {
         "out_dir": str(out_dir),
         "manifest": str(out_dir / "question_asset_manifest_v0.1.json"),
         "html": str(out_dir / "question_asset_review.html"),
+        "debug_html": str(out_dir / "question_asset_review_debug.html"),
         "question_count": len(records),
         "asset_count": asset_count,
         "questions_with_stem_image": sum(any(str(a.get("role") or a.get("asset_role") or "") == "stem" for a in r["assets"]) for r in records),
