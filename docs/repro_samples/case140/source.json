@@ -1,0 +1,17 @@
+{
+  "schema_version": "question_image_asset_repro_source.v1",
+  "questions": [
+    {
+      "question_id": "case_140",
+      "local_number": "140",
+      "question_type": "choice",
+      "tag": "高中函数 / 指对幂函数图象及性质",
+      "question_image": "docs/repro_samples/case140/images/case_140.png",
+      "stem_text": "1. （四川卷高考真题文科第4题）函数 $y=a^x-a(a>0,a\\neq1)$ 的图象可能是（ ）\n\nA.\n\nB.\n\nC.\n\nD.",
+      "answer_text": "C",
+      "analysis_text": "解：由于当 $x=1$ 时，$y=0$，即函数 $y=a^x-a$ 的图象过点 $(1,0)$，故排除 $A$、$B$、$D$。\n故选：$C$。",
+      "stem_requires_image": true,
+      "analysis_requires_image": false
+    }
+  ]
+}

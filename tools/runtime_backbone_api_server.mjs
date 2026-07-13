@@ -1,231 +1,109 @@
 /**
  * 用途：
- * - 通过一个小型本地 HTTP API 暴露运行时主干存储操作。
- * - 它连接自动化检查、演示和运行时存储实现。
+ * - 保留 8792 的兼容入口，但显式把它降级为 deprecated 代理层。
+ * - 真实运行时 API 只认 8790；这个文件不再直接接触任何状态存储。
  */
 
-import http from "http";
-import { URL } from "url";
-import {
-  ensureSeededState,
-  getArtifactLineage,
-  getLessonDetail,
-  getRunDetail,
-  getSummary,
-  listLessons,
-  loadState,
-  reseedState,
-  rerunLesson,
-  saveState,
-  updateReviewTaskStatus,
-} from "./runtime_backbone_store.mjs";
+import http from "node:http";
 
-function sendJson(res, status, body) {
-  res.writeHead(status, {
-    "Content-Type": "application/json; charset=utf-8",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  });
-  res.end(JSON.stringify(body, null, 2));
+function parseBooleanFlag(value, fallback = true) {
+  if (value === undefined || value === null || value === "") {
+    return fallback;
+  }
+  return !["0", "false", "no", "off"].includes(String(value).trim().toLowerCase());
 }
 
-function parseBody(req) {
+const compatPort = Number(process.env.RUNTIME_BACKBONE_API_PORT || 8792);
+const targetPort = Number(process.env.MOCK_WORKBENCH_API_PORT || 8790);
+const targetBaseUrl =
+  process.env.RUNTIME_BACKBONE_COMPAT_TARGET || `http://127.0.0.1:${targetPort}`;
+const compatEnabled = parseBooleanFlag(process.env.RUNTIME_BACKBONE_COMPAT_ENABLED, true);
+
+function readRawBody(req) {
   return new Promise((resolve, reject) => {
-    let raw = "";
-    req.on("data", (chunk) => {
-      raw += chunk;
-      if (raw.length > 2_000_000) {
-        reject(new Error("body_too_large"));
-      }
-    });
-    req.on("end", () => {
-      try {
-        resolve(raw ? JSON.parse(raw) : {});
-      } catch (error) {
-        reject(error);
-      }
-    });
+    const chunks = [];
+    req.on("data", (chunk) => chunks.push(chunk));
+    req.on("end", () => resolve(chunks.length ? Buffer.concat(chunks) : null));
     req.on("error", reject);
   });
 }
 
-function matchPath(pathname, pattern) {
-  const actual = pathname.split("/").filter(Boolean);
-  const expected = pattern.split("/").filter(Boolean);
-  if (actual.length !== expected.length) return null;
-  const params = {};
-  for (let i = 0; i < expected.length; i += 1) {
-    const exp = expected[i];
-    const act = actual[i];
-    if (exp.startsWith(":")) {
-      params[exp.slice(1)] = decodeURIComponent(act);
+function sanitizeRequestHeaders(headers) {
+  const nextHeaders = {};
+  for (const [key, value] of Object.entries(headers || {})) {
+    if (value === undefined || value === null) {
       continue;
     }
-    if (exp !== act) return null;
+    if (["host", "content-length", "connection"].includes(String(key).toLowerCase())) {
+      continue;
+    }
+    nextHeaders[key] = value;
   }
-  return params;
+  nextHeaders["x-runtime-compat-proxy"] = "8792-to-8790";
+  return nextHeaders;
 }
 
-ensureSeededState();
+function sanitizeResponseHeaders(headers) {
+  const nextHeaders = {
+    "X-Runtime-Deprecated": "true",
+    "X-Runtime-Compat-Target": targetBaseUrl,
+  };
+  headers.forEach((value, key) => {
+    if (["content-length", "connection", "transfer-encoding"].includes(String(key).toLowerCase())) {
+      return;
+    }
+    nextHeaders[key] = value;
+  });
+  return nextHeaders;
+}
 
 const server = http.createServer(async (req, res) => {
-  if (req.method === "OPTIONS") {
-    res.writeHead(204, {
+  try {
+    const requestUrl = new URL(req.url || "/", targetBaseUrl);
+    const body =
+      req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS"
+        ? undefined
+        : await readRawBody(req);
+    const response = await fetch(requestUrl, {
+      method: req.method || "GET",
+      headers: sanitizeRequestHeaders(req.headers),
+      body,
+    });
+    const payload = Buffer.from(await response.arrayBuffer());
+    res.writeHead(response.status, sanitizeResponseHeaders(response.headers));
+    res.end(payload);
+  } catch (error) {
+    res.writeHead(503, {
+      "Content-Type": "application/json; charset=utf-8",
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type,X-Runtime-Admin-Token",
+      "X-Runtime-Deprecated": "true",
+      "X-Runtime-Compat-Target": targetBaseUrl,
     });
-    res.end();
-    return;
-  }
-
-  const url = new URL(req.url || "/", "http://127.0.0.1");
-  const { pathname } = url;
-
-  try {
-    if (pathname === "/health" && req.method === "GET") {
-      const state = loadState();
-      sendJson(res, 200, {
-        ok: true,
-        service: "runtime_backbone_api",
-        summary: getSummary(state),
-      });
-      return;
-    }
-
-    if (pathname === "/api/runtime/bootstrap" && req.method === "POST") {
-      const state = reseedState();
-      sendJson(res, 200, {
-        ok: true,
-        summary: getSummary(state),
-      });
-      return;
-    }
-
-    if (pathname === "/api/runtime/summary" && req.method === "GET") {
-      sendJson(res, 200, {
-        ok: true,
-        summary: getSummary(loadState()),
-      });
-      return;
-    }
-
-    if (pathname === "/api/runtime/lessons" && req.method === "GET") {
-      const state = loadState();
-      sendJson(res, 200, {
-        ok: true,
-        items: listLessons(state),
-      });
-      return;
-    }
-
-    const lessonParams = matchPath(pathname, "/api/runtime/lessons/:lessonId");
-    if (lessonParams && req.method === "GET") {
-      const detail = getLessonDetail(loadState(), lessonParams.lessonId);
-      if (!detail) {
-        sendJson(res, 404, { ok: false, error: "lesson_not_found" });
-        return;
-      }
-      sendJson(res, 200, { ok: true, detail });
-      return;
-    }
-
-    const rerunParams = matchPath(pathname, "/api/runtime/lessons/:lessonId/rerun");
-    if (rerunParams && req.method === "POST") {
-      const body = await parseBody(req);
-      const state = loadState();
-      const result = rerunLesson(state, rerunParams.lessonId, body.actor || "manual_rerun");
-      saveState(state);
-      sendJson(res, 200, {
-        ok: true,
-        result,
-        lesson: getLessonDetail(state, rerunParams.lessonId),
-      });
-      return;
-    }
-
-    if (pathname === "/api/runtime/runs" && req.method === "GET") {
-      const state = loadState();
-      sendJson(res, 200, {
-        ok: true,
-        items: state.runs,
-      });
-      return;
-    }
-
-    const runParams = matchPath(pathname, "/api/runtime/runs/:runId");
-    if (runParams && req.method === "GET") {
-      const detail = getRunDetail(loadState(), runParams.runId);
-      if (!detail) {
-        sendJson(res, 404, { ok: false, error: "run_not_found" });
-        return;
-      }
-      sendJson(res, 200, { ok: true, detail });
-      return;
-    }
-
-    if (pathname === "/api/runtime/review-tasks" && req.method === "GET") {
-      const state = loadState();
-      const status = url.searchParams.get("status");
-      const items = status
-        ? state.reviewTasks.filter((item) => item.status === status)
-        : state.reviewTasks;
-      sendJson(res, 200, { ok: true, items });
-      return;
-    }
-
-    const approveParams = matchPath(pathname, "/api/runtime/review-tasks/:reviewTaskId/approve");
-    if (approveParams && req.method === "POST") {
-      const body = await parseBody(req);
-      const state = loadState();
-      const result = updateReviewTaskStatus(state, approveParams.reviewTaskId, "approve", body.actor || "reviewer");
-      saveState(state);
-      sendJson(res, 200, { ok: true, result });
-      return;
-    }
-
-    const changeParams = matchPath(pathname, "/api/runtime/review-tasks/:reviewTaskId/request-changes");
-    if (changeParams && req.method === "POST") {
-      const body = await parseBody(req);
-      const state = loadState();
-      const result = updateReviewTaskStatus(
-        state,
-        changeParams.reviewTaskId,
-        "request_changes",
-        body.actor || "reviewer"
-      );
-      saveState(state);
-      sendJson(res, 200, { ok: true, result });
-      return;
-    }
-
-    const lineageParams = matchPath(pathname, "/api/runtime/artifacts/:artifactId/lineage");
-    if (lineageParams && req.method === "GET") {
-      const detail = getArtifactLineage(loadState(), lineageParams.artifactId);
-      if (!detail) {
-        sendJson(res, 404, { ok: false, error: "artifact_not_found" });
-        return;
-      }
-      sendJson(res, 200, { ok: true, detail });
-      return;
-    }
-
-    if (pathname === "/api/runtime/debug/state" && req.method === "GET") {
-      sendJson(res, 200, { ok: true, state: loadState() });
-      return;
-    }
-
-    sendJson(res, 404, { ok: false, error: "not_found" });
-  } catch (error) {
-    sendJson(res, 500, {
-      ok: false,
-      error: String(error?.message || error),
-    });
+    res.end(
+      JSON.stringify({
+        ok: false,
+        error: "runtime_backbone_compat_target_unavailable",
+        target: targetBaseUrl,
+        deprecated: true,
+        detail: String(error?.message || error),
+      })
+    );
   }
 });
 
-const port = Number(process.env.RUNTIME_BACKBONE_API_PORT || 8792);
-server.listen(port, "127.0.0.1", () => {
-  console.log(`runtime_backbone_api listening on http://127.0.0.1:${port}`);
+server.on("error", (error) => {
+  console.error(`runtime_backbone_api_compat_error:${error?.message || error}`);
+  process.exitCode = 1;
 });
+
+if (!compatEnabled) {
+  console.warn("runtime_backbone_api on 8792 is disabled by RUNTIME_BACKBONE_COMPAT_ENABLED=false");
+} else {
+  server.listen(compatPort, "127.0.0.1", () => {
+    console.warn(
+      `runtime_backbone_api on 8792 is deprecated; forwarding to ${targetBaseUrl} from http://127.0.0.1:${compatPort}`
+    );
+  });
+}

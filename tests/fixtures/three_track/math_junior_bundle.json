@@ -1,0 +1,60 @@
+{
+  "bundle_id": "three_track_math_junior_bundle",
+  "lesson_id": "three_track_math_junior_lesson",
+  "title": "初中数学 三轨验证样本",
+  "track_code": "math_junior",
+  "subject": "数学",
+  "stage": "junior",
+  "grade": "g8",
+  "season": "summer",
+  "source_tree": [
+    {
+      "source_node_local_id": "root",
+      "node_type": "lesson",
+      "phase": "knowledge_main",
+      "title": "方程专题"
+    },
+    {
+      "source_node_local_id": "equation_block",
+      "parent_source_node_local_id": "root",
+      "node_type": "knowledge_block",
+      "phase": "knowledge_main",
+      "title": "一元一次方程",
+      "checkpoint_codes": ["一元一次方程"]
+    }
+  ],
+  "tasks": [
+    {
+      "local_task_id": "MJ-001",
+      "source_node_local_id": "equation_block",
+      "question_type": "single_choice",
+      "stem": "若 x + 5 = 12，则 x = ?",
+      "answer": "7",
+      "explanation": "两边同时减去 5。",
+      "difficulty_level": 2,
+      "difficulty_confidence": 0.95,
+      "subject_tags": ["代数"],
+      "source_refs_json": {
+        "page_no": 1
+      }
+    },
+    {
+      "local_task_id": "MJ-002",
+      "source_node_local_id": "equation_block",
+      "question_type": "fill_blank",
+      "stem": "化简 4m - m = ____。",
+      "answer": "3m",
+      "explanation": "合并同类项。",
+      "difficulty_level": 3,
+      "difficulty_confidence": 0.9,
+      "checkpoint_override": {
+        "mode": "add",
+        "checkpoint_codes": ["整式加减"]
+      },
+      "subject_tags": ["代数"],
+      "source_refs_json": {
+        "page_no": 1
+      }
+    }
+  ]
+}

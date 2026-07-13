@@ -3,6 +3,7 @@ config/runtime_secrets.local.json
 # Python caches
 __pycache__/
 *.pyc
+.venv*/
 
 # Node dependencies
 node_modules/
@@ -16,6 +17,7 @@ codex_tmp_pdf/
 
 # Generated outputs and scratch files
 outputs/
+out/
 temp_repo_demo.html
 tmp_script_check.js
 tmp_script_check2.js
@@ -26,7 +28,16 @@ tmp_preview_check.js
 .codex_assets/
 .codex_previews/
 _backup_*/
+backups/
 *.bak
+*.bak_*
+*.backup_*
+*.py.*_backup
+*.py.*backup
+*.yaml.*_backup
+*.yaml.*backup
+*_backup_20*.py
+*_backup_20*.yaml
 
 # Vendored local binaries
 tools/vendor/

@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:release-gate": "node tests/release_gate/run_release_gate.mjs --full --report-json --report-md",
+    "test:three-track-baseline": "node tools/runtime_three_track_validation_baseline.mjs",
+    "test:baseline-final-review": "node tools/runtime_baseline_final_review.mjs",
     "test:production-readiness": "node tools/runtime_backbone_production_readiness.mjs",
     "test:failure-injection": "node tools/runtime_backbone_failure_injection_checks.mjs",
     "test:backup-restore": "node tools/runtime_backbone_backup_restore.mjs",
