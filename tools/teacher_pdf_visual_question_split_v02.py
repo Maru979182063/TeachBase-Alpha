@@ -30,6 +30,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from PIL import Image, ImageDraw, ImageFont
 import vision_prompt_store
+from unit_planner_v01 import build_unit_plan, write_unit_plan_outputs
 
 
 SCALE = float(os.environ.get("PDF_RENDER_SCALE", "1.6"))
@@ -374,6 +375,23 @@ def resolve_profile(pdf_path: str, lines_by_page: dict[int, list[Line]]) -> str:
     for page in sorted(lines_by_page)[:8]:
         first_pages.extend(line.text for line in lines_by_page.get(page, [])[:120])
     joined = " ".join(first_pages)
+    source_lower = source_text.lower()
+
+    if (
+        "\u82f1\u8bed" in source_text
+        or "\u9ad8\u4e2d\u82f1\u8bed" in source_text
+        or "\u9605\u8bfb" in source_text
+        or "\u5199\u4f5c" in source_text
+        or "\u6c42\u52a9\u4fe1" in source_text
+        or "english" in source_lower
+        or "reading" in source_lower
+        or "writing" in source_lower
+    ):
+        return PROFILE_ENGLISH
+    if "\u521d\u4e2d\u6570\u5b66" in source_text or any(tag in source_text for tag in ("\u521d\u4e00", "\u521d\u4e8c", "\u521d\u4e09")):
+        return PROFILE_JUNIOR_GEOMETRY
+    if "\u9ad8\u4e2d\u6570\u5b66" in source_text or any(tag in source_text for tag in ("\u9ad8\u4e00", "\u9ad8\u4e8c", "\u9ad8\u4e09")):
+        return PROFILE_SENIOR_MATH
 
     if (
         "阅读理解" in source_text
@@ -3517,6 +3535,8 @@ def main() -> None:
     page_images = {i + 1: Image.open(path).convert("RGB") for i, path in enumerate(page_paths)}
     page_manifests, raw_blocks = build_raw_blocks(page_paths, lines_by_page, segments, anchors)
     reading_blocks = build_reading_blocks(raw_blocks, segments)
+    unit_plan_payload = build_unit_plan(pdf_path, profile, page_manifests, reading_blocks, segments)
+    write_unit_plan_outputs(unit_plan_payload, out_dir)
 
     planner_summary: dict | None = None
     structure_units: list[StructureUnit] = []
@@ -3597,6 +3617,8 @@ def main() -> None:
         "json": str(out_dir / "teacher_visual_question_split_v0.2.json"),
         "transcription_json": str(out_dir / "teacher_visual_question_transcription_v0.1.json"),
         "semantic_nodes": str(out_dir / "semantic_nodes_candidate_v0.3.json"),
+        "unit_plan": str(out_dir / "unit_planner_v0.1" / "unit_plan_v0.1.json"),
+        "unit_plan_html": str(out_dir / "unit_planner_v0.1" / "unit_plan_v0.1.html"),
         "reading_blocks": str(out_dir / "semantic_v03_blocks" / "reading_blocks_v0.3.json"),
         "assembled_semantic_nodes": str(out_dir / "semantic_v03_blocks" / "semantic_nodes_assembled_from_reading_blocks_v0.3.json"),
         "visual_blocks": str(out_dir / "semantic_v03_blocks" / "visual_blocks_v0.3.json"),

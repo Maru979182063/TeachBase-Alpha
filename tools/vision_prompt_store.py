@@ -403,6 +403,21 @@ def get_runtime_route_planner_prompt_bundle() -> dict[str, str]:
     }
 
 
+def get_visual_unit_planner_probe_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    visual_unit_planner_probe = prompts.get("visual_unit_planner_probe", {})
+    if not isinstance(visual_unit_planner_probe, dict):
+        raise PromptConfigError("missing_visual_unit_planner_probe_prompt_config")
+    return {
+        "prompt_version": str(visual_unit_planner_probe.get("prompt_version", "") or ""),
+        "system_prompt": str(visual_unit_planner_probe.get("system_prompt", "") or ""),
+        "user_template": str(visual_unit_planner_probe.get("user_template", "") or ""),
+    }
+
+
 def get_english_unit_planner_prompt_bundle() -> dict[str, str]:
     config = load_prompt_config()
     prompts = config.get("prompts", {})
