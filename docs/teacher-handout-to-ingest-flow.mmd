@@ -1,0 +1,83 @@
+flowchart TD
+    A([开始：教师讲义 PDF]) --> B[run_split_v03_full_doc.py：PDF、doc_key、输出目录、视觉模型]
+    B --> C[预检并逐页渲染：page_manifests 与页面主图]
+    C --> D[视觉版面块提取：模型块、OCR 辅助块、缺失区域 Tile 回补]
+    D --> E[阅读顺序块构建]
+    E --> F{语义归属}
+    F -- 新题号/题目头 --> G[创建 question 节点]
+    F -- 页首续接/答案/解析 --> H[附加到已打开题目节点]
+    F -- 知识图/表格/树图/大讲解块 --> I[保留为 knowledge 节点，不入题库]
+    F -- 页码噪声/无法归属 --> J[隔离为 quarantine 节点]
+    G --> K[累计 Semantic Nodes]
+    H --> K
+    K --> L[按节点生成 question_composite、片段图、审核画布]
+    L --> M[题目切片审计：题干、答案归属、跨页、吞下一个题/知识块]
+    M --> N{是否 AUDITED_READY？}
+    N -- 否 --> O[review_repair_pool：禁止自动入库]
+    O --> P{启用 v03 节点精修？}
+    P -- 是 --> Q[continuation finder 与归属冲突判断]
+    Q --> M
+    P -- 否 --> R[人工审核或重跑切题]
+    R --> D
+    N -- 是 --> S[legacy_bridge_questions.json]
+
+    S --> T[桥接题包：composite 供转录；bridge_fragments 保留页坐标证据]
+    T --> U[run_question_ingest_skill.py：统一题目入库编排]
+    U --> V[绝对化题图路径]
+    V --> W[图片需求 Gate：输出 stem、options、analysis 作用域]
+    W --> X[候选题源分片]
+    X --> Y[视觉转录分片并发执行]
+    Y --> Z{是否有失败题？}
+    Z -- 是 --> ZA[失败题重试并合并]
+    ZA --> ZB[转录格式归一化与字段回填]
+    Z -- 否 --> ZB
+
+    ZB --> ZC{输入是否为 v03 composite bridge？}
+    ZC -- 是：当前默认行为 --> ZD[跳过 composite 的选项/公图检测]
+    ZD --> ZE[仅复制 bridge_fragments 为 evidence_only 资产]
+    ZC -- 否：标准题源 --> AA{Gate 是否包含 options？}
+
+    AA -- 是 --> AB[选择题判断：题型、A-D 标记、选择题提示词、题图信号]
+    AB --> AC[选项锚点检测：视觉模型，失败时启发式兜底]
+    AC --> AD[逐选项图精修：在选项区域内定位小图]
+    AD --> AE[安全裁图：并集保留 A/B/C/D 标签、选项文字和完整小图]
+    AE --> AF{置信度足够且无跨选项冲突？}
+    AF -- 是 --> AG[选项资产：role=option，placement=option_inline，按 option_key 归属]
+    AF -- 否 --> AH[未归属证据资产：evidence_only，带 option_asset_unassigned 标记]
+    AA -- 否 --> AI[跳过选项图检测]
+
+    AG --> AJ{Gate 是否包含 stem 或 analysis？}
+    AH --> AJ
+    AI --> AJ
+    AJ -- 否 --> AK[汇总 staged_visual_assets]
+    AJ -- 是 --> AL{长图、同源长容器或 panel 信号？}
+    AL -- 否 --> AM[普通公共图检测：题干图与解析图 bbox]
+    AL -- 是 --> AN[串行执行：长图/面板分段预切]
+    AN --> AO[每个段独立视觉检测、启发式回补与组件聚类]
+    AO --> AP[合并同段子图：panel_group_id、子图 bbox、保持原版式]
+    AM --> AQ[公共图资产分配：stem 或 analysis]
+    AP --> AR[面板组资产：crop_policy=panel_group_preserve_layout]
+    AQ --> AK
+    AR --> AK
+
+    ZE --> BA[图片资产化：复制题图、桥接片段与 staged assets]
+    AK --> BA
+    BA --> BB[生成题目记录与 question_asset_manifest_v0.1.json]
+    BB --> BC[字段组装：题干、答案、解析 Markdown；图片依赖；question_visual_structure；display_blocks；lineage]
+    BC --> BD[视觉资产合并：仅对普通候选裁图去重；不合并 option_inline 与 panel group]
+    BD --> BE[资产归属与质量精修]
+    BE --> BF[题干/解析按 scope 选图；选项按 option_key 选图；面板组保持整体]
+    BF --> BG[模型复核图片插入锚点与长图面板布局]
+    BG --> BH[reconciled_refined_manifest.json]
+    BH --> BI[资产包审计：图片存在、作用域、选项图数量、展示块与裁图质量]
+    BI --> BJ{审计状态}
+    BJ -- fail / needs_review --> BK[审计 HTML、JSON 与日志定位问题]
+    BK --> W
+    BJ -- pass --> BL[runtime_summary.json、state.json、最终 Manifest、审核报告]
+    BL --> BM[当前代码终点：可由下游服务导入的题目字段与图片资产包]
+    BM --> BN([结束：本仓库未发现自动数据库写入节点])
+
+    ZD -. 未实现的主链衔接：bridge fragments 直接进入选项/面板检测 .-> AA
+
+    classDef gap fill:#fff4cc,stroke:#9c7a00,color:#222
+    class ZD,ZE,BM,BN gap
