@@ -1686,6 +1686,92 @@ def build_display_blocks(record: dict[str, Any]) -> list[dict[str, Any]]:
     return blocks
 
 
+def _first_non_empty(*values: Any) -> str:
+    for value in values:
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return ""
+
+
+def _question_lineage(question: dict[str, Any], question_id: str, assets: list[dict[str, Any]]) -> dict[str, Any]:
+    source_lineage = question.get("lineage", {}) if isinstance(question.get("lineage"), dict) else {}
+    qvs = (
+        question.get("question_visual_structure", {})
+        if isinstance(question.get("question_visual_structure"), dict)
+        else {}
+    )
+    source_refs = (
+        question.get("source_refs_json", {})
+        if isinstance(question.get("source_refs_json"), dict)
+        else {}
+    )
+    asset_ids = sorted(
+        {
+            str(asset.get("asset_id", "") or "").strip()
+            for asset in assets
+            if str(asset.get("asset_id", "") or "").strip()
+        }
+    )
+    return {
+        "source_run_id": _first_non_empty(
+            source_lineage.get("source_run_id"),
+            source_lineage.get("sourceRunId"),
+            question.get("source_run_id"),
+            question.get("sourceRunId"),
+            question.get("runtime_run_id"),
+            question.get("runtimeRunId"),
+            qvs.get("runtime_run_id"),
+            source_refs.get("runtime_run_id"),
+            question.get("run_id"),
+        ),
+        "source_document_id": _first_non_empty(
+            source_lineage.get("source_document_id"),
+            source_lineage.get("sourceDocumentId"),
+            question.get("source_document_id"),
+            question.get("sourceDocumentId"),
+            question.get("document_id"),
+            question.get("documentId"),
+            source_refs.get("document_id"),
+            source_refs.get("source_pdf_name"),
+        ),
+        "document_revision_id": _first_non_empty(
+            source_lineage.get("document_revision_id"),
+            source_lineage.get("documentRevisionId"),
+            question.get("document_revision_id"),
+            question.get("documentRevisionId"),
+            source_refs.get("document_revision_id"),
+        ),
+        "semantic_node_id": _first_non_empty(
+            source_lineage.get("semantic_node_id"),
+            source_lineage.get("semanticNodeId"),
+            question.get("semantic_node_id"),
+            question.get("semanticNodeId"),
+            question.get("node_id"),
+            question.get("split_node_id"),
+            qvs.get("semantic_node_id"),
+            qvs.get("node_id"),
+        ),
+        "question_id": question_id,
+        "asset_ids": asset_ids,
+        "release_decision_id": _first_non_empty(
+            source_lineage.get("release_decision_id"),
+            source_lineage.get("releaseDecisionId"),
+            question.get("release_decision_id"),
+            question.get("releaseDecisionId"),
+        ),
+        "runtime_import_id": _first_non_empty(
+            source_lineage.get("runtime_import_id"),
+            source_lineage.get("runtimeImportId"),
+            question.get("runtime_import_id"),
+            question.get("runtimeImportId"),
+        ),
+        "created_at": _first_non_empty(source_lineage.get("created_at"), source_lineage.get("createdAt")),
+    }
+
+
 def build_records(
     source_json: Path,
     visual_results: Path | None,
@@ -1746,6 +1832,7 @@ def build_records(
             "assets": all_assets,
             "missing_assets": missing_assets,
             "removed_duplicate_assets": removed_duplicate_assets,
+            "lineage": _question_lineage(question, question_id, all_assets),
             "selected_scope_asset_ids": {
                 "evidence": [str(evidence_meta.get("selected_evidence_asset_id", "") or "")] if str(evidence_meta.get("selected_evidence_asset_id", "") or "") else [],
                 "bridge_fragments": [str(asset.get("asset_id", "") or "") for asset in bridge_fragment_assets],
@@ -2183,7 +2270,7 @@ def write_html_clean(out_path: Path, payload: dict[str, Any], *, show_asset_debu
                 asset_figure_html(
                     asset,
                     str(asset.get("asset_id", "") or ""),
-                    show_asset_debug=show_asset_debug,
+                    show_asset_debug=show_asset_debug or str(asset.get("placement", "")) == "evidence_only",
                 )
             )
         return "".join(cards)

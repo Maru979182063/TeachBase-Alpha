@@ -31,12 +31,18 @@ That means the backend baseline covers:
 - release-gate and regression validation
 - asset packaging and question-image attachment tooling
 - backend observability and audit support
+- canonical release decision gating before automatic Runtime import
 
 That boundary does not cover:
 
 - raw PDF ingestion accuracy
 - OCR quality guarantees
 - final multi-discipline production rollout approval
+
+`complete` and `record=ok` are not release criteria. The automatic import boundary
+is `allow_list_manifest.json`, produced together with
+`canonical_release_decision.json` and `release_decision_summary.json`. See
+`docs/release_decision_gate.md`.
 
 ## Main Entry Points
 
@@ -45,6 +51,8 @@ The most useful places to start are:
 - `package.json`: top-level validation commands
 - `docs/release_gate/2026-07-01_validation_baseline.md`: current backend validation-baseline summary
 - `docs/production_readiness_final_report.md`: what is closed vs still out of scope
+- `docs/release_decision_gate.md`: why release decision is the only automatic import gate
+- `docs/artifact_lineage.md`: how source document, semantic node, assets, release decision, and Runtime import are traced
 - `runtime/postgres/scoped_state_repository.mjs`: scoped-table-write baseline introduced in the latest backend round
 - `tools/run_question_ingest_skill.py`: question-ingest and visual-asset flow entry for the current skill-side pipeline
 

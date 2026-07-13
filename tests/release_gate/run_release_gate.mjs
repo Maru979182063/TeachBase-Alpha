@@ -52,6 +52,14 @@ const moduleConfigs = [
     path: path.join(workspaceRoot, "tests", "release_gate", "06_asset_resolver.test.mjs"),
   },
   {
+    id: "release_gate_decision",
+    path: path.join(workspaceRoot, "tests", "release_gate", "07_release_decision.test.mjs"),
+  },
+  {
+    id: "artifact_lineage",
+    path: path.join(workspaceRoot, "tests", "release_gate", "08_artifact_lineage.test.mjs"),
+  },
+  {
     id: "business",
     path: path.join(workspaceRoot, "tests", "business", "runtime_business_checks.mjs"),
   },

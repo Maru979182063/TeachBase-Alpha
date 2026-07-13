@@ -23,6 +23,10 @@ import {
   adaptRuntimeManifestToLessonDraftBundle,
   looksLikeRuntimeManifest,
 } from "./runtime_manifest_to_lesson_bundle_adapter.mjs";
+import {
+  applyReleaseGateToLessonDraftBundle,
+  buildRuntimeImportLineage,
+} from "./build_release_decision.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -3299,9 +3303,21 @@ function hydrateRevisionFromBundle(state, lesson, documentId, lessonRevisionId, 
  * 容器创建和版本灌入分开，便于迁移复用同一组内部步骤。
  */
 export function importLessonDraftBundle(state, payload = {}) {
-  const bundle = normalizeLessonDraftBundle(normalizeBundleImportPayload(payload), {
+  let bundle = normalizeLessonDraftBundle(normalizeBundleImportPayload(payload), {
     runtimeRunId: payload.runtime_run_id || payload.runtimeRunId || "",
   });
+  const releaseGateResult = applyReleaseGateToLessonDraftBundle(bundle, {
+    allowListManifest:
+      payload.allow_list_manifest ||
+      payload.allowListManifest ||
+      payload.release_decision_manifest ||
+      payload.releaseDecisionManifest,
+    requireReleaseDecision:
+      payload.require_release_decision === true ||
+      payload.requireReleaseDecision === true ||
+      process.env.RUNTIME_REQUIRE_RELEASE_ALLOW_LIST === "1",
+  });
+  bundle = releaseGateResult.bundle;
   bundle.bundle_id = bundle.bundle_id || bundle.bundleId || `${bundle.lesson_id || bundle.lesson?.lesson_id || "lesson"}:bundle`;
   bundle.lesson_id = bundle.lesson_id || bundle.lesson?.lesson_id || makeId("lesson");
   bundle.title = bundle.title || bundle.lesson?.title || bundle.lesson?.lesson_title || bundle.lesson_id;
@@ -3320,6 +3336,11 @@ export function importLessonDraftBundle(state, payload = {}) {
     (item) => item.bundle_id === bundle.bundle_id && item.content_hash === contentHash
   );
   if (sameImport) {
+    const lineage = buildRuntimeImportLineage({
+      releaseGate: releaseGateResult.releaseGate,
+      runtimeImportId: sameImport.import_id || sameImport.artifact_id || "",
+      createdAt: new Date().toISOString(),
+    });
     return {
       importId: sameImport.import_id,
       runId: sameImport.run_id,
@@ -3327,6 +3348,8 @@ export function importLessonDraftBundle(state, payload = {}) {
       lessonRevisionId: sameImport.lesson_revision_id,
       reviewTaskId: sameImport.review_task_id,
       idempotent: true,
+      releaseGate: releaseGateResult.releaseGate,
+      lineage,
     };
   }
 
@@ -3459,6 +3482,12 @@ export function importLessonDraftBundle(state, payload = {}) {
     }
   }
 
+  const lineage = buildRuntimeImportLineage({
+    releaseGate: releaseGateResult.releaseGate,
+    runtimeImportId: importId,
+    createdAt: new Date().toISOString(),
+  });
+
   return {
     importId,
     runId: run.run_id,
@@ -3467,6 +3496,8 @@ export function importLessonDraftBundle(state, payload = {}) {
     reviewTaskId: reviewTask.review_task_id,
     artifactId: importArtifact.artifact_id,
     idempotent: false,
+    releaseGate: releaseGateResult.releaseGate,
+    lineage,
   };
 }
 
