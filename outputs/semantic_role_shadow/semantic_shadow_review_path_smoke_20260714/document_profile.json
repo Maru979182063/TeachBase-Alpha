@@ -1,0 +1,26 @@
+{
+  "schema_version": "document_profile_shadow.v0.1",
+  "doc_root": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\docs\\synthetic_review",
+  "resolver_mode": "deterministic_sidecar",
+  "model_invoked": false,
+  "database_write_attempted": false,
+  "runtime_import_attempted": false,
+  "node_count": 3,
+  "node_type_counts": {
+    "quarantined_orphan": 1,
+    "question": 2
+  },
+  "review_status_counts": {
+    "AUDITED_READY": 1,
+    "NEEDS_REVIEW": 1,
+    "QUARANTINED": 1
+  },
+  "pages": [
+    1,
+    2
+  ],
+  "review_reasons": [
+    "orphan_unresolved",
+    "page_bottom_may_continue"
+  ]
+}

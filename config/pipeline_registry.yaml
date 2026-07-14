@@ -1,7 +1,7 @@
 {
   "schema_version": "pipeline_registry.v0.1",
   "status_enum": ["stable", "experimental", "shadow", "validation", "effective", "deprecated"],
-  "generated_for_branch": "chore/pipeline-isolation-control-plane",
+  "generated_for_branch": "feat/semantic-role-shadow-v01-isolated",
   "pipelines": [
     {
       "pipeline_id": "split_v03",
@@ -91,6 +91,62 @@
       "rollback_method": "return to validation/backend-runtime-20260706",
       "baseline_id": "control_plane_20260714_v01",
       "last_validated_commit": "5ceccd23"
+    },
+    {
+      "pipeline_id": "semantic_role_shadow",
+      "pipeline_name": "Semantic Role Adapter isolated shadow sidecar",
+      "pipeline_version": "v0.1",
+      "status": "shadow",
+      "owner": "TeachBase-Alpha pipeline maintainers",
+      "description": "Shadow-only Semantic Role Adapter observation surface. It compares deterministic baselines and writes sidecar artifacts only under its owned output root.",
+      "entrypoint": "tools/run_semantic_role_adapter_shadow.py",
+      "config_path": "config/pipeline_feature_flags.yaml",
+      "feature_flags": ["semantic_role_adapter_shadow"],
+      "input_contracts": [
+        "assignments.json",
+        "semantic_nodes.json",
+        "audit_report.json",
+        "legacy_bridge_questions.json",
+        "review_repair_pool.json"
+      ],
+      "output_contracts": [
+        "document_profile.json",
+        "semantic_role_adapter_results.json",
+        "semantic_role_adapter_diff_report.json",
+        "semantic_role_adapter_metrics.json",
+        "semantic_role_adapter_prompt_trace.json",
+        "semantic_role_adapter_review_samples.html",
+        "semantic_role_shadow_non_interference_report.json"
+      ],
+      "owned_output_roots": ["outputs/semantic_role_shadow"],
+      "forbidden_write_roots": [
+        "out",
+        "outputs/split_v03",
+        "outputs/docx_native_ingest_v01",
+        "outputs/english_text_first_v01",
+        "outputs/runtime_validation",
+        "outputs/pipeline_baseline_snapshot"
+      ],
+      "stable_dependencies": ["python"],
+      "optional_dependencies": [],
+      "model_provider": "none",
+      "default_model": "",
+      "prompt_bundle": "",
+      "prompt_version": "",
+      "downstream_pipelines": [],
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "forbidden"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "forbidden"
+      },
+      "release_gate_policy": "no_effect",
+      "fallback_pipeline": "",
+      "rollback_method": "disable semantic_role_adapter_shadow and remove sidecar output",
+      "baseline_id": "control_plane_20260714_v02;semantic_shadow_review_path_20260714_v01",
+      "last_validated_commit": "878ad4a9"
     }
   ]
 }

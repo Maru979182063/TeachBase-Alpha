@@ -1,0 +1,24 @@
+{
+  "schema": "audit_report_v0.3",
+  "records": [
+    {
+      "node_id": "synthetic_ready_q_001",
+      "status": "AUDITED_READY",
+      "reasons": []
+    },
+    {
+      "node_id": "synthetic_review_q_002",
+      "status": "NEEDS_REVIEW",
+      "reasons": [
+        "page_bottom_may_continue"
+      ]
+    },
+    {
+      "node_id": "synthetic_orphan_003",
+      "status": "QUARANTINED",
+      "reasons": [
+        "orphan_unresolved"
+      ]
+    }
+  ]
+}

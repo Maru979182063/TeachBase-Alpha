@@ -1,0 +1,200 @@
+{
+  "schema_version": "semantic_shadow_review_path_fixture.v0.1",
+  "description": "Deterministic synthetic review/quarantine baseline. No paid model call and no restricted source text.",
+  "assignments": [
+    {
+      "block_id": "synthetic_rb0001",
+      "node_id": "synthetic_ready_q_001",
+      "role": "question_body",
+      "confidence": 1.0,
+      "provider": "deterministic_fixture"
+    },
+    {
+      "block_id": "synthetic_rb0002",
+      "node_id": "synthetic_ready_q_001",
+      "role": "answer_block",
+      "confidence": 1.0,
+      "provider": "deterministic_fixture"
+    },
+    {
+      "block_id": "synthetic_rb0003",
+      "node_id": "synthetic_review_q_002",
+      "role": "question_body",
+      "confidence": 1.0,
+      "provider": "deterministic_fixture"
+    },
+    {
+      "block_id": "synthetic_rb0004",
+      "node_id": "synthetic_orphan_003",
+      "role": "orphan_block",
+      "confidence": 1.0,
+      "provider": "deterministic_fixture"
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "synthetic_ready_q_001",
+      "node_type": "question",
+      "source": "semantic_v03",
+      "fragments": [
+        {
+          "page": 1,
+          "bbox_px": [
+            120,
+            140,
+            880,
+            360
+          ],
+          "role": "question_body",
+          "block_ids": [
+            "synthetic_rb0001"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 1,
+          "bbox_px": [
+            120,
+            370,
+            520,
+            450
+          ],
+          "role": "answer_block",
+          "block_ids": [
+            "synthetic_rb0002"
+          ],
+          "flags": [
+            "answer_like",
+            "reading_block"
+          ]
+        }
+      ],
+      "review_status": "AUDITED_READY",
+      "text_stub": "Synthetic deterministic ready question with answer evidence."
+    },
+    {
+      "node_id": "synthetic_review_q_002",
+      "node_type": "question",
+      "source": "semantic_v03",
+      "fragments": [
+        {
+          "page": 1,
+          "bbox_px": [
+            120,
+            900,
+            900,
+            1180
+          ],
+          "role": "question_body",
+          "block_ids": [
+            "synthetic_rb0003"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block",
+            "near_page_bottom"
+          ]
+        }
+      ],
+      "review_status": "NEEDS_REVIEW",
+      "text_stub": "Synthetic review question intentionally near page bottom."
+    },
+    {
+      "node_id": "synthetic_orphan_003",
+      "node_type": "quarantined_orphan",
+      "source": "semantic_v03",
+      "fragments": [
+        {
+          "page": 2,
+          "bbox_px": [
+            90,
+            120,
+            760,
+            260
+          ],
+          "role": "orphan_block",
+          "block_ids": [
+            "synthetic_rb0004"
+          ],
+          "flags": [
+            "orphan_candidate",
+            "reading_block"
+          ]
+        }
+      ],
+      "review_status": "QUARANTINED",
+      "text_stub": "Synthetic orphan block without a resolved owning question."
+    }
+  ],
+  "audit_records": [
+    {
+      "node_id": "synthetic_ready_q_001",
+      "status": "AUDITED_READY",
+      "reasons": []
+    },
+    {
+      "node_id": "synthetic_review_q_002",
+      "status": "NEEDS_REVIEW",
+      "reasons": [
+        "page_bottom_may_continue"
+      ]
+    },
+    {
+      "node_id": "synthetic_orphan_003",
+      "status": "QUARANTINED",
+      "reasons": [
+        "orphan_unresolved"
+      ]
+    }
+  ],
+  "crop_records": {
+    "synthetic_ready_q_001": {
+      "question_composite": "fixtures/semantic_shadow_review_path/assets/synthetic_ready_q_001_review_canvas.png",
+      "review_canvas": "fixtures/semantic_shadow_review_path/assets/synthetic_ready_q_001_review_canvas.png",
+      "fragment_records": [
+        {
+          "path": "fixtures/semantic_shadow_review_path/assets/synthetic_ready_q_001_fragment_01.png",
+          "role": "question_body",
+          "page": 1,
+          "bbox_px": [
+            120,
+            140,
+            880,
+            360
+          ]
+        },
+        {
+          "path": "fixtures/semantic_shadow_review_path/assets/synthetic_ready_q_001_fragment_02.png",
+          "role": "answer_block",
+          "page": 1,
+          "bbox_px": [
+            120,
+            370,
+            520,
+            450
+          ]
+        }
+      ]
+    },
+    "synthetic_review_q_002": {
+      "question_composite": "fixtures/semantic_shadow_review_path/assets/synthetic_review_q_002_review_canvas.png",
+      "review_canvas": "fixtures/semantic_shadow_review_path/assets/synthetic_review_q_002_review_canvas.png",
+      "fragment_records": [
+        {
+          "path": "fixtures/semantic_shadow_review_path/assets/synthetic_review_q_002_fragment_01.png",
+          "role": "question_body",
+          "page": 1,
+          "bbox_px": [
+            120,
+            900,
+            900,
+            1180
+          ]
+        }
+      ]
+    }
+  }
+}

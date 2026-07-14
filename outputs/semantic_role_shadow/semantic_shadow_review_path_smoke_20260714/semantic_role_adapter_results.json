@@ -1,0 +1,40 @@
+{
+  "schema_version": "semantic_role_adapter_results_shadow.v0.1",
+  "adapter_mode": "deterministic_sidecar",
+  "model_invoked": false,
+  "prompt_content_changed": false,
+  "document_profile_node_count": 3,
+  "observations": [
+    {
+      "node_id": "synthetic_ready_q_001",
+      "current_node_type": "question",
+      "current_review_status": "AUDITED_READY",
+      "shadow_role": "question",
+      "shadow_decision": "observe_only",
+      "review_reasons": [],
+      "would_mutate_pipeline": false
+    },
+    {
+      "node_id": "synthetic_review_q_002",
+      "current_node_type": "question",
+      "current_review_status": "NEEDS_REVIEW",
+      "shadow_role": "question",
+      "shadow_decision": "observe_only",
+      "review_reasons": [
+        "page_bottom_may_continue"
+      ],
+      "would_mutate_pipeline": false
+    },
+    {
+      "node_id": "synthetic_orphan_003",
+      "current_node_type": "quarantined_orphan",
+      "current_review_status": "QUARANTINED",
+      "shadow_role": "quarantined_orphan",
+      "shadow_decision": "observe_only",
+      "review_reasons": [
+        "orphan_unresolved"
+      ],
+      "would_mutate_pipeline": false
+    }
+  ]
+}

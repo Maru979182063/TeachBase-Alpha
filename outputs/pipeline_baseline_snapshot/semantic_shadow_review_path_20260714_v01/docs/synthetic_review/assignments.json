@@ -1,0 +1,33 @@
+{
+  "schema": "semantic_assignments_v0.3",
+  "assignments": [
+    {
+      "block_id": "synthetic_rb0001",
+      "node_id": "synthetic_ready_q_001",
+      "role": "question_body",
+      "confidence": 1.0,
+      "provider": "deterministic_fixture"
+    },
+    {
+      "block_id": "synthetic_rb0002",
+      "node_id": "synthetic_ready_q_001",
+      "role": "answer_block",
+      "confidence": 1.0,
+      "provider": "deterministic_fixture"
+    },
+    {
+      "block_id": "synthetic_rb0003",
+      "node_id": "synthetic_review_q_002",
+      "role": "question_body",
+      "confidence": 1.0,
+      "provider": "deterministic_fixture"
+    },
+    {
+      "block_id": "synthetic_rb0004",
+      "node_id": "synthetic_orphan_003",
+      "role": "orphan_block",
+      "confidence": 1.0,
+      "provider": "deterministic_fixture"
+    }
+  ]
+}

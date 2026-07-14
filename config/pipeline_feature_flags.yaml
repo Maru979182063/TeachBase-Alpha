@@ -5,12 +5,12 @@
     "semantic_role_adapter_shadow": {
       "default": false,
       "owner": "pipeline_control_plane",
-      "description": "Future Semantic Role Adapter shadow sidecar switch. Not wired in this branch."
+      "description": "Semantic Role Adapter isolated shadow sidecar switch. Default false; when enabled it may write only under outputs/semantic_role_shadow."
     },
     "semantic_visual_assignment_experiment": {
       "default": false,
       "owner": "pipeline_control_plane",
-      "description": "Future guard for visual semantic assignment experiments. Not wired in this branch."
+      "description": "Guard for visual semantic assignment experiments. Default false and not used by the Semantic Role Shadow runner."
     },
     "docx_native_ingest_enabled": {
       "default": false,

@@ -22,7 +22,7 @@ class PipelineRegistryTests(unittest.TestCase):
             ROOT,
         )
         self.assertTrue(result["ok"], result)
-        self.assertEqual(result["pipeline_count"], 2)
+        self.assertEqual(result["pipeline_count"], 3)
 
     def test_duplicate_pipeline_id_fails(self) -> None:
         registry_path = ROOT / "config" / "pipeline_registry.yaml"

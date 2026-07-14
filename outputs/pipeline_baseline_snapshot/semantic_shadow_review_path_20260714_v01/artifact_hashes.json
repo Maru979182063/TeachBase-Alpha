@@ -1,0 +1,40 @@
+{
+  "schema_version": "pipeline_baseline_artifact_hashes.v0.1",
+  "artifacts": [
+    {
+      "artifact": "docs/synthetic_review/assignments.json",
+      "path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\docs\\synthetic_review\\assignments.json",
+      "sha256": "b4f67fe57f3ab198a52d02749b8f4eeaf5c78cfc9869636674bada6b8525972e",
+      "canonical_sha256": "7ab072baae133042c5a6d6dd04b28584cc028ba6265bcd400e8a747748da290a",
+      "ignored_field_count": 0
+    },
+    {
+      "artifact": "docs/synthetic_review/semantic_nodes.json",
+      "path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\docs\\synthetic_review\\semantic_nodes.json",
+      "sha256": "d90f2f5fd66adbe1072fda54e2c62b933c99caa4c9584167229354349741c598",
+      "canonical_sha256": "a212161dc2c64d4a41ff56bea06ba2d251822b684c173c79eb9d1997dfb0dc53",
+      "ignored_field_count": 0
+    },
+    {
+      "artifact": "docs/synthetic_review/audit_report.json",
+      "path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\docs\\synthetic_review\\audit_report.json",
+      "sha256": "85233b27e26f9e477448b3897664fe6756f676472f8919783db4fb4def3116cf",
+      "canonical_sha256": "f4fc92b21066c76eeb460a8441e8386ea69a0901e6b635aa35dcb3e12ff7908f",
+      "ignored_field_count": 0
+    },
+    {
+      "artifact": "legacy_bridge_questions.json",
+      "path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\legacy_bridge_questions.json",
+      "sha256": "9bc782a8dfe9b9ec4cf394c77beef05377cd2cd8fd746e25d6f92c2678ee3fbf",
+      "canonical_sha256": "0bbbe88e324ec292d7970f2b0259f60a5de0ed16e2e7300722f5edeed5afbd6f",
+      "ignored_field_count": 0
+    },
+    {
+      "artifact": "review_repair_pool.json",
+      "path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\review_repair_pool.json",
+      "sha256": "026b71eb0a76ebea6a1926c99dd87a0795306f306b6a3e5543b55a84d4006eb3",
+      "canonical_sha256": "f2c8508f2c1ddfc625a6195644038b677754207aad75ff8bc3b8d42d2e6ce169",
+      "ignored_field_count": 0
+    }
+  ]
+}

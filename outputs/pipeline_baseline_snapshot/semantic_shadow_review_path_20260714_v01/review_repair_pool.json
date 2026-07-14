@@ -1,0 +1,126 @@
+{
+  "schema": "semantic_v03_review_repair_pool_v0.1",
+  "items": [
+    {
+      "question_id": "synthetic_review_q_002",
+      "question_uid": "synthetic_review_q_002",
+      "node_id": "synthetic_review_q_002",
+      "node_type": "question",
+      "source": "semantic_v03",
+      "text_stub": "Synthetic review question intentionally near page bottom.",
+      "fragments": [
+        {
+          "page": 1,
+          "bbox_px": [
+            120,
+            900,
+            900,
+            1180
+          ],
+          "role": "question_body",
+          "block_ids": [
+            "synthetic_rb0003"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block",
+            "near_page_bottom"
+          ]
+        }
+      ],
+      "bridge_contract": {
+        "version": "semantic_v03_bridge_v0.5",
+        "transcription_input": "question_composite",
+        "asset_source": "bridge_fragments",
+        "coordinate_policy": "fragments_keep_page_master_px; composite_has_own_canvas_space",
+        "option_prepare_policy": "do_not_detect_on_composite"
+      },
+      "question_image": "fixtures\\semantic_shadow_review_path\\assets\\synthetic_review_q_002_review_canvas.png",
+      "stem_image": "fixtures\\semantic_shadow_review_path\\assets\\synthetic_review_q_002_review_canvas.png",
+      "analysis_image": "",
+      "transcription_image": "fixtures\\semantic_shadow_review_path\\assets\\synthetic_review_q_002_review_canvas.png",
+      "review_canvas": "fixtures\\semantic_shadow_review_path\\assets\\synthetic_review_q_002_review_canvas.png",
+      "question_composite": "fixtures\\semantic_shadow_review_path\\assets\\synthetic_review_q_002_review_canvas.png",
+      "bridge_fragments": [
+        {
+          "fragment_id": "synthetic_review_q_002_fragment_01",
+          "role": "question_body",
+          "page": 1,
+          "bbox_px": [
+            120,
+            900,
+            900,
+            1180
+          ],
+          "fragment_image": "fixtures\\semantic_shadow_review_path\\assets\\synthetic_review_q_002_fragment_01.png",
+          "coordinate_space": "page_master_px",
+          "source_image_role": "source_page",
+          "placement_scope": "evidence_only",
+          "asset_role": "question_fragment_evidence",
+          "source_block_ids": [
+            "synthetic_rb0003"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block",
+            "near_page_bottom"
+          ]
+        }
+      ],
+      "staged_visual_assets": [],
+      "gating_result": {
+        "decision": "review_required",
+        "image_input_policy": "composite_first",
+        "asset_detection_source": "bridge_fragments",
+        "fragment_policy": "bridge_fragments_evidence_only",
+        "requires_visual_transcription": true
+      },
+      "review_status": "NEEDS_REVIEW",
+      "review_reasons": [
+        "page_bottom_may_continue"
+      ],
+      "pool_item_type": "question_needs_repair",
+      "allowed_next_actions": [
+        "visual_refine",
+        "manual_review",
+        "rerun_split"
+      ],
+      "auto_ingest_allowed": false
+    },
+    {
+      "node_id": "synthetic_orphan_003",
+      "node_type": "quarantined_orphan",
+      "source": "semantic_v03",
+      "text_stub": "Synthetic orphan block without a resolved owning question.",
+      "fragments": [
+        {
+          "page": 2,
+          "bbox_px": [
+            90,
+            120,
+            760,
+            260
+          ],
+          "role": "orphan_block",
+          "block_ids": [
+            "synthetic_rb0004"
+          ],
+          "flags": [
+            "orphan_candidate",
+            "reading_block"
+          ]
+        }
+      ],
+      "review_status": "QUARANTINED",
+      "review_reasons": [
+        "orphan_unresolved"
+      ],
+      "pool_item_type": "non_question_needs_review",
+      "allowed_next_actions": [
+        "manual_review",
+        "rerun_split"
+      ],
+      "auto_ingest_allowed": false
+    }
+  ]
+}

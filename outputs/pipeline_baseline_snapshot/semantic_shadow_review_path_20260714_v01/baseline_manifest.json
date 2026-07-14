@@ -1,0 +1,88 @@
+{
+  "schema_version": "pipeline_baseline_manifest.v0.3",
+  "baseline_id": "semantic_shadow_review_path_20260714_v01",
+  "created_at": "2026-07-14T08:22:22.863853+00:00",
+  "baseline_type": "deterministic",
+  "baseline_scope": "review/quarantine non-interference path for Semantic Role Shadow isolation",
+  "entrypoint": "tools/build_semantic_shadow_review_baseline.py",
+  "command": "python tools/build_semantic_shadow_review_baseline.py --out outputs/pipeline_baseline_snapshot/semantic_shadow_review_path_20260714_v01",
+  "input": {
+    "path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\input\\synthetic_review_path_fixture.json",
+    "exists": true,
+    "sha256": "1a08d7d87764b891c7e559efcd99d782af940749da4e19b7024b13b1d02cb302",
+    "restricted_business_text": false,
+    "external_absolute_path_required": false
+  },
+  "provider": "deterministic_fixture",
+  "model": "",
+  "paid_vlm_used": false,
+  "actual_vlm_calls": 0,
+  "core_artifacts": [
+    "docs/synthetic_review/assignments.json",
+    "docs/synthetic_review/semantic_nodes.json",
+    "docs/synthetic_review/audit_report.json",
+    "legacy_bridge_questions.json",
+    "review_repair_pool.json"
+  ],
+  "canonical_hashes": {
+    "docs/synthetic_review/assignments.json": "7ab072baae133042c5a6d6dd04b28584cc028ba6265bcd400e8a747748da290a",
+    "docs/synthetic_review/semantic_nodes.json": "a212161dc2c64d4a41ff56bea06ba2d251822b684c173c79eb9d1997dfb0dc53",
+    "docs/synthetic_review/audit_report.json": "f4fc92b21066c76eeb460a8441e8386ea69a0901e6b635aa35dcb3e12ff7908f",
+    "legacy_bridge_questions.json": "0bbbe88e324ec292d7970f2b0259f60a5de0ed16e2e7300722f5edeed5afbd6f",
+    "review_repair_pool.json": "f2c8508f2c1ddfc625a6195644038b677754207aad75ff8bc3b8d42d2e6ce169"
+  },
+  "ignored_field_counts": {
+    "docs/synthetic_review/assignments.json": 0,
+    "docs/synthetic_review/semantic_nodes.json": 0,
+    "docs/synthetic_review/audit_report.json": 0,
+    "legacy_bridge_questions.json": 0,
+    "review_repair_pool.json": 0
+  },
+  "metrics": {
+    "nodes": 3,
+    "legacy_bridge_ready_count": 1,
+    "review_repair_pool_count": 2,
+    "review_status": {
+      "AUDITED_READY": 1,
+      "NEEDS_REVIEW": 1,
+      "QUARANTINED": 1
+    },
+    "review_reasons": [
+      "page_bottom_may_continue",
+      "orphan_unresolved"
+    ],
+    "node_summary": {
+      "ready": 1,
+      "needs_review": 1,
+      "quarantined": 1,
+      "question_nodes": 2,
+      "knowledge_nodes": 0,
+      "multi_fragment_nodes": 1,
+      "cross_page_nodes": 0
+    }
+  },
+  "required_core_artifacts_present": true,
+  "canonical_normalization_policy": {
+    "ignored_non_business_fields": [
+      "absolute_path_prefix",
+      "created_at",
+      "started_at",
+      "finished_at",
+      "run_id",
+      "temporary_output_directory",
+      "request_id_when_explicitly_random"
+    ],
+    "strict_business_fields": [
+      "node_count",
+      "node_type",
+      "fragment_page_and_bbox",
+      "review_status",
+      "audit_reasons",
+      "legacy_bridge_question_count",
+      "repair_pool_content",
+      "asset_count_and_ownership",
+      "release_decision",
+      "runtime_import_payload_business_fields"
+    ]
+  }
+}

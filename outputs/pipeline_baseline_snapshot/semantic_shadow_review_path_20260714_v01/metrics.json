@@ -1,0 +1,26 @@
+{
+  "schema_version": "pipeline_baseline_metrics.v0.3",
+  "metrics": {
+    "nodes": 3,
+    "legacy_bridge_ready_count": 1,
+    "review_repair_pool_count": 2,
+    "review_status": {
+      "AUDITED_READY": 1,
+      "NEEDS_REVIEW": 1,
+      "QUARANTINED": 1
+    },
+    "review_reasons": [
+      "page_bottom_may_continue",
+      "orphan_unresolved"
+    ],
+    "node_summary": {
+      "ready": 1,
+      "needs_review": 1,
+      "quarantined": 1,
+      "question_nodes": 2,
+      "knowledge_nodes": 0,
+      "multi_fragment_nodes": 1,
+      "cross_page_nodes": 0
+    }
+  }
+}

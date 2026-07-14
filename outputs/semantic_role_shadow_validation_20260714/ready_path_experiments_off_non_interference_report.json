@@ -1,0 +1,75 @@
+{
+  "schema_version": "semantic_shadow_non_interference_report.v0.1",
+  "baseline_root": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6",
+  "current_root": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6",
+  "compared_artifact_count": 5,
+  "ignored_field_count": 0,
+  "equality": true,
+  "baseline_hash": "ea5ab7d60a99e4b01dff872d652c906a7a5614a34db400c954618acc8b2bd9b9",
+  "current_hash": "ea5ab7d60a99e4b01dff872d652c906a7a5614a34db400c954618acc8b2bd9b9",
+  "canonical_hash": "ea5ab7d60a99e4b01dff872d652c906a7a5614a34db400c954618acc8b2bd9b9",
+  "mismatch_json_paths": [],
+  "mismatch_reason": "",
+  "artifacts": [
+    {
+      "baseline_path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\assignments.json",
+      "current_path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\assignments.json",
+      "baseline_hash": "d6aa84cfe20bc19bbb57498c304cb91d9fb8ec7b574edfc4c6037397efe52cb0",
+      "current_hash": "d6aa84cfe20bc19bbb57498c304cb91d9fb8ec7b574edfc4c6037397efe52cb0",
+      "canonical_hash": "d6aa84cfe20bc19bbb57498c304cb91d9fb8ec7b574edfc4c6037397efe52cb0",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "docs/english/assignments.json"
+    },
+    {
+      "baseline_path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\semantic_nodes.json",
+      "current_path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\semantic_nodes.json",
+      "baseline_hash": "64d32e85f6bd49f8933eae492af384bdffc53abffc7fda1304cecc218560be55",
+      "current_hash": "64d32e85f6bd49f8933eae492af384bdffc53abffc7fda1304cecc218560be55",
+      "canonical_hash": "64d32e85f6bd49f8933eae492af384bdffc53abffc7fda1304cecc218560be55",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "docs/english/semantic_nodes.json"
+    },
+    {
+      "baseline_path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\audit_report.json",
+      "current_path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\audit_report.json",
+      "baseline_hash": "084441c5084875e69980ae1a8ed31866148dd180b9675eb0abf99234ce0f5c66",
+      "current_hash": "084441c5084875e69980ae1a8ed31866148dd180b9675eb0abf99234ce0f5c66",
+      "canonical_hash": "084441c5084875e69980ae1a8ed31866148dd180b9675eb0abf99234ce0f5c66",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "docs/english/audit_report.json"
+    },
+    {
+      "baseline_path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\legacy_bridge_questions.json",
+      "current_path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\legacy_bridge_questions.json",
+      "baseline_hash": "95ecb767bb6c60c55d396edc1cfa674c6ab579d1efef6f55be333ed4ebcf2cc5",
+      "current_hash": "95ecb767bb6c60c55d396edc1cfa674c6ab579d1efef6f55be333ed4ebcf2cc5",
+      "canonical_hash": "95ecb767bb6c60c55d396edc1cfa674c6ab579d1efef6f55be333ed4ebcf2cc5",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "legacy_bridge_questions.json"
+    },
+    {
+      "baseline_path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\review_repair_pool.json",
+      "current_path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\review_repair_pool.json",
+      "baseline_hash": "ce14b523bda6e3c720ec3eec56c85805191e3ae411ff800128184660dfb1c0ff",
+      "current_hash": "ce14b523bda6e3c720ec3eec56c85805191e3ae411ff800128184660dfb1c0ff",
+      "canonical_hash": "ce14b523bda6e3c720ec3eec56c85805191e3ae411ff800128184660dfb1c0ff",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "review_repair_pool.json"
+    }
+  ]
+}
