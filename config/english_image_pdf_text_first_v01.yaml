@@ -1,0 +1,35 @@
+schema: english_image_pdf_text_first_config_v0.1
+pipeline:
+  name: english_image_pdf_text_first
+  version: v0.1
+  entry: tools/run_english_image_pdf_text_first_v01.py
+  isolation_mode: standalone
+input:
+  default_pdf: out/english_handout_structure_study_20260713/pdf_ascii/reading.pdf
+  default_pages: "1-6"
+ocr:
+  provider: rapidocr_onnxruntime_vendor
+  dpi: 180
+  text_layer_required: false
+assembler:
+  provider: ark
+  endpoint: https://ark.cn-beijing.volces.com/api/v3/chat/completions
+  api_key_env: ARK_API_KEY
+  model: doubao-seed-2.0-mini
+  timeout_seconds: 120
+fallback:
+  visual_first_entry: tools/run_split_v03_full_doc.py
+  visual_first_enabled_by_default: false
+  use_visual_first_only_for_page_level_fallback: true
+output:
+  root: outputs/english_text_first_pipeline_v01_20260714
+  default_run_name: reading_p001_p006_ark_mini_configured
+release:
+  runtime_import_enabled_by_default: false
+  hold_if_qa_required: true
+  hold_if_model_output_missing: true
+isolation:
+  owns_output_root: outputs/english_text_first_pipeline_v01_20260714
+  does_not_modify_math_visual_first: true
+  does_not_import_split_v03_modules: true
+  shared_secret_env_only: ARK_API_KEY

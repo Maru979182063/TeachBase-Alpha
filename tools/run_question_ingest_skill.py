@@ -922,6 +922,7 @@ def main() -> None:
     )
 
     if args.skip_figure_detection:
+        paths["prepared_merged_json"].parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(paths["abs_source_json"], paths["prepared_merged_json"])
     else:
         run_figure_detection(args, paths, env)

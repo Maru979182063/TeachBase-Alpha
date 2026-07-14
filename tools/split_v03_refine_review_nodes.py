@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import http.client
 import io
 import json
@@ -601,7 +602,8 @@ def attach_continuation_candidates(
                 continue
             debug_dir = out_dir / "debug_continuation_judge" / node.node_id
             debug_dir.mkdir(parents=True, exist_ok=True)
-            judge_path = debug_dir / f"{node.node_id}_{block.block_id}.png"
+            judge_path = debug_dir / _short_debug_png_name(node.node_id, block.block_id)
+            judge_path.parent.mkdir(parents=True, exist_ok=True)
             judge_img.save(judge_path)
             try:
                 payload = _call_continuation_judge(
@@ -644,7 +646,8 @@ def attach_continuation_candidates(
                     if conflict_img is not None and (calls + conflict_calls) < max_calls:
                         conflict_dir = out_dir / "debug_ownership_conflict_judge" / node.node_id
                         conflict_dir.mkdir(parents=True, exist_ok=True)
-                        conflict_path = conflict_dir / f"{node.node_id}_{block.block_id}_vs_{original_owner}.png"
+                        conflict_path = conflict_dir / _short_debug_png_name(node.node_id, block.block_id, "vs", original_owner)
+                        conflict_path.parent.mkdir(parents=True, exist_ok=True)
                         conflict_img.save(conflict_path)
                         try:
                             conflict_payload = _call_ownership_conflict_judge(
@@ -800,11 +803,475 @@ def _replace_fragment(
     node.source = f"{node.source}+split_node_refine"
 
 
+def _is_english_doc_key(doc_key: str) -> bool:
+    lowered = str(doc_key or "").lower()
+    return lowered.startswith("english") or "english_" in lowered or any(
+        marker in lowered for marker in ("reading", "writing", "grammar", "clause")
+    )
+
+
+def _first_fragment(node: SemanticNodeV03) -> NodeFragmentV03 | None:
+    if not node.fragments:
+        return None
+    return sorted(node.fragments, key=lambda f: (f.page, f.bbox_px[1], f.bbox_px[0]))[0]
+
+
+def _node_sort_key(node: SemanticNodeV03) -> tuple[int, int, int, str]:
+    fragment = _first_fragment(node)
+    if fragment is None or len(fragment.bbox_px) < 4:
+        return (10**9, 10**9, 10**9, node.node_id)
+    return (int(fragment.page), int(fragment.bbox_px[1]), int(fragment.bbox_px[0]), node.node_id)
+
+
+def _previous_question_node(nodes: list[SemanticNodeV03], target: SemanticNodeV03) -> SemanticNodeV03 | None:
+    ordered = sorted([node for node in nodes if node.node_type == "question"], key=_node_sort_key)
+    previous = None
+    for node in ordered:
+        if node.node_id == target.node_id:
+            return previous
+        previous = node
+    return None
+
+
+def _crop_fragment_image(
+    *,
+    manifest_by_page: dict[int, PageManifestV03],
+    fragment: NodeFragmentV03,
+    pad: int = 0,
+) -> tuple[Image.Image, list[int]] | tuple[None, None]:
+    manifest = manifest_by_page.get(int(fragment.page))
+    if manifest is None:
+        return None, None
+    path = Path(manifest.page_image_master)
+    if not path.exists() or len(fragment.bbox_px) < 4:
+        return None, None
+    x0, y0, x1, y1 = [int(v) for v in fragment.bbox_px[:4]]
+    band = [
+        max(0, x0 - pad),
+        max(0, y0 - pad),
+        min(manifest.width_px, x1 + pad),
+        min(manifest.height_px, y1 + pad),
+    ]
+    with Image.open(path) as img:
+        return img.convert("RGB").crop(tuple(band)), band
+
+
+def _valid_box(box: list[int] | None, min_height: int = 24, min_width: int = 80) -> bool:
+    if not box or len(box) < 4:
+        return False
+    return int(box[2]) - int(box[0]) >= min_width and int(box[3]) - int(box[1]) >= min_height
+
+
+def _replace_first_fragment_bbox(
+    node: SemanticNodeV03,
+    bbox: list[int],
+    manifest: PageManifestV03,
+    extra_flags: list[str] | None = None,
+) -> None:
+    if not node.fragments:
+        return
+    ordered = sorted(enumerate(node.fragments), key=lambda item: (item[1].page, item[1].bbox_px[1], item[1].bbox_px[0]))
+    fragment_index, _ = ordered[0]
+    _replace_fragment(node, fragment_index, bbox, manifest, extra_flags or [])
+
+
+def apply_english_boundary_repair(
+    *,
+    nodes: list[SemanticNodeV03],
+    manifest_by_page: dict[int, PageManifestV03],
+    api_key: str,
+    model: str,
+    out_dir: Path,
+    max_calls: int,
+) -> tuple[list[dict[str, Any]], int]:
+    if not nodes or max_calls <= 0:
+        return [], 0
+    first_manifest = next(iter(manifest_by_page.values()), None)
+    if first_manifest is None or not _is_english_doc_key(first_manifest.doc_key):
+        return [], 0
+    bundle = vision_prompt_store.get_english_node_boundary_repair_prompt_bundle()
+    actions: list[dict[str, Any]] = []
+    calls = 0
+    for node in sorted(nodes, key=_node_sort_key):
+        if calls >= max_calls:
+            break
+        if node.node_type != "question":
+            continue
+        fragment = _first_fragment(node)
+        if fragment is None:
+            continue
+        manifest = manifest_by_page.get(fragment.page)
+        if manifest is None:
+            continue
+        image, band = _crop_fragment_image(manifest_by_page=manifest_by_page, fragment=fragment, pad=0)
+        if image is None or band is None:
+            continue
+        prompt = vision_prompt_store.render_template(
+            bundle["user_template"],
+            {
+                "DOC_KEY": manifest.doc_key,
+                "NODE_ID": node.node_id,
+                "NODE_TYPE": node.node_type,
+                "NODE_ROLE_HINT": ",".join(sorted({item.role for item in node.fragments})),
+                "PAGE": str(fragment.page),
+            },
+        )
+        debug_dir = out_dir / "debug_english_boundary_repair" / node.node_id
+        debug_dir.mkdir(parents=True, exist_ok=True)
+        input_path = debug_dir / _short_debug_png_name(node.node_id, "boundary")
+        image.save(input_path)
+        try:
+            payload = _call_model(api_key, model, image, prompt, bundle["system_prompt"])
+            calls += 1
+        except Exception as exc:
+            actions.append({"node_id": node.node_id, "stage": "english_boundary_repair", "action": "model_failed", "error": str(exc)[:240], "input_image": _portable(input_path, out_dir)})
+            continue
+        decision = str(payload.get("decision", "") or "").strip().lower()
+        action: dict[str, Any] = {
+            "node_id": node.node_id,
+            "stage": "english_boundary_repair",
+            "decision": decision,
+            "model_payload": payload,
+            "input_image": _portable(input_path, out_dir),
+        }
+        if decision != "split_previous_tail":
+            action["action"] = "kept_or_review"
+            actions.append(action)
+            continue
+        tail_box = _denorm_bbox_from_band(payload.get("previous_tail_bbox", {}) if isinstance(payload.get("previous_tail_bbox"), dict) else {}, band)
+        current_box = _denorm_bbox_from_band(payload.get("current_unit_bbox", {}) if isinstance(payload.get("current_unit_bbox"), dict) else {}, band)
+        old_height = max(1, int(band[3]) - int(band[1]))
+        current_height = (int(current_box[3]) - int(current_box[1])) if current_box and len(current_box) >= 4 else 0
+        tail_starts_at_head = bool(tail_box and len(tail_box) >= 4 and int(tail_box[1]) <= int(band[1]) + max(36, int(old_height * 0.12)))
+        current_is_substantial = current_height >= max(160, int(old_height * 0.32))
+        if not tail_starts_at_head:
+            action["action"] = "split_rejected_tail_not_at_node_head"
+            action["previous_tail_bbox"] = tail_box
+            action["current_unit_bbox"] = current_box
+            actions.append(action)
+            continue
+        if not _valid_box(current_box) or not current_is_substantial:
+            action["action"] = "split_rejected_invalid_current_bbox"
+            action["previous_tail_bbox"] = tail_box
+            action["current_unit_bbox"] = current_box
+            action["old_height"] = old_height
+            action["current_height"] = current_height
+            actions.append(action)
+            continue
+        previous = _previous_question_node(nodes, node)
+        if _valid_box(tail_box) and previous is not None:
+            tail_fragment = NodeFragmentV03(
+                page=fragment.page,
+                bbox_px=tail_box or [],
+                role="answer_block",
+                block_ids=[f"{node.node_id}_english_previous_tail"],
+                flags=sorted(set([*fragment.flags, "english_boundary_repair_previous_tail"])),
+            )
+            _append_unique_fragment(previous, tail_fragment)
+            action["previous_tail_attached_to"] = previous.node_id
+            action["previous_tail_bbox"] = tail_box
+        _replace_first_fragment_bbox(
+            node,
+            current_box or [],
+            manifest,
+            ["english_boundary_repair_trimmed_previous_tail", "mixed_boundary_repaired_by_model"],
+        )
+        action["action"] = "split_previous_tail_applied"
+        action["current_unit_bbox"] = current_box
+        node.source = f"{node.source}+english_boundary_repair"
+        actions.append(action)
+    return actions, calls
+
+
+def apply_english_guided_task_classifier(
+    *,
+    nodes: list[SemanticNodeV03],
+    manifest_by_page: dict[int, PageManifestV03],
+    api_key: str,
+    model: str,
+    out_dir: Path,
+    max_calls: int,
+) -> tuple[list[dict[str, Any]], int]:
+    if not nodes or max_calls <= 0:
+        return [], 0
+    first_manifest = next(iter(manifest_by_page.values()), None)
+    if first_manifest is None or not _is_english_doc_key(first_manifest.doc_key):
+        return [], 0
+    bundle = vision_prompt_store.get_english_guided_task_classifier_prompt_bundle()
+    actions: list[dict[str, Any]] = []
+    calls = 0
+    for node in sorted(nodes, key=_node_sort_key):
+        if calls >= max_calls:
+            break
+        if node.node_type not in {"knowledge_block", "question"}:
+            continue
+        roles = {fragment.role for fragment in node.fragments}
+        flags = {flag for fragment in node.fragments for flag in fragment.flags}
+        should_check = node.node_type == "knowledge_block" and (
+            {"table_like", "knowledge_like", "possible_section_heading"} & flags or "table_body" in roles
+        )
+        if node.node_type == "question" and not ({"table_body", "section_heading"} & roles):
+            should_check = False
+        if not should_check:
+            continue
+        fragment = _first_fragment(node)
+        if fragment is None:
+            continue
+        manifest = manifest_by_page.get(fragment.page)
+        if manifest is None:
+            continue
+        union = _union_bbox(node.fragments, fragment.page)
+        if union is None:
+            continue
+        union_fragment = NodeFragmentV03(fragment.page, union, fragment.role, fragment.block_ids, fragment.flags)
+        image, band = _crop_fragment_image(manifest_by_page=manifest_by_page, fragment=union_fragment, pad=16)
+        if image is None:
+            continue
+        prompt = vision_prompt_store.render_template(
+            bundle["user_template"],
+            {
+                "DOC_KEY": manifest.doc_key,
+                "NODE_ID": node.node_id,
+                "NODE_TYPE": node.node_type,
+                "PAGE": str(fragment.page),
+            },
+        )
+        debug_dir = out_dir / "debug_english_guided_task_classifier" / node.node_id
+        debug_dir.mkdir(parents=True, exist_ok=True)
+        input_path = debug_dir / _short_debug_png_name(node.node_id, "guided")
+        image.save(input_path)
+        try:
+            payload = _call_model(api_key, model, image, prompt, bundle["system_prompt"])
+            calls += 1
+        except Exception as exc:
+            actions.append({"node_id": node.node_id, "stage": "english_guided_task_classifier", "action": "model_failed", "error": str(exc)[:240], "input_image": _portable(input_path, out_dir)})
+            continue
+        unit_type = str(payload.get("unit_type", "") or "").strip()
+        route = str(payload.get("route", "") or "").strip()
+        try:
+            confidence = float(payload.get("confidence", 0.0) or 0.0)
+        except Exception:
+            confidence = 0.0
+        action = {
+            "node_id": node.node_id,
+            "stage": "english_guided_task_classifier",
+            "unit_type": unit_type,
+            "route": route,
+            "confidence": confidence,
+            "model_payload": payload,
+            "input_image": _portable(input_path, out_dir),
+        }
+        if node.node_type == "knowledge_block" and confidence >= 0.82 and route in {"knowledge_task", "writing_task", "reading_group", "question"}:
+            node.node_type = "question"
+            for fragment_item in node.fragments:
+                if fragment_item.role in {"knowledge_body", "table_body", "section_heading"}:
+                    fragment_item.role = "question_body"
+                fragment_item.flags = sorted(set([*fragment_item.flags, f"english_unit_type:{unit_type}", f"english_route:{route}"]))
+            node.source = f"{node.source}+english_guided_task_classifier"
+            node.text_stub = (node.text_stub + f"\nenglish_unit_type={unit_type} route={route}").strip()
+            action["action"] = "converted_to_question_route"
+        else:
+            action["action"] = "classified_no_route_change"
+        actions.append(action)
+    return actions, calls
+
+
+def _bbox_area(box: list[int]) -> int:
+    if len(box) < 4:
+        return 0
+    return max(0, int(box[2]) - int(box[0])) * max(0, int(box[3]) - int(box[1]))
+
+
+def _bbox_intersection_area(a: list[int], b: list[int]) -> int:
+    if len(a) < 4 or len(b) < 4:
+        return 0
+    x0 = max(int(a[0]), int(b[0]))
+    y0 = max(int(a[1]), int(b[1]))
+    x1 = min(int(a[2]), int(b[2]))
+    y1 = min(int(a[3]), int(b[3]))
+    return max(0, x1 - x0) * max(0, y1 - y0)
+
+
+def _node_page_bbox(node: SemanticNodeV03, page: int) -> list[int] | None:
+    return _union_bbox(node.fragments, page)
+
+
+def _fragment_contained_by_other_node(
+    *,
+    node: SemanticNodeV03,
+    other: SemanticNodeV03,
+    threshold: float = 0.86,
+) -> bool:
+    if node.node_id == other.node_id:
+        return False
+    if other.node_type != "question":
+        return False
+    for fragment in node.fragments:
+        box = fragment.bbox_px
+        area = _bbox_area(box)
+        if area <= 0:
+            continue
+        other_box = _node_page_bbox(other, fragment.page)
+        if other_box is None:
+            continue
+        if _bbox_intersection_area(box, other_box) / max(1, area) < threshold:
+            return False
+    return bool(node.fragments)
+
+
+def apply_english_duplicate_child_cleanup(
+    *,
+    nodes: list[SemanticNodeV03],
+    manifest_by_page: dict[int, PageManifestV03],
+) -> tuple[list[SemanticNodeV03], list[dict[str, Any]]]:
+    first_manifest = next(iter(manifest_by_page.values()), None)
+    if first_manifest is None or not _is_english_doc_key(first_manifest.doc_key):
+        return nodes, []
+    actions: list[dict[str, Any]] = []
+    kept: list[SemanticNodeV03] = []
+    ordered = sorted(nodes, key=_node_sort_key)
+    for node in ordered:
+        duplicate_parent = None
+        if node.node_type == "question":
+            node_flags = {flag for fragment in node.fragments for flag in fragment.flags}
+            node_roles = {fragment.role for fragment in node.fragments}
+            # Never drop a standalone question/guided task candidate here. This
+            # cleanup is only for small duplicate continuation fragments that
+            # were already absorbed into a larger English unit.
+            if "possible_question_start" in node_flags or any(str(flag).startswith("english_route:") for flag in node_flags):
+                kept.append(node)
+                continue
+            if "question_body" in node_roles and not ({"answer_block", "analysis_block", "translation_block", "body_continuation"} & node_roles):
+                kept.append(node)
+                continue
+            node_area = sum(_bbox_area(fragment.bbox_px) for fragment in node.fragments)
+            for other in ordered:
+                if other.node_id == node.node_id:
+                    continue
+                other_area = sum(_bbox_area(fragment.bbox_px) for fragment in other.fragments)
+                if other_area <= node_area:
+                    continue
+                if _fragment_contained_by_other_node(node=node, other=other):
+                    duplicate_parent = other
+                    break
+        if duplicate_parent is not None:
+            actions.append(
+                {
+                    "node_id": node.node_id,
+                    "stage": "english_duplicate_child_cleanup",
+                    "action": "drop_duplicate_child_node",
+                    "parent_node_id": duplicate_parent.node_id,
+                    "reason": "all_fragments_are_contained_in_larger_english_unit",
+                }
+            )
+            continue
+        kept.append(node)
+    return kept, actions
+
+
+def _next_block_after_fragment(
+    *,
+    blocks: list[BlockCandidateV03],
+    fragment: NodeFragmentV03,
+    max_gap_px: int,
+) -> BlockCandidateV03 | None:
+    candidates = [
+        block
+        for block in blocks
+        if int(block.page) == int(fragment.page)
+        and int(block.bbox_px[1]) >= int(fragment.bbox_px[3]) - 8
+        and int(block.bbox_px[1]) - int(fragment.bbox_px[3]) <= max_gap_px
+    ]
+    candidates.sort(key=lambda b: (b.bbox_px[1], b.bbox_px[0]))
+    for block in candidates:
+        flags = set(block.candidate_flags)
+        if "page_number_noise" in flags:
+            continue
+        if "possible_question_start" in flags and not ({"answer_like", "analysis_like", "translation_like", "knowledge_like", "table_like"} & flags):
+            continue
+        return block
+    return None
+
+
+def apply_english_task_block_completeness_expander(
+    *,
+    nodes: list[SemanticNodeV03],
+    reading_blocks: list[BlockCandidateV03],
+    manifest_by_page: dict[int, PageManifestV03],
+) -> list[dict[str, Any]]:
+    first_manifest = next(iter(manifest_by_page.values()), None)
+    if first_manifest is None or not _is_english_doc_key(first_manifest.doc_key):
+        return []
+    block_by_id = {block.block_id: block for block in reading_blocks}
+    owner = _block_owner_map(nodes)
+    actions: list[dict[str, Any]] = []
+    for node in sorted(nodes, key=_node_sort_key):
+        flags = {flag for fragment in node.fragments for flag in fragment.flags}
+        if not any(str(flag).startswith("english_route:") for flag in flags):
+            continue
+        last = sorted(node.fragments, key=lambda f: (f.page, f.bbox_px[3], f.bbox_px[0]))[-1] if node.fragments else None
+        if last is None:
+            continue
+        manifest = manifest_by_page.get(last.page)
+        if manifest is None:
+            continue
+        max_gap = max(80, int(manifest.height_px * 0.035))
+        block = _next_block_after_fragment(blocks=reading_blocks, fragment=last, max_gap_px=max_gap)
+        if block is None:
+            actions.append({"node_id": node.node_id, "stage": "english_task_block_completeness_expander", "action": "no_following_block"})
+            continue
+        current_owner = owner.get(block.block_id, "")
+        if current_owner and current_owner != node.node_id:
+            actions.append(
+                {
+                    "node_id": node.node_id,
+                    "stage": "english_task_block_completeness_expander",
+                    "action": "skip_following_block_owned",
+                    "block_id": block.block_id,
+                    "owner_node_id": current_owner,
+                }
+            )
+            continue
+        role = _role_for_continuation_block(block)
+        if "knowledge_like" in set(block.candidate_flags) or "table_like" in set(block.candidate_flags):
+            role = "question_body"
+        fragment = _block_to_fragment(block, role, ["english_task_completeness_expanded"])
+        if _append_unique_fragment(node, fragment):
+            owner[block.block_id] = node.node_id
+            actions.append(
+                {
+                    "node_id": node.node_id,
+                    "stage": "english_task_block_completeness_expander",
+                    "action": "attached_following_block",
+                    "block_id": block.block_id,
+                    "role": role,
+                }
+            )
+        else:
+            actions.append(
+                {
+                    "node_id": node.node_id,
+                    "stage": "english_task_block_completeness_expander",
+                    "action": "following_block_already_present",
+                    "block_id": block.block_id,
+                }
+            )
+    return actions
+
+
 def _portable(path: Path, root: Path) -> str:
     try:
         return str(path.resolve().relative_to(root.resolve()))
     except Exception:
         return str(path)
+
+
+def _short_debug_png_name(*parts: str) -> str:
+    """Keep Windows debug paths below legacy path-length limits."""
+    raw = "__".join(str(part or "") for part in parts)
+    digest = hashlib.sha1(raw.encode("utf-8", errors="ignore")).hexdigest()[:12]
+    safe_head = "".join(ch if ch.isalnum() else "_" for ch in str(parts[0] or "debug"))[:48]
+    return f"{safe_head}_{digest}.png"
 
 
 def refine_nodes(
@@ -931,6 +1398,39 @@ def refine_nodes(
             }
         )
 
+    english_boundary_actions, english_boundary_calls = apply_english_boundary_repair(
+        nodes=nodes,
+        manifest_by_page=manifest_by_page,
+        api_key=api_key,
+        model=model,
+        out_dir=out_dir,
+        max_calls=max_nodes,
+    )
+    actions.extend(english_boundary_actions)
+
+    english_guided_actions, english_guided_calls = apply_english_guided_task_classifier(
+        nodes=nodes,
+        manifest_by_page=manifest_by_page,
+        api_key=api_key,
+        model=model,
+        out_dir=out_dir,
+        max_calls=max(3, max_nodes // 2),
+    )
+    actions.extend(english_guided_actions)
+
+    completeness_actions = apply_english_task_block_completeness_expander(
+        nodes=nodes,
+        reading_blocks=reading_blocks,
+        manifest_by_page=manifest_by_page,
+    )
+    actions.extend(completeness_actions)
+
+    nodes, duplicate_cleanup_actions = apply_english_duplicate_child_cleanup(
+        nodes=nodes,
+        manifest_by_page=manifest_by_page,
+    )
+    actions.extend(duplicate_cleanup_actions)
+
     crop_records = execute_crops_v03(nodes, manifests, out_dir / "docs" / "refined")
     audit_records = audit_nodes_v03(nodes)
     bridge = build_legacy_bridge([asdict(node) for node in nodes], crop_records)
@@ -946,16 +1446,22 @@ def refine_nodes(
         "semantic_nodes_input": str(semantic_nodes_path),
         "audit_input": str(audit_path),
         "model": model,
-        "actual_vlm_calls": continuation_calls + ownership_conflict_calls + refine_calls,
+        "actual_vlm_calls": continuation_calls + ownership_conflict_calls + refine_calls + english_boundary_calls + english_guided_calls,
         "vlm_calls_by_stage": {
             "continuation_judge": continuation_calls,
             "ownership_conflict_judge": ownership_conflict_calls,
             "split_node_refine": refine_calls,
+            "english_boundary_repair": english_boundary_calls,
+            "english_guided_task_classifier": english_guided_calls,
         },
         "node_stage_contract": {
             "continuation_judge": "VLM only decides whether one candidate block continues one current question tail; it must not crop or rewrite content.",
             "ownership_conflict_judge": "VLM only resolves disputed ownership when a continuation candidate is already owned by another question; it must not crop or rewrite content.",
             "split_node_refine": "VLM only tightens one failed fragment bbox inside a local band; it must not attach cross-page blocks.",
+            "english_boundary_repair": "VLM only trims previous-question tail from the head of an English node and optionally attaches that tail to the previous question.",
+            "english_guided_task_classifier": "VLM only classifies English knowledge/task-like nodes into downstream routes; it does not transcribe content.",
+            "english_task_block_completeness_expander": "Rule guard attaches only the nearest unowned following block to an English task-like node when it is very close and non-noise.",
+            "english_duplicate_child_cleanup": "Rule guard drops only question nodes whose fragments are already contained inside a larger English question unit.",
         },
         "action_counts": {action: sum(1 for item in actions if item.get("action") == action) for action in sorted({str(item.get("action")) for item in actions})},
         "ready_count": len(bridge["questions"]),

@@ -36,24 +36,25 @@ def accumulate_nodes_v03(blocks: list[BlockCandidateV03], assignments: list[Bloc
         block = block_map.get(assignment.block_id)
         if block is None:
             continue
+        fragment_flags = sorted({*list(block.candidate_flags), str(assignment.reason_code or "")} - {""})
         if assignment.node_action == "new_node":
             node = nodes.setdefault(
                 assignment.node_id,
                 SemanticNodeV03(node_id=assignment.node_id, node_type=assignment.new_node_type, source="semantic_v03"),
             )
-            node.fragments.append(NodeFragmentV03(block.page, block.bbox_px, assignment.role, [block.block_id], list(block.candidate_flags)))
+            node.fragments.append(NodeFragmentV03(block.page, block.bbox_px, assignment.role, [block.block_id], fragment_flags))
             node.text_stub = (node.text_stub + "\n" + block.text_stub).strip()
             trace.append({"event": "new_node", "node_id": node.node_id, "block_id": block.block_id, "role": assignment.role})
         elif assignment.node_action == "attach_to_existing" and assignment.node_id in nodes:
             node = nodes[assignment.node_id]
-            node.fragments.append(NodeFragmentV03(block.page, block.bbox_px, assignment.role, [block.block_id], list(block.candidate_flags)))
+            node.fragments.append(NodeFragmentV03(block.page, block.bbox_px, assignment.role, [block.block_id], fragment_flags))
             node.text_stub = (node.text_stub + "\n" + block.text_stub).strip()
             trace.append({"event": "attach_to_existing", "node_id": node.node_id, "block_id": block.block_id, "role": assignment.role})
         else:
             node_id = f"quarantined_orphan_{orphan_counter:03d}"
             orphan_counter += 1
             node = SemanticNodeV03(node_id=node_id, node_type="quarantined_orphan", source="semantic_v03", review_status="QUARANTINED")
-            node.fragments.append(NodeFragmentV03(block.page, block.bbox_px, assignment.role, [block.block_id], list(block.candidate_flags)))
+            node.fragments.append(NodeFragmentV03(block.page, block.bbox_px, assignment.role, [block.block_id], fragment_flags))
             node.text_stub = block.text_stub
             nodes[node_id] = node
             trace.append({"event": "quarantine", "node_id": node_id, "block_id": block.block_id, "reason": assignment.reason_code})

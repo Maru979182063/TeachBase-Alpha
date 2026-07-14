@@ -130,6 +130,8 @@ def audit_nodes_v03(nodes: list[SemanticNodeV03]) -> list[AuditRecordV03]:
         fragment_flags = {flag for fragment in node.fragments for flag in getattr(fragment, "flags", [])}
         if "visual_coverage_incomplete" in fragment_flags:
             reasons.append("visual_coverage_incomplete")
+        if "mixed_boundary_requires_secondary_split" in fragment_flags:
+            reasons.append("mixed_boundary_requires_secondary_split")
         if (
             "near_page_bottom" in fragment_flags
             and "continues_previous_page" not in fragment_flags

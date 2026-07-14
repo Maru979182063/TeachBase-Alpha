@@ -25,6 +25,7 @@ from tools.split_pipeline_v03 import (
     write_json,
 )
 from tools.split_v03_refine_review_nodes import refine_nodes
+from tools.run_semantic_role_adapter_shadow import run_shadow
 
 
 def _page_count(pdf_path: Path) -> int:
@@ -84,6 +85,26 @@ def run(args: argparse.Namespace) -> int:
         max_vlm_calls=max_vlm_calls,
     )
     stage = _write_stage_outputs(out_dir, result)
+    semantic_shadow_summary: dict[str, Any] | None = None
+    shadow_enabled = bool(args.semantic_role_shadow or str(os.environ.get("SEMANTIC_ROLE_ADAPTER_SHADOW", "")).strip() == "1")
+    if shadow_enabled:
+        doc_dir = out_dir / "docs" / str(args.doc_key)
+        semantic_shadow_summary = run_shadow(
+            doc_dir=doc_dir,
+            out_dir=out_dir / "semantic_role_shadow",
+            pdf_path=str(pdf_path),
+            doc_key=str(args.doc_key),
+            provider=str(args.semantic_role_provider or "mock"),
+            api_key=str(args.api_key or ""),
+            model=str(args.semantic_role_model or args.model or ""),
+            batch_size=int(args.semantic_role_batch_size),
+            max_calls=int(args.semantic_role_max_calls),
+            baseline_files=[
+                doc_dir / "semantic_nodes.json",
+                out_dir / "legacy_bridge_questions.json",
+                out_dir / "review_repair_pool.json",
+            ],
+        )
     initial_summary = {
         "node_summary": summarize_nodes(result["nodes"]),
         "ready_bridge_count": len(stage["bridge"].get("questions", [])),
@@ -132,6 +153,8 @@ def run(args: argparse.Namespace) -> int:
         "initial": initial_summary,
         "refine_enabled": bool(args.refine),
         "refined": refined_summary,
+        "semantic_role_shadow_enabled": shadow_enabled,
+        "semantic_role_shadow": semantic_shadow_summary,
         "artifacts": {
             "doc_dir": str(out_dir / "docs" / str(args.doc_key)),
             "page_manifests": str(out_dir / "docs" / str(args.doc_key) / "page_manifests.json"),
@@ -141,6 +164,7 @@ def run(args: argparse.Namespace) -> int:
             "review_repair_pool": str(out_dir / "review_repair_pool.json"),
             "refined_dir": str(out_dir / "refined") if args.refine else "",
             "run_summary": str(out_dir / "full_doc_run_summary.json"),
+            "semantic_role_shadow_dir": str(out_dir / "semantic_role_shadow") if shadow_enabled else "",
         },
     }
     write_json(out_dir / "full_doc_run_summary.json", summary)
@@ -159,6 +183,11 @@ def main() -> None:
     parser.add_argument("--max-vlm-calls", type=int, default=0)
     parser.add_argument("--refine", action="store_true")
     parser.add_argument("--max-refine-nodes", type=int, default=80)
+    parser.add_argument("--semantic-role-shadow", action="store_true")
+    parser.add_argument("--semantic-role-provider", default="mock", choices=["mock", "visual"])
+    parser.add_argument("--semantic-role-model", default="")
+    parser.add_argument("--semantic-role-batch-size", type=int, default=8)
+    parser.add_argument("--semantic-role-max-calls", type=int, default=12)
     raise SystemExit(run(parser.parse_args()))
 
 

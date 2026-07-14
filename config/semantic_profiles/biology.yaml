@@ -1,0 +1,10 @@
+{
+  "schema_version": "semantic_subject_profile_v0.2",
+  "subject": "biology",
+  "profile_subtypes": {
+    "bio_mixed_lesson_pack": {},
+    "bio_experiment_process": {},
+    "bio_diagram_question": {},
+    "bio_inheritance_group": {}
+  }
+}

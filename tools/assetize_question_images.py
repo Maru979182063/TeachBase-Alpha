@@ -1574,10 +1574,116 @@ def _build_display_blocks_from_qvs(record: dict[str, Any]) -> list[dict[str, Any
     return blocks
 
 
+def _dollar_count_for_render(text: str) -> int:
+    value = str(text or "")
+    count = 0
+    escaped = False
+    for ch in value:
+        if escaped:
+            escaped = False
+            continue
+        if ch == "\\":
+            escaped = True
+            continue
+        if ch == "$":
+            count += 1
+    return count
+
+
+def _sanitize_delivery_display_blocks(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Final DB/display contract: one asset once, and no visibly broken math spans."""
+    sanitized: list[dict[str, Any]] = []
+    seen_assets: set[str] = set()
+    open_math_block_by_field: dict[str, int] = {}
+
+    for raw_block in blocks:
+        if not isinstance(raw_block, dict):
+            continue
+        block = dict(raw_block)
+        block_type = str(block.get("type", block.get("block_type", "")) or "").strip()
+        field = str(block.get("field", block.get("scope", "")) or "").strip() or "_"
+
+        if block_type == "image":
+            key = str(block.get("asset_id", "") or "").strip() or str(block.get("display_ref", "") or "").strip()
+            if key and key in seen_assets:
+                continue
+            if key:
+                seen_assets.add(key)
+            sanitized.append(block)
+            continue
+
+        if block_type != "markdown":
+            sanitized.append(block)
+            continue
+
+        content = str(block.get("content", block.get("text_md", "")) or "")
+        previous_index = open_math_block_by_field.get(field)
+        if previous_index is not None and content.lstrip().startswith("$"):
+            prefix_len = len(content) - len(content.lstrip())
+            content = content[:prefix_len] + content[prefix_len + 1 :]
+            previous = sanitized[previous_index]
+            previous_content = str(previous.get("content", previous.get("text_md", "")) or "")
+            if previous_content and not previous_content.rstrip().endswith("$"):
+                previous_content = previous_content.rstrip() + "$"
+                if "content" in previous:
+                    previous["content"] = previous_content
+                else:
+                    previous["text_md"] = previous_content
+            open_math_block_by_field.pop(field, None)
+
+        if "content" in block:
+            block["content"] = content
+        else:
+            block["text_md"] = content
+        sanitized.append(block)
+
+        if _dollar_count_for_render(content) % 2 == 1:
+            open_math_block_by_field[field] = len(sanitized) - 1
+        else:
+            open_math_block_by_field.pop(field, None)
+
+    for index in sorted(set(open_math_block_by_field.values())):
+        block = sanitized[index]
+        content_key = "content" if "content" in block else "text_md"
+        content = str(block.get(content_key, "") or "")
+        if content and _dollar_count_for_render(content) % 2 == 1:
+            block[content_key] = content.rstrip() + "$"
+
+    return sanitized
+
+
+def _append_missing_selected_scope_images(blocks: list[dict[str, Any]], record: dict[str, Any]) -> list[dict[str, Any]]:
+    """QVS slots can be stale after final asset selection; do not drop selected images."""
+    output = [dict(block) for block in blocks if isinstance(block, dict)]
+    present_ids = {
+        str(block.get("asset_id", "") or "").strip()
+        for block in output
+        if str(block.get("type", block.get("block_type", "")) or "") == "image"
+    }
+    by_id = _assets_by_id(record)
+    for scope in ("stem", "analysis"):
+        for asset_id in _selected_scope_asset_ids(record, scope):
+            if not asset_id or asset_id in present_ids:
+                continue
+            asset = by_id.get(asset_id)
+            if asset is None:
+                continue
+            output.append(
+                {
+                    "type": "image",
+                    "field": scope,
+                    "asset_id": asset_id,
+                    "display_ref": str(asset.get("display_ref", "") or f"asset://{asset_id}"),
+                }
+            )
+            present_ids.add(asset_id)
+    return output
+
+
 def build_display_blocks(record: dict[str, Any]) -> list[dict[str, Any]]:
     qvs_blocks = _build_display_blocks_from_qvs(record)
     if qvs_blocks:
-        return qvs_blocks
+        return _sanitize_delivery_display_blocks(_append_missing_selected_scope_images(qvs_blocks, record))
 
     blocks: list[dict[str, Any]] = []
     selected_option_by_key = _selected_option_asset_ids_by_key(record)
@@ -1683,7 +1789,7 @@ def build_display_blocks(record: dict[str, Any]) -> list[dict[str, Any]]:
             blocks.append({"type": "markdown", "field": "analysis", "content": record["analysis_text_md"]})
         for asset in analysis_assets:
             blocks.append({"type": "image", "field": "analysis", "asset_id": asset["asset_id"], "display_ref": asset["display_ref"]})
-    return blocks
+    return _sanitize_delivery_display_blocks(_append_missing_selected_scope_images(blocks, record))
 
 
 def _first_non_empty(*values: Any) -> str:

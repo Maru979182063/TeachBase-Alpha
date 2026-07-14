@@ -298,6 +298,36 @@ def get_split_node_refine_prompt_bundle() -> dict[str, str]:
     }
 
 
+def get_english_node_boundary_repair_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    repair = prompts.get("english_node_boundary_repair", {})
+    if not isinstance(repair, dict):
+        raise PromptConfigError("missing_english_node_boundary_repair_prompt_config")
+    return {
+        "prompt_version": str(repair.get("prompt_version", "") or ""),
+        "system_prompt": str(repair.get("system_prompt", "") or ""),
+        "user_template": str(repair.get("user_template", "") or ""),
+    }
+
+
+def get_english_guided_task_classifier_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    classifier = prompts.get("english_guided_task_classifier", {})
+    if not isinstance(classifier, dict):
+        raise PromptConfigError("missing_english_guided_task_classifier_prompt_config")
+    return {
+        "prompt_version": str(classifier.get("prompt_version", "") or ""),
+        "system_prompt": str(classifier.get("system_prompt", "") or ""),
+        "user_template": str(classifier.get("user_template", "") or ""),
+    }
+
+
 def get_continuation_judge_prompt_bundle() -> dict[str, str]:
     config = load_prompt_config()
     prompts = config.get("prompts", {})
@@ -460,4 +490,64 @@ def get_english_panel_planner_prompt_bundle() -> dict[str, str]:
         "prompt_version": str(english_panel_planner.get("prompt_version", "") or ""),
         "system_prompt": str(english_panel_planner.get("system_prompt", "") or ""),
         "user_template": str(english_panel_planner.get("user_template", "") or ""),
+    }
+
+
+def get_document_profile_resolver_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    profile = prompts.get("document_profile_resolver", {})
+    if not isinstance(profile, dict):
+        raise PromptConfigError("missing_document_profile_resolver_prompt_config")
+    return {
+        "prompt_version": str(profile.get("prompt_version", "") or ""),
+        "system_prompt": str(profile.get("system_prompt", "") or ""),
+        "user_template": str(profile.get("user_template", "") or ""),
+    }
+
+
+def get_semantic_role_adapter_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    adapter = prompts.get("semantic_role_adapter", {})
+    if not isinstance(adapter, dict):
+        raise PromptConfigError("missing_semantic_role_adapter_prompt_config")
+    return {
+        "prompt_version": str(adapter.get("prompt_version", "") or ""),
+        "system_prompt": str(adapter.get("system_prompt", "") or ""),
+        "user_template": str(adapter.get("user_template", "") or ""),
+    }
+
+
+def get_split_v03_semantic_assembler_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    assembler = prompts.get("split_v03_semantic_assembler", {})
+    if not isinstance(assembler, dict):
+        raise PromptConfigError("missing_split_v03_semantic_assembler_prompt_config")
+    return {
+        "prompt_version": str(assembler.get("prompt_version", "") or ""),
+        "system_prompt": str(assembler.get("system_prompt", "") or ""),
+        "user_template": str(assembler.get("user_template", "") or ""),
+    }
+
+
+def get_split_v03_english_semantic_assembler_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    assembler = prompts.get("split_v03_english_semantic_assembler", {})
+    if not isinstance(assembler, dict):
+        raise PromptConfigError("missing_split_v03_english_semantic_assembler_prompt_config")
+    return {
+        "prompt_version": str(assembler.get("prompt_version", "") or ""),
+        "system_prompt": str(assembler.get("system_prompt", "") or ""),
+        "user_template": str(assembler.get("user_template", "") or ""),
     }

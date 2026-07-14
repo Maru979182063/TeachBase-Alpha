@@ -57,6 +57,23 @@ def is_panel_group_asset(asset: dict[str, Any]) -> bool:
     return "panel_kept" in flags or "panel_subfigure_union" in flags
 
 
+def should_model_refine_panel_group(asset: dict[str, Any]) -> bool:
+    flags = {str(flag) for flag in (asset.get("review_flags", []) or [])}
+    risk_flags = {
+        "bbox_audit_suspect",
+        "headless_crop_risk",
+        "top_clip_risk",
+        "bottom_clip_risk",
+        "left_clip_risk",
+        "right_clip_risk",
+        "top_touches_source_edge",
+        "bottom_touches_source_edge",
+        "left_touches_source_edge",
+        "right_touches_source_edge",
+    }
+    return bool(flags & risk_flags)
+
+
 def local_path(asset: dict[str, Any], manifest_path: Path) -> Path | None:
     debug = asset.get("debug", {}) if isinstance(asset.get("debug"), dict) else {}
     raw = str(debug.get("local_path", "") or "")
@@ -876,7 +893,10 @@ def cropped_by_role(record: dict[str, Any], role: str) -> list[dict[str, Any]]:
     return [
         item
         for item in (record.get("assets", []) or [])
-        if isinstance(item, dict) and is_cropped_asset(item) and asset_role(item) == role
+        if isinstance(item, dict)
+        and not bool(item.get("delivery_suppressed"))
+        and is_cropped_asset(item)
+        and asset_role(item) == role
     ]
 
 
@@ -1008,14 +1028,26 @@ def select_delivery_assets(record: dict[str, Any]) -> list[dict[str, Any]]:
     if stem_selected:
         selected["stem"] = [asset_id(item) for item in stem_selected if asset_id(item)]
     elif stem_alias:
-        selected["stem"] = stem_alias
+        analysis_existing = {
+            asset_id(item)
+            for item in analysis_selected
+            if asset_id(item)
+        }
+        if analysis_existing and set(stem_alias).issubset(analysis_existing):
+            selected["stem"] = []
+        else:
+            selected["stem"] = stem_alias
     else:
         selected["stem"] = []
 
     if analysis_selected and (scope_analysis or bool(record.get("analysis_requires_image", False))):
         selected["analysis"] = [asset_id(item) for item in analysis_selected if asset_id(item)]
     elif analysis_alias:
-        selected["analysis"] = analysis_alias
+        stem_existing = set(selected.get("stem", []) if isinstance(selected.get("stem"), list) else [])
+        if stem_existing and set(analysis_alias).issubset(stem_existing):
+            selected["analysis"] = []
+        else:
+            selected["analysis"] = analysis_alias
     else:
         selected["analysis"] = []
 
@@ -1040,6 +1072,20 @@ def select_delivery_assets(record: dict[str, Any]) -> list[dict[str, Any]]:
         keep_ids.update([str(item or "").strip() for item in values if str(item or "").strip()])
 
     actions: list[dict[str, Any]] = []
+    for scope_name, alias_ids, existing_ids in (
+        ("stem", stem_alias, set(selected.get("analysis", []) if isinstance(selected.get("analysis"), list) else [])),
+        ("analysis", analysis_alias, set(selected.get("stem", []) if isinstance(selected.get("stem"), list) else [])),
+    ):
+        if alias_ids and not selected.get(scope_name) and set(alias_ids).issubset(existing_ids):
+            actions.append(
+                {
+                    "question_id": record.get("question_id", ""),
+                    "action": "drop_cross_scope_alias_duplicate",
+                    "scope": scope_name,
+                    "alias_asset_ids": alias_ids,
+                    "kept_in_scope": "analysis" if scope_name == "stem" else "stem",
+                }
+            )
     for asset in stem_removed + analysis_removed + option_removed:
         aid = asset_id(asset)
         if not aid or aid in keep_ids:
@@ -1213,7 +1259,19 @@ def refine_asset(
             debug["final_refine_contract"] = "single_candidate_refine_v0.1"
             debug["final_refine_input_width"] = width
             debug["final_refine_input_height"] = height
-            payload = option_anchor_detection._call_inline_figure_refine_model(api_key, model, image)
+            last_error: Exception | None = None
+            payload: dict[str, Any] | None = None
+            for attempt in range(2):
+                try:
+                    payload = option_anchor_detection._call_inline_figure_refine_model(api_key, model, image)
+                    break
+                except Exception as exc:
+                    last_error = exc
+                    if attempt == 0:
+                        continue
+                    raise
+            if payload is None:
+                raise RuntimeError(str(last_error or "empty_refine_payload"))
             asset["final_asset_quality_model_payload"] = payload
             if not bool(payload.get("is_valid_figure", True)):
                 debug["final_refine_action"] = "model_invalid_figure"
@@ -1234,7 +1292,22 @@ def refine_asset(
                 return {"question_id": qid, "asset_id": aid, "action": "bbox_invalid"}
             x1, y1, x2, y2 = bbox
             area_ratio = ((x2 - x1) * (y2 - y1)) / max(width * height, 1)
-            if area_ratio < 0.55:
+            risky_source = any(
+                flag in {
+                    "bbox_audit_suspect",
+                    "headless_crop_risk",
+                    "top_clip_risk",
+                    "bottom_clip_risk",
+                    "left_clip_risk",
+                    "right_clip_risk",
+                    "top_touches_source_edge",
+                    "bottom_touches_source_edge",
+                    "left_touches_source_edge",
+                    "right_touches_source_edge",
+                }
+                for flag in flags
+            )
+            if area_ratio < 0.55 and not risky_source:
                 debug["final_refine_action"] = "shrink_rejected_keep_current"
                 debug["final_refine_rejected_bbox"] = {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
                 debug["final_refine_rejected_area_ratio"] = round(area_ratio, 4)
@@ -1282,6 +1355,298 @@ def refine_asset(
         asset["debug"] = debug
         asset["review_flags"] = sorted(set(flags + ["final_asset_quality_model_failed"]))
         return {"question_id": qid, "asset_id": aid, "action": "model_failed", "error": str(exc)[:240]}
+
+
+def _visual_band_candidates(image: Image.Image) -> list[tuple[int, int, int, int]]:
+    width, height = image.size
+    if height < 280 or height < width * 1.2:
+        return []
+    rgb = image.convert("RGB")
+    pixels = rgb.load()
+    row_signal: list[int] = []
+    for y in range(height):
+        count = 0
+        for x in range(width):
+            r, g, b = pixels[x, y]
+            # Ignore teacher red text; this fallback is for black line diagrams.
+            if r > 150 and g < 110 and b < 110:
+                continue
+            if r < 150 and g < 150 and b < 150:
+                count += 1
+        row_signal.append(count)
+
+    # Geometry lines can be very sparse near vertices/slanted edges, so keep
+    # this threshold low and rely on min-size filters later to reject text.
+    threshold = max(3, int(round(width * 0.025)))
+    active = [count >= threshold for count in row_signal]
+    smoothed: list[bool] = []
+    for idx in range(height):
+        lo = max(0, idx - 3)
+        hi = min(height, idx + 4)
+        smoothed.append(any(active[lo:hi]))
+
+    bands: list[tuple[int, int]] = []
+    start: int | None = None
+    for y, flag in enumerate(smoothed):
+        if flag and start is None:
+            start = y
+        elif not flag and start is not None:
+            bands.append((start, y))
+            start = None
+    if start is not None:
+        bands.append((start, height))
+
+    # Short active bands are usually option labels, red answer snippets, or
+    # page/header fragments. Keep real geometry panels before merging.
+    bands = [(y1, y2) for y1, y2 in bands if y2 - y1 >= 35]
+
+    merged: list[tuple[int, int]] = []
+    for y1, y2 in bands:
+        if not merged or y1 - merged[-1][1] > 30:
+            merged.append((y1, y2))
+        else:
+            py1, _ = merged[-1]
+            merged[-1] = (py1, y2)
+
+    boxes: list[tuple[int, int, int, int]] = []
+    for y1, y2 in merged:
+        if y2 - y1 < 42:
+            continue
+        xs: list[int] = []
+        ys: list[int] = []
+        for y in range(max(0, y1), min(height, y2)):
+            for x in range(width):
+                r, g, b = pixels[x, y]
+                if r > 150 and g < 110 and b < 110:
+                    continue
+                if r < 150 and g < 150 and b < 150:
+                    xs.append(x)
+                    ys.append(y)
+        if len(xs) < 90:
+            continue
+        x1 = max(0, min(xs) - 14)
+        x2 = min(width, max(xs) + 15)
+        by1 = max(0, min(ys) - 16)
+        by2 = min(height, max(ys) + 18)
+        # Preserve sparse dashed extensions or point labels below a geometry
+        # panel, but stop before red answer/analysis text.
+        last_sparse_y: int | None = None
+        for yy in range(by2, min(height, by2 + 240)):
+            dark_count = 0
+            red_count = 0
+            for xx in range(x1, x2):
+                r, g, b = pixels[xx, yy]
+                if r > 150 and g < 110 and b < 110:
+                    red_count += 1
+                    continue
+                if r < 170 and g < 170 and b < 170:
+                    dark_count += 1
+            if red_count >= max(4, int(round((x2 - x1) * 0.018))):
+                break
+            if 1 <= dark_count <= max(28, int(round((x2 - x1) * 0.18))):
+                last_sparse_y = yy
+            elif dark_count > max(28, int(round((x2 - x1) * 0.18))) and last_sparse_y is not None:
+                break
+        if last_sparse_y is not None:
+            by2 = min(height, max(by2, last_sparse_y + 14))
+        if x2 - x1 < 55 or by2 - by1 < 42:
+            continue
+        boxes.append((x1, by1, x2, by2))
+
+    if len(boxes) < 2:
+        return []
+    # Avoid replacing a legitimate tall single panel with many tiny text bands.
+    kept = [box for box in boxes if (box[2] - box[0]) >= width * 0.38]
+    return kept if len(kept) >= 2 else []
+
+
+def _trim_red_edge_rows(
+    image: Image.Image,
+    bbox: tuple[int, int, int, int],
+) -> tuple[int, int, int, int]:
+    width, height = image.size
+    pixels = image.load()
+    x1, y1, x2, y2 = bbox
+    red_threshold = max(4, int(round((x2 - x1) * 0.018)))
+
+    def row_counts(y: int) -> tuple[int, int]:
+        red_count = 0
+        dark_count = 0
+        for x in range(x1, x2):
+            r, g, b = pixels[x, y]
+            if r > 150 and g < 110 and b < 110:
+                red_count += 1
+            elif r < 170 and g < 170 and b < 170:
+                dark_count += 1
+        return red_count, dark_count
+
+    new_y1 = y1
+    for y in range(y1, min(y2, y1 + 120)):
+        red_count, dark_count = row_counts(y)
+        if red_count >= red_threshold:
+            new_y1 = y + 1
+            continue
+        if y > new_y1 + 8 and dark_count >= 3:
+            break
+
+    new_y2 = y2
+    for y in range(y2 - 1, max(new_y1, y2 - 120), -1):
+        red_count, dark_count = row_counts(y)
+        if red_count >= red_threshold:
+            new_y2 = y
+            continue
+        if y < new_y2 - 8 and dark_count >= 3:
+            break
+
+    return x1, max(0, new_y1), x2, min(height, max(new_y1 + 1, new_y2))
+
+
+def _source_column_for_asset(
+    asset: dict[str, Any],
+) -> tuple[Image.Image, Path, int, int] | None:
+    debug = asset.get("debug", {}) if isinstance(asset.get("debug"), dict) else {}
+    source_raw = str(debug.get("source_path", "") or "").strip()
+    bbox = asset.get("bbox_json", {}) if isinstance(asset.get("bbox_json"), dict) else {}
+    if not source_raw or not bbox:
+        return None
+    source_path = Path(source_raw)
+    if not source_path.exists():
+        return None
+    try:
+        with Image.open(source_path) as im:
+            source = im.convert("RGB")
+        width, height = source.size
+        x = int(bbox.get("x", 0) or 0)
+        y = int(bbox.get("y", 0) or 0)
+        w = int(bbox.get("w", 0) or 0)
+        h = int(bbox.get("h", 0) or 0)
+        if w <= 0 or h <= 0:
+            return None
+        x1 = max(0, x - 24)
+        x2 = min(width, x + w + 40)
+        y1 = max(0, y - 260)
+        y2 = min(height, y + h + 560)
+        if x2 - x1 < 80 or y2 - y1 < h:
+            return None
+        return source.crop((x1, y1, x2, y2)), source_path, x1, y1
+    except Exception:
+        return None
+
+
+def split_mixed_asset_into_visual_bands(
+    record: dict[str, Any],
+    asset: dict[str, Any],
+    *,
+    manifest_path: Path,
+    out_dir: Path,
+) -> dict[str, Any] | None:
+    qid = str(record.get("question_id", "") or "question")
+    aid = str(asset.get("asset_id", "") or "asset")
+    path = local_path(asset, manifest_path)
+    if not path:
+        return None
+    try:
+        source_column = _source_column_for_asset(asset)
+        if source_column is not None:
+            image, source_path, source_offset_x, source_offset_y = source_column
+            band_input_source = "source_column"
+        else:
+            with Image.open(path) as im:
+                image = im.convert("RGB")
+            source_path = path
+            source_offset_x = 0
+            source_offset_y = 0
+            band_input_source = "current_asset"
+            bands = _visual_band_candidates(image)
+        bands = [_trim_red_edge_rows(image, bbox) for bbox in _visual_band_candidates(image)]
+        if len(bands) < 2:
+            return None
+        split_dir = out_dir / "refined_assets" / qid
+        split_dir.mkdir(parents=True, exist_ok=True)
+        new_assets: list[dict[str, Any]] = []
+        original_flags = [str(flag) for flag in (asset.get("review_flags", []) or [])]
+        selected_before = record.get("selected_scope_asset_ids") if isinstance(record.get("selected_scope_asset_ids"), dict) else {}
+        aliases_before = record.get("scope_asset_aliases") if isinstance(record.get("scope_asset_aliases"), dict) else {}
+        analysis_reuses_source = (
+            aid in (selected_before.get("analysis", []) or [])
+            or aid in (aliases_before.get("analysis", []) or [])
+            or bool(record.get("analysis_requires_image", False))
+        )
+        for idx, (x1, y1, x2, y2) in enumerate(bands, start=1):
+            crop = image.crop((x1, y1, x2, y2))
+            part_id = f"{aid}_band_{idx:02d}"
+            part_path = split_dir / f"{part_id}.png"
+            crop.save(part_path)
+            part = deepcopy(asset)
+            part["asset_id"] = part_id
+            part["display_ref"] = f"asset://{part_id}"
+            if idx > 1 and analysis_reuses_source:
+                part["asset_role"] = "analysis"
+                part["role"] = "analysis"
+                part["placement_scope"] = "after_analysis"
+                part["placement"] = "after_analysis"
+            part["storage_key"] = str(part_path.relative_to(out_dir)).replace("\\", "/")
+            part["image_width"] = crop.width
+            part["image_height"] = crop.height
+            part["review_flags"] = sorted(
+                set(original_flags + ["final_asset_quality_visual_band_split_part"])
+            )
+            debug = part.get("debug", {}) if isinstance(part.get("debug"), dict) else {}
+            debug["local_path"] = str(part_path)
+            debug["visual_band_split_source_asset_id"] = aid
+            debug["visual_band_split_input_source"] = band_input_source
+            debug["visual_band_split_source_path"] = str(source_path)
+            debug["visual_band_split_bbox"] = {
+                "x1": x1,
+                "y1": y1,
+                "x2": x2,
+                "y2": y2,
+                "source_x1": x1 + source_offset_x,
+                "source_y1": y1 + source_offset_y,
+                "source_x2": x2 + source_offset_x,
+                "source_y2": y2 + source_offset_y,
+            }
+            part["debug"] = debug
+            new_assets.append(part)
+
+        asset["review_flags"] = sorted(set(original_flags + ["final_asset_quality_visual_band_split_replaced"]))
+        asset["delivery_suppressed"] = True
+        record.setdefault("assets", []).extend(new_assets)
+
+        selected = record.get("selected_scope_asset_ids") if isinstance(record.get("selected_scope_asset_ids"), dict) else {}
+        aliases = record.get("scope_asset_aliases") if isinstance(record.get("scope_asset_aliases"), dict) else {}
+        stem_parts = [new_assets[0]["asset_id"]]
+        analysis_parts = [part["asset_id"] for part in new_assets[1:]]
+        if aid in (selected.get("stem", []) or []):
+            selected["stem"] = [stem_parts[0] if item == aid else item for item in (selected.get("stem", []) or [])]
+        if aid in (selected.get("analysis", []) or []):
+            selected["analysis"] = [
+                replacement
+                for item in (selected.get("analysis", []) or [])
+                for replacement in (analysis_parts if item == aid else [item])
+            ]
+        if aid in (aliases.get("analysis", []) or []) and analysis_parts:
+            aliases["analysis"] = [
+                replacement
+                for item in (aliases.get("analysis", []) or [])
+                for replacement in (analysis_parts if item == aid else [item])
+            ]
+        record["selected_scope_asset_ids"] = selected
+        record["scope_asset_aliases"] = aliases
+        return {
+            "question_id": qid,
+            "asset_id": aid,
+            "action": "visual_band_split_replaced",
+            "part_count": len(new_assets),
+            "input_source": band_input_source,
+        }
+    except Exception as exc:
+        flags = [str(flag) for flag in (asset.get("review_flags", []) or [])]
+        asset["review_flags"] = sorted(set(flags + ["final_asset_quality_visual_band_split_failed"]))
+        debug = asset.get("debug", {}) if isinstance(asset.get("debug"), dict) else {}
+        debug["visual_band_split_error"] = str(exc)[:240]
+        asset["debug"] = debug
+        return {"question_id": qid, "asset_id": aid, "action": "visual_band_split_failed", "error": str(exc)[:240]}
 
 
 def image_data_url(path: Path) -> str:
@@ -1359,11 +1724,15 @@ def main() -> None:
         for asset in list(record.get("assets", []) or []):
             if not isinstance(asset, dict) or not is_cropped_asset(asset):
                 continue
-            if is_panel_group_asset(asset):
+            if is_panel_group_asset(asset) and not should_model_refine_panel_group(asset):
                 asset["review_flags"] = sorted(
                     set([str(f) for f in (asset.get("review_flags", []) or [])] + ["final_asset_quality_panel_group_skip"])
                 )
                 continue
+            if is_panel_group_asset(asset):
+                asset["review_flags"] = sorted(
+                    set([str(f) for f in (asset.get("review_flags", []) or [])] + ["final_asset_quality_panel_group_refine_allowed"])
+                )
             if args.skip_model_refine:
                 asset["review_flags"] = sorted(
                     set([str(f) for f in (asset.get("review_flags", []) or [])] + ["final_asset_quality_model_skipped"])
@@ -1379,6 +1748,14 @@ def main() -> None:
                     model=str(args.model or ""),
                 )
             )
+            split_action = split_mixed_asset_into_visual_bands(
+                record,
+                asset,
+                manifest_path=manifest_path,
+                out_dir=out_dir,
+            )
+            if split_action is not None:
+                quality_actions.append(split_action)
         selection_actions.extend(compact_evidence_assets(record))
         selection_actions.extend(select_delivery_assets(record))
         if not args.skip_visual_insert_anchor_review:

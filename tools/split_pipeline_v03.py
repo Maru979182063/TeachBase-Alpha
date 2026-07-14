@@ -12,7 +12,7 @@ from tools.page_render_adapter_v03 import render_pdf_pages_v03, write_page_manif
 from tools.pdf_preflight_v03 import classify_pdf_v03
 from tools.question_slice_auditor_v03 import audit_nodes_v03, write_audit_report
 from tools.reading_block_builder_v03 import build_reading_blocks_v03, write_block_overlay, write_reading_blocks
-from tools.semantic_block_assembler_v03 import mock_semantic_assignments_v03, write_assignments
+from tools.semantic_block_assembler_v03 import mock_semantic_assignments_v03, visual_semantic_assignments_v03, write_assignments
 
 
 def _portable_path(raw_path: str) -> str:
@@ -50,7 +50,10 @@ def run_split_v03_for_doc(
         max_vlm_calls=max_vlm_calls,
     )
     reading_blocks = build_reading_blocks_v03(blocks, manifests, doc_key)
-    assignments = mock_semantic_assignments_v03(reading_blocks)
+    if provider == "visual":
+        assignments = visual_semantic_assignments_v03(reading_blocks, doc_key=doc_key, api_key=api_key, model=model)
+    else:
+        assignments = mock_semantic_assignments_v03(reading_blocks)
     nodes, trace = accumulate_nodes_v03(reading_blocks, assignments)
     crop_records = execute_crops_v03(nodes, manifests, doc_out)
     audit_records = audit_nodes_v03(nodes)

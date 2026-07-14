@@ -1,0 +1,38 @@
+schema_version: "docx_native_ingest_config.v0.1"
+
+isolation:
+  pipeline_id: "docx_native_ingest_v01"
+  owns_output_root: "outputs/docx_native_ingest_v0_1"
+  owns_config: "config/docx_native_ingest_v01.yaml"
+  owns_tools_prefix: "tools/docx_native_"
+  forbidden_write_roots: "outputs/ingress_splitter_v0.1,outputs/split_v03,outputs/teacher_pdf_visual,config/teacher_handout_visual_prompts.yaml"
+  no_pdf_visual_chain_mutation: true
+  no_database_write_by_default: true
+  no_runtime_import_by_default: true
+
+input:
+  default_docx: ""
+
+output:
+  root: "outputs/docx_native_ingest_v0_1"
+  default_run_name: "configured_docx_native_run"
+
+model_refine:
+  provider: "volcengine_ark"
+  endpoint: "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
+  model: "doubao-seed-2.0-mini"
+  api_key_env: "ARK_API_KEY"
+  temperature: 0.1
+  max_tokens: 4096
+  timeout_seconds: 120
+  retry_count: 2
+  default_limit: 3
+  output_dir_name: "model_refine_doubao2_0_mini_v01"
+
+contracts:
+  prompt_pack: "model_refine_prompt_pack.json"
+  question_packets: "question_packets_backend_preview.json"
+  formula_manifest: "formula_manifest_backend_preview.json"
+  asset_manifest: "asset_manifest_backend_preview.json"
+  release_decision: "release_decision_preview.json"
+  runtime_preview: "question_asset_manifest_for_runtime_preview.json"

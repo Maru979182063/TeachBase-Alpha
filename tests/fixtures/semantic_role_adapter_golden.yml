@@ -1,0 +1,33 @@
+{
+  "schema": "semantic_role_adapter_golden_v0.2",
+  "cases": [
+    {
+      "case_id": "math_exercise_basic",
+      "source_document_id": "fixture_math",
+      "page_range": [1],
+      "node_id": "q001",
+      "expected_semantic_role": "exercise",
+      "expected_presentation_kind": "text",
+      "expected_disposition": "processable",
+      "expected_route": "question_splitter",
+      "expected_relations": [],
+      "expected_review_required": false,
+      "boundary_quality": "correct",
+      "error_scope": "none"
+    },
+    {
+      "case_id": "answer_without_target",
+      "source_document_id": "fixture_math",
+      "page_range": [1],
+      "node_id": "a001",
+      "expected_semantic_role": "answer_explanation",
+      "expected_presentation_kind": "text",
+      "expected_disposition": "review_required",
+      "expected_route": "answer_attachment",
+      "expected_relations": [],
+      "expected_review_required": true,
+      "boundary_quality": "correct",
+      "error_scope": "relation_error"
+    }
+  ]
+}
