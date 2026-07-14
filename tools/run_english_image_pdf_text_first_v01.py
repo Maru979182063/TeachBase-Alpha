@@ -18,7 +18,7 @@ WORKSPACE_ROOT = THIS_DIR.parent
 if str(WORKSPACE_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT))
 
-from tools.english_image_pdf_text_first_probe_v01 import (  # noqa: E402
+from tools.english_text_first_evidence import (  # noqa: E402
     OcrLine,
     VisualObject,
     detect_visual_objects,
@@ -33,8 +33,16 @@ from tools.english_image_pdf_text_first_probe_v01 import (  # noqa: E402
 
 PIPELINE_SCHEMA = "english_image_pdf_text_first_pipeline_v0.1"
 ARK_API_URL = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
-DEFAULT_ARK_TEXT_ASSEMBLER_MODEL = "doubao-seed-2.0-mini"
+DEFAULT_ARK_TEXT_ASSEMBLER_MODEL = "doubao-seed-2-0-lite-260428"
 DEFAULT_CONFIG_PATH = "config/english_image_pdf_text_first_v01.yaml"
+
+
+class ModelJsonParseError(RuntimeError):
+    def __init__(self, message: str, *, content: str, payload: dict[str, Any], meta: dict[str, Any]) -> None:
+        super().__init__(message)
+        self.content = content
+        self.payload = payload
+        self.meta = meta
 
 
 def portable(path: Path, root: Path) -> str:
@@ -130,8 +138,13 @@ def apply_config(args: argparse.Namespace) -> argparse.Namespace:
         args.assembler_provider = str(nested_get(config, "assembler.provider", "none"))
     if not args.assembler_model:
         args.assembler_model = str(nested_get(config, "assembler.model", DEFAULT_ARK_TEXT_ASSEMBLER_MODEL))
+    args.assembler_model_alias = str(nested_get(config, "assembler.model_alias", "") or "")
     if not args.assembler_timeout:
         args.assembler_timeout = int(nested_get(config, "assembler.timeout_seconds", 120) or 120)
+    args.assembler_max_tokens = int(nested_get(config, "assembler.max_tokens", 12000) or 12000)
+    args.assembler_response_format_json = bool(nested_get(config, "assembler.response_format_json", True))
+    args.assembler_output_mode = str(nested_get(config, "assembler.output_mode", "compact_evidence") or "compact_evidence")
+    args.assembler_save_raw_response = bool(nested_get(config, "assembler.save_raw_response", True))
     if not args.api_key:
         api_key_env = str(nested_get(config, "assembler.api_key_env", "ARK_API_KEY") or "ARK_API_KEY")
         args.api_key = os.environ.get(api_key_env, "")
@@ -259,7 +272,7 @@ def build_model_input_bundle(
     }
 
 
-def build_text_assembler_prompt(model_input: dict[str, Any]) -> tuple[str, str]:
+def build_text_assembler_prompt(model_input: dict[str, Any], *, output_mode: str = "compact_evidence") -> tuple[str, str]:
     system_prompt = """You are TeachBase English image-PDF text-first semantic assembler.
 
 You receive OCR lines with page coordinates and visual-object candidates. Build a structure-preserving JSON assembly for an English teacher handout.
@@ -272,6 +285,9 @@ Hard rules:
 - Red teacher-version answer/analysis/translation text must be attached back to the owning question.
 - Tables, tree diagrams, figures, and images should be visual_refs attached to their owning knowledge node or question. Do not hallucinate their content.
 - If evidence is incomplete, output TRUNCATED_NEEDS_MORE_PAGES or MODEL_ASSEMBLED_NEEDS_QA.
+- Prefer compact evidence output. Do not copy long OCR passages into JSON strings. Use line_refs as evidence.
+- Do not include raw OCR source_text unless the field is short. The downstream normalizer can reconstruct text from line_refs.
+- Keep analysis, translation, and vocabulary fields concise. If the teacher-version text is long, summarize and cite line_refs.
 - Return strict JSON only. No markdown.
 """
     expected = {
@@ -284,7 +300,6 @@ Hard rules:
                 "role_in_handout": "semantic role",
                 "model_summary": "brief judgment",
                 "review_status": "MODEL_ASSEMBLED | MODEL_ASSEMBLED_NEEDS_QA | MODEL_ASSEMBLED_NEEDS_TEXT_QA | TRUNCATED_NEEDS_MORE_PAGES",
-                "source_text": "optional reconstructed text",
                 "evidence": {"line_refs": ["p001_l001"]},
                 "fields": {},
                 "relations": {},
@@ -327,6 +342,7 @@ Hard rules:
         )
     user_payload = {
         "task": "Assemble English handout structure from OCR evidence.",
+        "output_mode": output_mode,
         "source_pdf": model_input.get("source_pdf"),
         "pages": model_input.get("pages"),
         "expected_output_schema": expected,
@@ -341,8 +357,11 @@ def call_ark_text_assembler(
     api_key: str,
     model: str,
     timeout_seconds: int,
+    response_format_json: bool = True,
+    output_mode: str = "compact_evidence",
+    max_tokens: int = 12000,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    system_prompt, user_prompt = build_text_assembler_prompt(model_input)
+    system_prompt, user_prompt = build_text_assembler_prompt(model_input, output_mode=output_mode)
     body = {
         "model": model,
         "messages": [
@@ -351,6 +370,10 @@ def call_ark_text_assembler(
         ],
         "temperature": 0,
     }
+    if max_tokens > 0:
+        body["max_tokens"] = max_tokens
+    if response_format_json:
+        body["response_format"] = {"type": "json_object"}
     request = urllib.request.Request(
         ARK_API_URL,
         data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
@@ -361,15 +384,22 @@ def call_ark_text_assembler(
     with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
         payload = json.loads(response.read().decode("utf-8"))
     content = payload["choices"][0]["message"]["content"]
-    parsed = extract_json_block(content)
     meta = {
         "provider": "ark",
         "model": model,
         "endpoint": ARK_API_URL,
         "latency_seconds": round(time.time() - started, 3),
         "usage": payload.get("usage", {}),
+        "finish_reason": (payload.get("choices") or [{}])[0].get("finish_reason"),
         "raw_content": content,
+        "response_format_json": response_format_json,
+        "output_mode": output_mode,
+        "max_tokens": max_tokens,
     }
+    try:
+        parsed = extract_json_block(content)
+    except Exception as exc:
+        raise ModelJsonParseError(str(exc), content=content, payload=payload, meta=meta) from exc
     return parsed, meta
 
 
@@ -451,6 +481,7 @@ def normalize_model_output(
 
     question_packets: list[dict[str, Any]] = []
     node_ids = {node["node_id"] for node in semantic_nodes}
+    node_type_by_id = {node["node_id"]: node["node_type"] for node in semantic_nodes}
     passage_ids = {node["node_id"] for node in semantic_nodes if node["node_type"] == "shared_passage"}
     for raw in model_output.get("question_packets", []):
         if not isinstance(raw, dict):
@@ -460,24 +491,70 @@ def normalize_model_output(
         evidence = evidence_from_refs(refs, lines_by_id)
         source_node_id = str(raw.get("source_node_id") or "")
         shared_passage_id = str(raw.get("shared_passage_id") or "")
-        if source_node_id and source_node_id not in node_ids:
-            warnings.append(f"{raw.get('packet_id', 'unknown')}:missing_source_node:{source_node_id}")
         if shared_passage_id and shared_passage_id not in passage_ids:
             warnings.append(f"{raw.get('packet_id', 'unknown')}:missing_shared_passage:{shared_passage_id}")
+        packet_id = str(raw.get("packet_id") or f"qp_{len(question_packets)+1:04d}")
+        options = raw.get("options") if isinstance(raw.get("options"), dict) else {}
+        stem = str(raw.get("stem") or "")
+        answer = str(raw.get("answer") or "")
+        analysis = str(raw.get("analysis") or "")
+        translation = str(raw.get("translation") or "")
+        vocabulary_support = str(raw.get("vocabulary_support") or "")
+        review_status = str(raw.get("review_status") or "NEEDS_QA")
+        if not source_node_id or source_node_id not in node_ids or node_type_by_id.get(source_node_id) not in {"question_packet", "question"}:
+            synthesized_node_id = f"{packet_id}_node"
+            source_node_id = synthesized_node_id
+            node_ids.add(synthesized_node_id)
+            node_type_by_id[synthesized_node_id] = "question_packet"
+            semantic_nodes.append(
+                {
+                    "node_id": synthesized_node_id,
+                    "node_type": "question_packet",
+                    "title": stem[:120],
+                    "role_in_handout": "question_attached_to_shared_passage" if shared_passage_id else "standalone_question",
+                    "review_status": review_status,
+                    "source": f"{assembly_source}+normalizer_synthesized_question_node",
+                    "model_summary": "Synthesized question SemanticNode from model QuestionPacket because the model did not provide a dedicated question node.",
+                    "source_text": "\n".join(
+                        part
+                        for part in [
+                            stem,
+                            json.dumps(options, ensure_ascii=False) if options else "",
+                            f"answer: {answer}" if answer else "",
+                            analysis,
+                            translation,
+                            vocabulary_support,
+                        ]
+                        if part
+                    ),
+                    "evidence": evidence,
+                    "fields": {
+                        "stem": stem,
+                        "options": options,
+                        "answer": answer,
+                        "analysis": analysis,
+                        "translation": translation,
+                        "vocabulary_support": vocabulary_support,
+                    },
+                    "relations": {"shared_passage_id": shared_passage_id} if shared_passage_id else {},
+                    "visual_refs": [],
+                    "normalization_actions": ["synthesized_question_semantic_node_from_question_packet"],
+                }
+            )
         question_packets.append(
             {
-                "packet_id": str(raw.get("packet_id") or f"qp_{len(question_packets)+1:04d}"),
+                "packet_id": packet_id,
                 "source_node_id": source_node_id,
                 "question_type": str(raw.get("question_type") or "english_unknown"),
                 "shared_passage_id": shared_passage_id,
-                "stem": str(raw.get("stem") or ""),
-                "options": raw.get("options") if isinstance(raw.get("options"), dict) else {},
-                "answer": str(raw.get("answer") or ""),
-                "analysis": str(raw.get("analysis") or ""),
-                "translation": str(raw.get("translation") or ""),
-                "vocabulary_support": str(raw.get("vocabulary_support") or ""),
+                "stem": stem,
+                "options": options,
+                "answer": answer,
+                "analysis": analysis,
+                "translation": translation,
+                "vocabulary_support": vocabulary_support,
                 "evidence": evidence,
-                "review_status": str(raw.get("review_status") or "NEEDS_QA"),
+                "review_status": review_status,
                 "source": assembly_source,
             }
         )
@@ -654,6 +731,7 @@ def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
     assembler_meta: dict[str, Any] = {
         "provider": str(args.assembler_provider or "none"),
         "model": str(args.assembler_model or ""),
+        "model_alias": str(getattr(args, "assembler_model_alias", "") or ""),
         "called": False,
     }
     if args.model_output:
@@ -680,6 +758,9 @@ def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
                     api_key=api_key,
                     model=model,
                     timeout_seconds=int(args.assembler_timeout or 120),
+                    response_format_json=bool(getattr(args, "assembler_response_format_json", True)),
+                    output_mode=str(getattr(args, "assembler_output_mode", "compact_evidence") or "compact_evidence"),
+                    max_tokens=int(getattr(args, "assembler_max_tokens", 12000) or 12000),
                 )
                 assembler_meta = {**assembler_meta, **call_meta, "called": True}
                 model_output_path = str(out_dir / "model_output_ark.json")
@@ -693,6 +774,24 @@ def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
                     visual_objects=visual_objects,
                     assembly_source=assembly_source,
                 )
+            except ModelJsonParseError as exc:
+                warnings.append(f"ark_text_assembler_failed:{type(exc.__cause__).__name__}:{str(exc)[:160]}")
+                if bool(getattr(args, "assembler_save_raw_response", True)):
+                    (out_dir / "model_output_ark_raw.txt").write_text(exc.content, encoding="utf-8")
+                    write_json(out_dir / "model_output_ark_raw_payload.json", exc.payload)
+                    write_json(out_dir / "model_output_ark_meta.json", exc.meta)
+                write_json(
+                    out_dir / "model_output_ark_error.json",
+                    {
+                        "schema": "ark_text_assembler_error_v0.1",
+                        "provider": "ark",
+                        "model": model,
+                        "error_type": type(exc.__cause__).__name__ if exc.__cause__ else type(exc).__name__,
+                        "error": str(exc),
+                        "raw_content_path": str(out_dir / "model_output_ark_raw.txt"),
+                    },
+                )
+                assembly_source = f"ark_text_semantic_assembler_failed:{model}"
             except Exception as exc:
                 warnings.append(f"ark_text_assembler_failed:{type(exc).__name__}:{str(exc)[:160]}")
                 write_json(
@@ -777,6 +876,10 @@ def run_pipeline(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def main() -> None:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
     parser = argparse.ArgumentParser(description="Run English image-PDF text-first ingest pipeline v0.1.")
     parser.add_argument("--config", default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--pdf", default="")

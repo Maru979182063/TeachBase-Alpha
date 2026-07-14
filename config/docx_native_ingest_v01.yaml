@@ -20,7 +20,9 @@ output:
 model_refine:
   provider: "volcengine_ark"
   endpoint: "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
-  model: "doubao-seed-2.0-mini"
+  model_alias: "doubao2.0mini"
+  model: "doubao-seed-2-0-lite-260428"
+  model_note: "This is the Ark endpoint id that passed the DOCX-native smoke run with the shared Ark key; doubao-seed-2.0-mini returned HTTP 404 in this environment."
   api_key_env: "ARK_API_KEY"
   temperature: 0.1
   max_tokens: 4096

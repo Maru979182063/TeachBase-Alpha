@@ -44,7 +44,7 @@ export function runDocxNativeRuntimeAdapterDryRun(options = {}) {
     title: options.title || "DOCX Native Preview Lesson",
     subject: options.subject || "math",
     stage: options.stage || "junior",
-    track_code: options["track-code"] || options.trackCode || "math_docx_native",
+    track_code: options["track-code"] || options.trackCode || "math_junior",
   });
   const payload = {
     note: "adapter dry-run only; not imported into runtime/db",

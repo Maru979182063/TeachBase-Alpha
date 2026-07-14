@@ -15,8 +15,14 @@ assembler:
   provider: ark
   endpoint: https://ark.cn-beijing.volces.com/api/v3/chat/completions
   api_key_env: ARK_API_KEY
-  model: doubao-seed-2.0-mini
+  model_alias: doubao2.0mini
+  model: doubao-seed-2-0-lite-260428
+  model_note: doubao-seed-2-0-lite-260428 is the Ark endpoint id verified in the sibling thread; doubao-seed-2.0-mini is only a human-facing alias and may 404.
   timeout_seconds: 120
+  max_tokens: 12000
+  response_format_json: true
+  output_mode: compact_evidence
+  save_raw_response: true
 fallback:
   visual_first_entry: tools/run_split_v03_full_doc.py
   visual_first_enabled_by_default: false
