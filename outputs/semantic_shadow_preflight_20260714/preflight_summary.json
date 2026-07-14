@@ -1,0 +1,16 @@
+{
+  "schema_version": "semantic_shadow_preflight.v0.1",
+  "generated_at": "2026-07-14T08:11:57.770622+00:00",
+  "pushed_branches": [
+    "backup/pre-pipeline-isolation-20260714",
+    "chore/pipeline-isolation-control-plane"
+  ],
+  "stash0_record": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\semantic_shadow_preflight_20260714\\stash0\\stash0_manifest.json",
+  "baseline_v01_was_sufficient_for_shadow_gate": false,
+  "baseline_v01_reason": "Existing deterministic baseline had no review_repair_pool.json and was recorded as no-rerun candidate; not enough for strict core artifact comparison.",
+  "baseline_v02_created": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\baseline_manifest.json",
+  "semantic_branch_created": false,
+  "semantic_shadow_implementation_started": false,
+  "stop_reason": "Preflight baseline gate required completion; per user instruction, stopped after completing deterministic baseline.",
+  "status": "SEMANTIC_ROLE_SHADOW_ISOLATION_NOT_READY"
+}
