@@ -1,0 +1,149 @@
+{
+  "schema_version": "pipeline_registry.v0.1",
+  "status_enum": ["stable", "experimental", "shadow", "validation", "effective", "deprecated"],
+  "generated_for_branch": "chore/pipeline-isolation-control-plane",
+  "pipelines": [
+    {
+      "pipeline_id": "split_v03",
+      "pipeline_name": "PDF split v03 visual/mock handout splitter",
+      "pipeline_version": "v0.3",
+      "status": "validation",
+      "owner": "TeachBase-Alpha pipeline maintainers",
+      "description": "Existing PDF page render, block extraction, reading block, semantic node, audit, legacy bridge, and repair pool chain.",
+      "entrypoint": "tools/run_split_v03_full_doc.py",
+      "config_path": "config/teacher_handout_visual_prompts.yaml",
+      "feature_flags": [],
+      "input_contracts": ["pdf_file", "doc_key", "page_range"],
+      "output_contracts": [
+        "page_manifests.json",
+        "blocks.json",
+        "reading_blocks.json",
+        "assignments.json",
+        "semantic_nodes.json",
+        "audit_report.json",
+        "legacy_bridge_questions.json",
+        "review_repair_pool.json"
+      ],
+      "owned_output_roots": ["out", "outputs/split_v03"],
+      "forbidden_write_roots": [
+        "outputs/semantic_role_shadow",
+        "outputs/docx_native_ingest_v01",
+        "outputs/english_text_first_v01",
+        "outputs/runtime_validation"
+      ],
+      "stable_dependencies": ["python", "PyMuPDF"],
+      "optional_dependencies": ["ARK_API_KEY for visual provider"],
+      "model_provider": "mock_or_volcengine_ark",
+      "default_model": "doubao-seed-2-0-lite-260428",
+      "prompt_bundle": "config/teacher_handout_visual_prompts.yaml",
+      "prompt_version": "existing_split_v03_prompts",
+      "downstream_pipelines": ["runtime_backend"],
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "not imported directly without release decision artifacts"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "no direct database writes"
+      },
+      "release_gate_policy": "requires canonical release decision before Runtime import",
+      "fallback_pipeline": "",
+      "rollback_method": "disable caller or return to validation/backend-runtime-20260706",
+      "baseline_id": "control_plane_20260714_v01",
+      "last_validated_commit": "5ceccd23"
+    },
+    {
+      "pipeline_id": "runtime_backend",
+      "pipeline_name": "Runtime backend validation baseline",
+      "pipeline_version": "validation_backend_runtime_20260706",
+      "status": "validation",
+      "owner": "TeachBase-Alpha runtime maintainers",
+      "description": "Existing LessonDraftBundle boundary, release gate, and Postgres-backed runtime validation surface.",
+      "entrypoint": "tools/runtime_backbone_api_server.mjs",
+      "config_path": "config/runtime_observability.yaml",
+      "feature_flags": ["runtime_import_enabled"],
+      "input_contracts": ["LessonDraftBundle", "allow_list_manifest", "canonical_release_decision"],
+      "output_contracts": ["runtime_state", "release_gate_report", "staging_report"],
+      "owned_output_roots": ["outputs/runtime_validation", "outputs/test_runs", "outputs/staging_validation", "outputs/production_readiness"],
+      "forbidden_write_roots": [
+        "outputs/split_v03",
+        "outputs/semantic_role_shadow",
+        "outputs/docx_native_ingest_v01",
+        "outputs/english_text_first_v01"
+      ],
+      "stable_dependencies": ["node", "pg", "embedded-postgres"],
+      "optional_dependencies": ["DATABASE_URL_TEST", "PostgreSQL client tools"],
+      "model_provider": "none",
+      "default_model": "",
+      "prompt_bundle": "",
+      "prompt_version": "",
+      "downstream_pipelines": [],
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "release decision gate required for automatic imports"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "validation baseline only; explicit test/runtime command required"
+      },
+      "release_gate_policy": "validation baseline reports NOT_READY until promoted separately",
+      "fallback_pipeline": "",
+      "rollback_method": "return to validation/backend-runtime-20260706",
+      "baseline_id": "control_plane_20260714_v01",
+      "last_validated_commit": "5ceccd23"
+    },
+    {
+      "pipeline_id": "docx_native_ingest_v01",
+      "pipeline_name": "DOCX native-first math ingest pipeline",
+      "pipeline_version": "v0.1",
+      "status": "experimental",
+      "owner": "TeachBase-Alpha pipeline maintainers",
+      "description": "DOCX-native unzip/XML/word-media/OMML ingest chain that preserves native images, structures condition groups, emits backend-aligned question asset manifests, and produces preview/contract-check artifacts.",
+      "entrypoint": "tools/pipeline_docx_native_v01.py",
+      "config_path": "config/pipeline_docx_native_v01.yaml",
+      "feature_flags": ["docx_native_ingest_enabled"],
+      "input_contracts": ["docx_file"],
+      "output_contracts": [
+        "summary.json",
+        "paragraph_stream.json",
+        "asset_manifest_backend_preview.json",
+        "formula_manifest_backend_preview.json",
+        "question_packets_backend_preview.json",
+        "model_refine_prompt_pack.json",
+        "backend_aligned_v01/docx_native_backend_aligned_question_asset_manifest.json",
+        "backend_aligned_v01/docx_native_backend_contract_check.json",
+        "backend_aligned_v01/render_backend_aligned_v01/index.html",
+        "pipeline_summary.json"
+      ],
+      "owned_output_roots": ["outputs/docx_native_pipeline_v0_1"],
+      "forbidden_write_roots": [
+        "out",
+        "outputs/split_v03",
+        "outputs/semantic_role_shadow",
+        "outputs/english_text_first_v01",
+        "outputs/runtime_validation",
+        "config/teacher_handout_visual_prompts.yaml"
+      ],
+      "stable_dependencies": ["python", "Pillow", "node for optional runtime-adjacent checks"],
+      "optional_dependencies": ["ARK_API_KEY for Doubao condition-group refine"],
+      "model_provider": "volcengine_ark",
+      "default_model": "doubao-seed-2-0-lite-260428",
+      "prompt_bundle": "config/pipeline_docx_native_v01.yaml",
+      "prompt_version": "docx_native_condition_group_refine_v0.1",
+      "downstream_pipelines": ["runtime_backend"],
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "emits LessonDraftBundle-compatible preview artifacts only; Runtime import requires an explicit later command and release decision."
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "no direct database writes"
+      },
+      "release_gate_policy": "backend contract check required; condition-group review remains explicit until promoted after blind DOCX validation",
+      "fallback_pipeline": "split_v03 only for local visual evidence when DOCX anchors/XML are unusable",
+      "rollback_method": "disable docx_native_ingest_enabled and remove callers to tools/pipeline_docx_native_v01.py",
+      "baseline_id": "docx_native_sample_14_3_pipeline_v01_smoke",
+      "last_validated_commit": "uncommitted_local_20260714"
+    }
+  ]
+}

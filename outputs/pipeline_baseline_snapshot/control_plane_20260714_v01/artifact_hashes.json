@@ -1,0 +1,40 @@
+{
+  "schema_version": "pipeline_artifact_hashes.v0.1",
+  "hashes": {
+    "deterministic_english_mock_p5_6_coordinate_v2:page_manifests": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\page_manifests.json",
+      "sha256": "ca5612e80dd42db81bbd92cca42167bda31a5438a048d8e2558b82c48fe4a65d",
+      "size_bytes": 1353
+    },
+    "deterministic_english_mock_p5_6_coordinate_v2:blocks": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\blocks.json",
+      "sha256": "2c118ac40fb89c0bfe45ac21cc7c6708d3e1aac12b4b379d640f502b34afeb80",
+      "size_bytes": 33414
+    },
+    "deterministic_english_mock_p5_6_coordinate_v2:reading_blocks": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\reading_blocks.json",
+      "sha256": "a66d9f951438e8af67ee68f75ad4d1496ef168fed85c84d9d9700b6987765890",
+      "size_bytes": 10233
+    },
+    "deterministic_english_mock_p5_6_coordinate_v2:assignments": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\assignments.json",
+      "sha256": "bc52ff6efc65a4a1da4b00e0a73ab0172b82f97f1a8ed4ebe3e34242d6f26e6a",
+      "size_bytes": 2438
+    },
+    "deterministic_english_mock_p5_6_coordinate_v2:semantic_nodes": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\semantic_nodes.json",
+      "sha256": "51541c4d4df3b2087a575f477ccf2198d81bc3b635b99b2def1ceb948ddd6559",
+      "size_bytes": 5906
+    },
+    "deterministic_english_mock_p5_6_coordinate_v2:audit_report": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\audit_report.json",
+      "sha256": "f21a8e2ce40f22fad704a8dbca9c183a70ab2ac318ca3d656034651ca32d9e00",
+      "size_bytes": 942
+    },
+    "deterministic_english_mock_p5_6_coordinate_v2:legacy_bridge_questions": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\legacy_bridge_questions.json",
+      "sha256": "e472bfc2e42a3a6c1f60f9f7b0e38c08d8109f95e802623825d18ff95a0b93c0",
+      "size_bytes": 4677
+    }
+  }
+}

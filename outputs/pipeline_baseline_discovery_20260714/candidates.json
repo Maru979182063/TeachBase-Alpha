@@ -1,0 +1,645 @@
+{
+  "schema_version": "pipeline_baseline_discovery.v0.1",
+  "generated_at": "2026-07-14T07:48:18.895136+00:00",
+  "workspace": "C:\\Users\\EDY\\Documents\\教研基建",
+  "branch": "chore/pipeline-isolation-control-plane",
+  "commit": "5ceccd230dc7041b108046217f480357078aa68c",
+  "scanned_roots": [
+    "out",
+    "outputs",
+    "docs/reports"
+  ],
+  "selection_policy": {
+    "deterministic": "mock/fixed existing artifacts only; eligible for CI hash comparison",
+    "live_model_reference": "existing paid-model artifacts only; no model calls made in this round; not a strict CI hash gate"
+  },
+  "candidates": [
+    {
+      "candidate_id": "deterministic_english_mock_p5_6_coordinate_v2",
+      "category": "deterministic_ci_hard_gate",
+      "baseline_type": "deterministic",
+      "run_root": "out/quick_debug_mock/english_p5_6_coordinate_v2",
+      "doc_key": "english",
+      "summary_file": "out/quick_debug_mock/english_p5_6_coordinate_v2/quick_debug_result.json",
+      "input": {
+        "path": "C:\\Users\\EDY\\Documents\\WXWork\\1688857912801359\\WeDrive\\领世培优\\领世一对一英语学科资料\\高中英语\\01标准化讲义\\01暑假标准化讲义\\高二暑假\\语法\\词法和句法基础梳理-教师版.pdf",
+        "exists": true,
+        "sha256": "cbcb8dfd6e4f11b9ccba00560e2e5d7377326e37570d31fef4b3ed52ae34fa45",
+        "size_bytes": 3271906,
+        "mtime": "2026-06-16T05:23:45.503624+00:00"
+      },
+      "command_or_reconstructed_command": "python tools/split_v03_quick_debug.py --pdf \"C:\\Users\\EDY\\Documents\\WXWork\\1688857912801359\\WeDrive\\领世培优\\领世一对一英语学科资料\\高中英语\\01标准化讲义\\01暑假标准化讲义\\高二暑假\\语法\\词法和句法基础梳理-教师版.pdf\" --doc-key english --pages 5,6 --out out/quick_debug_mock/english_p5_6_coordinate_v2 --provider mock --max-vlm-calls 0",
+      "provider": "mock",
+      "model": "",
+      "paid_vlm_used": false,
+      "actual_vlm_calls": 0,
+      "page_count": 24,
+      "pages": [
+        5,
+        6
+      ],
+      "run_time_observed_from_files": "2026-07-08T06:42:27.037422+00:00",
+      "metrics": {
+        "node_summary": {
+          "ready": 7,
+          "needs_review": 0,
+          "quarantined": 1,
+          "question_nodes": 7,
+          "knowledge_nodes": 0,
+          "multi_fragment_nodes": 1
+        },
+        "refined_node_summary": null,
+        "block_count": 51,
+        "reading_block_count": 9,
+        "node_count": 8,
+        "legacy_bridge_ready_count": 7,
+        "review_repair_pool_count": null,
+        "cross_page_nodes": null
+      },
+      "artifacts": {
+        "page_manifests": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\page_manifests.json",
+          "exists": true,
+          "sha256": "ca5612e80dd42db81bbd92cca42167bda31a5438a048d8e2558b82c48fe4a65d",
+          "size_bytes": 1353,
+          "mtime": "2026-07-08T06:42:25.266314+00:00"
+        },
+        "blocks": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\blocks.json",
+          "exists": true,
+          "sha256": "2c118ac40fb89c0bfe45ac21cc7c6708d3e1aac12b4b379d640f502b34afeb80",
+          "size_bytes": 33414,
+          "mtime": "2026-07-08T06:42:25.271546+00:00",
+          "count": 51
+        },
+        "reading_blocks": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\reading_blocks.json",
+          "exists": true,
+          "sha256": "a66d9f951438e8af67ee68f75ad4d1496ef168fed85c84d9d9700b6987765890",
+          "size_bytes": 10233,
+          "mtime": "2026-07-08T06:42:25.274331+00:00",
+          "count": 9
+        },
+        "assignments": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\assignments.json",
+          "exists": true,
+          "sha256": "bc52ff6efc65a4a1da4b00e0a73ab0172b82f97f1a8ed4ebe3e34242d6f26e6a",
+          "size_bytes": 2438,
+          "mtime": "2026-07-08T06:42:25.275336+00:00",
+          "count": 9
+        },
+        "semantic_nodes": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\semantic_nodes.json",
+          "exists": true,
+          "sha256": "51541c4d4df3b2087a575f477ccf2198d81bc3b635b99b2def1ceb948ddd6559",
+          "size_bytes": 5906,
+          "mtime": "2026-07-08T06:42:25.278232+00:00",
+          "count": 8
+        },
+        "audit_report": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\audit_report.json",
+          "exists": true,
+          "sha256": "f21a8e2ce40f22fad704a8dbca9c183a70ab2ac318ca3d656034651ca32d9e00",
+          "size_bytes": 942,
+          "mtime": "2026-07-08T06:42:25.280974+00:00",
+          "count": 8
+        },
+        "legacy_bridge_questions": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\legacy_bridge_questions.json",
+          "exists": true,
+          "sha256": "e472bfc2e42a3a6c1f60f9f7b0e38c08d8109f95e802623825d18ff95a0b93c0",
+          "size_bytes": 4677,
+          "mtime": "2026-07-08T06:42:27.038423+00:00",
+          "count": 7
+        },
+        "review_repair_pool": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\review_repair_pool.json",
+          "exists": false
+        },
+        "doc_legacy_bridge_questions": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\legacy_bridge_questions.json",
+          "exists": false
+        },
+        "doc_review_repair_pool": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\docs\\english\\review_repair_pool.json",
+          "exists": false
+        },
+        "release_decision": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\canonical_release_decision.json",
+          "exists": false
+        },
+        "runtime_import_preview_or_bundle": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\quick_debug_mock\\english_p5_6_coordinate_v2\\runtime_import_preview.json",
+          "exists": false
+        }
+      },
+      "completeness": {
+        "required_core_artifacts": [
+          "semantic_nodes",
+          "audit_report",
+          "legacy_bridge_questions",
+          "review_repair_pool"
+        ],
+        "present_core_artifacts": [
+          "semantic_nodes",
+          "audit_report",
+          "legacy_bridge_questions"
+        ],
+        "present_count": 3,
+        "required_count": 4,
+        "score": 0.75
+      },
+      "recommendation": "selected_for_deterministic_baseline",
+      "recommendation_reason": "Mock run, input PDF exists, no paid VLM calls, has semantic_nodes/audit_report/legacy_bridge; review_repair_pool is absent so scope is frozen as minimal hard gate."
+    },
+    {
+      "candidate_id": "live_math_full_handout_concurrent_20260709",
+      "category": "math_stable_whole_handout",
+      "baseline_type": "live_model_reference",
+      "run_root": "out/full_handout_regression_20260709/full_math_english_concurrent_20260709/math",
+      "doc_key": "math",
+      "summary_file": "out/full_handout_regression_20260709/full_math_english_concurrent_20260709/math/full_doc_run_summary.json",
+      "input": {
+        "path": "C:\\Users\\EDY\\Documents\\WXWork\\1688857912801359\\WeDrive\\领世培优\\领世一对一数学学科资料\\高中数学\\01标准化讲义\\01 暑假\\02 高二\\第2讲 解三角形综合\\解三角形综合 - 教师版.pdf",
+        "exists": true,
+        "sha256": "49f07c1b6bb09f0d1f38c8f32c6419dcfa2c4e283aaa0410b698a78b3d898220",
+        "size_bytes": 636716,
+        "mtime": "2026-06-16T05:13:54.255074+00:00"
+      },
+      "command_or_reconstructed_command": "python tools/run_split_v03_full_doc.py --pdf \"C:\\Users\\EDY\\Documents\\WXWork\\1688857912801359\\WeDrive\\领世培优\\领世一对一数学学科资料\\高中数学\\01标准化讲义\\01 暑假\\02 高二\\第2讲 解三角形综合\\解三角形综合 - 教师版.pdf\" --doc-key math --out out/full_handout_regression_20260709/full_math_english_concurrent_20260709/math --provider visual --model doubao-seed-2-0-lite-260428 --max-vlm-calls 132 --refine",
+      "provider": "visual",
+      "model": "doubao-seed-2-0-lite-260428",
+      "paid_vlm_used": true,
+      "actual_vlm_calls": 13,
+      "page_count": 33,
+      "pages": 33,
+      "run_time_observed_from_files": "2026-07-09T05:59:53.348496+00:00",
+      "metrics": {
+        "node_summary": {
+          "ready": 40,
+          "needs_review": 11,
+          "quarantined": 1,
+          "question_nodes": 47,
+          "knowledge_nodes": 4,
+          "multi_fragment_nodes": 26,
+          "cross_page_nodes": 21
+        },
+        "refined_node_summary": {
+          "ready": 47,
+          "needs_review": 4,
+          "quarantined": 1,
+          "question_nodes": 47,
+          "knowledge_nodes": 4,
+          "multi_fragment_nodes": 26,
+          "cross_page_nodes": 21
+        },
+        "block_count": null,
+        "reading_block_count": null,
+        "node_count": null,
+        "legacy_bridge_ready_count": 40,
+        "review_repair_pool_count": 12,
+        "cross_page_nodes": 21
+      },
+      "artifacts": {
+        "page_manifests": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\math\\docs\\math\\page_manifests.json",
+          "exists": true,
+          "sha256": "6397ff801ea14179e8a26f2ec50fe880515d80b50e3f5414f30cec16565ff213",
+          "size_bytes": 26076,
+          "mtime": "2026-07-09T05:51:54.673613+00:00"
+        },
+        "blocks": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\math\\docs\\math\\blocks.json",
+          "exists": true,
+          "sha256": "7762df2b97e64505165e5c68a092346bbf17e1e06a2a8e98dca4d18b19f436a1",
+          "size_bytes": 72652,
+          "mtime": "2026-07-09T05:51:54.685014+00:00",
+          "count": 82
+        },
+        "reading_blocks": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\math\\docs\\math\\reading_blocks.json",
+          "exists": true,
+          "sha256": "d8b34d013da9b068c381d40ef363e3f25b04c96418fd4707dd1ff728b409e60d",
+          "size_bytes": 81625,
+          "mtime": "2026-07-09T05:51:54.693231+00:00",
+          "count": 82
+        },
+        "assignments": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\math\\docs\\math\\assignments.json",
+          "exists": true,
+          "sha256": "5e2bf60519cf16048ab6572d25b48fda7bfd90a56b2b1e0ec107c4fcd8768a35",
+          "size_bytes": 21931,
+          "mtime": "2026-07-09T05:51:54.696413+00:00",
+          "count": 82
+        },
+        "semantic_nodes": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\math\\docs\\math\\semantic_nodes.json",
+          "exists": true,
+          "sha256": "63eafd9ee345bc35972552ff8c06e7e6c6c644e5558f7c2d4b770090df8c815b",
+          "size_bytes": 44969,
+          "mtime": "2026-07-09T05:51:54.700034+00:00",
+          "count": 52
+        },
+        "audit_report": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\math\\docs\\math\\audit_report.json",
+          "exists": true,
+          "sha256": "ffbba8f426aa272ba557660e4dcc7248c962a964368651ba3137f8cdf794392b",
+          "size_bytes": 5751,
+          "mtime": "2026-07-09T05:51:54.706054+00:00",
+          "count": 52
+        },
+        "legacy_bridge_questions": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\math\\legacy_bridge_questions.json",
+          "exists": true,
+          "sha256": "4f28407cdaf8f692643e4fad6a99415934826c76fd45f911bb1aad01982b1da6",
+          "size_bytes": 160365,
+          "mtime": "2026-07-09T05:52:18.985968+00:00",
+          "count": 40
+        },
+        "review_repair_pool": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\math\\review_repair_pool.json",
+          "exists": true,
+          "sha256": "5bb3e08ec2004e8011f8ba6191432bdc001cd2e09e915894530165ec9ef82845",
+          "size_bytes": 29344,
+          "mtime": "2026-07-09T05:52:18.990509+00:00",
+          "count": 12
+        },
+        "doc_legacy_bridge_questions": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\math\\docs\\math\\legacy_bridge_questions.json",
+          "exists": false
+        },
+        "doc_review_repair_pool": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\math\\docs\\math\\review_repair_pool.json",
+          "exists": false
+        },
+        "release_decision": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\math\\canonical_release_decision.json",
+          "exists": false
+        },
+        "runtime_import_preview_or_bundle": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\math\\runtime_import_preview.json",
+          "exists": false
+        }
+      },
+      "completeness": {
+        "required_core_artifacts": [
+          "semantic_nodes",
+          "audit_report",
+          "legacy_bridge_questions",
+          "review_repair_pool"
+        ],
+        "present_core_artifacts": [
+          "semantic_nodes",
+          "audit_report",
+          "legacy_bridge_questions",
+          "review_repair_pool"
+        ],
+        "present_count": 4,
+        "required_count": 4,
+        "score": 1.0
+      },
+      "recommendation": "selected_for_live_reference",
+      "recommendation_reason": "Full math handout, input PDF exists, visual provider/model recorded, complete core artifacts and cross-page metrics present."
+    },
+    {
+      "candidate_id": "live_english_full_handout_concurrent_20260709",
+      "category": "english_whole_handout",
+      "baseline_type": "live_model_reference",
+      "run_root": "out/full_handout_regression_20260709/full_math_english_concurrent_20260709/english",
+      "doc_key": "english",
+      "summary_file": "out/full_handout_regression_20260709/full_math_english_concurrent_20260709/english/full_doc_run_summary.json",
+      "input": {
+        "path": "C:\\Users\\EDY\\Documents\\WXWork\\1688857912801359\\WeDrive\\领世培优\\领世一对一英语学科资料\\高中英语\\01标准化讲义\\01暑假标准化讲义\\高三暑假\\语法\\高考一轮之必考定语从句1-教师版.pdf",
+        "exists": true,
+        "sha256": "4a1599454799f6702ff0a734b612df28fdaff18e4b2903d60052a0cd9f59bbde",
+        "size_bytes": 1717851,
+        "mtime": "2026-07-10T08:32:14.502262+00:00"
+      },
+      "command_or_reconstructed_command": "python tools/run_split_v03_full_doc.py --pdf \"C:\\Users\\EDY\\Documents\\WXWork\\1688857912801359\\WeDrive\\领世培优\\领世一对一英语学科资料\\高中英语\\01标准化讲义\\01暑假标准化讲义\\高三暑假\\语法\\高考一轮之必考定语从句1-教师版.pdf\" --doc-key english --out out/full_handout_regression_20260709/full_math_english_concurrent_20260709/english --provider visual --model doubao-seed-2-0-lite-260428 --max-vlm-calls 112 --refine",
+      "provider": "visual",
+      "model": "doubao-seed-2-0-lite-260428",
+      "paid_vlm_used": true,
+      "actual_vlm_calls": 16,
+      "page_count": 28,
+      "pages": 28,
+      "run_time_observed_from_files": "2026-07-09T05:56:51.246569+00:00",
+      "metrics": {
+        "node_summary": {
+          "ready": 49,
+          "needs_review": 22,
+          "quarantined": 0,
+          "question_nodes": 56,
+          "knowledge_nodes": 15,
+          "multi_fragment_nodes": 13,
+          "cross_page_nodes": 11
+        },
+        "refined_node_summary": {
+          "ready": 55,
+          "needs_review": 15,
+          "quarantined": 0,
+          "question_nodes": 55,
+          "knowledge_nodes": 15,
+          "multi_fragment_nodes": 15,
+          "cross_page_nodes": 13
+        },
+        "block_count": null,
+        "reading_block_count": null,
+        "node_count": null,
+        "legacy_bridge_ready_count": 49,
+        "review_repair_pool_count": 22,
+        "cross_page_nodes": 11
+      },
+      "artifacts": {
+        "page_manifests": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\english\\docs\\english\\page_manifests.json",
+          "exists": true,
+          "sha256": "02f147be81f5a97495843b94f6f426f1ee3ee58c6acc496956c5b4d631cd8674",
+          "size_bytes": 22551,
+          "mtime": "2026-07-09T05:49:54.194566+00:00"
+        },
+        "blocks": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\english\\docs\\english\\blocks.json",
+          "exists": true,
+          "sha256": "a52b48ee446a57274e3515a5bfa08d0997dd9c28635fce26b448f3e890f903b9",
+          "size_bytes": 74349,
+          "mtime": "2026-07-09T05:49:54.206948+00:00",
+          "count": 85
+        },
+        "reading_blocks": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\english\\docs\\english\\reading_blocks.json",
+          "exists": true,
+          "sha256": "d349eaa64fd5d2632d00d5dbfa78c243e6f140ced986a85202a46dbbcafcf6f8",
+          "size_bytes": 84215,
+          "mtime": "2026-07-09T05:49:54.221739+00:00",
+          "count": 85
+        },
+        "assignments": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\english\\docs\\english\\assignments.json",
+          "exists": true,
+          "sha256": "c02219f405c90a3b489e5eba5bac53332c5eb04fe648b3172a8ea88f148f71dd",
+          "size_bytes": 23157,
+          "mtime": "2026-07-09T05:49:54.226754+00:00",
+          "count": 85
+        },
+        "semantic_nodes": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\english\\docs\\english\\semantic_nodes.json",
+          "exists": true,
+          "sha256": "88b8b65cd31e1d9cff626d9487b89541ee429aee8b6013fef9a462b4dee5b558",
+          "size_bytes": 50710,
+          "mtime": "2026-07-09T05:49:54.236779+00:00",
+          "count": 71
+        },
+        "audit_report": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\english\\docs\\english\\audit_report.json",
+          "exists": true,
+          "sha256": "3758fd17f08c9971fd82fb528e8802a00a8e4321826953c9d0e363c48a1bdb5c",
+          "size_bytes": 7979,
+          "mtime": "2026-07-09T05:49:54.243688+00:00",
+          "count": 71
+        },
+        "legacy_bridge_questions": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\english\\legacy_bridge_questions.json",
+          "exists": true,
+          "sha256": "430b5cdfc1ec2448d7c44aa08f36f32f49877db7be1100cd8ca2fdc9519f01dd",
+          "size_bytes": 173530,
+          "mtime": "2026-07-09T05:50:17.090171+00:00",
+          "count": 49
+        },
+        "review_repair_pool": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\english\\review_repair_pool.json",
+          "exists": true,
+          "sha256": "c820d9516718ec57e2184ff72543b4c98a40621af176b00983ba01d0152709c0",
+          "size_bytes": 37061,
+          "mtime": "2026-07-09T05:50:17.094190+00:00",
+          "count": 22
+        },
+        "doc_legacy_bridge_questions": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\english\\docs\\english\\legacy_bridge_questions.json",
+          "exists": false
+        },
+        "doc_review_repair_pool": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\english\\docs\\english\\review_repair_pool.json",
+          "exists": false
+        },
+        "release_decision": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\english\\canonical_release_decision.json",
+          "exists": false
+        },
+        "runtime_import_preview_or_bundle": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\full_math_english_concurrent_20260709\\english\\runtime_import_preview.json",
+          "exists": false
+        }
+      },
+      "completeness": {
+        "required_core_artifacts": [
+          "semantic_nodes",
+          "audit_report",
+          "legacy_bridge_questions",
+          "review_repair_pool"
+        ],
+        "present_core_artifacts": [
+          "semantic_nodes",
+          "audit_report",
+          "legacy_bridge_questions",
+          "review_repair_pool"
+        ],
+        "present_count": 4,
+        "required_count": 4,
+        "score": 1.0
+      },
+      "recommendation": "selected_for_live_reference",
+      "recommendation_reason": "Full English handout, input PDF exists, visual provider/model recorded, complete core artifacts and cross-page metrics present."
+    },
+    {
+      "candidate_id": "live_biology_edge_crosspage_20260709",
+      "category": "edge_cross_page_long_visual_sample",
+      "baseline_type": "live_model_reference",
+      "run_root": "out/full_handout_regression_20260709/bio",
+      "doc_key": "bio",
+      "summary_file": "out/full_handout_regression_20260709/bio/quick_debug_result.json",
+      "input": {
+        "path": "C:\\Users\\EDY\\Documents\\WXWork\\1688857912801359\\WeDrive\\领世培优\\领世一对一生物学科资料\\01标准化讲义\\暑假\\02高二讲义\\专题强化之遗传的基本规律和人类遗传病\\第2讲 伴性遗传\\伴性遗传(教师版).pdf",
+        "exists": true,
+        "sha256": "2851749d694955b00a0e5acc7ff3e8706402e67d5f508613840521c055452a8a",
+        "size_bytes": 3122123,
+        "mtime": "2026-06-16T05:57:49.654694+00:00"
+      },
+      "command_or_reconstructed_command": "python tools/split_v03_quick_debug.py --pdf \"C:\\Users\\EDY\\Documents\\WXWork\\1688857912801359\\WeDrive\\领世培优\\领世一对一生物学科资料\\01标准化讲义\\暑假\\02高二讲义\\专题强化之遗传的基本规律和人类遗传病\\第2讲 伴性遗传\\伴性遗传(教师版).pdf\" --doc-key bio --pages 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39 --out out/full_handout_regression_20260709/bio --provider visual --model doubao-seed-2-0-lite-260428 --max-vlm-calls 39",
+      "provider": "visual",
+      "model": "doubao-seed-2-0-lite-260428",
+      "paid_vlm_used": true,
+      "actual_vlm_calls": 39,
+      "page_count": 45,
+      "pages": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "run_time_observed_from_files": "2026-07-08T18:18:05.182065+00:00",
+      "metrics": {
+        "node_summary": {
+          "ready": 34,
+          "needs_review": 25,
+          "quarantined": 0,
+          "question_nodes": 41,
+          "knowledge_nodes": 18,
+          "multi_fragment_nodes": 24,
+          "cross_page_nodes": 23
+        },
+        "refined_node_summary": null,
+        "block_count": 84,
+        "reading_block_count": 84,
+        "node_count": 59,
+        "legacy_bridge_ready_count": 34,
+        "review_repair_pool_count": 25,
+        "cross_page_nodes": 23
+      },
+      "artifacts": {
+        "page_manifests": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\bio\\docs\\bio\\page_manifests.json",
+          "exists": true,
+          "sha256": "507766f041ed964b8f0613f4f4ef9fbdbfe5046b5ea9435fb339ec7c5ea42707",
+          "size_bytes": 27573,
+          "mtime": "2026-07-08T18:17:50.981940+00:00"
+        },
+        "blocks": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\bio\\docs\\bio\\blocks.json",
+          "exists": true,
+          "sha256": "2626e0acb0f455623d69a51103de4a67dc42e69ad45b23fc5fe1ec1c9b00c621",
+          "size_bytes": 73987,
+          "mtime": "2026-07-08T18:17:50.985463+00:00",
+          "count": 84
+        },
+        "reading_blocks": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\bio\\docs\\bio\\reading_blocks.json",
+          "exists": true,
+          "sha256": "02ffcee2fa5ef1b693abf974416dcc27423cf32c6f6e60851048962208881dfc",
+          "size_bytes": 82860,
+          "mtime": "2026-07-08T18:17:50.989699+00:00",
+          "count": 84
+        },
+        "assignments": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\bio\\docs\\bio\\assignments.json",
+          "exists": true,
+          "sha256": "650361bfaacced0fa7ae7eed0688f38be1fe79cb7d7b335521ce51b675dd4870",
+          "size_bytes": 22454,
+          "mtime": "2026-07-08T18:17:50.992034+00:00",
+          "count": 84
+        },
+        "semantic_nodes": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\bio\\docs\\bio\\semantic_nodes.json",
+          "exists": true,
+          "sha256": "4812c3e3cae7c7245bec72a80a4ffbccf587cf561e2fbb2df6d22a70da3cd0e9",
+          "size_bytes": 47129,
+          "mtime": "2026-07-08T18:17:50.994416+00:00",
+          "count": 59
+        },
+        "audit_report": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\bio\\docs\\bio\\audit_report.json",
+          "exists": true,
+          "sha256": "712892bcb5e5871703f9161b1f03668e93e71fbbbc0ce08ef984a7e8e8043b7a",
+          "size_bytes": 6545,
+          "mtime": "2026-07-08T18:17:50.996975+00:00",
+          "count": 59
+        },
+        "legacy_bridge_questions": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\bio\\legacy_bridge_questions.json",
+          "exists": true,
+          "sha256": "a03f9b21ebe750ec47952953a9c9e70772576f40628ce5b748de4fb8fa047d63",
+          "size_bytes": 124619,
+          "mtime": "2026-07-08T18:18:05.188182+00:00",
+          "count": 34
+        },
+        "review_repair_pool": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\bio\\review_repair_pool.json",
+          "exists": true,
+          "sha256": "552ed6b2b4e33dceda08ff0afef88a191cc592e21122f09f33700f23808f8057",
+          "size_bytes": 39409,
+          "mtime": "2026-07-08T18:18:05.191198+00:00",
+          "count": 25
+        },
+        "doc_legacy_bridge_questions": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\bio\\docs\\bio\\legacy_bridge_questions.json",
+          "exists": false
+        },
+        "doc_review_repair_pool": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\bio\\docs\\bio\\review_repair_pool.json",
+          "exists": false
+        },
+        "release_decision": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\bio\\canonical_release_decision.json",
+          "exists": false
+        },
+        "runtime_import_preview_or_bundle": {
+          "path": "C:\\Users\\EDY\\Documents\\教研基建\\out\\full_handout_regression_20260709\\bio\\runtime_import_preview.json",
+          "exists": false
+        }
+      },
+      "completeness": {
+        "required_core_artifacts": [
+          "semantic_nodes",
+          "audit_report",
+          "legacy_bridge_questions",
+          "review_repair_pool"
+        ],
+        "present_core_artifacts": [
+          "semantic_nodes",
+          "audit_report",
+          "legacy_bridge_questions",
+          "review_repair_pool"
+        ],
+        "present_count": 4,
+        "required_count": 4,
+        "score": 1.0
+      },
+      "recommendation": "selected_as_edge_candidate_not_hard_gate",
+      "recommendation_reason": "Long biology run with 23 cross-page nodes and complete core artifacts; live model output only, suitable as edge reference, not CI hash gate."
+    }
+  ],
+  "selected": {
+    "deterministic_baselines": [
+      "deterministic_english_mock_p5_6_coordinate_v2"
+    ],
+    "live_model_references": [
+      "live_math_full_handout_concurrent_20260709",
+      "live_english_full_handout_concurrent_20260709",
+      "live_biology_edge_crosspage_20260709"
+    ]
+  }
+}

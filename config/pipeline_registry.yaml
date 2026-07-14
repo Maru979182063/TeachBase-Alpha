@@ -1,0 +1,96 @@
+{
+  "schema_version": "pipeline_registry.v0.1",
+  "status_enum": ["stable", "experimental", "shadow", "validation", "effective", "deprecated"],
+  "generated_for_branch": "chore/pipeline-isolation-control-plane",
+  "pipelines": [
+    {
+      "pipeline_id": "split_v03",
+      "pipeline_name": "PDF split v03 visual/mock handout splitter",
+      "pipeline_version": "v0.3",
+      "status": "validation",
+      "owner": "TeachBase-Alpha pipeline maintainers",
+      "description": "Existing PDF page render, block extraction, reading block, semantic node, audit, legacy bridge, and repair pool chain.",
+      "entrypoint": "tools/run_split_v03_full_doc.py",
+      "config_path": "config/teacher_handout_visual_prompts.yaml",
+      "feature_flags": [],
+      "input_contracts": ["pdf_file", "doc_key", "page_range"],
+      "output_contracts": [
+        "page_manifests.json",
+        "blocks.json",
+        "reading_blocks.json",
+        "assignments.json",
+        "semantic_nodes.json",
+        "audit_report.json",
+        "legacy_bridge_questions.json",
+        "review_repair_pool.json"
+      ],
+      "owned_output_roots": ["out", "outputs/split_v03"],
+      "forbidden_write_roots": [
+        "outputs/semantic_role_shadow",
+        "outputs/docx_native_ingest_v01",
+        "outputs/english_text_first_v01",
+        "outputs/runtime_validation"
+      ],
+      "stable_dependencies": ["python", "PyMuPDF"],
+      "optional_dependencies": ["ARK_API_KEY for visual provider"],
+      "model_provider": "mock_or_volcengine_ark",
+      "default_model": "doubao-seed-2-0-lite-260428",
+      "prompt_bundle": "config/teacher_handout_visual_prompts.yaml",
+      "prompt_version": "existing_split_v03_prompts",
+      "downstream_pipelines": ["runtime_backend"],
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "not imported directly without release decision artifacts"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "no direct database writes"
+      },
+      "release_gate_policy": "requires canonical release decision before Runtime import",
+      "fallback_pipeline": "",
+      "rollback_method": "disable caller or return to validation/backend-runtime-20260706",
+      "baseline_id": "control_plane_20260714_v01",
+      "last_validated_commit": "5ceccd23"
+    },
+    {
+      "pipeline_id": "runtime_backend",
+      "pipeline_name": "Runtime backend validation baseline",
+      "pipeline_version": "validation_backend_runtime_20260706",
+      "status": "validation",
+      "owner": "TeachBase-Alpha runtime maintainers",
+      "description": "Existing LessonDraftBundle boundary, release gate, and Postgres-backed runtime validation surface.",
+      "entrypoint": "tools/runtime_backbone_api_server.mjs",
+      "config_path": "config/runtime_observability.yaml",
+      "feature_flags": ["runtime_import_enabled"],
+      "input_contracts": ["LessonDraftBundle", "allow_list_manifest", "canonical_release_decision"],
+      "output_contracts": ["runtime_state", "release_gate_report", "staging_report"],
+      "owned_output_roots": ["outputs/runtime_validation", "outputs/test_runs", "outputs/staging_validation", "outputs/production_readiness"],
+      "forbidden_write_roots": [
+        "outputs/split_v03",
+        "outputs/semantic_role_shadow",
+        "outputs/docx_native_ingest_v01",
+        "outputs/english_text_first_v01"
+      ],
+      "stable_dependencies": ["node", "pg", "embedded-postgres"],
+      "optional_dependencies": ["DATABASE_URL_TEST", "PostgreSQL client tools"],
+      "model_provider": "none",
+      "default_model": "",
+      "prompt_bundle": "",
+      "prompt_version": "",
+      "downstream_pipelines": [],
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "release decision gate required for automatic imports"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "validation baseline only; explicit test/runtime command required"
+      },
+      "release_gate_policy": "validation baseline reports NOT_READY until promoted separately",
+      "fallback_pipeline": "",
+      "rollback_method": "return to validation/backend-runtime-20260706",
+      "baseline_id": "control_plane_20260714_v01",
+      "last_validated_commit": "5ceccd23"
+    }
+  ]
+}

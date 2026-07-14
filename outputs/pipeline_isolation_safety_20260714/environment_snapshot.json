@@ -1,0 +1,100 @@
+﻿{
+    "schema_version":  "pipeline_isolation_environment_snapshot.v0.1",
+    "captured_at":  "2026-07-14T07:44:09.2677035Z",
+    "cwd":  "C:\\Users\\EDY\\Documents\\教研基建",
+    "python":  {
+                   "version":  "Python 3.12.10",
+                   "executable":  "C:\\Users\\EDY\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+                   "pip_freeze":  [
+                                      "fire==0.7.1",
+                                      "fonttools==4.63.0",
+                                      "lxml==6.1.1",
+                                      "numpy==2.5.0",
+                                      "opencv-python-headless==4.13.0.92",
+                                      "pdf2docx==0.5.13",
+                                      "pillow==12.2.0",
+                                      "pymupdf==1.28.0",
+                                      "python-docx==1.2.0",
+                                      "python-pptx==1.0.2",
+                                      "termcolor==3.3.0",
+                                      "typing_extensions==4.15.0",
+                                      "xlsxwriter==3.2.9"
+                                  ]
+               },
+    "node":  {
+                 "version":  "v24.16.0",
+                 "npm_version":  "11.13.0",
+                 "npm_ls_depth0":  [
+                                       "jiaoyan-jijian-runtime-backbone@ C:\\Users\\EDY\\Documents\\教研基建",
+                                       "+-- embedded-postgres@18.4.0-beta.17",
+                                       "`-- pg@8.22.0",
+                                       ""
+                                   ]
+             },
+    "git":  {
+                "version":  "git version 2.54.0.windows.1"
+            },
+    "postgres_client":  {
+                            "version":  "psql (PostgreSQL) 18.4"
+                        },
+    "environment_variable_names":  [
+                                       "ALLUSERSPROFILE",
+                                       "APPDATA",
+                                       "CODEX_INTERNAL_ORIGINATOR_OVERRIDE",
+                                       "CODEX_PERMISSION_PROFILE",
+                                       "CODEX_SHELL",
+                                       "CODEX_THREAD_ID",
+                                       "CommonProgramFiles",
+                                       "CommonProgramFiles(x86)",
+                                       "CommonProgramW6432",
+                                       "COMPUTERNAME",
+                                       "ComSpec",
+                                       "DISABLE_AUTO_UPDATE",
+                                       "DriverData",
+                                       "HOMEDRIVE",
+                                       "HOMEPATH",
+                                       "LOCALAPPDATA",
+                                       "LOG_FORMAT",
+                                       "LOGONSERVER",
+                                       "NUMBER_OF_PROCESSORS",
+                                       "OneDrive",
+                                       "OneDriveConsumer",
+                                       "OS",
+                                       "Path",
+                                       "PATHEXT",
+                                       "PROCESSOR_ARCHITECTURE",
+                                       "PROCESSOR_IDENTIFIER",
+                                       "PROCESSOR_LEVEL",
+                                       "PROCESSOR_REVISION",
+                                       "ProgramData",
+                                       "ProgramFiles",
+                                       "ProgramFiles(x86)",
+                                       "ProgramW6432",
+                                       "PSModulePath",
+                                       "PUBLIC",
+                                       "RUST_LOG",
+                                       "SHELL",
+                                       "SystemDrive",
+                                       "SystemRoot",
+                                       "TEMP",
+                                       "TMP",
+                                       "USERDOMAIN",
+                                       "USERDOMAIN_ROAMINGPROFILE",
+                                       "USERNAME",
+                                       "USERPROFILE",
+                                       "windir",
+                                       "ZES_ENABLE_SYSMAN",
+                                       "ZSH_TMUX_AUTOSTART",
+                                       "ZSH_TMUX_AUTOSTARTED"
+                                   ],
+    "secret_values_recorded":  false,
+    "default_model_ids_observed":  [
+                                       "doubao-seed-2-0-lite-260428"
+                                   ],
+    "default_config_files_observed":  [
+                                          "config/docx_native_ingest_v01.yaml",
+                                          "config/english_image_pdf_text_first_v01.yaml",
+                                          "config/teacher_handout_visual_prompts.yaml"
+                                      ],
+    "current_start_command":  ""
+}

@@ -1,0 +1,39 @@
+﻿{
+    "schema_version":  "pipeline_isolation_late_business_files.v0.1",
+    "captured_at":  "2026-07-14T07:57:08.9671531Z",
+    "note":  "Final observed repollution: registry modified to add DOCX pipeline plus new DOCX/probe files. Copied here, then stashed with pathspec.",
+    "files":  [
+                  {
+                      "path":  "config/pipeline_registry.yaml",
+                      "copied_to":  "outputs/pipeline_isolation_safety_20260714/late_business_files_final_repollution/config/pipeline_registry.yaml",
+                      "sha1_git_hash":  "3145ac0d1f24c64bd718242377fa974d8e04a4a6",
+                      "sha256":  "e965c8071659d941607b4316ee9bee7044212170ad932a6e1fa01641060666fb",
+                      "length":  7187,
+                      "last_write_time_utc":  "2026-07-14T07:56:18.5683109Z"
+                  },
+                  {
+                      "path":  "config/pipeline_docx_native_v01.yaml",
+                      "copied_to":  "outputs/pipeline_isolation_safety_20260714/late_business_files_final_repollution/config/pipeline_docx_native_v01.yaml",
+                      "sha1_git_hash":  "41ff9f846d7258c3b7b62a7bcd9e3b258cf1e316",
+                      "sha256":  "97f971b3242f330ae6a90a9073d7221373224778ce39b93ae550a10302774e13",
+                      "length":  1106,
+                      "last_write_time_utc":  "2026-07-14T07:49:15.5588402Z"
+                  },
+                  {
+                      "path":  "tools/pipeline_docx_native_v01.py",
+                      "copied_to":  "outputs/pipeline_isolation_safety_20260714/late_business_files_final_repollution/tools/pipeline_docx_native_v01.py",
+                      "sha1_git_hash":  "71f55df0aeded863a44d6863f12ddab5a9f375f4",
+                      "sha256":  "aef83c2df7d114aecc2a246b2a7537934dac439973eb301409a657a56fbe7b95",
+                      "length":  46567,
+                      "last_write_time_utc":  "2026-07-14T07:56:13.4007260Z"
+                  },
+                  {
+                      "path":  "tools/english_text_first_write_probe.tmp",
+                      "copied_to":  "outputs/pipeline_isolation_safety_20260714/late_business_files_final_repollution/tools/english_text_first_write_probe.tmp",
+                      "sha1_git_hash":  "da0c4eb8d9a48d171a33574b380752e183286751",
+                      "sha256":  "25be323556dad377abb57fe7ec8c4b99a6527f488dda28d0c9b686528659c909",
+                      "length":  6,
+                      "last_write_time_utc":  "2026-07-14T07:56:22.2397492Z"
+                  }
+              ]
+}

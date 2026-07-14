@@ -1,0 +1,23 @@
+﻿{
+    "schema_version":  "pipeline_isolation_late_business_files.v0.1",
+    "captured_at":  "2026-07-14T07:54:28.2976563Z",
+    "note":  "DOCX pipeline files reappeared after audit report generation; copied here, then stashed with pathspec only.",
+    "files":  [
+                  {
+                      "path":  "config/docx_native_pipeline_v01.yaml",
+                      "copied_to":  "outputs/pipeline_isolation_safety_20260714/late_business_files_after_audit_report/config/docx_native_pipeline_v01.yaml",
+                      "sha1_git_hash":  "41ff9f846d7258c3b7b62a7bcd9e3b258cf1e316",
+                      "sha256":  "97f971b3242f330ae6a90a9073d7221373224778ce39b93ae550a10302774e13",
+                      "length":  1106,
+                      "last_write_time_utc":  "2026-07-14T07:49:15.5588402Z"
+                  },
+                  {
+                      "path":  "tools/docx_native_pipeline_v01.py",
+                      "copied_to":  "outputs/pipeline_isolation_safety_20260714/late_business_files_after_audit_report/tools/docx_native_pipeline_v01.py",
+                      "sha1_git_hash":  "1c4aa7de7503c01fbeff6cf85ca0223c318b92cf",
+                      "sha256":  "89ab3c491d0d7c559ba59f276f70264d3ccaac825971da33b1f7d0a5c04198e0",
+                      "length":  46567,
+                      "last_write_time_utc":  "2026-07-14T07:51:47.3837597Z"
+                  }
+              ]
+}
