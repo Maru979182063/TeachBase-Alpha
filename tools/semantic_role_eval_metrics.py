@@ -34,6 +34,10 @@ def _is_auto_routed(prediction: dict[str, Any]) -> bool:
     return route not in {"", "review_only", "noise"} and prediction.get("needs_role_review") is not True
 
 
+def _is_verified_real_gold(case: dict[str, Any]) -> bool:
+    return case.get("evaluation_tier") == "VERIFIED_REAL_GOLD" and case.get("gold_status") == "VERIFIED"
+
+
 def _relations_match(expected: list[dict[str, Any]], predicted: list[dict[str, Any]]) -> bool | None:
     if not expected:
         return None
@@ -110,7 +114,8 @@ def classify_bad_case(case: dict[str, Any], prediction: dict[str, Any]) -> list[
 
 def compute_metrics(cases: list[dict[str, Any]], predictions: list[dict[str, Any]]) -> dict[str, Any]:
     prediction_by_id = {str(row.get("case_id")): row for row in predictions}
-    verified = [case for case in cases if case.get("gold_status") == "VERIFIED"]
+    verified = [case for case in cases if _is_verified_real_gold(case)]
+    contract_fixtures = [case for case in cases if case.get("evaluation_tier") == "CONTRACT_FIXTURE"]
     labels = sorted({str(case.get("expected_semantic_role")) for case in verified if case.get("expected_semantic_role")})
 
     confusion: dict[str, Counter[str]] = defaultdict(Counter)
@@ -251,6 +256,8 @@ def compute_metrics(cases: list[dict[str, Any]], predictions: list[dict[str, Any
 
     return {
         "verified_case_count": total,
+        "verified_real_gold_case_count": total,
+        "contract_fixture_count": len(contract_fixtures),
         "candidate_case_count": len(cases),
         "role_exact_match_accuracy": _safe_div(role_exact, total),
         "macro_f1": _safe_div(sum(f1_values), len(f1_values)),
@@ -280,8 +287,10 @@ def compute_metrics(cases: list[dict[str, Any]], predictions: list[dict[str, Any
 
 
 def dataset_coverage(cases: list[dict[str, Any]]) -> dict[str, Any]:
-    verified = [case for case in cases if case.get("gold_status") == "VERIFIED"]
+    verified = [case for case in cases if _is_verified_real_gold(case)]
+    contract_fixtures = [case for case in cases if case.get("evaluation_tier") == "CONTRACT_FIXTURE"]
     statuses = Counter(str(case.get("gold_status") or "") for case in cases)
+    tiers = Counter(str(case.get("evaluation_tier") or "") for case in cases)
     verified_subjects = Counter(str(case.get("subject") or "unknown") for case in verified)
     verified_roles = Counter(str(case.get("expected_semantic_role") or "") for case in verified)
     edge_count = sum(
@@ -305,7 +314,10 @@ def dataset_coverage(cases: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "total_cases": len(cases),
         "status_counts": dict(sorted(statuses.items())),
+        "evaluation_tier_counts": dict(sorted(tiers.items())),
         "verified_case_count": len(verified),
+        "verified_real_gold_case_count": len(verified),
+        "contract_fixture_count": len(contract_fixtures),
         "verified_subject_counts": dict(sorted(verified_subjects.items())),
         "verified_role_counts": dict(sorted(verified_roles.items())),
         "verified_edge_case_count": edge_count,
