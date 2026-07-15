@@ -4,6 +4,10 @@
 
 `MODULARIZATION_PHASE2A_COMPLETE`
 
+Verification-gap closure status:
+
+`PHASE2A_FULLY_COMPLETE`
+
 This round completed only the Semantic Role Eval vertical slice. DOCX Native, English Text-first, Runtime/Postgres, split v03, and `run_question_ingest_skill.py` production code were not migrated.
 
 ## Implemented
@@ -16,6 +20,9 @@ This round completed only the Semantic Role Eval vertical slice. DOCX Native, En
 - Added architecture boundary tests.
 - Added structured Phase 1 and Phase 2A gate runners.
 - Updated registry metadata for runtime 8790 / deprecated 8792 compatibility and English validation commit.
+- Added committed canonical Golden Master artifacts under `tests/golden/semantic_role_effectiveness_phase2a_c2d874a`.
+- Upgraded architecture boundary tests to AST-based checks with explicit exceptions.
+- Performed clean isolated venv verification with `include-system-site-packages = false`.
 
 ## Not Implemented
 
@@ -35,6 +42,10 @@ This round completed only the Semantic Role Eval vertical slice. DOCX Native, En
 - `npm run test:repository-rescue-phase1`: `37 passed`, `0 failed`, `0 skipped`, `0 not_run`.
 - `npm run test:modularization-phase2a`: all gate exit codes zero.
 - Legacy CLI post-migration run: exit code `20`.
+- Clean isolated venv install command: `python -m pip install -e ".[dev]"`.
+- Clean isolated venv gates:
+  - `npm run test:repository-rescue-phase1`: `37 passed`, all gate exit codes zero.
+  - `npm run test:modularization-phase2a`: semantic `10 passed`, architecture `7 passed`, repository gate exit code zero.
 
 ## Artifacts
 
@@ -43,11 +54,19 @@ This round completed only the Semantic Role Eval vertical slice. DOCX Native, En
 - Phase 1 report: `docs/reports/repository_rescue_phase1_test_report_20260715.json`
 - Phase 2A report: `docs/reports/modularization_phase2a_test_report_20260715.json`
 - Golden comparison: `docs/reports/modularization_phase2a_golden_comparison_20260715.json`
+- Committed golden: `tests/golden/semantic_role_effectiveness_phase2a_c2d874a`
+- Isolated venv report: `docs/reports/phase2a_isolated_venv_verification_20260715.json`
 
 ## Risks
 
 - Semantic Role Eval still uses legacy shadow adapter behavior through a tools-level predictor adapter. This is intentional for Phase 2A to avoid migrating the broader shadow pipeline.
 - The evaluation remains dataset-review-required because verified real Gold count is still zero.
+
+## Phase 2B Debt
+
+- Consolidate duplicate semantic profile config loading without changing behavior.
+- Harden artifact temp-file naming for concurrent writes beyond the current atomic replace helper.
+- Decide whether the legacy semantic shadow adapter should move into package in a separate Phase 2B slice.
 
 ## Completion Markers
 

@@ -1,0 +1,26 @@
+{
+  "candidate_case_count": 12,
+  "contract_fixture_count": 12,
+  "critical_misroute_rate": 0.0,
+  "disposition_accuracy": 0.0,
+  "error_capture_rate": null,
+  "false_safe_rate": 0.0,
+  "hard_safety_gate": {
+    "answer_explanation_missing_target_auto_route_count": 0,
+    "critical_misroute_count": 0,
+    "false_safe_count": 0,
+    "mixed_auto_route_count": 0,
+    "passed": true,
+    "structurally_blocked_auto_route_count": 0,
+    "unknown_auto_route_count": 0
+  },
+  "macro_f1": 0.0,
+  "presentation_kind_accuracy": 0.0,
+  "relation_accuracy": null,
+  "review_rate": 0.75,
+  "role_exact_match_accuracy": 0.0,
+  "route_candidate_accuracy": 0.0,
+  "safe_automation_coverage": 0.0,
+  "verified_case_count": 0,
+  "verified_real_gold_case_count": 0
+}

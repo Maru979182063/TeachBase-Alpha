@@ -1,0 +1,308 @@
+[
+  {
+    "case_id": "fixture_math_knowledge_001",
+    "confidence": 0.76,
+    "database_write_attempted": false,
+    "disposition": "processable",
+    "effective_route_candidate": "review_only",
+    "evidence": [
+      {
+        "detail": "knowledge_like_or_section",
+        "type": "existing_assignment",
+        "weight": 0.5
+      }
+    ],
+    "hard_constraints_passed": true,
+    "model_invoked": false,
+    "needs_role_review": true,
+    "node_id": "fixture_math_knowledge_001",
+    "paid_model_invoked": false,
+    "presentation_kind": "text",
+    "relations": [],
+    "review_reasons": [],
+    "route_candidate": "knowledge_transcription",
+    "runtime_import_attempted": false,
+    "semantic_role": "knowledge"
+  },
+  {
+    "case_id": "fixture_math_exercise_002",
+    "confidence": 0.82,
+    "database_write_attempted": false,
+    "disposition": "processable",
+    "effective_route_candidate": "question_splitter",
+    "evidence": [
+      {
+        "detail": "question_node_or_start_flag",
+        "type": "existing_assignment",
+        "weight": 0.65
+      }
+    ],
+    "hard_constraints_passed": true,
+    "model_invoked": false,
+    "needs_role_review": false,
+    "node_id": "fixture_math_exercise_002",
+    "paid_model_invoked": false,
+    "presentation_kind": "text",
+    "relations": [],
+    "review_reasons": [],
+    "route_candidate": "question_splitter",
+    "runtime_import_attempted": false,
+    "semantic_role": "exercise"
+  },
+  {
+    "case_id": "fixture_math_formula_003",
+    "confidence": 0.82,
+    "database_write_attempted": false,
+    "disposition": "processable",
+    "effective_route_candidate": "question_splitter",
+    "evidence": [
+      {
+        "detail": "question_node_or_start_flag",
+        "type": "existing_assignment",
+        "weight": 0.65
+      }
+    ],
+    "hard_constraints_passed": true,
+    "model_invoked": false,
+    "needs_role_review": false,
+    "node_id": "fixture_math_formula_003",
+    "paid_model_invoked": false,
+    "presentation_kind": "formula_heavy",
+    "relations": [],
+    "review_reasons": [],
+    "route_candidate": "question_splitter",
+    "runtime_import_attempted": false,
+    "semantic_role": "exercise"
+  },
+  {
+    "case_id": "fixture_math_table_004",
+    "confidence": 0.82,
+    "database_write_attempted": false,
+    "disposition": "processable",
+    "effective_route_candidate": "question_splitter",
+    "evidence": [
+      {
+        "detail": "question_node_or_start_flag",
+        "type": "existing_assignment",
+        "weight": 0.65
+      }
+    ],
+    "hard_constraints_passed": true,
+    "model_invoked": false,
+    "needs_role_review": false,
+    "node_id": "fixture_math_table_004",
+    "paid_model_invoked": false,
+    "presentation_kind": "table",
+    "relations": [],
+    "review_reasons": [],
+    "route_candidate": "question_splitter",
+    "runtime_import_attempted": false,
+    "semantic_role": "exercise"
+  },
+  {
+    "case_id": "fixture_math_mixed_005",
+    "confidence": 0.4,
+    "database_write_attempted": false,
+    "disposition": "structurally_blocked",
+    "effective_route_candidate": "review_only",
+    "evidence": [
+      {
+        "detail": "no_strong_role_signal",
+        "type": "fallback",
+        "weight": 0.2
+      }
+    ],
+    "hard_constraints_passed": false,
+    "model_invoked": false,
+    "needs_role_review": true,
+    "node_id": "fixture_math_mixed_005",
+    "paid_model_invoked": false,
+    "presentation_kind": "text",
+    "relations": [],
+    "review_reasons": [
+      "mixed_content_requires_review"
+    ],
+    "route_candidate": "review_only",
+    "runtime_import_attempted": false,
+    "semantic_role": "unknown"
+  },
+  {
+    "case_id": "fixture_math_unknown_006",
+    "confidence": 0.35,
+    "database_write_attempted": false,
+    "disposition": "structurally_blocked",
+    "effective_route_candidate": "review_only",
+    "evidence": [
+      {
+        "detail": "quarantined",
+        "type": "audit_signal",
+        "weight": 1.0
+      }
+    ],
+    "hard_constraints_passed": false,
+    "model_invoked": false,
+    "needs_role_review": true,
+    "node_id": "fixture_math_unknown_006",
+    "paid_model_invoked": false,
+    "presentation_kind": "unknown",
+    "relations": [],
+    "review_reasons": [
+      "orphan_unresolved"
+    ],
+    "route_candidate": "review_only",
+    "runtime_import_attempted": false,
+    "semantic_role": "unknown"
+  },
+  {
+    "case_id": "fixture_english_source_007",
+    "confidence": 0.72,
+    "database_write_attempted": false,
+    "disposition": "processable",
+    "effective_route_candidate": "review_only",
+    "evidence": [
+      {
+        "detail": "source_material_marker",
+        "type": "content_function",
+        "weight": 0.6
+      }
+    ],
+    "hard_constraints_passed": true,
+    "model_invoked": false,
+    "needs_role_review": true,
+    "node_id": "fixture_english_source_007",
+    "paid_model_invoked": false,
+    "presentation_kind": "text",
+    "relations": [],
+    "review_reasons": [],
+    "route_candidate": "shared_material_preserve",
+    "runtime_import_attempted": false,
+    "semantic_role": "source_material"
+  },
+  {
+    "case_id": "fixture_english_exercise_008",
+    "confidence": 0.72,
+    "database_write_attempted": false,
+    "disposition": "processable",
+    "effective_route_candidate": "review_only",
+    "evidence": [
+      {
+        "detail": "source_material_marker",
+        "type": "content_function",
+        "weight": 0.6
+      }
+    ],
+    "hard_constraints_passed": true,
+    "model_invoked": false,
+    "needs_role_review": true,
+    "node_id": "fixture_english_exercise_008",
+    "paid_model_invoked": false,
+    "presentation_kind": "text",
+    "relations": [],
+    "review_reasons": [],
+    "route_candidate": "shared_material_preserve",
+    "runtime_import_attempted": false,
+    "semantic_role": "source_material"
+  },
+  {
+    "case_id": "fixture_english_answer_009",
+    "confidence": 0.4,
+    "database_write_attempted": false,
+    "disposition": "processable",
+    "effective_route_candidate": "review_only",
+    "evidence": [
+      {
+        "detail": "no_strong_role_signal",
+        "type": "fallback",
+        "weight": 0.2
+      }
+    ],
+    "hard_constraints_passed": true,
+    "model_invoked": false,
+    "needs_role_review": true,
+    "node_id": "fixture_english_answer_009",
+    "paid_model_invoked": false,
+    "presentation_kind": "text",
+    "relations": [],
+    "review_reasons": [],
+    "route_candidate": "review_only",
+    "runtime_import_attempted": false,
+    "semantic_role": "unknown"
+  },
+  {
+    "case_id": "fixture_english_method_010",
+    "confidence": 0.76,
+    "database_write_attempted": false,
+    "disposition": "processable",
+    "effective_route_candidate": "review_only",
+    "evidence": [
+      {
+        "detail": "knowledge_like_or_section",
+        "type": "existing_assignment",
+        "weight": 0.5
+      }
+    ],
+    "hard_constraints_passed": true,
+    "model_invoked": false,
+    "needs_role_review": true,
+    "node_id": "fixture_english_method_010",
+    "paid_model_invoked": false,
+    "presentation_kind": "text",
+    "relations": [],
+    "review_reasons": [],
+    "route_candidate": "knowledge_transcription",
+    "runtime_import_attempted": false,
+    "semantic_role": "knowledge"
+  },
+  {
+    "case_id": "fixture_english_group_011",
+    "confidence": 0.72,
+    "database_write_attempted": false,
+    "disposition": "processable",
+    "effective_route_candidate": "review_only",
+    "evidence": [
+      {
+        "detail": "source_material_marker",
+        "type": "content_function",
+        "weight": 0.6
+      }
+    ],
+    "hard_constraints_passed": true,
+    "model_invoked": false,
+    "needs_role_review": true,
+    "node_id": "fixture_english_group_011",
+    "paid_model_invoked": false,
+    "presentation_kind": "text",
+    "relations": [],
+    "review_reasons": [],
+    "route_candidate": "shared_material_preserve",
+    "runtime_import_attempted": false,
+    "semantic_role": "source_material"
+  },
+  {
+    "case_id": "fixture_english_unknown_012",
+    "confidence": 0.4,
+    "database_write_attempted": false,
+    "disposition": "structurally_blocked",
+    "effective_route_candidate": "review_only",
+    "evidence": [
+      {
+        "detail": "no_strong_role_signal",
+        "type": "fallback",
+        "weight": 0.2
+      }
+    ],
+    "hard_constraints_passed": false,
+    "model_invoked": false,
+    "needs_role_review": true,
+    "node_id": "fixture_english_unknown_012",
+    "paid_model_invoked": false,
+    "presentation_kind": "text",
+    "relations": [],
+    "review_reasons": [
+      "context_missing"
+    ],
+    "route_candidate": "review_only",
+    "runtime_import_attempted": false,
+    "semantic_role": "unknown"
+  }
+]

@@ -18,6 +18,22 @@ Compared files: `17`
 
 Mismatches after normalization: `0`
 
+## Verification Gap Closure
+
+Committed golden path:
+
+`tests/golden/semantic_role_effectiveness_phase2a_c2d874a`
+
+Committed golden manifest:
+
+`tests/golden/semantic_role_effectiveness_phase2a_c2d874a/manifest.json`
+
+Baseline commit recorded by manifest:
+
+`c2d874a487a5dfaefa4ba76b7634ab883d2d2e24`
+
+Current parity test compares `18` canonical JSON artifacts, including the 17 standard Semantic Role Eval outputs plus `review_pack/review_decisions.json`. The test runs the current implementation, normalizes volatile fields, and compares every listed artifact with committed golden data.
+
 Normalized fields:
 
 - `created_at`

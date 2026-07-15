@@ -19,7 +19,7 @@
       "failed": 0,
       "skipped": 0,
       "not_run": 0,
-      "duration_seconds": 0.073,
+      "duration_seconds": 0.071,
       "output_tail": "{\n  \"schema_version\": \"pipeline_registry_validation_result.v0.1\",\n  \"registry_path\": \"config\\\\pipeline_registry.yaml\",\n  \"flags_path\": \"config\\\\pipeline_feature_flags.yaml\",\n  \"pipeline_count\": 4,\n  \"error_count\": 0,\n  \"warning_count\": 0,\n  \"errors\": [],\n  \"warnings\": [],\n  \"ok\": true\n}\n"
     },
     {
@@ -36,8 +36,8 @@
       "failed": 0,
       "skipped": 0,
       "not_run": 0,
-      "duration_seconds": 0.344,
-      "output_tail": "...                                                                      [100%]\n3 passed in 0.03s\n"
+      "duration_seconds": 0.453,
+      "output_tail": "...                                                                      [100%]\n3 passed in 0.04s\n"
     },
     {
       "name": "semantic_shadow_isolation",
@@ -55,8 +55,8 @@
       "failed": 0,
       "skipped": 0,
       "not_run": 0,
-      "duration_seconds": 0.582,
-      "output_tail": "....                                                                     [100%]\n4 passed, 4 deselected in 0.25s\n"
+      "duration_seconds": 0.853,
+      "output_tail": "....                                                                     [100%]\n4 passed, 4 deselected in 0.46s\n"
     },
     {
       "name": "semantic_shadow_non_interference_real_rerun",
@@ -74,8 +74,8 @@
       "failed": 0,
       "skipped": 0,
       "not_run": 0,
-      "duration_seconds": 0.84,
-      "output_tail": "....                                                                     [100%]\n4 passed, 4 deselected in 0.48s\n"
+      "duration_seconds": 1.005,
+      "output_tail": "....                                                                     [100%]\n4 passed, 4 deselected in 0.50s\n"
     },
     {
       "name": "semantic_eval",
@@ -94,8 +94,8 @@
       "failed": 0,
       "skipped": 0,
       "not_run": 0,
-      "duration_seconds": 0.544,
-      "output_tail": ".........                                                                [100%]\n9 passed in 0.24s\n"
+      "duration_seconds": 0.672,
+      "output_tail": ".........                                                                [100%]\n9 passed in 0.32s\n"
     },
     {
       "name": "english_portable_regression",
@@ -112,8 +112,8 @@
       "failed": 0,
       "skipped": 0,
       "not_run": 0,
-      "duration_seconds": 0.501,
-      "output_tail": ".......                                                                  [100%]\n7 passed in 0.18s\n"
+      "duration_seconds": 0.626,
+      "output_tail": ".......                                                                  [100%]\n7 passed in 0.27s\n"
     },
     {
       "name": "docx_native_repair_regression",
@@ -131,8 +131,8 @@
       "failed": 0,
       "skipped": 0,
       "not_run": 0,
-      "duration_seconds": 0.439,
-      "output_tail": "..........                                                               [100%]\n10 passed in 0.11s\n"
+      "duration_seconds": 0.515,
+      "output_tail": "..........                                                               [100%]\n10 passed in 0.13s\n"
     }
   ]
 }

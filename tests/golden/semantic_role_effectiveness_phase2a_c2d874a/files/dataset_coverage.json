@@ -1,0 +1,26 @@
+{
+  "contract_fixture_count": 12,
+  "coverage_gate": {
+    "has_relation_case": false,
+    "has_review_path": false,
+    "passed": false,
+    "semantic_roles_at_least_6": false,
+    "verified_edge_at_least_4": false,
+    "verified_english_at_least_10": false,
+    "verified_math_at_least_10": false,
+    "verified_total_at_least_24": false
+  },
+  "evaluation_tier_counts": {
+    "CONTRACT_FIXTURE": 12
+  },
+  "status_counts": {
+    "VERIFIED": 12
+  },
+  "total_cases": 12,
+  "verified_case_count": 0,
+  "verified_edge_case_count": 0,
+  "verified_real_gold_case_count": 0,
+  "verified_relation_case_count": 0,
+  "verified_role_counts": {},
+  "verified_subject_counts": {}
+}

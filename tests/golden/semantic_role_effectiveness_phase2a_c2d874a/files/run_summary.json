@@ -1,0 +1,15 @@
+{
+  "candidate_case_count": 12,
+  "contract_fixture_count": 12,
+  "database_write_attempted": false,
+  "dataset_coverage_gate_passed": false,
+  "exit_code": 20,
+  "hard_safety_gate_passed": true,
+  "model_invoked": false,
+  "out_dir": "<OUT_DIR>",
+  "paid_model_invoked": false,
+  "run_id": "<RUN_ID>",
+  "runtime_import_attempted": false,
+  "status": "SEMANTIC_ROLE_EVALUATION_DATASET_REVIEW_REQUIRED",
+  "verified_real_gold_case_count": 0
+}
