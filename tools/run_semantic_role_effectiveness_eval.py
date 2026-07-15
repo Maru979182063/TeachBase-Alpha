@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
 
 from teachbase.semantic_role.candidate_manifest import write_candidate_manifest as package_write_candidate_manifest
 from teachbase.semantic_role.contracts import OUTPUT_FILES, REQUIRED_FIELDS, default_cases_path, schema_path
@@ -13,7 +19,6 @@ try:
 except ImportError:
     from semantic_role_eval_legacy_predictor import predict_case as package_predict_case
 
-ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CASES = default_cases_path(ROOT)
 SCHEMA_PATH = schema_path(ROOT)
 

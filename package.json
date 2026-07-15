@@ -18,7 +18,8 @@
     "test:semantic-role-eval": "python -m pytest tests/test_semantic_role_eval_schema.py tests/test_semantic_role_eval_metrics.py tests/test_semantic_role_gold_leakage.py tests/test_semantic_role_effectiveness_run.py tests/test_semantic_role_golden_parity.py -q",
     "test:repository-rescue-phase1": "python tools/run_repository_rescue_phase1_gate.py",
     "test:architecture-boundaries": "python -m pytest tests/test_architecture_boundaries.py -q",
-    "test:modularization-phase2a": "python tools/run_modularization_phase2a_gate.py"
+    "test:modularization-phase2a": "python tools/run_modularization_phase2a_gate.py",
+    "test:modularization-phase2b": "python tools/run_modularization_phase2b_gate.py"
   },
   "dependencies": {
     "pg": "^8.16.3"
