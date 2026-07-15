@@ -1,0 +1,29 @@
+{
+  "schema_version": "docx_formula_token_question_packets.v0.1",
+  "question_count": 1,
+  "questions": [
+    {
+      "question_id": "fixture_q1",
+      "order_index": 1,
+      "start_paragraph_index": 0,
+      "end_paragraph_index": 0,
+      "display_markdown": "Find $x^2$ from the figure ![docx_media_0001](asset://docx_media_0001).",
+      "asset_ids": ["docx_media_0001"],
+      "model_segmentation": {
+        "start_paragraph_index": 0,
+        "end_paragraph_index": 0
+      },
+      "no_runtime_import": true,
+      "no_database_write": true
+    }
+  ],
+  "assets": [
+    {
+      "asset_id": "docx_media_0001",
+      "storage_key": "tests/fixtures/docx_native_repair_v01/image1.png",
+      "preview_src": "word_media_native/image1.png"
+    }
+  ],
+  "no_runtime_import": true,
+  "no_database_write": true
+}
