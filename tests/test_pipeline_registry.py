@@ -22,7 +22,13 @@ class PipelineRegistryTests(unittest.TestCase):
             ROOT,
         )
         self.assertTrue(result["ok"], result)
-        self.assertEqual(result["pipeline_count"], 3)
+        self.assertEqual(result["pipeline_count"], 4)
+        registry = json.loads((ROOT / "config" / "pipeline_registry.yaml").read_text(encoding="utf-8-sig"))
+        entries = {item["pipeline_id"]: item for item in registry["pipelines"]}
+        english = entries["english_text_first_v05"]
+        self.assertEqual(english["status"], "experimental")
+        self.assertFalse(english["runtime_import_policy"]["default_enabled"])
+        self.assertFalse(english["database_write_policy"]["default_enabled"])
 
     def test_duplicate_pipeline_id_fails(self) -> None:
         registry_path = ROOT / "config" / "pipeline_registry.yaml"

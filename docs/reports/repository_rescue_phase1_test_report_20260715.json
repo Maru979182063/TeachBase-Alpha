@@ -1,0 +1,54 @@
+{
+  "schema_version": "repository_rescue_phase1_test_report.v0.1",
+  "date": "2026-07-15",
+  "integration_branch": "integration/repository-scope-clean-20260715",
+  "commands": [
+    {
+      "command": "npm run test:semantic-role-eval",
+      "exit_code": 0,
+      "passed": 9,
+      "failed": 0,
+      "model_invoked": false,
+      "database_write_attempted": false,
+      "runtime_import_attempted": false
+    },
+    {
+      "command": "npm run test:english-text-first-v05",
+      "exit_code": 0,
+      "passed": 7,
+      "failed": 0,
+      "model_invoked": false,
+      "database_write_attempted": false,
+      "runtime_import_attempted": false
+    },
+    {
+      "command": "npm run test:docx-native-repair",
+      "exit_code": 0,
+      "passed": 10,
+      "failed": 0,
+      "model_invoked": false,
+      "database_write_attempted": false,
+      "runtime_import_attempted": false
+    },
+    {
+      "command": "npm run test:repository-rescue-phase1",
+      "exit_code": 0,
+      "passed": 37,
+      "failed": 0,
+      "model_invoked": false,
+      "database_write_attempted": false,
+      "runtime_import_attempted": false
+    },
+    {
+      "command": "python tools/run_semantic_role_effectiveness_eval.py --out-root outputs/semantic_role_effectiveness_eval --run-id integration_phase1_20260715",
+      "exit_code": 20,
+      "status": "SEMANTIC_ROLE_EVALUATION_DATASET_REVIEW_REQUIRED",
+      "verified_real_gold_case_count": 0,
+      "contract_fixture_count": 12,
+      "model_invoked": false,
+      "database_write_attempted": false,
+      "runtime_import_attempted": false
+    }
+  ],
+  "final_status": "PHASE1_RESCUE_INCOMPLETE"
+}
