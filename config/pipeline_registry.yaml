@@ -147,6 +147,60 @@
       "rollback_method": "disable semantic_role_adapter_shadow and remove sidecar output",
       "baseline_id": "control_plane_20260714_v02;semantic_shadow_review_path_20260714_v01",
       "last_validated_commit": "878ad4a9"
+    },
+    {
+      "pipeline_id": "english_text_first_v05",
+      "pipeline_name": "English image-PDF text-first isolated v0.5",
+      "pipeline_version": "v0.5",
+      "status": "experimental",
+      "owner": "TeachBase-Alpha English ingest maintainers",
+      "description": "Isolated English image-PDF text-first review runner. It consumes existing VLM/unit artifacts, creates exact-copy SemanticNode and QuestionPacket candidates, materializes visual asset files from source pages, and keeps unsafe outputs on HOLD.",
+      "entrypoint": "tools/english_text_first_v05_pipeline.py",
+      "config_path": "config/english_text_first_v05.yaml",
+      "feature_flags": ["english_text_first_enabled"],
+      "input_contracts": [
+        "vlm_page_transcription.json",
+        "unit_bundle.json",
+        "evidence_bundle.json"
+      ],
+      "output_contracts": [
+        "semantic_nodes.json",
+        "asset_manifest.json",
+        "question_packet_candidates.json",
+        "run_summary.json",
+        "review.html"
+      ],
+      "owned_output_roots": [
+        "outputs/english_text_first_pipeline_v02_spec_20260715/regression/endpoint_v05_isolated"
+      ],
+      "forbidden_write_roots": [
+        "out",
+        "outputs/split_v03",
+        "outputs/semantic_role_shadow",
+        "outputs/docx_native_ingest_v01",
+        "outputs/runtime_validation",
+        "outputs/pipeline_baseline_snapshot"
+      ],
+      "stable_dependencies": ["python", "Pillow"],
+      "optional_dependencies": ["ARK_API_KEY for future model assembler/builder reruns"],
+      "model_provider": "volcengine_ark",
+      "default_model": "doubao-seed-2-0-lite-260428",
+      "prompt_bundle": "outputs/english_text_first_pipeline_v02_spec_20260715/prompts",
+      "prompt_version": "v0.2/v0.5 isolated review",
+      "downstream_pipelines": ["runtime_backend"],
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "forbidden in v0.5 isolated review; QuestionPacket candidates are not imported"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "forbidden"
+      },
+      "release_gate_policy": "HOLD unless exact source text, required solution evidence, and real precise visual assets are present",
+      "fallback_pipeline": "manual_review_or_visual_first",
+      "rollback_method": "disable english_text_first_enabled and remove endpoint_v05_isolated artifacts",
+      "baseline_id": "english_text_first_v05_isolated_20260715",
+      "last_validated_commit": ""
     }
   ]
 }

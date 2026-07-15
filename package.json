@@ -12,7 +12,8 @@
     "test:load": "node tools/runtime_backbone_load_smoke.mjs",
     "test:soak": "node tools/runtime_backbone_soak.mjs",
     "test:postgres-live": "node tools/runtime_backbone_postgres_live_checks.mjs",
-    "test:consistency": "node tools/runtime_backbone_consistency_check.mjs"
+    "test:consistency": "node tools/runtime_backbone_consistency_check.mjs",
+    "test:english-text-first-v05": "python -m pytest tests/test_english_text_first_v05_pipeline.py tests/test_english_text_first_sidecar_graph_v01.py -q"
   },
   "dependencies": {
     "pg": "^8.16.3"

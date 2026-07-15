@@ -20,7 +20,7 @@
     "english_text_first_enabled": {
       "default": false,
       "owner": "pipeline_control_plane",
-      "description": "Future English image PDF text-first switch. Not implemented in this branch."
+      "description": "English image-PDF text-first experimental isolated switch. Default false; current v0.5 runner writes only review artifacts and does not import Runtime/DB."
     },
     "english_visual_fallback_enabled": {
       "default": false,

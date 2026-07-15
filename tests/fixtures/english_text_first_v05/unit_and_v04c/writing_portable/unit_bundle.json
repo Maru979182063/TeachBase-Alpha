@@ -1,0 +1,55 @@
+{
+  "schema": "english_text_first_v05.fixture.unit_bundle",
+  "doc_id": "writing_portable",
+  "units": [
+    {
+      "unit_id": "u_010",
+      "unit_type": "question_like_unit",
+      "title": "Writing invitation prompt",
+      "role_tags": [
+        "writing_prompt"
+      ],
+      "relation_to_parent": "",
+      "parent_hint": "",
+      "source_refs": [
+        "p001:b1"
+      ],
+      "visual_refs": [
+        "page_001:poster_layout"
+      ],
+      "completeness": "complete"
+    },
+    {
+      "unit_id": "u_011",
+      "unit_type": "solution_unit",
+      "title": "Sample invitation answer",
+      "role_tags": [
+        "answer"
+      ],
+      "relation_to_parent": "solution_for",
+      "parent_hint": "u_010",
+      "source_refs": [
+        "p001:b2"
+      ],
+      "visual_refs": [],
+      "completeness": "complete"
+    },
+    {
+      "unit_id": "u_012",
+      "unit_type": "visual_unit",
+      "title": "Writing surface visual",
+      "role_tags": [
+        "writing_surface"
+      ],
+      "relation_to_parent": "part_of_question",
+      "parent_hint": "u_010",
+      "source_refs": [
+        "p001:b3"
+      ],
+      "visual_refs": [
+        "page_001:poster_layout"
+      ],
+      "completeness": "complete"
+    }
+  ]
+}

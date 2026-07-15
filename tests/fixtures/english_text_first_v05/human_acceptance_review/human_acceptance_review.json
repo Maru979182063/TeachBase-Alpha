@@ -1,0 +1,29 @@
+{
+  "schema": "english_text_first_v05.fixture.human_review",
+  "packets": [
+    {
+      "packet_id": "reading_portable_u_002",
+      "doc_id": "reading_portable",
+      "human_verdict": "ACCEPT_READY_DIRECTION",
+      "current_final_status": "READY"
+    },
+    {
+      "packet_id": "reading_portable_u_004",
+      "doc_id": "reading_portable",
+      "human_verdict": "HOLD_MISSING_SOLUTION",
+      "current_final_status": "HOLD"
+    },
+    {
+      "packet_id": "reading_portable_u_005",
+      "doc_id": "reading_portable",
+      "human_verdict": "HOLD_INCOMPLETE_TAIL",
+      "current_final_status": "HOLD"
+    },
+    {
+      "packet_id": "writing_portable_u_010",
+      "doc_id": "writing_portable",
+      "human_verdict": "HOLD_VISUAL_REVIEW",
+      "current_final_status": "HOLD"
+    }
+  ]
+}
