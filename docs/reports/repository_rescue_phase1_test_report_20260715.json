@@ -50,5 +50,10 @@
       "runtime_import_attempted": false
     }
   ],
-  "final_status": "PHASE1_RESCUE_INCOMPLETE"
+  "repository_rescue_status": "PHASE1_RESCUE_LOCALLY_COMPLETE",
+  "evaluation_contract_status": "EVALUATION_CONTRACT_VALID",
+  "portable_regression_status": "PORTABLE_REGRESSION_LOCAL_READY",
+  "integration_checkpoint_status": "INTEGRATION_CHECKPOINT_LOCAL_READY",
+  "semantic_role_effectiveness_status": "SEMANTIC_ROLE_EFFECTIVENESS_DATASET_REVIEW_REQUIRED",
+  "final_status_note": "Repository rescue is locally complete. Semantic Role Effectiveness remains dataset-review-required because VERIFIED_REAL_GOLD count is 0."
 }
