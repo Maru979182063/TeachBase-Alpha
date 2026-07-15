@@ -15,8 +15,10 @@
     "test:consistency": "node tools/runtime_backbone_consistency_check.mjs",
     "test:english-text-first-v05": "python -m pytest tests/test_english_text_first_v05_pipeline.py tests/test_english_text_first_sidecar_graph_v01.py -q",
     "test:docx-native-repair": "python -m pytest tests/test_docx_native_formula_providers.py tests/test_docx_native_formula_token_stream_v01.py tests/test_docx_native_text_repair_model_node_v01.py -q",
-    "test:semantic-role-eval": "python -m pytest tests/test_semantic_role_eval_schema.py tests/test_semantic_role_eval_metrics.py tests/test_semantic_role_gold_leakage.py tests/test_semantic_role_effectiveness_run.py -q",
-    "test:repository-rescue-phase1": "python -m pytest tests/test_pipeline_registry.py tests/test_semantic_role_shadow_isolation.py tests/test_semantic_role_eval_schema.py tests/test_semantic_role_eval_metrics.py tests/test_semantic_role_gold_leakage.py tests/test_semantic_role_effectiveness_run.py tests/test_english_text_first_v05_pipeline.py tests/test_english_text_first_sidecar_graph_v01.py tests/test_docx_native_formula_providers.py tests/test_docx_native_formula_token_stream_v01.py tests/test_docx_native_text_repair_model_node_v01.py -q"
+    "test:semantic-role-eval": "python -m pytest tests/test_semantic_role_eval_schema.py tests/test_semantic_role_eval_metrics.py tests/test_semantic_role_gold_leakage.py tests/test_semantic_role_effectiveness_run.py tests/test_semantic_role_golden_parity.py -q",
+    "test:repository-rescue-phase1": "python tools/run_repository_rescue_phase1_gate.py",
+    "test:architecture-boundaries": "python -m pytest tests/test_architecture_boundaries.py -q",
+    "test:modularization-phase2a": "python tools/run_modularization_phase2a_gate.py"
   },
   "dependencies": {
     "pg": "^8.16.3"

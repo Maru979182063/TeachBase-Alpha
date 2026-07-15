@@ -3,14 +3,24 @@ from __future__ import annotations
 import html
 from typing import Any
 
-from tools.semantic_profile_config import (
-    default_route_for_role,
-    eligible_for_question_bank,
-    load_semantic_profile_configs,
-    route_availability,
-    semantic_enums,
-    threshold_version,
-)
+try:
+    from .semantic_profile_config import (
+        default_route_for_role,
+        eligible_for_question_bank,
+        load_semantic_profile_configs,
+        route_availability,
+        semantic_enums,
+        threshold_version,
+    )
+except ImportError:
+    from semantic_profile_config import (
+        default_route_for_role,
+        eligible_for_question_bank,
+        load_semantic_profile_configs,
+        route_availability,
+        semantic_enums,
+        threshold_version,
+    )
 
 
 ADAPTER_VERSION = "semantic_role_adapter_shadow.v0.2"

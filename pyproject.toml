@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "teachbase-alpha"
+version = "0.0.0"
+description = "TeachBase Alpha validation and modularization utilities"
+requires-python = ">=3.11"
+dependencies = [
+  "Pillow>=10",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "Pillow>=10",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
