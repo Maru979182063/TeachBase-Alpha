@@ -1,0 +1,88 @@
+{
+  "baseline_command": "python tools/run_semantic_role_effectiveness_eval.py --run-id c2d874a_phase2a_golden --out-root <TEMP_OUT_ROOT>",
+  "baseline_commit": "c2d874a487a5dfaefa4ba76b7634ab883d2d2e24",
+  "baseline_exit_code": 20,
+  "file_count": 18,
+  "files": [
+    {
+      "canonical": "files/evaluation_manifest.json",
+      "source": "evaluation_manifest.json"
+    },
+    {
+      "canonical": "files/verified_cases_snapshot.json",
+      "source": "verified_cases_snapshot.json"
+    },
+    {
+      "canonical": "files/predictions.json",
+      "source": "predictions.json"
+    },
+    {
+      "canonical": "files/case_level_results.json",
+      "source": "case_level_results.json"
+    },
+    {
+      "canonical": "files/metrics_summary.json",
+      "source": "metrics_summary.json"
+    },
+    {
+      "canonical": "files/per_role_metrics.json",
+      "source": "per_role_metrics.json"
+    },
+    {
+      "canonical": "files/per_subject_metrics.json",
+      "source": "per_subject_metrics.json"
+    },
+    {
+      "canonical": "files/confusion_matrix.json",
+      "source": "confusion_matrix.json"
+    },
+    {
+      "canonical": "files/critical_misroutes.json",
+      "source": "critical_misroutes.json"
+    },
+    {
+      "canonical": "files/false_safe_cases.json",
+      "source": "false_safe_cases.json"
+    },
+    {
+      "canonical": "files/review_capture_report.json",
+      "source": "review_capture_report.json"
+    },
+    {
+      "canonical": "files/confidence_calibration.json",
+      "source": "confidence_calibration.json"
+    },
+    {
+      "canonical": "files/bad_cases.json",
+      "source": "bad_cases.json"
+    },
+    {
+      "canonical": "files/dataset_coverage.json",
+      "source": "dataset_coverage.json"
+    },
+    {
+      "canonical": "files/contract_fixture_snapshot.json",
+      "source": "contract_fixture_snapshot.json"
+    },
+    {
+      "canonical": "files/real_gold_snapshot.json",
+      "source": "real_gold_snapshot.json"
+    },
+    {
+      "canonical": "files/run_summary.json",
+      "source": "run_summary.json"
+    },
+    {
+      "canonical": "files/review_pack__review_decisions.json",
+      "source": "review_pack/review_decisions.json"
+    }
+  ],
+  "normalization": {
+    "created_at_started_at_finished_at": "<TIMESTAMP>",
+    "out_dir": "<OUT_DIR>",
+    "path_separator": "/",
+    "run_id": "<RUN_ID>",
+    "workspace_absolute_paths": "relative_or_<PATH>"
+  },
+  "schema_version": "semantic_role_effectiveness_phase2a_golden_manifest.v0.1"
+}

@@ -7,7 +7,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from tools.semantic_profile_config import load_semantic_profile_configs
+try:
+    from .semantic_profile_config import load_semantic_profile_configs
+except ImportError:
+    from semantic_profile_config import load_semantic_profile_configs
 
 
 PROFILE_VERSION = "document_profile_shadow.v0.2"

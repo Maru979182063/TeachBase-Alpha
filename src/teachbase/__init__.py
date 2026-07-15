@@ -1,0 +1,1 @@
+"""TeachBase Alpha package foundation."""

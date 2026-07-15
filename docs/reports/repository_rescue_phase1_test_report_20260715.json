@@ -1,59 +1,138 @@
 {
-  "schema_version": "repository_rescue_phase1_test_report.v0.1",
-  "date": "2026-07-15",
-  "integration_branch": "integration/repository-scope-clean-20260715",
-  "commands": [
+  "schema_version": "repository_rescue_phase1_gate_report.v0.2",
+  "gate_count": 7,
+  "passed": 37,
+  "failed": 0,
+  "skipped": 0,
+  "not_run": 0,
+  "all_exit_codes_zero": true,
+  "gates": [
     {
-      "command": "npm run test:semantic-role-eval",
+      "name": "pipeline_registry_validator",
+      "command": [
+        "C:\\Users\\EDY\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "tools/validate_pipeline_registry.py",
+        "--json"
+      ],
+      "exit_code": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "not_run": 0,
+      "duration_seconds": 0.071,
+      "output_tail": "{\n  \"schema_version\": \"pipeline_registry_validation_result.v0.1\",\n  \"registry_path\": \"config\\\\pipeline_registry.yaml\",\n  \"flags_path\": \"config\\\\pipeline_feature_flags.yaml\",\n  \"pipeline_count\": 4,\n  \"error_count\": 0,\n  \"warning_count\": 0,\n  \"errors\": [],\n  \"warnings\": [],\n  \"ok\": true\n}\n"
+    },
+    {
+      "name": "pipeline_registry_tests",
+      "command": [
+        "C:\\Users\\EDY\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-m",
+        "pytest",
+        "tests/test_pipeline_registry.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "not_run": 0,
+      "duration_seconds": 0.453,
+      "output_tail": "...                                                                      [100%]\n3 passed in 0.04s\n"
+    },
+    {
+      "name": "semantic_shadow_isolation",
+      "command": [
+        "C:\\Users\\EDY\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-m",
+        "pytest",
+        "tests/test_semantic_role_shadow_isolation.py",
+        "-q",
+        "-k",
+        "review_path_baseline_has_review or shadow_on_writes_only_allowed_sidecars or shadow_on_observes_real_role_differences or registry_declares_shadow_output_ownership"
+      ],
+      "exit_code": 0,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "not_run": 0,
+      "duration_seconds": 0.853,
+      "output_tail": "....                                                                     [100%]\n4 passed, 4 deselected in 0.46s\n"
+    },
+    {
+      "name": "semantic_shadow_non_interference_real_rerun",
+      "command": [
+        "C:\\Users\\EDY\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-m",
+        "pytest",
+        "tests/test_semantic_role_shadow_isolation.py",
+        "-q",
+        "-k",
+        "ready_path_experiments_off or review_path_experiments_off or review_reasons_and_repair_pool_non_interference or review_path_real_rerun_generator"
+      ],
+      "exit_code": 0,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "not_run": 0,
+      "duration_seconds": 1.005,
+      "output_tail": "....                                                                     [100%]\n4 passed, 4 deselected in 0.50s\n"
+    },
+    {
+      "name": "semantic_eval",
+      "command": [
+        "C:\\Users\\EDY\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-m",
+        "pytest",
+        "tests/test_semantic_role_eval_schema.py",
+        "tests/test_semantic_role_eval_metrics.py",
+        "tests/test_semantic_role_gold_leakage.py",
+        "tests/test_semantic_role_effectiveness_run.py",
+        "-q"
+      ],
       "exit_code": 0,
       "passed": 9,
       "failed": 0,
-      "model_invoked": false,
-      "database_write_attempted": false,
-      "runtime_import_attempted": false
+      "skipped": 0,
+      "not_run": 0,
+      "duration_seconds": 0.672,
+      "output_tail": ".........                                                                [100%]\n9 passed in 0.32s\n"
     },
     {
-      "command": "npm run test:english-text-first-v05",
+      "name": "english_portable_regression",
+      "command": [
+        "C:\\Users\\EDY\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-m",
+        "pytest",
+        "tests/test_english_text_first_v05_pipeline.py",
+        "tests/test_english_text_first_sidecar_graph_v01.py",
+        "-q"
+      ],
       "exit_code": 0,
       "passed": 7,
       "failed": 0,
-      "model_invoked": false,
-      "database_write_attempted": false,
-      "runtime_import_attempted": false
+      "skipped": 0,
+      "not_run": 0,
+      "duration_seconds": 0.626,
+      "output_tail": ".......                                                                  [100%]\n7 passed in 0.27s\n"
     },
     {
-      "command": "npm run test:docx-native-repair",
+      "name": "docx_native_repair_regression",
+      "command": [
+        "C:\\Users\\EDY\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-m",
+        "pytest",
+        "tests/test_docx_native_formula_providers.py",
+        "tests/test_docx_native_formula_token_stream_v01.py",
+        "tests/test_docx_native_text_repair_model_node_v01.py",
+        "-q"
+      ],
       "exit_code": 0,
       "passed": 10,
       "failed": 0,
-      "model_invoked": false,
-      "database_write_attempted": false,
-      "runtime_import_attempted": false
-    },
-    {
-      "command": "npm run test:repository-rescue-phase1",
-      "exit_code": 0,
-      "passed": 37,
-      "failed": 0,
-      "model_invoked": false,
-      "database_write_attempted": false,
-      "runtime_import_attempted": false
-    },
-    {
-      "command": "python tools/run_semantic_role_effectiveness_eval.py --out-root outputs/semantic_role_effectiveness_eval --run-id integration_phase1_20260715",
-      "exit_code": 20,
-      "status": "SEMANTIC_ROLE_EVALUATION_DATASET_REVIEW_REQUIRED",
-      "verified_real_gold_case_count": 0,
-      "contract_fixture_count": 12,
-      "model_invoked": false,
-      "database_write_attempted": false,
-      "runtime_import_attempted": false
+      "skipped": 0,
+      "not_run": 0,
+      "duration_seconds": 0.515,
+      "output_tail": "..........                                                               [100%]\n10 passed in 0.13s\n"
     }
-  ],
-  "repository_rescue_status": "PHASE1_RESCUE_LOCALLY_COMPLETE",
-  "evaluation_contract_status": "EVALUATION_CONTRACT_VALID",
-  "portable_regression_status": "PORTABLE_REGRESSION_LOCAL_READY",
-  "integration_checkpoint_status": "INTEGRATION_CHECKPOINT_LOCAL_READY",
-  "semantic_role_effectiveness_status": "SEMANTIC_ROLE_EFFECTIVENESS_DATASET_REVIEW_REQUIRED",
-  "final_status_note": "Repository rescue is locally complete. Semantic Role Effectiveness remains dataset-review-required because VERIFIED_REAL_GOLD count is 0."
+  ]
 }

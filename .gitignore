@@ -4,6 +4,7 @@ config/runtime_secrets.local.json
 __pycache__/
 *.pyc
 .venv*/
+*.egg-info/
 
 # Node dependencies
 node_modules/

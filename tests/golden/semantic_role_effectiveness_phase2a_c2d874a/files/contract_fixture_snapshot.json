@@ -1,0 +1,434 @@
+[
+  {
+    "case_id": "fixture_math_knowledge_001",
+    "current_node_type": "knowledge_block",
+    "current_review_reasons": [],
+    "current_review_status": "AUDITED_READY",
+    "difficulty_tags": [
+      "math",
+      "method_summary"
+    ],
+    "document_type": "teacher_handout",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "expected_disposition": "processable",
+    "expected_needs_role_review": true,
+    "expected_presentation_kind": "text",
+    "expected_relations": [],
+    "expected_route_candidate": "knowledge_transcription",
+    "expected_semantic_role": "knowledge",
+    "gold_evidence": [
+      "The fixture describes a method summary, not a student exercise."
+    ],
+    "gold_source": "fixture_contract",
+    "gold_status": "VERIFIED",
+    "node_id": "fixture_math_knowledge_001",
+    "notes": "Synthetic fixture for evaluator plumbing, not a real business Gold sample.",
+    "page_range": [
+      1
+    ],
+    "source_artifact_ref": "synthetic_fixture",
+    "source_document_ref": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+    "source_document_sha256": "fixture_contract_math_knowledge_001",
+    "source_image_ref": "",
+    "source_text_stub": "Key method summary for solving linear equations.",
+    "subject": "math"
+  },
+  {
+    "case_id": "fixture_math_exercise_002",
+    "current_node_type": "question",
+    "current_review_reasons": [],
+    "current_review_status": "AUDITED_READY",
+    "difficulty_tags": [
+      "math",
+      "exercise"
+    ],
+    "document_type": "teacher_handout",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "expected_disposition": "processable",
+    "expected_needs_role_review": false,
+    "expected_presentation_kind": "text",
+    "expected_relations": [],
+    "expected_route_candidate": "question_splitter",
+    "expected_semantic_role": "exercise",
+    "gold_evidence": [
+      "The fixture is explicitly a practice problem."
+    ],
+    "gold_source": "fixture_contract",
+    "gold_status": "VERIFIED",
+    "node_id": "fixture_math_exercise_002",
+    "notes": "Synthetic fixture for evaluator plumbing.",
+    "page_range": [
+      1
+    ],
+    "source_artifact_ref": "synthetic_fixture",
+    "source_document_ref": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+    "source_document_sha256": "fixture_contract_math_exercise_002",
+    "source_image_ref": "",
+    "source_text_stub": "Practice problem: solve for x and show each step.",
+    "subject": "math"
+  },
+  {
+    "case_id": "fixture_math_formula_003",
+    "current_node_type": "question",
+    "current_review_reasons": [],
+    "current_review_status": "AUDITED_READY",
+    "difficulty_tags": [
+      "math",
+      "formula_heavy"
+    ],
+    "document_type": "teacher_handout",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "expected_disposition": "processable",
+    "expected_needs_role_review": false,
+    "expected_presentation_kind": "formula_heavy",
+    "expected_relations": [],
+    "expected_route_candidate": "question_splitter",
+    "expected_semantic_role": "exercise",
+    "gold_evidence": [
+      "The fixture contains a formula-heavy practice prompt."
+    ],
+    "gold_source": "fixture_contract",
+    "gold_status": "VERIFIED",
+    "node_id": "fixture_math_formula_003",
+    "notes": "Synthetic fixture for presentation-kind evaluation.",
+    "page_range": [
+      2
+    ],
+    "source_artifact_ref": "synthetic_fixture",
+    "source_document_ref": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+    "source_document_sha256": "fixture_contract_math_formula_003",
+    "source_image_ref": "",
+    "source_text_stub": "Practice problem using /frac{a}{b} and multiple formula transformations.",
+    "subject": "math"
+  },
+  {
+    "case_id": "fixture_math_table_004",
+    "current_node_type": "question",
+    "current_review_reasons": [],
+    "current_review_status": "AUDITED_READY",
+    "difficulty_tags": [
+      "math",
+      "table"
+    ],
+    "document_type": "teacher_handout",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "expected_disposition": "processable",
+    "expected_needs_role_review": false,
+    "expected_presentation_kind": "table",
+    "expected_relations": [],
+    "expected_route_candidate": "question_splitter",
+    "expected_semantic_role": "exercise",
+    "gold_evidence": [
+      "The pipe-delimited stub marks a table-like exercise."
+    ],
+    "gold_source": "fixture_contract",
+    "gold_status": "VERIFIED",
+    "node_id": "fixture_math_table_004",
+    "notes": "Synthetic fixture for table presentation.",
+    "observed_fragment_flags": [
+      "table_like"
+    ],
+    "page_range": [
+      2
+    ],
+    "source_artifact_ref": "synthetic_fixture",
+    "source_document_ref": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+    "source_document_sha256": "fixture_contract_math_table_004",
+    "source_image_ref": "",
+    "source_text_stub": "Practice problem with values | x | y | in a table.",
+    "subject": "math"
+  },
+  {
+    "case_id": "fixture_math_mixed_005",
+    "current_node_type": "mixed_block",
+    "current_review_reasons": [
+      "mixed_content_requires_review"
+    ],
+    "current_review_status": "NEEDS_REVIEW",
+    "difficulty_tags": [
+      "math",
+      "mixed",
+      "review"
+    ],
+    "document_type": "teacher_handout",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "expected_disposition": "review_required",
+    "expected_needs_role_review": true,
+    "expected_presentation_kind": "text",
+    "expected_relations": [],
+    "expected_route_candidate": "secondary_visual_split",
+    "expected_semantic_role": "mixed",
+    "gold_evidence": [
+      "The fixture intentionally combines explanation and exercise functions."
+    ],
+    "gold_source": "fixture_contract",
+    "gold_status": "VERIFIED",
+    "node_id": "fixture_math_mixed_005",
+    "notes": "Expected to expose current deterministic rule limitations.",
+    "page_range": [
+      3
+    ],
+    "source_artifact_ref": "synthetic_fixture",
+    "source_document_ref": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+    "source_document_sha256": "fixture_contract_math_mixed_005",
+    "source_image_ref": "",
+    "source_text_stub": "Combined method explanation and a new practice problem in one block.",
+    "subject": "math"
+  },
+  {
+    "case_id": "fixture_math_unknown_006",
+    "current_node_type": "quarantined_orphan",
+    "current_review_reasons": [
+      "orphan_unresolved"
+    ],
+    "current_review_status": "QUARANTINED",
+    "difficulty_tags": [
+      "math",
+      "unknown",
+      "review"
+    ],
+    "document_type": "teacher_handout",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "expected_disposition": "structurally_blocked",
+    "expected_needs_role_review": true,
+    "expected_presentation_kind": "unknown",
+    "expected_relations": [],
+    "expected_route_candidate": "review_only",
+    "expected_semantic_role": "unknown",
+    "gold_evidence": [
+      "The fixture is explicitly an unresolved orphan crop."
+    ],
+    "gold_source": "fixture_contract",
+    "gold_status": "VERIFIED",
+    "node_id": "fixture_math_unknown_006",
+    "notes": "Review-path synthetic fixture.",
+    "page_range": [
+      3
+    ],
+    "source_artifact_ref": "synthetic_fixture",
+    "source_document_ref": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+    "source_document_sha256": "fixture_contract_math_unknown_006",
+    "source_image_ref": "",
+    "source_text_stub": "Detached crop with insufficient local context.",
+    "subject": "math"
+  },
+  {
+    "case_id": "fixture_english_source_007",
+    "current_node_type": "content_block",
+    "current_review_reasons": [],
+    "current_review_status": "AUDITED_READY",
+    "difficulty_tags": [
+      "english",
+      "source_material"
+    ],
+    "document_type": "teacher_handout",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "expected_disposition": "processable",
+    "expected_needs_role_review": true,
+    "expected_presentation_kind": "text",
+    "expected_relations": [],
+    "expected_route_candidate": "shared_material_preserve",
+    "expected_semantic_role": "source_material",
+    "gold_evidence": [
+      "The fixture is a reading passage shared by later questions."
+    ],
+    "gold_source": "fixture_contract",
+    "gold_status": "VERIFIED",
+    "node_id": "fixture_english_source_007",
+    "notes": "Synthetic source-material fixture.",
+    "page_range": [
+      4
+    ],
+    "source_artifact_ref": "synthetic_fixture",
+    "source_document_ref": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+    "source_document_sha256": "fixture_contract_english_source_007",
+    "source_image_ref": "",
+    "source_text_stub": "Reading passage: a short source text used by the following questions.",
+    "subject": "english"
+  },
+  {
+    "case_id": "fixture_english_exercise_008",
+    "current_node_type": "question",
+    "current_review_reasons": [],
+    "current_review_status": "AUDITED_READY",
+    "difficulty_tags": [
+      "english",
+      "exercise"
+    ],
+    "document_type": "teacher_handout",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "expected_disposition": "processable",
+    "expected_needs_role_review": false,
+    "expected_presentation_kind": "text",
+    "expected_relations": [],
+    "expected_route_candidate": "question_splitter",
+    "expected_semantic_role": "exercise",
+    "gold_evidence": [
+      "The fixture is an English passage question."
+    ],
+    "gold_source": "fixture_contract",
+    "gold_status": "VERIFIED",
+    "node_id": "fixture_english_exercise_008",
+    "notes": "Synthetic English exercise fixture.",
+    "page_range": [
+      4
+    ],
+    "source_artifact_ref": "synthetic_fixture",
+    "source_document_ref": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+    "source_document_sha256": "fixture_contract_english_exercise_008",
+    "source_image_ref": "",
+    "source_text_stub": "Choose the best answer according to the passage.",
+    "subject": "english"
+  },
+  {
+    "case_id": "fixture_english_answer_009",
+    "current_node_type": "answer_block",
+    "current_review_reasons": [],
+    "current_review_status": "AUDITED_READY",
+    "difficulty_tags": [
+      "english",
+      "answer_explanation",
+      "relation"
+    ],
+    "document_type": "teacher_handout",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "expected_disposition": "review_required",
+    "expected_needs_role_review": true,
+    "expected_presentation_kind": "text",
+    "expected_relations": [
+      {
+        "target_node_id": "fixture_english_exercise_008",
+        "type": "explains"
+      }
+    ],
+    "expected_route_candidate": "answer_attachment",
+    "expected_semantic_role": "answer_explanation",
+    "gold_evidence": [
+      "The fixture is answer material and names the previous question relation."
+    ],
+    "gold_source": "fixture_contract",
+    "gold_status": "VERIFIED",
+    "node_id": "fixture_english_answer_009",
+    "notes": "Relation fixture; the one-case runner cannot infer cross-case context yet.",
+    "page_range": [
+      5
+    ],
+    "source_artifact_ref": "synthetic_fixture",
+    "source_document_ref": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+    "source_document_sha256": "fixture_contract_english_answer_009",
+    "source_image_ref": "",
+    "source_text_stub": "Answer and explanation for the previous reading question.",
+    "subject": "english"
+  },
+  {
+    "case_id": "fixture_english_method_010",
+    "current_node_type": "knowledge_block",
+    "current_review_reasons": [],
+    "current_review_status": "AUDITED_READY",
+    "difficulty_tags": [
+      "english",
+      "method_or_strategy"
+    ],
+    "document_type": "teacher_handout",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "expected_disposition": "processable",
+    "expected_needs_role_review": true,
+    "expected_presentation_kind": "text",
+    "expected_relations": [],
+    "expected_route_candidate": "knowledge_transcription",
+    "expected_semantic_role": "method_or_strategy",
+    "gold_evidence": [
+      "The fixture is a writing strategy summary."
+    ],
+    "gold_source": "fixture_contract",
+    "gold_status": "VERIFIED",
+    "node_id": "fixture_english_method_010",
+    "notes": "Expected to expose whether method differs from generic knowledge.",
+    "page_range": [
+      5
+    ],
+    "source_artifact_ref": "synthetic_fixture",
+    "source_document_ref": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+    "source_document_sha256": "fixture_contract_english_method_010",
+    "source_image_ref": "",
+    "source_text_stub": "Writing strategy summary: how to structure an application letter.",
+    "subject": "english"
+  },
+  {
+    "case_id": "fixture_english_group_011",
+    "current_node_type": "content_block",
+    "current_review_reasons": [],
+    "current_review_status": "AUDITED_READY",
+    "difficulty_tags": [
+      "english",
+      "question_group",
+      "relation"
+    ],
+    "document_type": "teacher_handout",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "expected_disposition": "processable",
+    "expected_needs_role_review": true,
+    "expected_presentation_kind": "text",
+    "expected_relations": [
+      {
+        "target_node_id": "fixture_english_source_007",
+        "type": "shared_material_for"
+      }
+    ],
+    "expected_route_candidate": "group_splitter",
+    "expected_semantic_role": "question_group",
+    "gold_evidence": [
+      "The fixture is a group of questions sharing a passage."
+    ],
+    "gold_source": "fixture_contract",
+    "gold_status": "VERIFIED",
+    "node_id": "fixture_english_group_011",
+    "notes": "Synthetic relation fixture.",
+    "page_range": [
+      6
+    ],
+    "source_artifact_ref": "synthetic_fixture",
+    "source_document_ref": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+    "source_document_sha256": "fixture_contract_english_group_011",
+    "source_image_ref": "",
+    "source_text_stub": "Question group for the same passage: questions 1 to 3 share the source.",
+    "subject": "english"
+  },
+  {
+    "case_id": "fixture_english_unknown_012",
+    "current_node_type": "content_block",
+    "current_review_reasons": [
+      "context_missing"
+    ],
+    "current_review_status": "NEEDS_REVIEW",
+    "difficulty_tags": [
+      "english",
+      "unknown",
+      "review"
+    ],
+    "document_type": "teacher_handout",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "expected_disposition": "review_required",
+    "expected_needs_role_review": true,
+    "expected_presentation_kind": "text",
+    "expected_relations": [],
+    "expected_route_candidate": "review_only",
+    "expected_semantic_role": "unknown",
+    "gold_evidence": [
+      "The fixture explicitly lacks enough context to route safely."
+    ],
+    "gold_source": "fixture_contract",
+    "gold_status": "VERIFIED",
+    "node_id": "fixture_english_unknown_012",
+    "notes": "Review-path synthetic fixture.",
+    "page_range": [
+      6
+    ],
+    "source_artifact_ref": "synthetic_fixture",
+    "source_document_ref": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+    "source_document_sha256": "fixture_contract_english_unknown_012",
+    "source_image_ref": "",
+    "source_text_stub": "Detached heading and partial sentence with no owning context.",
+    "subject": "english"
+  }
+]

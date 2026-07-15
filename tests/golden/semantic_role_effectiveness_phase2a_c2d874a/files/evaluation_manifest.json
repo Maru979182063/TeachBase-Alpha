@@ -1,0 +1,16 @@
+{
+  "adapter_mode": "shadow_only",
+  "business_mutation_allowed": false,
+  "candidate_manifest_path": "",
+  "cases_path": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+  "created_at": "<TIMESTAMP>",
+  "database_write_attempted": false,
+  "model_invoked": false,
+  "paid_model_invoked": false,
+  "run_id": "<RUN_ID>",
+  "runtime_import_attempted": false,
+  "schema_path": "tests/fixtures/semantic_role_effectiveness_v01/schema.json",
+  "schema_version": "semantic_role_effectiveness_eval_manifest_v0.1",
+  "semantic_role_logic_modified_by_this_runner": false,
+  "status": "SEMANTIC_ROLE_EVALUATION_DATASET_REVIEW_REQUIRED"
+}

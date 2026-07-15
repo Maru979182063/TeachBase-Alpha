@@ -1,7 +1,7 @@
 {
   "schema_version": "pipeline_registry.v0.1",
   "status_enum": ["stable", "experimental", "shadow", "validation", "effective", "deprecated"],
-  "generated_for_branch": "feat/semantic-role-shadow-v01-isolated",
+  "generated_for_branch": "refactor/pipeline-modularization-phase2a-semantic-eval",
   "pipelines": [
     {
       "pipeline_id": "split_v03",
@@ -58,8 +58,8 @@
       "pipeline_version": "validation_backend_runtime_20260706",
       "status": "validation",
       "owner": "TeachBase-Alpha runtime maintainers",
-      "description": "Existing LessonDraftBundle boundary, release gate, and Postgres-backed runtime validation surface.",
-      "entrypoint": "tools/runtime_backbone_api_server.mjs",
+      "description": "Existing LessonDraftBundle boundary, release gate, and Postgres-backed runtime validation surface. The official local runtime API entry is 8790 via tools/mock_workbench_api_server.mjs. tools/runtime_backbone_api_server.mjs is deprecated and retained only as the 8792 compatibility transport proxy.",
+      "entrypoint": "tools/mock_workbench_api_server.mjs",
       "config_path": "config/runtime_observability.yaml",
       "feature_flags": ["runtime_import_enabled"],
       "input_contracts": ["LessonDraftBundle", "allow_list_manifest", "canonical_release_decision"],
@@ -86,7 +86,7 @@
         "default_enabled": false,
         "policy": "validation baseline only; explicit test/runtime command required"
       },
-      "release_gate_policy": "validation baseline reports NOT_READY until promoted separately",
+      "release_gate_policy": "validation baseline reports NOT_READY until promoted separately; tools/runtime_backbone_api_server.mjs is deprecated 8792 compatibility and must proxy to 8790 rather than become a second backend entry",
       "fallback_pipeline": "",
       "rollback_method": "return to validation/backend-runtime-20260706",
       "baseline_id": "control_plane_20260714_v01",
@@ -200,7 +200,7 @@
       "fallback_pipeline": "manual_review_or_visual_first",
       "rollback_method": "disable english_text_first_enabled and remove endpoint_v05_isolated artifacts",
       "baseline_id": "english_text_first_v05_isolated_20260715",
-      "last_validated_commit": ""
+      "last_validated_commit": "c2d874a487a5dfaefa4ba76b7634ab883d2d2e24"
     }
   ]
 }

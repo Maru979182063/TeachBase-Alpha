@@ -1,0 +1,77 @@
+{
+  "schema_version": "modularization_phase2a_golden_comparison.v0.1",
+  "baseline": "C:\\Users\\EDY\\Documents\\TeachBase-Alpha-modularization-phase2a\\outputs\\modularization_phase2a_golden\\baseline\\phase2a_baseline",
+  "after": "C:\\Users\\EDY\\Documents\\TeachBase-Alpha-modularization-phase2a\\outputs\\modularization_phase2a_golden\\after\\phase2a_after",
+  "file_count": 17,
+  "mismatch_count": 0,
+  "results": [
+    {
+      "file": "evaluation_manifest.json",
+      "equal": true
+    },
+    {
+      "file": "verified_cases_snapshot.json",
+      "equal": true
+    },
+    {
+      "file": "predictions.json",
+      "equal": true
+    },
+    {
+      "file": "case_level_results.json",
+      "equal": true
+    },
+    {
+      "file": "metrics_summary.json",
+      "equal": true
+    },
+    {
+      "file": "per_role_metrics.json",
+      "equal": true
+    },
+    {
+      "file": "per_subject_metrics.json",
+      "equal": true
+    },
+    {
+      "file": "confusion_matrix.json",
+      "equal": true
+    },
+    {
+      "file": "critical_misroutes.json",
+      "equal": true
+    },
+    {
+      "file": "false_safe_cases.json",
+      "equal": true
+    },
+    {
+      "file": "review_capture_report.json",
+      "equal": true
+    },
+    {
+      "file": "confidence_calibration.json",
+      "equal": true
+    },
+    {
+      "file": "bad_cases.json",
+      "equal": true
+    },
+    {
+      "file": "dataset_coverage.json",
+      "equal": true
+    },
+    {
+      "file": "contract_fixture_snapshot.json",
+      "equal": true
+    },
+    {
+      "file": "real_gold_snapshot.json",
+      "equal": true
+    },
+    {
+      "file": "run_summary.json",
+      "equal": true
+    }
+  ]
+}

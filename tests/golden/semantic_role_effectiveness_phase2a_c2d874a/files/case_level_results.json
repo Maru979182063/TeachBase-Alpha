@@ -1,0 +1,86 @@
+[
+  {
+    "case_id": "fixture_math_knowledge_001",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "gold_status": "VERIFIED",
+    "included_in_formal_metrics": false,
+    "reason": "not_verified_real_gold"
+  },
+  {
+    "case_id": "fixture_math_exercise_002",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "gold_status": "VERIFIED",
+    "included_in_formal_metrics": false,
+    "reason": "not_verified_real_gold"
+  },
+  {
+    "case_id": "fixture_math_formula_003",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "gold_status": "VERIFIED",
+    "included_in_formal_metrics": false,
+    "reason": "not_verified_real_gold"
+  },
+  {
+    "case_id": "fixture_math_table_004",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "gold_status": "VERIFIED",
+    "included_in_formal_metrics": false,
+    "reason": "not_verified_real_gold"
+  },
+  {
+    "case_id": "fixture_math_mixed_005",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "gold_status": "VERIFIED",
+    "included_in_formal_metrics": false,
+    "reason": "not_verified_real_gold"
+  },
+  {
+    "case_id": "fixture_math_unknown_006",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "gold_status": "VERIFIED",
+    "included_in_formal_metrics": false,
+    "reason": "not_verified_real_gold"
+  },
+  {
+    "case_id": "fixture_english_source_007",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "gold_status": "VERIFIED",
+    "included_in_formal_metrics": false,
+    "reason": "not_verified_real_gold"
+  },
+  {
+    "case_id": "fixture_english_exercise_008",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "gold_status": "VERIFIED",
+    "included_in_formal_metrics": false,
+    "reason": "not_verified_real_gold"
+  },
+  {
+    "case_id": "fixture_english_answer_009",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "gold_status": "VERIFIED",
+    "included_in_formal_metrics": false,
+    "reason": "not_verified_real_gold"
+  },
+  {
+    "case_id": "fixture_english_method_010",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "gold_status": "VERIFIED",
+    "included_in_formal_metrics": false,
+    "reason": "not_verified_real_gold"
+  },
+  {
+    "case_id": "fixture_english_group_011",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "gold_status": "VERIFIED",
+    "included_in_formal_metrics": false,
+    "reason": "not_verified_real_gold"
+  },
+  {
+    "case_id": "fixture_english_unknown_012",
+    "evaluation_tier": "CONTRACT_FIXTURE",
+    "gold_status": "VERIFIED",
+    "included_in_formal_metrics": false,
+    "reason": "not_verified_real_gold"
+  }
+]

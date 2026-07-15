@@ -29,6 +29,10 @@ class PipelineRegistryTests(unittest.TestCase):
         self.assertEqual(english["status"], "experimental")
         self.assertFalse(english["runtime_import_policy"]["default_enabled"])
         self.assertFalse(english["database_write_policy"]["default_enabled"])
+        runtime = entries["runtime_backend"]
+        self.assertEqual(runtime["entrypoint"], "tools/mock_workbench_api_server.mjs")
+        self.assertIn("tools/runtime_backbone_api_server.mjs is deprecated", runtime["description"])
+        self.assertIn("8792 compatibility", runtime["release_gate_policy"])
 
     def test_duplicate_pipeline_id_fails(self) -> None:
         registry_path = ROOT / "config" / "pipeline_registry.yaml"
