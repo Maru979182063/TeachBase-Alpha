@@ -1,0 +1,34 @@
+{
+  "schema_version": "english_text_first_v05.config",
+  "pipeline_id": "english_text_first_v05",
+  "status": "experimental_isolated",
+  "model_provider": "volcengine_ark",
+  "default_model_alias": "doubao2.0mini",
+  "default_model_endpoint_id": "doubao-seed-2-0-lite-260428",
+  "api_key_env": "ARK_API_KEY",
+  "owned_output_root": "outputs/english_text_first_pipeline_v02_spec_20260715/regression/endpoint_v05_isolated",
+  "input_roots": {
+    "vlm_transcriber": "outputs/english_text_first_pipeline_v02_spec_20260715/regression/vlm_transcriber_full8_lite_20260715",
+    "unit_and_v04c": "outputs/english_text_first_pipeline_v02_spec_20260715/regression/endpoint_v04c_hardened_enum_norm_full8_lite_20260715",
+    "semantic_reference_v03b": "outputs/english_text_first_pipeline_v02_spec_20260715/regression/endpoint_v03b_units_resume_full8_lite_20260715"
+  },
+  "documents": [
+    "reading_argumentative",
+    "grammar_clauses",
+    "writing_invitation"
+  ],
+  "contracts": {
+    "unit_types": [
+      "content_unit",
+      "question_like_unit",
+      "solution_unit",
+      "visual_unit",
+      "writing_surface",
+      "unknown_unit"
+    ],
+    "builder_policy": "exact_source_copy_only",
+    "visual_asset_policy": "real_asset_required_for_visual_refs",
+    "runtime_import_enabled": false,
+    "database_write_enabled": false
+  }
+}

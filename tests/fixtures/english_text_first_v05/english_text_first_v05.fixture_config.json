@@ -1,0 +1,24 @@
+{
+  "schema_version": "english_text_first_v05.config.fixture",
+  "pipeline_id": "english_text_first_v05",
+  "status": "experimental_isolated_fixture",
+  "model_provider": "recorded_fixture",
+  "default_model_alias": "none",
+  "default_model_endpoint_id": "none",
+  "api_key_env": "",
+  "owned_output_root": "outputs/english_text_first_fixture_should_be_overridden",
+  "input_roots": {
+    "vlm_transcriber": "tests/fixtures/english_text_first_v05/vlm_transcriber",
+    "unit_and_v04c": "tests/fixtures/english_text_first_v05/unit_and_v04c",
+    "semantic_reference_v03b": "tests/fixtures/english_text_first_v05/semantic_reference_v03b"
+  },
+  "documents": [
+    "reading_portable",
+    "writing_portable"
+  ],
+  "contracts": {
+    "runtime_import_enabled": false,
+    "database_write_enabled": false,
+    "fixture_policy": "small_portable_recorded_inputs_no_model_calls"
+  }
+}

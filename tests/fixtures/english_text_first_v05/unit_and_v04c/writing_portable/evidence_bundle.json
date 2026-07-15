@@ -1,0 +1,49 @@
+{
+  "schema": "english_text_first_v05.fixture.evidence_bundle",
+  "doc_id": "writing_portable",
+  "pages": [
+    {
+      "page": 1,
+      "blocks": [
+        {
+          "line_ref": "p001:b1",
+          "block_id": "b1",
+          "label": "question",
+          "text": "Write an invitation for the school art show."
+        },
+        {
+          "line_ref": "p001:b2",
+          "block_id": "b2",
+          "label": "solution",
+          "text": "Sample answer: Dear Tom, please join our art show."
+        },
+        {
+          "line_ref": "p001:b3",
+          "block_id": "b3",
+          "label": "visual",
+          "text": "Poster layout: time, place, and activity boxes."
+        }
+      ]
+    }
+  ],
+  "flat_blocks": [
+    {
+      "line_ref": "p001:b1",
+      "block_id": "b1",
+      "label": "question",
+      "text": "Write an invitation for the school art show."
+    },
+    {
+      "line_ref": "p001:b2",
+      "block_id": "b2",
+      "label": "solution",
+      "text": "Sample answer: Dear Tom, please join our art show."
+    },
+    {
+      "line_ref": "p001:b3",
+      "block_id": "b3",
+      "label": "visual",
+      "text": "Poster layout: time, place, and activity boxes."
+    }
+  ]
+}

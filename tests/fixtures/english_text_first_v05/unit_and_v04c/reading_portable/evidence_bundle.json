@@ -1,0 +1,73 @@
+{
+  "schema": "english_text_first_v05.fixture.evidence_bundle",
+  "doc_id": "reading_portable",
+  "pages": [
+    {
+      "page": 1,
+      "blocks": [
+        {
+          "line_ref": "p001:b1",
+          "block_id": "b1",
+          "label": "passage",
+          "text": "Passage: Lily keeps a daily reading journal."
+        },
+        {
+          "line_ref": "p001:b2",
+          "block_id": "b2",
+          "label": "question",
+          "text": "1. What does Lily keep every day?"
+        },
+        {
+          "line_ref": "p001:b3",
+          "block_id": "b3",
+          "label": "solution",
+          "text": "Answer: She keeps a reading journal."
+        },
+        {
+          "line_ref": "p001:b4",
+          "block_id": "b4",
+          "label": "question",
+          "text": "2. Why is the journal useful?"
+        },
+        {
+          "line_ref": "p001:b5",
+          "block_id": "b5",
+          "label": "question",
+          "text": "3. Continue the sentence at the bottom..."
+        }
+      ]
+    }
+  ],
+  "flat_blocks": [
+    {
+      "line_ref": "p001:b1",
+      "block_id": "b1",
+      "label": "passage",
+      "text": "Passage: Lily keeps a daily reading journal."
+    },
+    {
+      "line_ref": "p001:b2",
+      "block_id": "b2",
+      "label": "question",
+      "text": "1. What does Lily keep every day?"
+    },
+    {
+      "line_ref": "p001:b3",
+      "block_id": "b3",
+      "label": "solution",
+      "text": "Answer: She keeps a reading journal."
+    },
+    {
+      "line_ref": "p001:b4",
+      "block_id": "b4",
+      "label": "question",
+      "text": "2. Why is the journal useful?"
+    },
+    {
+      "line_ref": "p001:b5",
+      "block_id": "b5",
+      "label": "question",
+      "text": "3. Continue the sentence at the bottom..."
+    }
+  ]
+}

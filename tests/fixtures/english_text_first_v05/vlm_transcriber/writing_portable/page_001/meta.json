@@ -1,0 +1,5 @@
+{
+  "image_path": "tests/fixtures/english_text_first_v05/page_images/writing_portable_p001.png",
+  "model": "recorded_fixture_no_model_call",
+  "finish_reason": "recorded_fixture"
+}

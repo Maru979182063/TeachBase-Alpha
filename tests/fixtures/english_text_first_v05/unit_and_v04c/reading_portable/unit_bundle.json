@@ -1,0 +1,81 @@
+{
+  "schema": "english_text_first_v05.fixture.unit_bundle",
+  "doc_id": "reading_portable",
+  "units": [
+    {
+      "unit_id": "u_001",
+      "unit_type": "content_unit",
+      "title": "Reading passage",
+      "role_tags": [
+        "passage_companion"
+      ],
+      "relation_to_parent": "passage_companion",
+      "parent_hint": "",
+      "source_refs": [
+        "p001:b1"
+      ],
+      "visual_refs": [],
+      "completeness": "complete"
+    },
+    {
+      "unit_id": "u_002",
+      "unit_type": "question_like_unit",
+      "title": "Complete reading question",
+      "role_tags": [
+        "reading_comprehension"
+      ],
+      "relation_to_parent": "depends_on",
+      "parent_hint": "u_001",
+      "source_refs": [
+        "p001:b2"
+      ],
+      "visual_refs": [],
+      "completeness": "complete"
+    },
+    {
+      "unit_id": "u_003",
+      "unit_type": "solution_unit",
+      "title": "Answer for question 1",
+      "role_tags": [
+        "answer"
+      ],
+      "relation_to_parent": "solution_for",
+      "parent_hint": "u_002",
+      "source_refs": [
+        "p001:b3"
+      ],
+      "visual_refs": [],
+      "completeness": "complete"
+    },
+    {
+      "unit_id": "u_004",
+      "unit_type": "question_like_unit",
+      "title": "Missing solution question",
+      "role_tags": [
+        "reading_comprehension"
+      ],
+      "relation_to_parent": "depends_on",
+      "parent_hint": "u_001",
+      "source_refs": [
+        "p001:b4"
+      ],
+      "visual_refs": [],
+      "completeness": "complete"
+    },
+    {
+      "unit_id": "u_005",
+      "unit_type": "question_like_unit",
+      "title": "Incomplete tail question",
+      "role_tags": [
+        "reading_comprehension"
+      ],
+      "relation_to_parent": "depends_on",
+      "parent_hint": "u_001",
+      "source_refs": [
+        "p001:b5"
+      ],
+      "visual_refs": [],
+      "completeness": "open_tail"
+    }
+  ]
+}
