@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.run_semantic_role_effectiveness_eval import DEFAULT_CASES, validate_cases
+from tools.run_semantic_role_effectiveness_eval import DEFAULT_CASES, _case_to_node, predict_case, validate_cases
 from tools.semantic_role_eval_metrics import compute_metrics
 
 
@@ -19,6 +19,7 @@ class SemanticRoleGoldLeakageTests(unittest.TestCase):
         cases = [
             {
                 "case_id": "verified",
+                "evaluation_tier": "VERIFIED_REAL_GOLD",
                 "gold_status": "VERIFIED",
                 "subject": "math",
                 "expected_semantic_role": "exercise",
@@ -30,6 +31,7 @@ class SemanticRoleGoldLeakageTests(unittest.TestCase):
             },
             {
                 "case_id": "candidate",
+                "evaluation_tier": "CANDIDATE_REVIEW",
                 "gold_status": "REVIEW_REQUIRED",
                 "subject": "math",
                 "expected_semantic_role": "knowledge",
@@ -69,6 +71,24 @@ class SemanticRoleGoldLeakageTests(unittest.TestCase):
         metrics = compute_metrics(cases, predictions)
         self.assertEqual(metrics["verified_case_count"], 1)
         self.assertEqual(metrics["role_exact_match_accuracy"], 1.0)
+
+    def test_expected_fields_do_not_change_prediction_input_or_prediction(self) -> None:
+        base = json.loads(DEFAULT_CASES.read_text(encoding="utf-8-sig"))[0]
+        base_node = _case_to_node(base)
+        base_prediction = predict_case(base, "gold_leakage_metamorphic")
+        mutations = {
+            "expected_semantic_role": "exercise",
+            "expected_presentation_kind": "table",
+            "expected_disposition": "structurally_blocked",
+            "expected_route_candidate": "review_only",
+            "expected_relations": [{"type": "explains", "target_node_id": "mutated"}],
+            "expected_needs_role_review": False,
+        }
+        for field, value in mutations.items():
+            mutated = dict(base)
+            mutated[field] = value
+            self.assertEqual(_case_to_node(mutated), base_node, field)
+            self.assertEqual(predict_case(mutated, "gold_leakage_metamorphic"), base_prediction, field)
 
     def test_fixture_gold_does_not_copy_current_node_type_as_role(self) -> None:
         cases = json.loads(DEFAULT_CASES.read_text(encoding="utf-8-sig"))

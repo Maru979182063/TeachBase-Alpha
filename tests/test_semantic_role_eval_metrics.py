@@ -17,6 +17,7 @@ class SemanticRoleEvalMetricsTests(unittest.TestCase):
         cases = [
             {
                 "case_id": "c1",
+                "evaluation_tier": "VERIFIED_REAL_GOLD",
                 "gold_status": "VERIFIED",
                 "subject": "math",
                 "expected_semantic_role": "exercise",
@@ -28,6 +29,7 @@ class SemanticRoleEvalMetricsTests(unittest.TestCase):
             },
             {
                 "case_id": "c2",
+                "evaluation_tier": "VERIFIED_REAL_GOLD",
                 "gold_status": "VERIFIED",
                 "subject": "math",
                 "expected_semantic_role": "knowledge",
@@ -39,6 +41,7 @@ class SemanticRoleEvalMetricsTests(unittest.TestCase):
             },
             {
                 "case_id": "c3",
+                "evaluation_tier": "CONTRACT_FIXTURE",
                 "gold_status": "UNVERIFIED",
                 "subject": "english",
                 "expected_semantic_role": "",
@@ -89,6 +92,8 @@ class SemanticRoleEvalMetricsTests(unittest.TestCase):
         ]
         metrics = compute_metrics(cases, predictions)
         self.assertEqual(metrics["verified_case_count"], 2)
+        self.assertEqual(metrics["verified_real_gold_case_count"], 2)
+        self.assertEqual(metrics["contract_fixture_count"], 1)
         self.assertEqual(metrics["role_exact_match_accuracy"], 0.5)
         self.assertEqual(metrics["false_safe_rate"], 0.5)
         self.assertEqual(metrics["error_capture_rate"], 0.0)
