@@ -15,7 +15,19 @@ IGNORED_FIELD_NAMES = {
     "run_id",
 }
 RANDOM_REQUEST_KEYS = {"request_id"}
-PATH_LIKE_KEYS = {"path", "output_root", "run_root", "pdf_path"}
+PATH_LIKE_KEYS = {
+    "path",
+    "output_root",
+    "run_root",
+    "pdf_path",
+    "fragment_image",
+    "question_image",
+    "stem_image",
+    "analysis_image",
+    "transcription_image",
+    "review_canvas",
+    "question_composite",
+}
 
 
 def _is_explicit_random_request_id(value: Any) -> bool:
@@ -28,9 +40,18 @@ def _is_explicit_random_request_id(value: Any) -> bool:
 def _normalize_path_string(value: str, roots: list[Path]) -> str:
     normalized = value.replace("\\", "/")
     for root in roots:
-        root_text = str(root.resolve()).replace("\\", "/")
-        if root_text and normalized.startswith(root_text):
-            return "<ABS_ROOT>" + normalized[len(root_text) :]
+        candidates = {
+            str(root).replace("\\", "/"),
+            str(root.resolve()).replace("\\", "/"),
+        }
+        try:
+            candidates.add(str(root.resolve().relative_to(Path.cwd().resolve())).replace("\\", "/"))
+        except Exception:
+            pass
+        for root_text in sorted((item.strip("/") for item in candidates if item), key=len, reverse=True):
+            if normalized.strip("/").startswith(root_text):
+                suffix = normalized.strip("/")[len(root_text) :]
+                return "<RUN_ROOT>" + suffix
     temp_markers = ["/Temp/", "/tmp/", "/AppData/Local/Temp/"]
     for marker in temp_markers:
         idx = normalized.find(marker)

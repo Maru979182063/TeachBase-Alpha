@@ -1,0 +1,121 @@
+{
+  "schema_version": "semantic_role_adapter_results_shadow.v0.2",
+  "adapter_version": "semantic_role_adapter_shadow.v0.2",
+  "adapter_mode": "shadow_only",
+  "business_mutation_allowed": false,
+  "model_invoked": false,
+  "paid_model_invoked": false,
+  "prompt_content_changed": false,
+  "document_profile_node_count": 3,
+  "observations": [
+    {
+      "adapter_version": "semantic_role_adapter_shadow.v0.2",
+      "adapter_mode": "shadow_only",
+      "business_mutation_allowed": false,
+      "node_id": "synthetic_ready_q_001",
+      "current_node_type": "question",
+      "current_review_status": "AUDITED_READY",
+      "shadow_role": "exercise",
+      "presentation_kind": "text",
+      "disposition_candidate": "processable",
+      "route_candidate": "question_splitter",
+      "effective_route_candidate": "question_splitter",
+      "confidence": 0.82,
+      "confidence_source": "rule_fallback",
+      "review_reasons": [],
+      "evidence": [
+        {
+          "type": "existing_assignment",
+          "detail": "question_node_or_start_flag",
+          "weight": 0.65
+        }
+      ],
+      "relations": [],
+      "requires_secondary_split": false,
+      "preserve_as_handout_content": true,
+      "eligible_for_question_bank": true,
+      "needs_role_review": false,
+      "shadow_decision": "observe_only",
+      "would_mutate_pipeline": false,
+      "prompt_version": "no_prompt_shadow_rules_v0.2",
+      "config_version": "semantic_profiles_v0.2",
+      "route_availability": "implemented",
+      "threshold_version": "uncalibrated_v0.2",
+      "hard_constraints_passed": true
+    },
+    {
+      "adapter_version": "semantic_role_adapter_shadow.v0.2",
+      "adapter_mode": "shadow_only",
+      "business_mutation_allowed": false,
+      "node_id": "synthetic_review_q_002",
+      "current_node_type": "question",
+      "current_review_status": "NEEDS_REVIEW",
+      "shadow_role": "exercise",
+      "presentation_kind": "text",
+      "disposition_candidate": "structurally_blocked",
+      "route_candidate": "question_splitter",
+      "effective_route_candidate": "review_only",
+      "confidence": 0.82,
+      "confidence_source": "rule_fallback",
+      "review_reasons": [
+        "page_bottom_may_continue"
+      ],
+      "evidence": [
+        {
+          "type": "existing_assignment",
+          "detail": "question_node_or_start_flag",
+          "weight": 0.65
+        }
+      ],
+      "relations": [],
+      "requires_secondary_split": false,
+      "preserve_as_handout_content": true,
+      "eligible_for_question_bank": true,
+      "needs_role_review": true,
+      "shadow_decision": "observe_only",
+      "would_mutate_pipeline": false,
+      "prompt_version": "no_prompt_shadow_rules_v0.2",
+      "config_version": "semantic_profiles_v0.2",
+      "route_availability": "implemented",
+      "threshold_version": "uncalibrated_v0.2",
+      "hard_constraints_passed": false
+    },
+    {
+      "adapter_version": "semantic_role_adapter_shadow.v0.2",
+      "adapter_mode": "shadow_only",
+      "business_mutation_allowed": false,
+      "node_id": "synthetic_orphan_003",
+      "current_node_type": "quarantined_orphan",
+      "current_review_status": "QUARANTINED",
+      "shadow_role": "unknown",
+      "presentation_kind": "unknown",
+      "disposition_candidate": "structurally_blocked",
+      "route_candidate": "review_only",
+      "effective_route_candidate": "review_only",
+      "confidence": 0.35,
+      "confidence_source": "rule_fallback",
+      "review_reasons": [
+        "orphan_unresolved"
+      ],
+      "evidence": [
+        {
+          "type": "audit_signal",
+          "detail": "quarantined",
+          "weight": 1.0
+        }
+      ],
+      "relations": [],
+      "requires_secondary_split": false,
+      "preserve_as_handout_content": true,
+      "eligible_for_question_bank": false,
+      "needs_role_review": true,
+      "shadow_decision": "observe_only",
+      "would_mutate_pipeline": false,
+      "prompt_version": "no_prompt_shadow_rules_v0.2",
+      "config_version": "semantic_profiles_v0.2",
+      "route_availability": "implemented",
+      "threshold_version": "uncalibrated_v0.2",
+      "hard_constraints_passed": false
+    }
+  ]
+}

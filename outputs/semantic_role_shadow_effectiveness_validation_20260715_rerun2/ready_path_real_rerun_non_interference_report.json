@@ -1,0 +1,75 @@
+{
+  "schema_version": "semantic_shadow_non_interference_report.v0.1",
+  "baseline_root": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6",
+  "current_root": "outputs\\semantic_role_shadow_effectiveness_validation_20260715_rerun2\\ready_path_real_rerun\\deterministic_english_mock_p5_6",
+  "compared_artifact_count": 5,
+  "ignored_field_count": 146,
+  "equality": true,
+  "baseline_hash": "8b7fb0dffc5a2d62e15bccdb31b24d2a9fe838f74daf69912790ca72cede08b6",
+  "current_hash": "8b7fb0dffc5a2d62e15bccdb31b24d2a9fe838f74daf69912790ca72cede08b6",
+  "canonical_hash": "8b7fb0dffc5a2d62e15bccdb31b24d2a9fe838f74daf69912790ca72cede08b6",
+  "mismatch_json_paths": [],
+  "mismatch_reason": "",
+  "artifacts": [
+    {
+      "baseline_path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\assignments.json",
+      "current_path": "outputs\\semantic_role_shadow_effectiveness_validation_20260715_rerun2\\ready_path_real_rerun\\deterministic_english_mock_p5_6\\docs\\english\\assignments.json",
+      "baseline_hash": "d6aa84cfe20bc19bbb57498c304cb91d9fb8ec7b574edfc4c6037397efe52cb0",
+      "current_hash": "d6aa84cfe20bc19bbb57498c304cb91d9fb8ec7b574edfc4c6037397efe52cb0",
+      "canonical_hash": "d6aa84cfe20bc19bbb57498c304cb91d9fb8ec7b574edfc4c6037397efe52cb0",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "docs/english/assignments.json"
+    },
+    {
+      "baseline_path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\semantic_nodes.json",
+      "current_path": "outputs\\semantic_role_shadow_effectiveness_validation_20260715_rerun2\\ready_path_real_rerun\\deterministic_english_mock_p5_6\\docs\\english\\semantic_nodes.json",
+      "baseline_hash": "64d32e85f6bd49f8933eae492af384bdffc53abffc7fda1304cecc218560be55",
+      "current_hash": "64d32e85f6bd49f8933eae492af384bdffc53abffc7fda1304cecc218560be55",
+      "canonical_hash": "64d32e85f6bd49f8933eae492af384bdffc53abffc7fda1304cecc218560be55",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "docs/english/semantic_nodes.json"
+    },
+    {
+      "baseline_path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\audit_report.json",
+      "current_path": "outputs\\semantic_role_shadow_effectiveness_validation_20260715_rerun2\\ready_path_real_rerun\\deterministic_english_mock_p5_6\\docs\\english\\audit_report.json",
+      "baseline_hash": "084441c5084875e69980ae1a8ed31866148dd180b9675eb0abf99234ce0f5c66",
+      "current_hash": "084441c5084875e69980ae1a8ed31866148dd180b9675eb0abf99234ce0f5c66",
+      "canonical_hash": "084441c5084875e69980ae1a8ed31866148dd180b9675eb0abf99234ce0f5c66",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "docs/english/audit_report.json"
+    },
+    {
+      "baseline_path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\legacy_bridge_questions.json",
+      "current_path": "outputs\\semantic_role_shadow_effectiveness_validation_20260715_rerun2\\ready_path_real_rerun\\deterministic_english_mock_p5_6\\legacy_bridge_questions.json",
+      "baseline_hash": "bee83cd148d7e650fd782397f2ebbef2b9a04a95bafdfff341f8aa274f1ff51c",
+      "current_hash": "bee83cd148d7e650fd782397f2ebbef2b9a04a95bafdfff341f8aa274f1ff51c",
+      "canonical_hash": "bee83cd148d7e650fd782397f2ebbef2b9a04a95bafdfff341f8aa274f1ff51c",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 146,
+      "artifact": "legacy_bridge_questions.json"
+    },
+    {
+      "baseline_path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\review_repair_pool.json",
+      "current_path": "outputs\\semantic_role_shadow_effectiveness_validation_20260715_rerun2\\ready_path_real_rerun\\deterministic_english_mock_p5_6\\review_repair_pool.json",
+      "baseline_hash": "ce14b523bda6e3c720ec3eec56c85805191e3ae411ff800128184660dfb1c0ff",
+      "current_hash": "ce14b523bda6e3c720ec3eec56c85805191e3ae411ff800128184660dfb1c0ff",
+      "canonical_hash": "ce14b523bda6e3c720ec3eec56c85805191e3ae411ff800128184660dfb1c0ff",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "review_repair_pool.json"
+    }
+  ]
+}

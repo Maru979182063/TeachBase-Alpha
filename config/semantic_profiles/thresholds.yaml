@@ -1,0 +1,19 @@
+{
+  "schema_version": "semantic_thresholds_v0.2",
+  "threshold_version": "uncalibrated_v0.2",
+  "auto_route": {
+    "exercise": 0.82,
+    "knowledge": 0.80,
+    "worked_example": 0.82,
+    "question_group": 0.86,
+    "source_material": 0.86,
+    "answer_explanation": 0.88
+  },
+  "relation": {
+    "answers": 0.88,
+    "explains": 0.88,
+    "shared_material_for": 0.86,
+    "continues": 0.84,
+    "contains": 0.80
+  }
+}

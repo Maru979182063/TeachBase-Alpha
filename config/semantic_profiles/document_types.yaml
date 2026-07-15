@@ -1,0 +1,12 @@
+{
+  "schema_version": "semantic_document_types_v0.2",
+  "document_types": {
+    "teacher_handout": {},
+    "student_handout": {},
+    "workbook": {},
+    "exam": {},
+    "question_bank_export": {},
+    "reference_material": {},
+    "unknown": {}
+  }
+}

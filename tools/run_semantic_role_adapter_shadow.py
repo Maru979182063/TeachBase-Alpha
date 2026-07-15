@@ -14,7 +14,7 @@ if str(ROOT) not in sys.path:
 
 from tools.document_profile_resolver import resolve_document_profile
 from tools.pipeline_run_context import generate_run_id
-from tools.semantic_role_adapter import build_adapter_diff_report, run_semantic_role_adapter_shadow
+from tools.semantic_role_adapter import build_adapter_diff_report, build_review_samples_html, run_semantic_role_adapter_shadow
 from tools.semantic_shadow_compare import compare_artifact_sets, load_json
 
 
@@ -52,25 +52,6 @@ def _artifact_paths(doc_root: Path, stable_root: Path) -> list[str]:
         "legacy_bridge_questions.json",
         "review_repair_pool.json",
     ]
-
-
-def _review_samples_html(adapter_results: dict[str, Any]) -> str:
-    rows = []
-    for row in adapter_results.get("observations", []) or []:
-        reasons = ", ".join(html.escape(str(reason)) for reason in row.get("review_reasons", []))
-        rows.append(
-            "<tr>"
-            f"<td>{html.escape(str(row.get('node_id', '')))}</td>"
-            f"<td>{html.escape(str(row.get('current_node_type', '')))}</td>"
-            f"<td>{html.escape(str(row.get('current_review_status', '')))}</td>"
-            f"<td>{reasons}</td>"
-            "</tr>"
-        )
-    return (
-        "<!doctype html><html><head><meta charset=\"utf-8\"><title>Semantic Role Shadow Review Samples</title></head>"
-        "<body><table><thead><tr><th>node_id</th><th>node_type</th><th>review_status</th><th>review_reasons</th></tr></thead>"
-        f"<tbody>{''.join(rows)}</tbody></table></body></html>"
-    )
 
 
 def _assert_owned_outputs(out_dir: Path, files: list[Path]) -> None:
@@ -123,6 +104,8 @@ def run_shadow(
         doc_root=doc_root,
         semantic_nodes=semantic_nodes,
         audit_report=audit_report,
+        doc_key=doc_root.name,
+        source_run_id=run_id,
     )
     adapter_results = run_semantic_role_adapter_shadow(
         semantic_nodes=semantic_nodes,
@@ -133,8 +116,12 @@ def run_shadow(
         semantic_nodes=semantic_nodes,
         adapter_results=adapter_results,
     )
+    diff_metrics = diff_report.get("metrics", {})
+    observations = adapter_results.get("observations", [])
     metrics = {
-        "schema_version": "semantic_role_adapter_metrics_shadow.v0.1",
+        "schema_version": "semantic_role_adapter_metrics_shadow.v0.2",
+        "adapter_mode": "shadow_only",
+        "business_mutation_allowed": False,
         "shadow_enabled": True,
         "model_invoked": False,
         "paid_model_invoked": False,
@@ -143,8 +130,11 @@ def run_shadow(
         "audit_record_count": len(audit_report.get("records", [])),
         "legacy_bridge_question_count": len(legacy_bridge.get("questions", [])),
         "review_repair_pool_count": len(repair_pool.get("items", [])),
-        "adapter_observation_count": len(adapter_results.get("observations", [])),
+        "adapter_observation_count": len(observations),
         "diff_count": diff_report.get("diff_count", 0),
+        "needs_role_review_count": int(diff_metrics.get("needs_manual_review", 0) or 0),
+        "route_fallback_count": int(diff_metrics.get("route_fallbacks", 0) or 0),
+        "shadow_roles": sorted({str(item.get("shadow_role", "")) for item in observations if item.get("shadow_role")}),
     }
     prompt_trace = {
         "schema_version": "semantic_role_adapter_prompt_trace_shadow.v0.1",
@@ -169,7 +159,7 @@ def run_shadow(
     _write_json(files[2], diff_report)
     _write_json(files[3], metrics)
     _write_json(files[4], prompt_trace)
-    files[5].write_text(_review_samples_html(adapter_results), encoding="utf-8")
+    files[5].write_text(build_review_samples_html(adapter_results, diff_report), encoding="utf-8")
     _write_json(files[6], compare_report)
     _assert_owned_outputs(out_dir, files)
     return {

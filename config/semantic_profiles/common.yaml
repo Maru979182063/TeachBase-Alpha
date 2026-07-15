@@ -1,0 +1,11 @@
+{
+  "schema_version": "semantic_profile_common_v0.2",
+  "config_version": "semantic_profiles_v0.2",
+  "title_evidence_policy": "weak_signal_only",
+  "unknown_output_policy": {
+    "semantic_role": "unknown",
+    "disposition": "review_required",
+    "effective_route": "review_only",
+    "needs_role_review": true
+  }
+}

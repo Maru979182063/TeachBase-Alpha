@@ -13,6 +13,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import tools.run_semantic_role_adapter_shadow as shadow_runner
+from tools.build_semantic_shadow_review_baseline import build_baseline
 from tools.semantic_shadow_compare import compare_artifact_sets
 
 
@@ -116,6 +117,31 @@ class SemanticRoleShadowIsolationTests(unittest.TestCase):
                 self.assertIn(sidecar_dir.resolve(), [path.resolve(), *path.resolve().parents])
             self.assertTrue(result["non_interference"]["equality"], result)
 
+    def test_shadow_on_observes_real_role_differences_without_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            current_root = Path(td) / "review_current"
+            out_root = Path(td) / "semantic_role_shadow"
+            copy_core_artifacts(REVIEW_ROOT, REVIEW_ARTIFACTS, current_root)
+            result = shadow_runner.run_shadow(
+                stable_root=REVIEW_ROOT,
+                doc_root=REVIEW_DOC_ROOT,
+                current_root=current_root,
+                out_root=out_root,
+                run_id="unit_shadow_diffs",
+                enable_shadow=True,
+            )
+            sidecar_dir = out_root / "unit_shadow_diffs"
+            adapter_results = json.loads((sidecar_dir / "semantic_role_adapter_results.json").read_text(encoding="utf-8-sig"))
+            diff_report = json.loads((sidecar_dir / "semantic_role_adapter_diff_report.json").read_text(encoding="utf-8-sig"))
+            self.assertEqual(adapter_results["adapter_mode"], "shadow_only")
+            self.assertFalse(adapter_results["business_mutation_allowed"])
+            self.assertGreater(diff_report["diff_count"], 0, diff_report)
+            self.assertTrue(
+                any(row["current_node_type"] != row["shadow_role"] for row in diff_report["rows"]),
+                diff_report,
+            )
+            self.assertTrue(result["non_interference"]["equality"], result)
+
     def test_review_reasons_and_repair_pool_non_interference(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             current_root = Path(td) / "review_current"
@@ -130,6 +156,14 @@ class SemanticRoleShadowIsolationTests(unittest.TestCase):
             self.assertTrue(report["equality"], report)
             self.assertEqual(reasons, ["page_bottom_may_continue", "orphan_unresolved"])
             self.assertEqual(len(repair_pool["items"]), 2)
+
+    def test_review_path_real_rerun_generator_canonical_comparison(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            current_root = Path(td) / "review_rerun"
+            build_baseline(current_root)
+            report = compare_artifact_sets(REVIEW_ROOT, current_root, REVIEW_ARTIFACTS, roots=[ROOT, REVIEW_ROOT, current_root])
+            self.assertTrue(report["equality"], report)
+            self.assertEqual(report["compared_artifact_count"], 5)
 
     def test_registry_declares_shadow_output_ownership(self) -> None:
         registry = json.loads((ROOT / "config" / "pipeline_registry.yaml").read_text(encoding="utf-8-sig"))
