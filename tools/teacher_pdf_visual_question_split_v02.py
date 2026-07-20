@@ -46,6 +46,7 @@ VALID_PROFILES = {
     PROFILE_SENIOR_MATH,
     PROFILE_JUNIOR_GEOMETRY,
 }
+MATH_MODEL_SPLIT_PROFILES = {PROFILE_SENIOR_MATH, PROFILE_JUNIOR_GEOMETRY}
 REVIEW_STATUS_CANDIDATE = "CANDIDATE_SPLIT_V03"
 REVIEW_STATUS_NEEDS_REVIEW = "NEEDS_MANUAL_REVIEW"
 REVIEW_STATUS_ORPHAN_MERGED = "CANDIDATE_SPLIT_V03_ORPHAN_MERGED"
@@ -273,6 +274,7 @@ PANEL_MULTI_QUESTION = "multi_question_panel"
 PANEL_KNOWLEDGE = "knowledge_panel"
 PANEL_MIXED = "mixed_panel"
 ENGLISH_PANEL_KINDS = {PANEL_SINGLE_QUESTION, PANEL_MULTI_QUESTION, PANEL_KNOWLEDGE, PANEL_MIXED}
+PANEL_KINDS = {PANEL_SINGLE_QUESTION, PANEL_MULTI_QUESTION, PANEL_KNOWLEDGE, PANEL_MIXED}
 ARK_API_URL = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
 SECTION_LABEL_PATTERNS = {
     "answer": [
@@ -999,8 +1001,61 @@ def run_english_segment_unit_planner(segments: list[Segment], out_dir: Path) -> 
     return summary
 
 
-def build_group_question_split_messages(group: ComponentGroup, canvas_path: Path) -> list[dict]:
-    bundle = vision_prompt_store.get_english_question_splitter_prompt_bundle()
+def env_flag(name: str, default: str = "0") -> bool:
+    return str(os.environ.get(name, default) or default).strip().lower() not in {"0", "false", "no", "off"}
+
+
+def profile_question_splitter_bundle(profile: str) -> dict[str, str]:
+    if profile in MATH_MODEL_SPLIT_PROFILES:
+        return vision_prompt_store.get_math_question_splitter_prompt_bundle()
+    return vision_prompt_store.get_english_question_splitter_prompt_bundle()
+
+
+def profile_panel_planner_bundle(profile: str) -> dict[str, str]:
+    if profile in MATH_MODEL_SPLIT_PROFILES:
+        return vision_prompt_store.get_math_panel_planner_prompt_bundle()
+    return vision_prompt_store.get_english_panel_planner_prompt_bundle()
+
+
+def profile_question_split_model(profile: str) -> str:
+    if profile in MATH_MODEL_SPLIT_PROFILES:
+        return str(
+            os.environ.get("MATH_QUESTION_SPLIT_MODEL", "")
+            or os.environ.get("ENGLISH_QUESTION_SPLIT_MODEL", "")
+            or "doubao-seed-2-0-lite-260428"
+        ).strip()
+    return str(os.environ.get("ENGLISH_QUESTION_SPLIT_MODEL", "") or "doubao-seed-2-0-lite-260428").strip()
+
+
+def profile_panel_planner_model(profile: str) -> str:
+    if profile in MATH_MODEL_SPLIT_PROFILES:
+        return str(
+            os.environ.get("MATH_PANEL_PLANNER_MODEL", "")
+            or os.environ.get("MATH_QUESTION_SPLIT_MODEL", "")
+            or os.environ.get("ENGLISH_QUESTION_SPLIT_MODEL", "")
+            or "doubao-seed-2-0-lite-260428"
+        ).strip()
+    return str(
+        os.environ.get("ENGLISH_PANEL_PLANNER_MODEL", "")
+        or os.environ.get("ENGLISH_QUESTION_SPLIT_MODEL", "")
+        or "doubao-seed-2-0-lite-260428"
+    ).strip()
+
+
+def profile_panel_planner_enabled(profile: str) -> bool:
+    if profile in MATH_MODEL_SPLIT_PROFILES:
+        return env_flag("MATH_PANEL_PLANNER_ENABLE", "1")
+    return env_flag("ENGLISH_PANEL_PLANNER_ENABLE", "1")
+
+
+def profile_question_split_enabled(profile: str) -> bool:
+    if profile in MATH_MODEL_SPLIT_PROFILES:
+        return env_flag("MATH_QUESTION_SPLIT_ENABLE", "1")
+    return env_flag("ENGLISH_QUESTION_SPLIT_ENABLE", "1")
+
+
+def build_group_question_split_messages(group: ComponentGroup, canvas_path: Path, profile: str = PROFILE_ENGLISH) -> list[dict]:
+    bundle = profile_question_splitter_bundle(profile)
     prompt = vision_prompt_store.render_template(
         bundle["user_template"],
         {
@@ -1019,8 +1074,8 @@ def build_group_question_split_messages(group: ComponentGroup, canvas_path: Path
     return [{"role": "user", "content": content}]
 
 
-def build_group_panel_planner_messages(group: ComponentGroup, canvas_path: Path) -> list[dict]:
-    bundle = vision_prompt_store.get_english_panel_planner_prompt_bundle()
+def build_group_panel_planner_messages(group: ComponentGroup, canvas_path: Path, profile: str = PROFILE_ENGLISH) -> list[dict]:
+    bundle = profile_panel_planner_bundle(profile)
     prompt = vision_prompt_store.render_template(
         bundle["user_template"],
         {
@@ -1037,12 +1092,64 @@ def build_group_panel_planner_messages(group: ComponentGroup, canvas_path: Path)
     content.append({"type": "text", "text": prompt})
     content.append({"type": "image_url", "image_url": {"url": image_to_data_url(canvas_path)}})
     return [{"role": "user", "content": content}]
+
+
+def call_question_splitter_model(
+    group: ComponentGroup,
+    canvas_path: Path,
+    api_key: str,
+    model: str,
+    profile: str = PROFILE_ENGLISH,
+    timeout_seconds: int = 180,
+) -> tuple[dict, dict]:
+    body = {
+        "model": model,
+        "messages": build_group_question_split_messages(group, canvas_path, profile),
+        "temperature": 0,
+    }
+    request = urllib.request.Request(
+        ARK_API_URL,
+        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
+        method="POST",
+    )
+    started = time.time()
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"http_{exc.code}: {detail}") from exc
+    except Exception as exc:
+        raise RuntimeError(f"network_error: {exc}") from exc
+    payload = json.loads(raw)
+    parsed = extract_json_block(payload["choices"][0]["message"]["content"])
+    meta = {
+        "latency_seconds": round(time.time() - started, 3),
+        "usage": payload.get("usage", {}) if isinstance(payload, dict) else {},
+        "raw_response": payload,
+    }
+    return parsed, meta
 
 
 def call_english_question_splitter_model(group: ComponentGroup, canvas_path: Path, api_key: str, model: str, timeout_seconds: int = 180) -> tuple[dict, dict]:
+    return call_question_splitter_model(group, canvas_path, api_key, model, PROFILE_ENGLISH, timeout_seconds)
+
+
+def call_panel_planner_model(
+    group: ComponentGroup,
+    canvas_path: Path,
+    api_key: str,
+    model: str,
+    profile: str = PROFILE_ENGLISH,
+    timeout_seconds: int = 180,
+) -> tuple[dict, dict]:
     body = {
         "model": model,
-        "messages": build_group_question_split_messages(group, canvas_path),
+        "messages": build_group_panel_planner_messages(group, canvas_path, profile),
         "temperature": 0,
     }
     request = urllib.request.Request(
@@ -1074,37 +1181,7 @@ def call_english_question_splitter_model(group: ComponentGroup, canvas_path: Pat
 
 
 def call_english_panel_planner_model(group: ComponentGroup, canvas_path: Path, api_key: str, model: str, timeout_seconds: int = 180) -> tuple[dict, dict]:
-    body = {
-        "model": model,
-        "messages": build_group_panel_planner_messages(group, canvas_path),
-        "temperature": 0,
-    }
-    request = urllib.request.Request(
-        ARK_API_URL,
-        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
-        },
-        method="POST",
-    )
-    started = time.time()
-    try:
-        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
-            raw = response.read().decode("utf-8")
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"http_{exc.code}: {detail}") from exc
-    except Exception as exc:
-        raise RuntimeError(f"network_error: {exc}") from exc
-    payload = json.loads(raw)
-    parsed = extract_json_block(payload["choices"][0]["message"]["content"])
-    meta = {
-        "latency_seconds": round(time.time() - started, 3),
-        "usage": payload.get("usage", {}) if isinstance(payload, dict) else {},
-        "raw_response": payload,
-    }
-    return parsed, meta
+    return call_panel_planner_model(group, canvas_path, api_key, model, PROFILE_ENGLISH, timeout_seconds)
 
 
 def build_group_canvas_with_placements(group: ComponentGroup, page_images: dict[int, Image.Image], out_dir: Path) -> tuple[Path, list[dict], tuple[int, int]]:
@@ -1228,7 +1305,7 @@ def normalize_canvas_panel_boxes(parsed: dict, canvas_size: tuple[int, int]) -> 
         if x1 - x0 < 180 or y1 - y0 < 80:
             continue
         panel_type = str(item.get("panel_type", "") or "").strip()
-        if panel_type not in ENGLISH_PANEL_KINDS:
+        if panel_type not in PANEL_KINDS:
             panel_type = PANEL_MIXED
         try:
             confidence = float(item.get("confidence", 0) or 0)
@@ -1322,17 +1399,18 @@ def split_group_by_english_panels(
     page_images: dict[int, Image.Image],
     next_q: int,
     question_split_dir: Path,
+    profile: str = PROFILE_ENGLISH,
 ) -> tuple[list[QuestionSlice], int] | None:
     api_key = str(os.environ.get("ARK_API_KEY", "") or "").strip()
-    enabled = str(os.environ.get("ENGLISH_PANEL_PLANNER_ENABLE", "1") or "1").strip().lower() not in {"0", "false", "no"}
-    model = str(os.environ.get("ENGLISH_PANEL_PLANNER_MODEL", "") or os.environ.get("ENGLISH_QUESTION_SPLIT_MODEL", "") or "doubao-seed-2-0-lite-260428").strip()
+    enabled = profile_panel_planner_enabled(profile)
+    model = profile_panel_planner_model(profile)
     if not enabled or not api_key:
         return None
     if group.kind not in QUESTION_KINDS:
         return None
     try:
         canvas_path, placements, canvas_size = build_group_canvas_with_placements(group, page_images, question_split_dir / "group_canvases")
-        parsed, meta = call_english_panel_planner_model(group, canvas_path, api_key=api_key, model=model)
+        parsed, meta = call_panel_planner_model(group, canvas_path, api_key=api_key, model=model, profile=profile)
         raw_dir = question_split_dir / "panel_raw_responses"
         raw_dir.mkdir(parents=True, exist_ok=True)
         (raw_dir / f"{group.group_id}.response.json").write_text(json.dumps(meta["raw_response"], ensure_ascii=False, indent=2), encoding="utf-8")
@@ -1352,7 +1430,7 @@ def split_group_by_english_panels(
                     placements,
                     panel,
                     next_q,
-                    "english_panel_single_question",
+                    f"{profile}_panel_single_question",
                     str(panel_idx),
                 )
                 if question is not None:
@@ -1364,7 +1442,7 @@ def split_group_by_english_panels(
                 panel["bbox_xyxy"],
                 panel_crop_dir / f"{group.group_id}_panel_{panel_idx:02d}_{panel_type}.png",
             )
-            sub_parsed, sub_meta = call_english_question_splitter_model(group, panel_path, api_key=api_key, model=model)
+            sub_parsed, sub_meta = call_question_splitter_model(group, panel_path, api_key=api_key, model=model, profile=profile)
             sub_raw_dir = question_split_dir / "panel_question_raw_responses"
             sub_raw_dir.mkdir(parents=True, exist_ok=True)
             (sub_raw_dir / f"{group.group_id}_panel_{panel_idx:02d}.response.json").write_text(
@@ -1382,7 +1460,7 @@ def split_group_by_english_panels(
                     placements,
                     sub_box,
                     next_q,
-                    f"english_panel_recursive {panel_type}",
+                    f"{profile}_panel_recursive {panel_type}",
                     f"{panel_idx}.{sub_idx}",
                 )
                 if question is not None:
@@ -1401,17 +1479,18 @@ def split_group_by_english_model(
     page_images: dict[int, Image.Image],
     next_q: int,
     question_split_dir: Path,
+    profile: str = PROFILE_ENGLISH,
 ) -> tuple[list[QuestionSlice], int] | None:
     api_key = str(os.environ.get("ARK_API_KEY", "") or "").strip()
-    enabled = str(os.environ.get("ENGLISH_QUESTION_SPLIT_ENABLE", "1") or "1").strip().lower() not in {"0", "false", "no"}
-    model = str(os.environ.get("ENGLISH_QUESTION_SPLIT_MODEL", "") or "doubao-seed-2-0-lite-260428").strip()
+    enabled = profile_question_split_enabled(profile)
+    model = profile_question_split_model(profile)
     if not enabled or not api_key:
         return None
     if group.kind not in QUESTION_KINDS:
         return None
     try:
         canvas_path, placements, canvas_size = build_group_canvas_with_placements(group, page_images, question_split_dir / "group_canvases")
-        parsed, meta = call_english_question_splitter_model(group, canvas_path, api_key=api_key, model=model)
+        parsed, meta = call_question_splitter_model(group, canvas_path, api_key=api_key, model=model, profile=profile)
         raw_dir = question_split_dir / "raw_responses"
         raw_dir.mkdir(parents=True, exist_ok=True)
         (raw_dir / f"{group.group_id}.response.json").write_text(json.dumps(meta["raw_response"], ensure_ascii=False, indent=2), encoding="utf-8")
@@ -1426,7 +1505,7 @@ def split_group_by_english_model(
                 placements,
                 box,
                 next_q,
-                "english_model_question_split",
+                f"{profile}_model_question_split",
                 str(idx + 1),
             )
             if question is not None:
@@ -1613,6 +1692,34 @@ def synthesize_checkpoint_fallback_groups(
     return groups
 
 
+def synthesize_math_page_fallback_segments(page_paths: list[Path], profile: str) -> list[Segment]:
+    if profile not in MATH_MODEL_SPLIT_PROFILES:
+        return []
+    segments: list[Segment] = []
+    for page, path in enumerate(page_paths, start=1):
+        img = Image.open(path).convert("RGB")
+        bounds = page_content_bounds(path)
+        if bounds:
+            y0, y1 = bounds
+        else:
+            y0, y1 = 60, max(120, img.height - 60)
+        segments.append(
+            Segment(
+                segment_id=f"seg_math_page_fallback_{page:03d}",
+                page=page,
+                kind="example",
+                label="math_page_model_fallback",
+                checkpoint=f"page_{page:03d}_visual_fallback",
+                x0=30,
+                y0=max(0, y0 - 20),
+                x1=max(60, img.width - 30),
+                y1=min(img.height, y1 + 20),
+                anchor_note="math_page_split_fallback_no_visual_anchors",
+            )
+        )
+    return segments
+
+
 def line_overlaps(line: Line, seg: Segment) -> bool:
     return line.y1 >= seg.y0 and line.y0 <= seg.y1 and line.x1 >= seg.x0 and line.x0 <= seg.x1
 
@@ -1658,7 +1765,15 @@ def question_start_candidates(group: ComponentGroup, lines_by_page: dict[int, li
                 )
                 if len((tail + row_tail).strip()) < 4:
                     continue
-            if line.x0 > seg.x0 + 125:
+            allow_indented_math_example_start = (
+                profile in MATH_MODEL_SPLIT_PROFILES
+                and seg.kind == "example"
+                and number.isdigit()
+                and int(number) == 1
+                and line.x0 <= seg.x0 + 280
+                and line.y0 <= seg.y0 + 145
+            )
+            if line.x0 > seg.x0 + 125 and not allow_indented_math_example_start:
                 continue
             if line.y0 < seg.y0 - 3 or line.y0 > seg.y1:
                 continue
@@ -1771,6 +1886,13 @@ ENGLISH_ORPHAN_TAIL_RE = re.compile(
 )
 
 
+MATH_ORPHAN_TAIL_RE = re.compile(
+    r"(?:答案|解析|解答|证明|故选|所以|因为|由于|整理得|化简得|可得|故|∴)",
+    re.IGNORECASE,
+)
+MATH_INLINE_QUESTION_HEAD_RE = re.compile(r"^\s*(\d{1,2})\s*[\.．、)]")
+
+
 def english_question_has_head(text: str) -> bool:
     clean = normalize_preview_text(text)
     if not clean:
@@ -1784,6 +1906,21 @@ def english_question_has_head(text: str) -> bool:
     return english_words >= 6 and "____" in head
 
 
+def math_question_has_head(text: str) -> bool:
+    clean = normalize_preview_text(text)
+    if not clean:
+        return False
+    return bool(MATH_INLINE_QUESTION_HEAD_RE.search(clean[:160]))
+
+
+def question_has_head(text: str, profile: str) -> bool:
+    if profile == PROFILE_ENGLISH:
+        return english_question_has_head(text)
+    if profile in MATH_MODEL_SPLIT_PROFILES:
+        return math_question_has_head(text)
+    return bool(parse_question_start(normalize_preview_text(text), profile))
+
+
 def english_question_is_orphan_tail(q: QuestionSlice, lines_by_page: dict[int, list[Line]]) -> bool:
     text = preview_text(lines_by_page, q.fragments[0], limit=360) if q.fragments else q.text_preview
     clean = normalize_preview_text(text)
@@ -1792,6 +1929,22 @@ def english_question_is_orphan_tail(q: QuestionSlice, lines_by_page: dict[int, l
     if english_question_has_head(clean):
         return False
     return bool(ENGLISH_ORPHAN_TAIL_RE.search(clean[:280]))
+
+
+def question_is_orphan_tail(q: QuestionSlice, lines_by_page: dict[int, list[Line]], profile: str) -> bool:
+    if profile == PROFILE_ENGLISH:
+        return english_question_is_orphan_tail(q, lines_by_page)
+    text = preview_text(lines_by_page, q.fragments[0], limit=420) if q.fragments else q.text_preview
+    clean = normalize_preview_text(text)
+    if not clean:
+        return False
+    if question_has_head(clean, profile):
+        return False
+    if profile in MATH_MODEL_SPLIT_PROFILES:
+        if english_local_number_int(q.local_number) not in {None, 0}:
+            return False
+        return bool(MATH_ORPHAN_TAIL_RE.search(clean[:360]))
+    return False
 
 
 ENGLISH_INLINE_QUESTION_HEAD_RE = re.compile(
@@ -1823,9 +1976,23 @@ def english_inline_head_number(text: str) -> int | None:
     return None
 
 
+def inline_head_number(text: str, profile: str) -> int | None:
+    if profile == PROFILE_ENGLISH:
+        return english_inline_head_number(text)
+    if profile in MATH_MODEL_SPLIT_PROFILES:
+        match = MATH_INLINE_QUESTION_HEAD_RE.search(normalize_preview_text(text))
+        if match:
+            try:
+                return int(match.group(1))
+            except ValueError:
+                return None
+    return None
+
+
 def find_tail_head_conflict(
     q: QuestionSlice,
     lines_by_page: dict[int, list[Line]],
+    profile: str = PROFILE_ENGLISH,
 ) -> tuple[int, int, int, str] | None:
     current_number = english_local_number_int(q.local_number)
     if current_number is None:
@@ -1836,7 +2003,7 @@ def find_tail_head_conflict(
         for line in lines_by_page.get(frag["page"], []):
             if not (line.y1 >= y0 and line.y0 <= y1 and line.x1 >= x0 and line.x0 <= x1):
                 continue
-            head_number = english_inline_head_number(line.text)
+            head_number = inline_head_number(line.text, profile)
             if head_number is None or head_number <= current_number:
                 continue
             # The current question must already contain real content before this
@@ -1853,12 +2020,20 @@ def refresh_question_slice_text(q: QuestionSlice, lines_by_page: dict[int, list[
         q.text_preview = preview_text(lines_by_page, q.fragments[0])
 
 
-def repair_english_tail_head_shift(
+def tail_head_repair_enabled(profile: str) -> bool:
+    if profile == PROFILE_ENGLISH:
+        return env_flag("ENGLISH_TAIL_HEAD_REPAIR_ENABLE", "0")
+    if profile in MATH_MODEL_SPLIT_PROFILES:
+        return env_flag("MATH_TAIL_HEAD_REPAIR_ENABLE", "1")
+    return False
+
+
+def repair_tail_head_shift(
     questions: list[QuestionSlice],
     lines_by_page: dict[int, list[Line]],
+    profile: str = PROFILE_ENGLISH,
 ) -> list[QuestionSlice]:
-    enabled = str(os.environ.get("ENGLISH_TAIL_HEAD_REPAIR_ENABLE", "0") or "0").strip().lower() in {"1", "true", "yes"}
-    if not enabled:
+    if not tail_head_repair_enabled(profile):
         return questions
     max_rounds = max(1, len(questions) * 2)
     for _ in range(max_rounds):
@@ -1866,7 +2041,7 @@ def repair_english_tail_head_shift(
         for idx in range(len(questions) - 1):
             current = questions[idx]
             following = questions[idx + 1]
-            conflict = find_tail_head_conflict(current, lines_by_page)
+            conflict = find_tail_head_conflict(current, lines_by_page, profile)
             if conflict is None:
                 continue
             frag_idx, split_y, head_number, _head_text = conflict
@@ -1909,20 +2084,36 @@ def repair_english_tail_head_shift(
     return questions
 
 
-def merge_english_orphan_tail_questions(
+def repair_english_tail_head_shift(
     questions: list[QuestionSlice],
     lines_by_page: dict[int, list[Line]],
 ) -> list[QuestionSlice]:
-    enabled = str(os.environ.get("ENGLISH_ORPHAN_MERGE_ENABLE", "0") or "0").strip().lower() in {"1", "true", "yes"}
+    return repair_tail_head_shift(questions, lines_by_page, PROFILE_ENGLISH)
+
+
+def orphan_merge_enabled(profile: str) -> bool:
+    if profile == PROFILE_ENGLISH:
+        return env_flag("ENGLISH_ORPHAN_MERGE_ENABLE", "0")
+    if profile in MATH_MODEL_SPLIT_PROFILES:
+        return env_flag("MATH_ORPHAN_MERGE_ENABLE", "1")
+    return False
+
+
+def merge_orphan_tail_questions(
+    questions: list[QuestionSlice],
+    lines_by_page: dict[int, list[Line]],
+    profile: str = PROFILE_ENGLISH,
+) -> list[QuestionSlice]:
+    enabled = orphan_merge_enabled(profile)
     if not enabled:
         for q in questions:
-            if english_question_is_orphan_tail(q, lines_by_page):
+            if question_is_orphan_tail(q, lines_by_page, profile):
                 q.review_status = BRIDGE_STATUS_QUARANTINED
                 q.review_note = f"{q.review_note}; orphan_tail_quarantined_no_auto_merge".strip("; ")
         return questions
     merged: list[QuestionSlice] = []
     for q in questions:
-        if merged and english_question_is_orphan_tail(q, lines_by_page):
+        if merged and question_is_orphan_tail(q, lines_by_page, profile):
             previous = merged[-1]
             previous.fragments.extend(q.fragments)
             previous.visual_pages = sorted({f["page"] for f in previous.fragments})
@@ -1935,6 +2126,64 @@ def merge_english_orphan_tail_questions(
     for idx, q in enumerate(merged, start=1):
         q.question_id = f"tq_{idx:03d}"
     return merged
+
+
+def merge_english_orphan_tail_questions(
+    questions: list[QuestionSlice],
+    lines_by_page: dict[int, list[Line]],
+) -> list[QuestionSlice]:
+    return merge_orphan_tail_questions(questions, lines_by_page, PROFILE_ENGLISH)
+
+
+def build_leading_question_before_first_start(
+    group: ComponentGroup,
+    lines_by_page: dict[int, list[Line]],
+    starts: list[dict],
+    next_q: int,
+    profile: str,
+) -> tuple[QuestionSlice | None, int]:
+    if not starts or profile not in MATH_MODEL_SPLIT_PROFILES:
+        return None, next_q
+    first_number = english_local_number_int(starts[0].get("number", ""))
+    if first_number is None or first_number <= 1:
+        return None, next_q
+    first_seg_idx = int(starts[0]["seg_idx"])
+    fragments: list[dict] = []
+    for seg_idx in range(0, first_seg_idx + 1):
+        seg = group.segments[seg_idx]
+        fy0, fy1 = seg.y0, seg.y1
+        if seg_idx == first_seg_idx:
+            fy1 = min(seg.y1, int(starts[0]["y"]) - 10)
+        if fy1 <= fy0 + 80:
+            continue
+        fragments.append(
+            {
+                "page": seg.page,
+                "bbox_image": [seg.x0, fy0, seg.x1, fy1],
+                "parent_segment_id": seg.segment_id,
+                "fragment_type": "recovered_leading_question" if not fragments else "continuation",
+            }
+        )
+    if not fragments:
+        return None, next_q
+    preview = preview_text(lines_by_page, fragments[0], limit=360)
+    if not preview and len(fragments) == 1:
+        return None, next_q
+    local_number = str(max(1, first_number - 1))
+    question = QuestionSlice(
+        question_id=f"tq_{next_q:03d}",
+        group_id=group.group_id,
+        checkpoint=group.checkpoint,
+        component_kind=group.kind,
+        component_label=group.label,
+        local_number=local_number,
+        visual_pages=sorted({f["page"] for f in fragments}),
+        fragments=fragments,
+        text_preview=preview,
+        review_status=REVIEW_STATUS_CANDIDATE,
+        review_note=f"{profile}_leading_question_recovered_before_Q{first_number}",
+    )
+    return question, next_q + 1
 
 
 def split_group(
@@ -1953,6 +2202,27 @@ def split_group(
         if model_split is not None:
             return model_split
     starts = question_start_candidates(group, lines_by_page, profile)
+    if profile in MATH_MODEL_SPLIT_PROFILES and (not starts or env_flag("MATH_QUESTION_SPLIT_MODE_ALWAYS", "0")):
+        panel_split = split_group_by_english_panels(
+            group,
+            lines_by_page,
+            page_images,
+            next_q,
+            question_split_dir,
+            profile=profile,
+        )
+        if panel_split is not None:
+            return panel_split
+        model_split = split_group_by_english_model(
+            group,
+            lines_by_page,
+            page_images,
+            next_q,
+            question_split_dir,
+            profile=profile,
+        )
+        if model_split is not None:
+            return model_split
     if not starts:
         fragments = [
             {
@@ -1983,6 +2253,9 @@ def split_group(
         ], next_q + 1
 
     questions: list[QuestionSlice] = []
+    leading_question, next_q = build_leading_question_before_first_start(group, lines_by_page, starts, next_q, profile)
+    if leading_question is not None:
+        questions.append(leading_question)
     for idx, start in enumerate(starts):
         next_start = starts[idx + 1] if idx + 1 < len(starts) else None
         start_seg_idx = start["seg_idx"]
@@ -1994,7 +2267,10 @@ def split_group(
             if seg_idx == start_seg_idx:
                 fy0 = max(seg.y0, int(start["y"]))
             if next_start and seg_idx == next_start["seg_idx"]:
-                fy1 = min(seg.y1, max(fy0 + 55, int(next_start["y"]) - 10))
+                cutoff_y = int(next_start["y"]) - 10
+                if cutoff_y <= fy0 + 35:
+                    continue
+                fy1 = min(seg.y1, cutoff_y)
             if fy1 <= fy0 + 35:
                 continue
             fragments.append(
@@ -3512,7 +3788,7 @@ def main() -> None:
     pages_dir = out_dir / "pages"
     segment_dir = out_dir / "component_crops"
     question_dir = out_dir / "question_crops"
-    question_split_dir = out_dir / "english_question_splitter"
+    question_split_dir = out_dir / "model_question_splitter"
     stem_dir = out_dir / "stem_images"
     analysis_dir = out_dir / "analysis_images"
     annotated_dir = out_dir / "annotated_pages"
@@ -3527,8 +3803,11 @@ def main() -> None:
         if total_line_count(ocr_lines_by_page) > max(20, total_line_count(lines_by_page) * 2):
             lines_by_page = ocr_lines_by_page
             line_source = "ocr_page_lines_fallback"
+    question_split_dir = out_dir / ("english_question_splitter" if profile == PROFILE_ENGLISH else "math_question_splitter")
     anchors = detect_anchors(page_paths, lines_by_page, profile)
     segments = make_segments(page_paths, anchors)
+    if not segments and profile in MATH_MODEL_SPLIT_PROFILES and env_flag("MATH_PAGE_SPLIT_FALLBACK_ENABLE", "1"):
+        segments = synthesize_math_page_fallback_segments(page_paths, profile)
     crop_segments(page_paths, segments, segment_dir)
     annotated_paths = annotate_pages(page_paths, segments, annotated_dir)
     contact_sheet(annotated_paths, out_dir / "component_annotated_contact_sheet.jpg")
@@ -3555,9 +3834,9 @@ def main() -> None:
     for group in groups:
         group_questions, counter = split_group(group, lines_by_page, page_images, counter, profile, question_split_dir)
         questions.extend(group_questions)
-    if profile == PROFILE_ENGLISH:
-        questions = repair_english_tail_head_shift(questions, lines_by_page)
-        questions = merge_english_orphan_tail_questions(questions, lines_by_page)
+    if profile == PROFILE_ENGLISH or profile in MATH_MODEL_SPLIT_PROFILES:
+        questions = repair_tail_head_shift(questions, lines_by_page, profile)
+        questions = merge_orphan_tail_questions(questions, lines_by_page, profile)
 
     for q in questions:
         out = question_dir / f"{q.question_id}_{safe_name(q.checkpoint)}_{safe_name(q.component_label)}_Q{q.local_number}.png"

@@ -779,6 +779,66 @@ def materialize_staged_asset(
     asset = dict(staged_asset)
     asset["placement"] = str(asset.get("placement", asset.get("placement_scope", "")) or "")
     storage_key = str(asset.get("storage_key", "") or "").strip()
+    external_raw = str(asset.get("external_asset_path", "") or "").strip()
+    if external_raw:
+        external_path = resolve_path(external_raw, base_dir)
+        if not storage_key or not external_path.exists():
+            asset["materialized"] = False
+            asset["file_status"] = "failed"
+            asset["review_flags"] = normalize_review_flags(list(asset.get("review_flags", []) or []) + ["asset_materialize_failed"])
+            return asset
+        target_path = out_dir / Path(storage_key)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        review_key: str | None = None
+        review_meta: dict[str, Any] | None = None
+        try:
+            with Image.open(external_path) as source_image:
+                copied = source_image.convert("RGB")
+                if copied.width <= 0 or copied.height <= 0 or _is_suspicious_crop(copied):
+                    if str(asset.get("asset_role", "") or "") == "option":
+                        asset["asset_role"] = "evidence"
+                        asset["placement_scope"] = "evidence_only"
+                        asset["option_key"] = None
+                        asset["attach_status"] = "not_attached_low_confidence"
+                    asset["materialized"] = False
+                    asset["file_status"] = "failed"
+                    asset["review_flags"] = normalize_review_flags(list(asset.get("review_flags", []) or []) + ["option_asset_suspicious_crop"])
+                    return asset
+                copied.save(target_path)
+                review_key, review_meta = _write_review_display_copy(
+                    copied,
+                    out_dir=out_dir,
+                    storage_key=storage_key,
+                )
+        except Exception:
+            asset["materialized"] = False
+            asset["file_status"] = "failed"
+            asset["review_flags"] = normalize_review_flags(list(asset.get("review_flags", []) or []) + ["asset_materialize_failed"])
+            return asset
+        asset["materialized"] = True
+        asset["file_status"] = "materialized"
+        asset["bbox_audit"] = {
+            "validity": "external_asset",
+            "source": str(asset.get("external_asset_source", "") or ""),
+            "external_asset_path": str(external_path.resolve()),
+            "width": copied.width,
+            "height": copied.height,
+        }
+        asset["image_width"] = int(asset.get("image_width", 0) or copied.width)
+        asset["image_height"] = int(asset.get("image_height", 0) or copied.height)
+        asset["review_flags"] = normalize_review_flags(list(asset.get("review_flags", []) or []) + ["external_asset_copied"])
+        if review_key and review_meta:
+            asset["review_storage_key"] = review_key
+            asset["review_render"] = review_meta
+            asset["delivery_storage_key"] = review_key
+            asset["delivery_render"] = review_meta
+        if include_debug_paths:
+            asset["debug"] = {
+                "local_path": str(target_path.resolve()),
+                "source_path": str(external_path.resolve()),
+            }
+        return asset
+
     bbox_space = str(asset.get("bbox_space", "") or "").strip()
     bbox = asset.get("bbox_json", {}) if isinstance(asset.get("bbox_json"), dict) else {}
     source_path = _resolve_bbox_source(question, bbox_space, base_dir)

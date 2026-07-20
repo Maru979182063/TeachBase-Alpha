@@ -149,6 +149,29 @@ def get_raw_blocks_prompt_bundle() -> dict[str, str]:
     }
 
 
+def get_layout_prompt_bundle(name: str) -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    layout_prompt = prompts.get(name, {})
+    if not isinstance(layout_prompt, dict):
+        raise PromptConfigError(f"missing_{name}_prompt_config")
+    return {
+        "prompt_version": str(layout_prompt.get("prompt_version", "") or ""),
+        "system_prompt": str(layout_prompt.get("system_prompt", "") or ""),
+        "user_template": str(layout_prompt.get("user_template", "") or ""),
+    }
+
+
+def get_math_question_splitter_prompt_bundle() -> dict[str, str]:
+    return get_layout_prompt_bundle("math_question_splitter")
+
+
+def get_math_panel_planner_prompt_bundle() -> dict[str, str]:
+    return get_layout_prompt_bundle("math_panel_planner")
+
+
 def get_field_mapping_prompt_bundle() -> dict[str, str]:
     config = load_prompt_config()
     prompts = config.get("prompts", {})

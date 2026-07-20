@@ -1,0 +1,339 @@
+{
+  "schema_version": "english_text_first_v02.control.v0.1",
+  "pipeline_id": "english_text_first_v02_controlled",
+  "status": "controlled_audit",
+  "model_provider": "volcengine_ark",
+  "api_url": "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
+  "api_key_env": "ARK_API_KEY",
+  "default_model_alias": "doubao2.0mini",
+  "default_model_endpoint_id": "doubao-seed-2-0-lite-260428",
+  "runtime_import_enabled": false,
+  "database_write_enabled": false,
+  "owned_output_root": "outputs/english_text_first_pipeline_v02_spec_20260715/controlled_runs",
+  "nodes": {
+    "node1_vlm_transcriber": {
+      "entrypoint": "tools/english_text_first_controlled_node1_vlm_transcriber.py",
+      "model": "doubao-seed-2-0-lite-260428",
+      "temperature": 0,
+      "prompt_version": "english_vlm_page_transcriber_v0.3_page_visual_flags_20260716",
+      "system_prompt_path": "prompts/english_vlm_page_transcriber_system_v0.2.md",
+      "user_prompt_path": "prompts/english_vlm_page_transcriber_user_v0.2.md",
+      "output_schema_path": "schemas/vlm_page_transcription.schema.json",
+      "input_contract": {
+        "input_type": "single_page_image",
+        "one_page_per_model_call": true,
+        "required_fields": ["doc_id", "page_number", "image_path"]
+      },
+      "artifact_contract": {
+        "persist_request_messages": true,
+        "persist_prompt_files": true,
+        "persist_input_image_sha256": true,
+        "persist_raw_response": true,
+        "persist_raw_content": true,
+        "persist_parsed_output": true,
+        "persist_validation_report": true
+      },
+      "forbidden": [
+        "QuestionPacket",
+        "Runtime release decision",
+        "cross_page_assembly",
+        "passage_question_binding",
+        "semantic_graph_projection"
+      ]
+    },
+    "node1_vlm_transcriber_with_attributes": {
+      "entrypoint": "tools/english_text_first_controlled_node1_vlm_transcriber.py",
+      "model": "doubao-seed-2-0-lite-260428",
+      "temperature": 0,
+      "prompt_version": "english_vlm_page_transcriber_with_block_attributes_v0.2_experimental_20260716",
+      "system_prompt_path": "prompts/english_vlm_page_transcriber_with_attributes_system_v0.2.md",
+      "user_prompt_path": "prompts/english_vlm_page_transcriber_with_attributes_user_v0.2.md",
+      "output_schema_path": "schemas/vlm_page_transcription.schema.json",
+      "requires_block_attributes": true,
+      "input_contract": {
+        "input_type": "single_page_image",
+        "one_page_per_model_call": true,
+        "required_fields": ["doc_id", "page_number", "image_path"]
+      },
+      "artifact_contract": {
+        "persist_request_messages": true,
+        "persist_prompt_files": true,
+        "persist_input_image_sha256": true,
+        "persist_raw_response": true,
+        "persist_raw_content": true,
+        "persist_parsed_output": true,
+        "persist_validation_report": true
+      },
+      "forbidden": [
+        "QuestionPacket",
+        "Runtime release decision",
+        "cross_page_assembly",
+        "passage_question_binding",
+        "semantic_graph_projection"
+      ]
+    },
+    "node1b_block_attribute_tagger": {
+      "entrypoint": "tools/english_text_first_controlled_node1b_attribute_tagger.py",
+      "model": "doubao-seed-2-0-lite-260428",
+      "temperature": 0,
+      "prompt_version": "english_block_attribute_tagger_v0.6_composition_relevance_tight_no_role_drift_20260716",
+      "system_prompt_path": "prompts/english_block_attribute_tagger_system_v0.1.md",
+      "user_prompt_path": "prompts/english_block_attribute_tagger_user_v0.1.md",
+      "output_schema_path": "schemas/block_attribute_tags.schema.json",
+      "input_contract": {
+        "input_type": "node1a_blocks_text_only",
+        "one_page_per_model_call": true,
+        "required_fields": ["doc_id", "page_number", "node1a_blocks", "page_visual_flags"]
+      },
+      "artifact_contract": {
+        "persist_request_messages": true,
+        "persist_prompt_files": true,
+        "persist_input_image_sha256": true,
+        "persist_node1a_source_refs": true,
+        "persist_raw_response": true,
+        "persist_raw_content": true,
+        "persist_parsed_output": true,
+        "persist_validation_report": true
+      },
+      "forbidden": [
+        "changing_text",
+        "changing_block_id",
+        "adding_blocks",
+        "deleting_blocks",
+        "QuestionPacket",
+        "Runtime release decision",
+        "cross_page_assembly",
+        "passage_question_binding",
+        "semantic_graph_projection"
+      ]
+    },
+    "node2_sliding_window_composer": {
+      "entrypoint": "tools/english_text_first_sliding_window_composer_v01.py",
+      "model": "doubao-seed-2-0-lite-260428",
+      "temperature": 0,
+      "prompt_version": "english_group_composer_v0.5_refs_only_fallback_20260717",
+      "system_prompt_path": "prompts/english_sliding_window_composer_system_v0.1.md",
+      "user_prompt_path": "prompts/english_sliding_window_composer_user_v0.1.md",
+      "output_schema_path": "schemas/sliding_window_composition.schema.json",
+      "retry_on_invalid": false,
+      "window_policy": {
+        "default_previous_tail_blocks": 8,
+        "default_next_head_blocks": 6,
+        "continuation_previous_tail_blocks": 10,
+        "continuation_next_head_blocks": 10,
+        "quiet_page_previous_tail_blocks": 4,
+        "quiet_page_next_head_blocks": 4,
+        "max_window_blocks": 48
+      },
+      "input_contract": {
+        "input_type": "tagged_blocks_sliding_window",
+        "one_window_per_model_call": true,
+        "required_fields": ["previous_tail_blocks", "current_page_blocks", "next_head_blocks"]
+      },
+      "forbidden": [
+        "Runtime QuestionPacket",
+        "Runtime release decision",
+        "database_write",
+        "inventing_text",
+        "dropping_source_refs"
+      ]
+    },
+    "node3_group_normalizer": {
+      "entrypoint": "tools/english_text_first_group_normalizer_v01.py",
+      "model": "doubao-seed-2-0-lite-260428",
+      "temperature": 0,
+      "prompt_version": "english_group_normalizer_v0.1_field_refs_only_20260717",
+      "system_prompt_path": "prompts/english_group_normalizer_system_v0.1.md",
+      "user_prompt_path": "prompts/english_group_normalizer_user_v0.1.md",
+      "output_schema_path": "schemas/normalized_group_record.schema.json",
+      "input_contract": {
+        "input_type": "document_group_with_tagged_blocks",
+        "one_group_per_model_call": true,
+        "required_fields": ["document_group", "blocks"]
+      },
+      "forbidden": [
+        "Runtime QuestionPacket",
+        "Runtime release decision",
+        "database_write",
+        "inventing_text",
+        "inventing_block_refs",
+        "pulling_refs_from_outside_document_group",
+        "asset_crop_completeness_decision"
+      ]
+    },
+    "node3_group_relation_resolver": {
+      "entrypoint": "tools/english_text_first_group_relation_resolver_v01.py",
+      "model": "doubao-seed-2-0-lite-260428",
+      "temperature": 0,
+      "prompt_version": "english_group_relation_resolver_v0.1_parent_child_projection_20260717",
+      "system_prompt_path": "prompts/english_group_relation_resolver_system_v0.1.md",
+      "user_prompt_path": "prompts/english_group_relation_resolver_user_v0.1.md",
+      "output_schema_path": "schemas/group_projection_graph.schema.json",
+      "input_contract": {
+        "input_type": "document_groups_with_normalized_records",
+        "one_document_per_model_call": true,
+        "required_fields": ["document_groups", "normalized_records", "overlapping_block_refs"]
+      },
+      "forbidden": [
+        "Runtime QuestionPacket",
+        "Runtime release decision",
+        "database_write",
+        "inventing_text",
+        "inventing_group_ids",
+        "inventing_block_refs",
+        "family_specific_gate"
+      ]
+    },
+    "node4_source_backed_draft_builder": {
+      "entrypoint": "tools/english_text_first_source_backed_draft_builder_v01.py",
+      "builder_version": "english_source_backed_draft_builder_v0.1_ref_expansion_20260717",
+      "model_call_enabled": false,
+      "output_schema_path": "schemas/source_backed_draft_items.schema.json",
+      "input_contract": {
+        "input_type": "document_groups_with_normalized_records_and_projection_graph",
+        "required_fields": [
+          "document_groups_json",
+          "node2_run",
+          "node3_run",
+          "group_projection_graph"
+        ]
+      },
+      "forbidden": [
+        "model_call",
+        "Runtime QuestionPacket",
+        "Runtime release decision",
+        "database_write",
+        "inventing_text",
+        "inventing_group_ids",
+        "inventing_block_refs",
+        "field_reinterpretation"
+      ]
+    },
+    "node5_question_packet_builder": {
+      "entrypoint": "tools/english_text_first_question_packet_builder_v01.py",
+      "builder_version": "english_question_packet_builder_v0.1_one_draft_in_one_packet_out_20260717",
+      "model_call_enabled": false,
+      "output_schema_path": "schemas/english_question_packet_candidates.schema.json",
+      "input_contract": {
+        "input_type": "source_backed_draft_item",
+        "one_draft_in_one_packet_out": true,
+        "required_fields": [
+          "draft_id",
+          "source_group_id",
+          "project_directly_to_question",
+          "fields",
+          "relations",
+          "source_refs",
+          "page_image_refs"
+        ]
+      },
+      "forbidden": [
+        "model_call",
+        "Runtime import",
+        "database_write",
+        "inventing_text",
+        "inventing_answer",
+        "changing_source_refs",
+        "reinterpreting_group_relations",
+        "dropping_non_direct_drafts"
+      ]
+    },
+    "node5_question_packet_refiner": {
+      "entrypoint": "tools/english_text_first_question_packet_refiner_v01.py",
+      "model": "doubao-seed-2-0-lite-260428",
+      "temperature": 0,
+      "prompt_version": "english_question_packet_refiner_v0.1_one_packet_standard_fields_20260717",
+      "system_prompt_path": "prompts/english_question_packet_refiner_system_v0.1.md",
+      "user_prompt_path": "prompts/english_question_packet_refiner_user_v0.1.md",
+      "output_schema_path": "schemas/refined_question_packet.schema.json",
+      "input_contract": {
+        "input_type": "one_source_backed_packet_candidate",
+        "one_packet_per_model_call": true,
+        "required_fields": [
+          "packet_id",
+          "projection_status",
+          "packet_family",
+          "content",
+          "evidence",
+          "asset_refs"
+        ]
+      },
+      "forbidden": [
+        "Runtime import",
+        "database_write",
+        "inventing_text",
+        "inventing_answer",
+        "changing_source_refs",
+        "merging_packets",
+        "repairing_ocr_without_evidence"
+      ]
+    },
+    "node6a_runtime_projection_planner": {
+      "entrypoint": "tools/english_text_first_runtime_projection_planner_v01.py",
+      "planner_version": "english_runtime_projection_planner_v0.1_graph_first_no_model_20260717",
+      "model_call_enabled": false,
+      "output_schema_path": "schemas/runtime_projection_plan.schema.json",
+      "input_contract": {
+        "input_type": "refined_packets_with_packet_candidates_and_group_projection_graph",
+        "required_fields": [
+          "refined_packets_json",
+          "packet_candidates_json",
+          "group_projection_graph_json"
+        ]
+      },
+      "forbidden": [
+        "model_call",
+        "Runtime import",
+        "database_write",
+        "inventing_text",
+        "inventing_answer",
+        "reinterpreting_source_content",
+        "building_runtime_payload"
+      ]
+    },
+    "node6b_question_render_normalizer": {
+      "entrypoint": "tools/english_text_first_question_render_normalizer_v01.py",
+      "model": "doubao-seed-2-0-lite-260428",
+      "temperature": 0,
+      "prompt_version": "english_question_render_normalizer_v0.1_one_packet_surface_restore_20260720",
+      "system_prompt_path": "prompts/english_question_render_normalizer_system_v0.1.md",
+      "user_prompt_path": "prompts/english_question_render_normalizer_user_v0.1.md",
+      "output_schema_path": "schemas/rendered_question_record.schema.json",
+      "input_contract": {
+        "input_type": "one_refined_packet_with_source_page_images",
+        "one_packet_per_model_call": true,
+        "required_fields": [
+          "source_packet_id",
+          "source_group_id",
+          "standard_question",
+          "final_markdown",
+          "source_refs",
+          "asset_refs.page_image_refs"
+        ]
+      },
+      "forbidden": [
+        "Runtime import",
+        "database_write",
+        "question_grouping",
+        "finding_new_answers",
+        "inventing_text",
+        "merging_packets",
+        "changing_source_refs"
+      ]
+    }
+  },
+  "documents": {
+    "reading_argument": {
+      "page_images_dir": "outputs/english_text_first_pipeline_v01_20260714/reading_argumentative_p001_p008_window4_live_v2/evidence/page_images"
+    },
+    "reading_argumentative": {
+      "page_images_dir": "outputs/english_text_first_pipeline_v01_20260714/reading_argumentative_p001_p008_window4_live_v2/evidence/page_images"
+    },
+    "grammar_clauses": {
+      "page_images_dir": "outputs/english_text_first_pipeline_v01_20260714/grammar_clauses_p001_p008_window4_live_v2/evidence/page_images"
+    },
+    "writing_invitation": {
+      "page_images_dir": "outputs/english_text_first_pipeline_v01_20260714/writing_invitation_p001_p008_window4_live_v2/evidence/page_images"
+    }
+  }
+}

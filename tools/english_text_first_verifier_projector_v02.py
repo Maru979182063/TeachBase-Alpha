@@ -374,7 +374,14 @@ def verify_asset(row: dict[str, Any], graph: dict[str, Any], objects: dict[str, 
         user_payload=payload,
         image_paths=image_paths,
     )
-    result.update({"verifier": "asset_coverage", "packet_id": row["packet_id"], "doc_id": row["doc_id"]})
+    result.update(
+        {
+            "verifier": "asset_coverage",
+            "packet_id": row["packet_id"],
+            "doc_id": row["doc_id"],
+            "asset_candidates": assets,
+        }
+    )
     return result
 
 
@@ -440,6 +447,18 @@ def normalize_asset_fact(call: dict[str, Any]) -> dict[str, Any]:
     ]
     has_required = bool(result.get("has_required_visual_requirements")) or bool(required_requirements)
     overall = str(result.get("overall_required_asset_coverage", "not_required") or "not_required").lower()
+    rough_asset_ids: set[str] = set()
+    for group in call.get("asset_candidates", []) or []:
+        for asset in group.get("derivative_assets", []) or []:
+            raw = asset.get("raw_asset_ref", {}) or {}
+            if raw.get("crop_precision") == "ROUGH_DERIVED_VIEW" or raw.get("needs_precise_bbox"):
+                rough_asset_ids.add(str(asset.get("id", "")))
+    covered_required_asset_ids = {
+        str(asset_id)
+        for req in required_requirements
+        for asset_id in (req.get("covered_by_asset_ids", []) or [])
+    }
+    rough_derivative_used_for_required_coverage = bool(rough_asset_ids & covered_required_asset_ids)
     return {
         "packet_id": call.get("packet_id"),
         "verifier": "asset_coverage",
@@ -447,7 +466,9 @@ def normalize_asset_fact(call: dict[str, Any]) -> dict[str, Any]:
         "has_required_visual_requirements": has_required,
         "requirements": requirements,
         "overall_required_asset_coverage": overall,
-        "required_asset_complete": (not has_required) or (overall == "complete" and not incomplete),
+        "required_asset_complete": (not has_required)
+        or (overall == "complete" and not incomplete and not rough_derivative_used_for_required_coverage),
+        "rough_derivative_used_for_required_coverage": rough_derivative_used_for_required_coverage,
         "incomplete_required_requirements": incomplete,
         "reason": result.get("reason", "") or call.get("parse_error", ""),
     }

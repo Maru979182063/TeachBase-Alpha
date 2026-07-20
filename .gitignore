@@ -17,6 +17,7 @@ codex_tmp_pdf/
 
 # Generated outputs and scratch files
 outputs/
+output/
 out/
 temp_repo_demo.html
 tmp_script_check.js

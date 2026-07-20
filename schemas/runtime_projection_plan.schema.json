@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "English Text First Runtime Projection Plan",
+  "type": "object",
+  "required": [
+    "schema",
+    "doc_id",
+    "planner_version",
+    "inputs",
+    "semantic_nodes",
+    "question_projections",
+    "absorption_map",
+    "asset_manifest",
+    "projection_report",
+    "summary"
+  ],
+  "properties": {
+    "schema": { "const": "english_runtime_projection_plan_v0.1" },
+    "doc_id": { "type": "string" },
+    "planner_version": { "type": "string" },
+    "inputs": { "type": "object" },
+    "semantic_nodes": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "question_projections": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "absorption_map": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "asset_manifest": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "projection_report": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "summary": { "type": "object" }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "block_attribute_tags.schema.json",
+  "type": "object",
+  "required": ["schema", "doc_id", "page", "prompt_version", "tags", "qa_flags"],
+  "properties": {
+    "schema": {"const": "block_attribute_tags_v0.3"},
+    "doc_id": {"type": "string", "minLength": 1},
+    "page": {"type": "integer", "minimum": 1},
+    "prompt_version": {"type": "string", "minLength": 1},
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "block_id",
+          "visual_form",
+          "content_role",
+          "relation_hint",
+          "composition_relevance",
+          "relevance_confidence",
+          "requires_visual_preservation",
+          "preservation_reason",
+          "confidence"
+        ],
+        "properties": {
+          "block_id": {"type": "string", "pattern": "^b[0-9]+$"},
+          "visual_form": {
+            "enum": [
+              "plain_text",
+              "heading",
+              "list",
+              "table",
+              "diagram",
+              "question_stem",
+              "options",
+              "answer_key",
+              "worked_example",
+              "writing_surface",
+              "image",
+              "mixed",
+              "unknown"
+            ]
+          },
+          "content_role": {
+            "enum": [
+              "navigation",
+              "knowledge_explanation",
+              "reading_passage",
+              "activity_instruction",
+              "student_task",
+              "solution_reference",
+              "analysis_explanation",
+              "translation",
+              "example",
+              "visual_structure",
+              "response_surface",
+              "teacher_note",
+              "unknown"
+            ]
+          },
+          "relation_hint": {
+            "enum": [
+              "none",
+              "introduces_following",
+              "depends_on_previous",
+              "answer_for_previous",
+              "analysis_for_previous",
+              "surface_for_previous",
+              "context_for_following",
+              "unknown"
+            ]
+          },
+          "composition_relevance": {
+            "enum": [
+              "main_candidate",
+              "context_candidate",
+              "evidence_only",
+              "unknown"
+            ]
+          },
+          "relevance_confidence": {"enum": ["low", "medium", "high"]},
+          "requires_visual_preservation": {"type": "boolean"},
+          "preservation_reason": {
+            "enum": [
+              "none",
+              "table_layout_needed",
+              "diagram_layout_needed",
+              "writing_surface_needed",
+              "checklist_or_form_needed",
+              "image_content_needed",
+              "spatial_relation_needed",
+              "unknown"
+            ]
+          },
+          "confidence": {"enum": ["low", "medium", "high"]}
+        },
+        "additionalProperties": false
+      }
+    },
+    "qa_flags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "severity", "message", "block_ids"],
+        "properties": {
+          "code": {"type": "string"},
+          "severity": {"enum": ["warning", "error"]},
+          "message": {"type": "string"},
+          "block_ids": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

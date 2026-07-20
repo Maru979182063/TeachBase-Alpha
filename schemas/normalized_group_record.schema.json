@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "normalized_group_record.schema.json",
+  "type": "object",
+  "required": [
+    "schema",
+    "doc_id",
+    "document_group_id",
+    "prompt_version",
+    "record_kind",
+    "field_refs",
+    "field_status",
+    "normalizer_warnings"
+  ],
+  "properties": {
+    "schema": {"const": "normalized_group_record_v0.1"},
+    "doc_id": {"type": "string"},
+    "document_group_id": {"type": "string"},
+    "prompt_version": {"type": "string"},
+    "record_kind": {"type": "string"},
+    "field_refs": {
+      "type": "object",
+      "required": [
+        "stem_refs",
+        "option_refs",
+        "passage_refs",
+        "answer_refs",
+        "analysis_refs",
+        "translation_refs",
+        "context_refs",
+        "instruction_refs",
+        "example_refs",
+        "visual_refs",
+        "writing_surface_refs",
+        "rubric_refs",
+        "other_evidence_refs"
+      ],
+      "properties": {
+        "stem_refs": {"$ref": "#/$defs/ref_array"},
+        "option_refs": {"$ref": "#/$defs/ref_array"},
+        "passage_refs": {"$ref": "#/$defs/ref_array"},
+        "answer_refs": {"$ref": "#/$defs/ref_array"},
+        "analysis_refs": {"$ref": "#/$defs/ref_array"},
+        "translation_refs": {"$ref": "#/$defs/ref_array"},
+        "context_refs": {"$ref": "#/$defs/ref_array"},
+        "instruction_refs": {"$ref": "#/$defs/ref_array"},
+        "example_refs": {"$ref": "#/$defs/ref_array"},
+        "visual_refs": {"$ref": "#/$defs/ref_array"},
+        "writing_surface_refs": {"$ref": "#/$defs/ref_array"},
+        "rubric_refs": {"$ref": "#/$defs/ref_array"},
+        "other_evidence_refs": {"$ref": "#/$defs/ref_array"}
+      },
+      "additionalProperties": false
+    },
+    "field_status": {
+      "type": "object",
+      "required": [
+        "stem",
+        "options",
+        "passage",
+        "answer",
+        "analysis",
+        "translation",
+        "context",
+        "visual_asset",
+        "writing_surface"
+      ],
+      "properties": {
+        "stem": {"$ref": "#/$defs/status_value"},
+        "options": {"$ref": "#/$defs/status_value"},
+        "passage": {"$ref": "#/$defs/status_value"},
+        "answer": {"$ref": "#/$defs/status_value"},
+        "analysis": {"$ref": "#/$defs/status_value"},
+        "translation": {"$ref": "#/$defs/status_value"},
+        "context": {"$ref": "#/$defs/status_value"},
+        "visual_asset": {"enum": ["required", "not_required", "uncertain"]},
+        "writing_surface": {"enum": ["required", "not_required", "uncertain"]}
+      },
+      "additionalProperties": false
+    },
+    "open_issues": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/open_issue"}
+    },
+    "normalizer_warnings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/open_issue"}
+    }
+  },
+  "$defs": {
+    "ref_array": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "status_value": {
+      "enum": ["present", "missing", "not_applicable", "uncertain", "partial"]
+    },
+    "open_issue": {
+      "type": "object",
+      "required": ["code", "message", "source_block_refs"],
+      "properties": {
+        "code": {"type": "string"},
+        "message": {"type": "string"},
+        "source_block_refs": {"$ref": "#/$defs/ref_array"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

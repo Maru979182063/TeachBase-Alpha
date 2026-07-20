@@ -169,7 +169,16 @@ def audit_record(record: dict[str, Any]) -> dict[str, Any]:
         audit = asset.get("bbox_audit", {}) if isinstance(asset.get("bbox_audit"), dict) else {}
         suspect = audit.get("suspect_reasons", []) if isinstance(audit.get("suspect_reasons"), list) else []
         if "fallback" in detector:
-            issues.append("fallback_figure_detection_used")
+            recovered = (
+                "figure_detection_zero_assets_recovered" in flags
+                and is_materialized(asset)
+                and asset_role(asset) == "option"
+                and str(asset.get("option_key", "") or "").strip()
+            )
+            if recovered:
+                warnings.append("fallback_figure_detection_used")
+            else:
+                issues.append("fallback_figure_detection_used")
             evidence.append(str(asset.get("asset_id", "")))
         if "bbox_audit_invalid" in flags or audit.get("validity") == "invalid":
             issues.append("bbox_audit_invalid")

@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "refined_question_packet.schema.json",
+  "type": "object",
+  "required": [
+    "schema",
+    "doc_id",
+    "source_packet_id",
+    "source_group_id",
+    "prompt_version",
+    "packet_family",
+    "refine_status",
+    "question_type",
+    "final_markdown",
+    "standard_question",
+    "source_refs",
+    "asset_refs",
+    "status_breakdown",
+    "missing_fields",
+    "warnings",
+    "normalization_actions"
+  ],
+  "properties": {
+    "schema": {"const": "refined_question_packet_v0.1"},
+    "doc_id": {"type": "string"},
+    "source_packet_id": {"type": "string"},
+    "source_group_id": {"type": "string"},
+    "prompt_version": {"type": "string"},
+    "packet_family": {"type": "string"},
+    "refine_status": {"enum": ["REFINED_READY", "REFINED_NEEDS_REVIEW", "PRESERVED_NON_DIRECT", "REFINE_FAILED"]},
+    "question_type": {"type": "string"},
+    "final_markdown": {"type": "string"},
+    "standard_question": {
+      "type": "object",
+      "required": [
+        "title",
+        "passage",
+        "stem",
+        "options",
+        "answer",
+        "analysis",
+        "translation",
+        "context",
+        "examples",
+        "rubric"
+      ],
+      "properties": {
+        "title": {"type": "string"},
+        "passage": {"type": "string"},
+        "stem": {"type": "string"},
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "text"],
+            "properties": {
+              "label": {"type": "string"},
+              "text": {"type": "string"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "answer": {"type": "string"},
+        "analysis": {"type": "string"},
+        "translation": {"type": "string"},
+        "context": {"type": "string"},
+        "examples": {"type": "string"},
+        "rubric": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string"}
+      }
+    },
+    "asset_refs": {
+      "type": "object",
+      "required": ["visual_refs", "writing_surface_refs", "page_image_refs"],
+      "properties": {
+        "visual_refs": {"type": "array"},
+        "writing_surface_refs": {"type": "array"},
+        "page_image_refs": {"type": "array"}
+      },
+      "additionalProperties": true
+    },
+    "status_breakdown": {
+      "type": "object",
+      "required": ["content_status", "source_status", "projection_status", "risk_codes"],
+      "properties": {
+        "content_status": {"enum": ["CLEAN", "PARTIAL", "BROKEN", "PRESERVED_SOURCE_ONLY"]},
+        "source_status": {"enum": ["CLEAN", "RESCUED_FROM_UPSTREAM", "OVERLAP_WARNING", "MIXED_WINDOW_STATUS", "INCOMPLETE_SOURCE"]},
+        "projection_status": {"enum": ["READY", "READY_WITH_SOURCE_WARNINGS", "NEEDS_REVIEW", "PRESERVED_SOURCE_ONLY", "BLOCKED"]},
+        "risk_codes": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "missing_fields": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {"type": "string"},
+          "message": {"type": "string"},
+          "refs": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "normalization_actions": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  },
+  "additionalProperties": false
+}

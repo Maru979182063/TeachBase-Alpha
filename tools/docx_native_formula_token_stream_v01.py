@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import json
 import shutil
+import struct
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -58,6 +60,56 @@ def slug_for(path: Path) -> str:
     return ("".join(chars).strip("_") or "docx")[:56]
 
 
+def image_metadata(data: bytes, filename: str) -> dict[str, Any]:
+    ext = Path(filename).suffix.lower().lstrip(".")
+    mime = {
+        "png": "image/png",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "gif": "image/gif",
+        "bmp": "image/bmp",
+        "wmf": "image/wmf",
+        "emf": "image/emf",
+    }.get(ext, "application/octet-stream")
+    width: int | None = None
+    height: int | None = None
+    try:
+        if data.startswith(b"\x89PNG\r\n\x1a\n") and len(data) >= 24:
+            width, height = struct.unpack(">II", data[16:24])
+        elif data.startswith(b"GIF") and len(data) >= 10:
+            width, height = struct.unpack("<HH", data[6:10])
+        elif data.startswith(b"BM") and len(data) >= 26:
+            width, height = struct.unpack("<ii", data[18:26])
+        elif data.startswith(b"\xff\xd8"):
+            pos = 2
+            while pos + 9 < len(data):
+                if data[pos] != 0xFF:
+                    pos += 1
+                    continue
+                marker = data[pos + 1]
+                pos += 2
+                if marker in {0xD8, 0xD9}:
+                    continue
+                if pos + 2 > len(data):
+                    break
+                size = struct.unpack(">H", data[pos : pos + 2])[0]
+                if marker in {0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF} and pos + 7 <= len(data):
+                    height, width = struct.unpack(">HH", data[pos + 3 : pos + 7])
+                    break
+                pos += size
+    except Exception:
+        width = None
+        height = None
+    return {
+        "format": ext or "unknown",
+        "mime_type": mime,
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "width_px": width,
+        "height_px": height,
+        "has_dimensions": width is not None and height is not None,
+    }
+
+
 def parse_relationships(zf: zipfile.ZipFile) -> dict[str, str]:
     name = "word/_rels/document.xml.rels"
     if name not in zf.namelist():
@@ -88,7 +140,8 @@ def extract_media(docx_path: Path, out_dir: Path) -> dict[str, dict[str, Any]]:
                 continue
             asset_id = f"docx_media_{len(media) + 1:04d}"
             target = media_dir / Path(zip_name).name
-            target.write_bytes(zf.read(zip_name))
+            data = zf.read(zip_name)
+            target.write_bytes(data)
             media[zip_name] = {
                 "asset_id": asset_id,
                 "zip_path": zip_name,
@@ -96,6 +149,7 @@ def extract_media(docx_path: Path, out_dir: Path) -> dict[str, dict[str, Any]]:
                 "storage_key": safe_rel(target),
                 "preview_src": "word_media_native/" + target.name,
                 "bytes": target.stat().st_size,
+                **image_metadata(data, target.name),
             }
     return media
 
@@ -105,7 +159,7 @@ def run_vert_align(run: ET.Element) -> str:
     return align.attrib.get(qn("w", "val"), "") if align is not None else ""
 
 
-def run_text(run: ET.Element) -> str:
+def direct_run_text(run: ET.Element) -> str:
     parts: list[str] = []
     for child in list(run):
         name = lname(child)
@@ -118,16 +172,31 @@ def run_text(run: ET.Element) -> str:
     return "".join(parts)
 
 
+def nested_run_text(run: ET.Element) -> str:
+    return "".join(node.text or "" for node in run.findall(".//w:t", NS))
+
+
+def run_text(run: ET.Element) -> str:
+    direct = direct_run_text(run)
+    if direct:
+        return direct
+    return nested_run_text(run)
+
+
 def serialize_run(run: ET.Element) -> tuple[str, list[dict[str, Any]]]:
-    text = run_text(run)
+    direct = direct_run_text(run)
+    text = direct or nested_run_text(run)
     if not text:
         return "", []
+    findings: list[dict[str, Any]] = []
+    if not direct:
+        findings.append({"type": "nested_run_text", "text": text})
     align = run_vert_align(run)
     if align == "superscript":
-        return f"^{{{text}}}", [{"type": "run_superscript", "text": text}]
+        return f"^{{{text}}}", [*findings, {"type": "run_superscript", "text": text}]
     if align == "subscript":
-        return f"_{{{text}}}", [{"type": "run_subscript", "text": text}]
-    return text, []
+        return f"_{{{text}}}", [*findings, {"type": "run_subscript", "text": text}]
+    return text, findings
 
 
 MATH_CHARS = set(
@@ -207,9 +276,123 @@ def collect_image_refs(el: ET.Element, rels: dict[str, str], media: dict[str, di
                 "asset_id": asset["asset_id"],
                 "mode": mode,
                 "storage_key": asset["storage_key"],
+                "filename": asset.get("filename", ""),
+                "format": asset.get("format", ""),
+                "mime_type": asset.get("mime_type", ""),
+                "bytes": asset.get("bytes", 0),
+                "sha256": asset.get("sha256", ""),
+                "width_px": asset.get("width_px"),
+                "height_px": asset.get("height_px"),
             }
         )
     return refs
+
+
+def formula_refs_from_tokens(tokens: list[dict[str, Any]], block_id: str, start_index: int = 0) -> list[dict[str, Any]]:
+    refs: list[dict[str, Any]] = []
+    formula_index = start_index
+    for token in tokens:
+        if token.get("type") not in {"omml_formula", "legacy_mtef_formula"}:
+            continue
+        formula_index += 1
+        source = "omml" if token.get("type") == "omml_formula" else "legacy_equation_mtef"
+        formula_id = str(token.get("formula_id") or f"{block_id}_f_{formula_index:03d}")
+        refs.append(
+            {
+                "formula_ref_id": formula_id,
+                "source": source,
+                "latex": str(token.get("latex") or ""),
+                "markdown": str(token.get("markdown") or ""),
+                "status": str(token.get("status") or ("omml_latex_ok" if source == "omml" else "")),
+            }
+        )
+    return refs
+
+
+def formula_refs_for_block(block: dict[str, Any]) -> list[dict[str, Any]]:
+    refs = formula_refs_from_tokens(list(block.get("tokens", []) or []), str(block.get("block_id") or ""))
+    block_id = str(block.get("block_id") or "")
+    formula_index = len(refs)
+    for token in block.get("table_formula_tokens", []) or []:
+        formula_index += 1
+        source = "omml" if token.get("type") == "omml_formula" else "legacy_equation_mtef"
+        formula_id = str(token.get("formula_id") or f"{block_id}_table_f_{formula_index:03d}")
+        refs.append(
+            {
+                "formula_ref_id": formula_id,
+                "source": source,
+                "latex": str(token.get("latex") or ""),
+                "markdown": str(token.get("markdown") or ""),
+                "status": str(token.get("status") or ("omml_latex_ok" if source == "omml" else "")),
+                "table_row": token.get("table_row"),
+                "table_col": token.get("table_col"),
+                "cell_paragraph_index": token.get("cell_paragraph_index"),
+            }
+        )
+    for finding in block.get("formula_findings", []) or []:
+        if finding.get("type") not in {"run_superscript", "run_subscript"}:
+            continue
+        formula_index += 1
+        refs.append(
+            {
+                "formula_ref_id": f"{block_id}_run_{formula_index:03d}",
+                "source": "word_run_vert_align",
+                "latex": "",
+                "markdown": "",
+                "status": str(finding.get("type")),
+                "text": str(finding.get("text") or ""),
+            }
+        )
+    return refs
+
+
+def loss_flags_for_block(block: dict[str, Any]) -> list[str]:
+    flags: list[str] = []
+    markdown = str(block.get("markdown") or "")
+    plain = str(block.get("text") or "")
+    if markdown and plain and markdown != plain and "$" in markdown:
+        flags.append("plain_text_loses_formula_markup")
+    if block.get("source_block_type") == "docx_table":
+        flags.append("table_markdown_is_linearized")
+        table = block.get("table_structured") or {}
+        if not table.get("rows"):
+            flags.append("table_structure_missing")
+    if block.get("formula_count") and "$" not in markdown:
+        flags.append("formula_count_without_display_formula")
+    for finding in block.get("formula_findings", []) or []:
+        if finding.get("type") == "legacy_mtef_formula" and not finding.get("has_latex"):
+            flags.append("legacy_mtef_missing_latex")
+            break
+    if block.get("image_refs") and not plain and not markdown.replace(" ", ""):
+        flags.append("image_only_block_needs_role_classification")
+    return flags
+
+
+def annotate_block_contract(block: dict[str, Any], order: int) -> dict[str, Any]:
+    block_id = f"b_{order:06d}"
+    block["schema_version"] = "docx_native_block.v0.2"
+    block["block_id"] = block_id
+    block["block_order"] = order
+    block["display_markdown"] = str(block.get("markdown") or "")
+    block["plain_text_lossy"] = str(block.get("text") or "")
+    block["asset_refs"] = list(block.get("image_refs") or [])
+    block["formula_refs"] = formula_refs_for_block(block)
+    block["content_loss_flags"] = loss_flags_for_block(block)
+    serious = {
+        "formula_count_without_display_formula",
+        "legacy_mtef_missing_latex",
+        "table_structure_missing",
+    }
+    block["qa_status"] = "needs_review" if serious.intersection(block["content_loss_flags"]) else "ok"
+    block["content_contract"] = {
+        "canonical_markdown_field": "display_markdown",
+        "plain_text_field": "plain_text_lossy",
+        "plain_text_is_lossy": True,
+        "asset_refs_field": "asset_refs",
+        "formula_refs_field": "formula_refs",
+        "loss_flags_field": "content_loss_flags",
+    }
+    return block
 
 
 def serialize_paragraph(
@@ -270,8 +453,16 @@ def serialize_paragraph(
         for child in list(node):
             walk(child)
 
+    def collect_plain_text(node: ET.Element) -> str:
+        name = lname(node)
+        if name == "r":
+            return run_text(node)
+        if name in {"oMath", "oMathPara"}:
+            return ""
+        return "".join(collect_plain_text(child) for child in list(node))
+
     walk(p)
-    plain = "".join(run_text(run) for run in p.findall(".//w:r", NS)).strip()
+    plain = collect_plain_text(p).strip()
     markdown = tokens_to_markdown(tokens)
     return {
         "source_block_type": "docx_paragraph",
@@ -294,14 +485,28 @@ def serialize_table(
 ) -> dict[str, Any]:
     rows: list[list[str]] = []
     cell_blocks: list[list[dict[str, Any]]] = []
+    table_formula_tokens: list[dict[str, Any]] = []
     for tr in tbl.findall("./w:tr", NS):
+        row_index = len(rows)
         row_text: list[str] = []
         row_blocks: list[dict[str, Any]] = []
         for tc in tr.findall("./w:tc", NS):
+            col_index = len(row_text)
             paras = [serialize_paragraph(p, rels, media, image_counter, omml_provider, mtef_provider) for p in tc.findall("./w:p", NS)]
             text = "\n".join(p["markdown"] for p in paras if p.get("markdown"))
             row_text.append(text)
             row_blocks.append({"paragraphs": paras})
+            for para_index, para in enumerate(paras):
+                for token in para.get("tokens", []) or []:
+                    if token.get("type") in {"omml_formula", "legacy_mtef_formula"}:
+                        table_formula_tokens.append(
+                            {
+                                **token,
+                                "table_row": row_index,
+                                "table_col": col_index,
+                                "cell_paragraph_index": para_index,
+                            }
+                        )
         rows.append(row_text)
         cell_blocks.append(row_blocks)
     markdown = "\n".join(" | ".join(cell for cell in row) for row in rows)
@@ -312,6 +517,7 @@ def serialize_table(
         "tokens": [{"type": "table", "markdown": markdown}],
         "formula_count": sum(p.get("formula_count", 0) for row in cell_blocks for cell in row for p in cell["paragraphs"]),
         "formula_findings": [f for row in cell_blocks for cell in row for p in cell["paragraphs"] for f in p.get("formula_findings", [])],
+        "table_formula_tokens": table_formula_tokens,
         "image_refs": [ref for row in cell_blocks for cell in row for p in cell["paragraphs"] for ref in p.get("image_refs", [])],
         "table_structured": {"rows": rows},
     }
@@ -341,6 +547,7 @@ def extract_stream(docx_path: Path, out_dir: Path, formula_manifest: Path | None
             else:
                 continue
             block["paragraph_index"] = len(paragraphs)
+            annotate_block_contract(block, len(paragraphs))
             paragraphs.append(block)
     counts = {
         "paragraphs": len(paragraphs),
@@ -354,7 +561,15 @@ def extract_stream(docx_path: Path, out_dir: Path, formula_manifest: Path | None
         "omml_formulas_with_sqrt": sum(1 for p in paragraphs for f in p.get("formula_findings", []) if f.get("has_sqrt")),
         "run_superscripts": sum(1 for p in paragraphs for f in p.get("formula_findings", []) if f.get("type") == "run_superscript"),
         "run_subscripts": sum(1 for p in paragraphs for f in p.get("formula_findings", []) if f.get("type") == "run_subscript"),
+        "nested_run_texts": sum(1 for p in paragraphs for f in p.get("formula_findings", []) if f.get("type") == "nested_run_text"),
     }
+    loss_flag_counts: dict[str, int] = {}
+    for block in paragraphs:
+        for flag in block.get("content_loss_flags", []) or []:
+            loss_flag_counts[flag] = loss_flag_counts.get(flag, 0) + 1
+    counts["needs_review_blocks"] = sum(1 for p in paragraphs if p.get("qa_status") == "needs_review")
+    counts["blocks_with_loss_flags"] = sum(1 for p in paragraphs if p.get("content_loss_flags"))
+    counts["loss_flag_counts"] = loss_flag_counts
     write_json(out_dir / "paragraph_stream_formula_tokens.json", {"source_docx": str(docx_path), "counts": counts, "paragraphs": paragraphs})
     write_json(out_dir / "asset_manifest_native.json", {"assets": list(media.values())})
     write_json(out_dir / "formula_token_audit.json", build_audit(paragraphs, counts))

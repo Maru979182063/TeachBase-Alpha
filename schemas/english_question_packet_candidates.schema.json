@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "english_question_packet_candidates.schema.json",
+  "type": "object",
+  "required": [
+    "schema",
+    "doc_id",
+    "builder_version",
+    "packet_candidates",
+    "summary"
+  ],
+  "properties": {
+    "schema": {"const": "english_question_packet_candidates_v0.1"},
+    "doc_id": {"type": "string"},
+    "builder_version": {"type": "string"},
+    "packet_candidates": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/packet_candidate"}
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "input_draft_count",
+        "packet_count",
+        "direct_packet_count",
+        "non_direct_preserved_count",
+        "needs_review_count",
+        "mojibake_suspected_count"
+      ],
+      "properties": {
+        "input_draft_count": {"type": "integer"},
+        "packet_count": {"type": "integer"},
+        "direct_packet_count": {"type": "integer"},
+        "non_direct_preserved_count": {"type": "integer"},
+        "needs_review_count": {"type": "integer"},
+        "mojibake_suspected_count": {"type": "integer"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "ref_array": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "packet_field": {
+      "type": "object",
+      "required": ["text", "refs", "missing_refs"],
+      "properties": {
+        "text": {"type": "string"},
+        "refs": {"$ref": "#/$defs/ref_array"},
+        "missing_refs": {"$ref": "#/$defs/ref_array"}
+      },
+      "additionalProperties": false
+    },
+    "packet_candidate": {
+      "type": "object",
+      "required": [
+        "packet_id",
+        "doc_id",
+        "source_draft_id",
+        "source_group_id",
+        "projection_status",
+        "packet_family",
+        "project_directly_to_question",
+        "content",
+        "evidence",
+        "relations",
+        "asset_refs",
+        "source_text_health",
+        "missing_fields",
+        "builder_warnings",
+        "runtime_import_enabled",
+        "database_write_enabled"
+      ],
+      "properties": {
+        "packet_id": {"type": "string"},
+        "doc_id": {"type": "string"},
+        "source_draft_id": {"type": "string"},
+        "source_group_id": {"type": "string"},
+        "projection_status": {"enum": ["DRAFT_READY", "DRAFT_NEEDS_REVIEW", "PRESERVED_NON_DIRECT"]},
+        "packet_family": {"type": "string"},
+        "project_directly_to_question": {"type": "boolean"},
+        "content": {
+          "type": "object",
+          "required": [
+            "instruction",
+            "stem",
+            "options",
+            "passage",
+            "answer",
+            "analysis",
+            "translation",
+            "context",
+            "examples",
+            "rubric"
+          ],
+          "properties": {
+            "instruction": {"$ref": "#/$defs/packet_field"},
+            "stem": {"$ref": "#/$defs/packet_field"},
+            "options": {"$ref": "#/$defs/packet_field"},
+            "passage": {"$ref": "#/$defs/packet_field"},
+            "answer": {"$ref": "#/$defs/packet_field"},
+            "analysis": {"$ref": "#/$defs/packet_field"},
+            "translation": {"$ref": "#/$defs/packet_field"},
+            "context": {"$ref": "#/$defs/packet_field"},
+            "examples": {"$ref": "#/$defs/packet_field"},
+            "rubric": {"$ref": "#/$defs/packet_field"}
+          },
+          "additionalProperties": false
+        },
+        "evidence": {
+          "type": "object",
+          "required": ["source_refs", "source_pages", "page_image_refs", "field_ref_map"],
+          "properties": {
+            "source_refs": {"$ref": "#/$defs/ref_array"},
+            "source_pages": {
+              "type": "array",
+              "items": {"type": "integer"}
+            },
+            "page_image_refs": {"type": "array"},
+            "field_ref_map": {"type": "object"}
+          },
+          "additionalProperties": true
+        },
+        "relations": {"type": "object"},
+        "asset_refs": {
+          "type": "object",
+          "required": ["visual_refs", "writing_surface_refs", "page_image_refs"],
+          "properties": {
+            "visual_refs": {"type": "array"},
+            "writing_surface_refs": {"type": "array"},
+            "page_image_refs": {"type": "array"}
+          },
+          "additionalProperties": true
+        },
+        "source_text_health": {
+          "type": "object",
+          "required": ["mojibake_suspected", "suspect_fields", "signals"],
+          "properties": {
+            "mojibake_suspected": {"type": "boolean"},
+            "suspect_fields": {"$ref": "#/$defs/ref_array"},
+            "signals": {"type": "array"}
+          },
+          "additionalProperties": true
+        },
+        "missing_fields": {"$ref": "#/$defs/ref_array"},
+        "builder_warnings": {"type": "array"},
+        "runtime_import_enabled": {"const": false},
+        "database_write_enabled": {"const": false}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -610,6 +610,18 @@ def run_figure_detection(args: argparse.Namespace, paths: dict[str, Path], env: 
             ]
             if args.disable_heuristic_figure_fallback:
                 cmd.append("--disable-heuristic-figure-fallback")
+            if args.enable_mineru_fallback:
+                cmd += [
+                    "--enable-mineru-fallback",
+                    "--mineru-exe",
+                    str(args.mineru_exe or "mineru"),
+                    "--mineru-api-url",
+                    str(args.mineru_api_url or ""),
+                    "--mineru-out-dir",
+                    str(paths["figure_dir"] / "_mineru_fallback"),
+                    "--mineru-timeout-seconds",
+                    str(args.mineru_timeout_seconds),
+                ]
             futures.append(
                 pool.submit(
                     run_cmd,
@@ -640,6 +652,18 @@ def run_figure_detection(args: argparse.Namespace, paths: dict[str, Path], env: 
         ]
         if args.disable_heuristic_figure_fallback:
             cmd.append("--disable-heuristic-figure-fallback")
+        if args.enable_mineru_fallback:
+            cmd += [
+                "--enable-mineru-fallback",
+                "--mineru-exe",
+                str(args.mineru_exe or "mineru"),
+                "--mineru-api-url",
+                str(args.mineru_api_url or ""),
+                "--mineru-out-dir",
+                str(paths["figure_dir"] / "_mineru_fallback"),
+                "--mineru-timeout-seconds",
+                str(args.mineru_timeout_seconds),
+            ]
         result = run_cmd(
             cmd,
             cwd=paths["workspace"],
@@ -861,6 +885,10 @@ def main() -> None:
     parser.add_argument("--skip-transcription-retry", action="store_true")
     parser.add_argument("--skip-figure-detection", action="store_true")
     parser.add_argument("--disable-heuristic-figure-fallback", action="store_true")
+    parser.add_argument("--enable-mineru-fallback", action="store_true")
+    parser.add_argument("--mineru-exe", default=os.environ.get("MINERU_EXE", "mineru"))
+    parser.add_argument("--mineru-api-url", default=os.environ.get("MINERU_API_URL", ""))
+    parser.add_argument("--mineru-timeout-seconds", type=int, default=int(os.environ.get("MINERU_TIMEOUT_SECONDS", "240") or 240))
     parser.add_argument("--force-planner", action="store_true")
     args = parser.parse_args()
 
