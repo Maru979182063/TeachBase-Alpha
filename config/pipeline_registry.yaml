@@ -201,6 +201,62 @@
       "rollback_method": "disable english_text_first_enabled and remove endpoint_v05_isolated artifacts",
       "baseline_id": "english_text_first_v05_isolated_20260715",
       "last_validated_commit": ""
+    },
+    {
+      "pipeline_id": "docx_native_stage0_router_v01",
+      "pipeline_name": "DOCX native Stage0 formula router",
+      "pipeline_version": "v0.1",
+      "status": "experimental",
+      "owner": "TeachBase-Alpha DOCX ingest maintainers",
+      "description": "DOCX-native entry node that inspects Office Math XML and legacy Equation Editor OLE objects, optionally builds an MTEF formula manifest, then runs the existing native Stage0 block stream. It does not cut questions, refine text, import Runtime, or write the database.",
+      "entrypoint": "tools/docx_native_stage0_router_v01.py",
+      "config_path": "config/docx_native_stage0_router_v01.yaml",
+      "feature_flags": ["docx_native_ingest_enabled"],
+      "input_contracts": ["docx_file"],
+      "output_contracts": [
+        "router_summary.json",
+        "handoff_manifest.json",
+        "formula_manifest_backend_preview.json",
+        "paragraph_stream_formula_tokens.json",
+        "asset_manifest_native.json",
+        "formula_token_audit.json"
+      ],
+      "owned_output_roots": [
+        "outputs/docx_native_stage0_router_v0_1",
+        "outputs/docx_legacy_formula_recovery_v0_1",
+        "outputs/docx_native_formula_token_stream_v0_1"
+      ],
+      "forbidden_write_roots": [
+        "out",
+        "outputs/split_v03",
+        "outputs/semantic_role_shadow",
+        "outputs/english_text_first_pipeline_v02_spec_20260715/regression/endpoint_v05_isolated",
+        "outputs/runtime_validation",
+        "outputs/pipeline_baseline_snapshot"
+      ],
+      "stable_dependencies": ["python"],
+      "optional_dependencies": [
+        "ruby and mathtype_to_mathml_plus for legacy Equation Editor OLE/MTEF",
+        "node and mathml-to-latex for MathML to LaTeX conversion"
+      ],
+      "model_provider": "none",
+      "default_model": "",
+      "prompt_bundle": "",
+      "prompt_version": "",
+      "downstream_pipelines": [],
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "forbidden; this entry emits Stage0 artifacts only"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "forbidden"
+      },
+      "release_gate_policy": "not a release node; unresolved formulas set needs_review/fallback_signal before downstream processing",
+      "fallback_pipeline": "split_v03",
+      "rollback_method": "disable docx_native_ingest_enabled and call tools/docx_native_formula_token_stream_v01.py directly",
+      "baseline_id": "docx_native_stage0_router_v01_20260720",
+      "last_validated_commit": ""
     }
   ]
 }

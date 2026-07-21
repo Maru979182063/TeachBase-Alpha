@@ -210,6 +210,8 @@ def empty_refined(draft: dict[str, Any], prompt_version: str, status: str, reaso
         "warnings": warnings,
         "normalization_actions": [],
     }
+    apply_latex_json_escape_gate(refined)
+    apply_solution_policy_gate(refined)
     refined["status_breakdown"] = compute_status(refined)
     return refined
 
@@ -257,12 +259,126 @@ def repair_shape(refined: dict[str, Any], draft: dict[str, Any], prompt_version:
     for key in ["missing_fields", "warnings", "normalization_actions"]:
         if not isinstance(fixed.get(key), list):
             fixed[key] = []
+    apply_latex_json_escape_gate(fixed)
+    apply_solution_policy_gate(fixed)
     fixed["status_breakdown"] = compute_status(fixed)
     return fixed
 
 
 def warning_codes(refined: dict[str, Any]) -> list[str]:
     return [str(w.get("code") or "") for w in refined.get("warnings") or [] if isinstance(w, dict) and w.get("code")]
+
+
+SOLUTION_ABSENT_FIELDS = {
+    "answer",
+    "answer_md",
+    "explanation",
+    "explanation_md",
+    "solution",
+    "solution_md",
+    "analysis",
+    "analysis_md",
+}
+
+
+SOLUTION_ABSENT_WARNING_CODES = {
+    "MISSING_ANSWER",
+    "MISSING_EXPECTED_CONTENT",
+    "MISSING_REQUIRED_CONTENT",
+}
+
+
+def is_solution_absence_warning(warning: Any) -> bool:
+    if not isinstance(warning, dict):
+        return False
+    code = str(warning.get("code") or "")
+    message = str(warning.get("message") or "").lower()
+    if code not in SOLUTION_ABSENT_WARNING_CODES:
+        return False
+    return any(term in message for term in ["answer", "explanation", "solution", "analysis"])
+
+
+LATEX_CONTROL_ESCAPE_MAP = {
+    "\t": "\\t",
+    "\f": "\\f",
+    "\b": "\\b",
+    "\r": "\\r",
+    "\v": "\\v",
+}
+
+
+def repair_latex_control_escapes(value: Any) -> tuple[Any, int]:
+    if isinstance(value, str):
+        repaired = value
+        count = 0
+        for control, replacement in LATEX_CONTROL_ESCAPE_MAP.items():
+            hits = repaired.count(control)
+            if hits:
+                repaired = repaired.replace(control, replacement)
+                count += hits
+        return repaired, count
+    if isinstance(value, list):
+        total = 0
+        repaired_items = []
+        for item in value:
+            repaired, count = repair_latex_control_escapes(item)
+            repaired_items.append(repaired)
+            total += count
+        return repaired_items, total
+    if isinstance(value, dict):
+        total = 0
+        repaired_dict: dict[str, Any] = {}
+        for key, item in value.items():
+            repaired, count = repair_latex_control_escapes(item)
+            repaired_dict[key] = repaired
+            total += count
+        return repaired_dict, total
+    return value, 0
+
+
+def apply_latex_json_escape_gate(refined: dict[str, Any]) -> None:
+    repaired, count = repair_latex_control_escapes(refined)
+    if count <= 0 or not isinstance(repaired, dict):
+        return
+    refined.clear()
+    refined.update(repaired)
+    actions = list(refined.get("normalization_actions") or [])
+    actions.append(
+        {
+            "action": "repair_latex_json_control_escapes",
+            "message": "模型 JSON 中的单反斜杠 LaTeX 被解析为控制字符，已恢复为 LaTeX 命令前缀。",
+            "replacement_count": count,
+        }
+    )
+    refined["normalization_actions"] = actions
+
+
+def apply_solution_policy_gate(refined: dict[str, Any]) -> None:
+    if refined.get("solution_policy") != "absent_expected":
+        return
+    missing = [str(item) for item in refined.get("missing_fields") or []]
+    kept_missing = [item for item in missing if item not in SOLUTION_ABSENT_FIELDS]
+    filtered_missing = len(kept_missing) != len(missing)
+    warnings = list(refined.get("warnings") or [])
+    kept_warnings = [warning for warning in warnings if not is_solution_absence_warning(warning)]
+    filtered_warnings = len(kept_warnings) != len(warnings)
+    if filtered_missing or filtered_warnings:
+        actions = list(refined.get("normalization_actions") or [])
+        actions.append(
+            {
+                "action": "apply_absent_expected_solution_policy",
+                "message": "原卷/无解答来源允许答案和解析缺失；不把该类缺失降级为 needs_review。",
+                "removed_missing_fields": [item for item in missing if item not in kept_missing],
+                "removed_warning_count": len(warnings) - len(kept_warnings),
+            }
+        )
+        refined["normalization_actions"] = actions
+    refined["missing_fields"] = kept_missing
+    refined["warnings"] = kept_warnings
+    q = refined.get("standard_question") or {}
+    has_core = bool(str(q.get("stem_md") or "").strip() or q.get("subquestions"))
+    if has_core and not kept_missing and refined.get("refine_status") == "REFINED_NEEDS_REVIEW":
+        refined["refine_status"] = "REFINED_READY"
 
 
 def compute_status(refined: dict[str, Any]) -> dict[str, Any]:
