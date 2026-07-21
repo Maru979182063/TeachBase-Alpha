@@ -220,13 +220,65 @@ def choose_pages(refs: dict[str, list[str]], block_by_id: dict[str, dict[str, An
     }
 
 
-def markdown_for_packet(packet: dict[str, Any]) -> str:
+def source_subquestion_labels(draft_ref: dict[str, Any] | None) -> list[str]:
+    markdown = ""
+    if isinstance(draft_ref, dict):
+        fields = draft_ref.get("fields") if isinstance(draft_ref.get("fields"), dict) else {}
+        subquestions = fields.get("subquestions") if isinstance(fields.get("subquestions"), dict) else {}
+        markdown = str(subquestions.get("markdown") or "")
+    labels: list[str] = []
+    for line in markdown.splitlines():
+        text = line.strip()
+        if not text:
+            continue
+        match = re.match(r"^((?:\(|（)\s*[0-9一二三四五六七八九十]+\s*(?:\)|）)|[①②③④⑤⑥⑦⑧⑨⑩])", text)
+        if match:
+            labels.append(match.group(1).replace(" ", ""))
+    return labels
+
+
+def markdown_for_packet(packet: dict[str, Any], draft_ref: dict[str, Any] | None = None) -> str:
     q = packet.get("standard_question") or {}
-    for key in ["render_markdown", "stem_md", "context_md"]:
-        value = str(q.get(key) or "").strip()
-        if value:
-            return value
-    return ""
+    parts: list[str] = []
+    title = str(q.get("title") or "").strip()
+    if title:
+        parts.append(title)
+    stem = str(q.get("stem_md") or "").strip()
+    if stem:
+        parts.append(stem)
+    subquestions = q.get("subquestions") if isinstance(q.get("subquestions"), list) else []
+    source_labels = source_subquestion_labels(draft_ref)
+    for sub_index, item in enumerate(subquestions):
+        if not isinstance(item, dict):
+            continue
+        label = str(item.get("label") or "").strip()
+        markdown = str(item.get("markdown") or "").strip()
+        if not label and len(source_labels) == len(subquestions):
+            label = source_labels[sub_index]
+        if label and markdown and not markdown.startswith(label):
+            parts.append(f"{label}{markdown}" if label.endswith((")", "）", ".")) else f"{label} {markdown}")
+        elif markdown or label:
+            parts.append(markdown or label)
+    options = q.get("options") if isinstance(q.get("options"), list) else []
+    for option in options:
+        if not isinstance(option, dict):
+            continue
+        label = str(option.get("label") or "").strip()
+        markdown = str(option.get("markdown") or "").strip()
+        if label or markdown:
+            parts.append(f"{label}. {markdown}".strip())
+    answer = str(q.get("answer_md") or "").strip()
+    if answer:
+        parts.append(f"【答案】{answer}")
+    explanation = str(q.get("explanation_md") or "").strip()
+    if explanation:
+        parts.append(f"【解析】{explanation}")
+    teaching_note = str(q.get("teaching_note_md") or "").strip()
+    if teaching_note:
+        parts.append(f"【点睛】{teaching_note}")
+    if parts:
+        return "\n\n".join(parts)
+    return str(q.get("render_markdown") or "").strip()
 
 
 def copy_assets(run_dir: Path, doc_out_dir: Path) -> dict[str, str]:
@@ -331,7 +383,8 @@ def build_doc_review(run_dir: Path, out_dir: Path, block_stream_root: Path, *, d
     for idx, packet in enumerate(packets_payload.get("packets") or [], start=1):
         refs = packet_block_ids(packet, draft_ref_by_group)
         page_pick = choose_pages(refs, block_by_id, page_info["paragraph_pages"])
-        markdown = replace_asset_urls(markdown_for_packet(packet), asset_rel)
+        draft_ref = draft_ref_by_group.get(str(packet.get("source_group_id") or ""))
+        markdown = replace_asset_urls(markdown_for_packet(packet, draft_ref), asset_rel)
         cards.append(
             {
                 "ordinal": idx,

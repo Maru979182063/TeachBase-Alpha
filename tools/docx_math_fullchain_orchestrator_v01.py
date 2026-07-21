@@ -217,14 +217,13 @@ def subquestion_markdown(item: Any) -> str:
 
 def synthesize_render_markdown(packet: dict[str, Any]) -> str:
     q = packet.get("standard_question") or {}
-    render = str(q.get("render_markdown") or "").strip()
-    if render:
-        return render
     parts: list[str] = []
-    for key in ["context_md", "stem_md"]:
-        value = str(q.get(key) or "").strip()
-        if value:
-            parts.append(value)
+    title = str(q.get("title") or "").strip()
+    if title:
+        parts.append(title)
+    stem = str(q.get("stem_md") or "").strip()
+    if stem:
+        parts.append(stem)
     subquestions = q.get("subquestions") if isinstance(q.get("subquestions"), list) else []
     for item in subquestions:
         value = subquestion_markdown(item)
@@ -254,15 +253,15 @@ def ensure_render_markdown(packet: dict[str, Any]) -> None:
     q = packet.get("standard_question")
     if not isinstance(q, dict):
         return
-    if str(q.get("render_markdown") or "").strip():
-        return
+    previous = str(q.get("render_markdown") or "").strip()
     rendered = synthesize_render_markdown(packet)
     if not rendered:
         return
     q["render_markdown"] = rendered
+    action = "overwrite_render_markdown_from_structured_fields" if previous and previous != rendered else "synthesize_render_markdown_from_structured_fields"
     packet.setdefault("normalization_actions", []).append(
         {
-            "action": "synthesize_render_markdown_from_structured_fields",
+            "action": action,
             "scope": "fullchain_orchestrator_merge",
         }
     )

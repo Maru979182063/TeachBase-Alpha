@@ -228,6 +228,89 @@ def build_model_input(draft: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def subquestion_markdown(item: dict[str, Any]) -> str:
+    label = str(item.get("label") or "").strip()
+    markdown = str(item.get("markdown") or "").strip()
+    if label and markdown and not markdown.startswith(label):
+        return f"{label}{markdown}" if label.endswith((")", "）", ".")) else f"{label} {markdown}"
+    return markdown or label
+
+
+def source_subquestion_labels(draft: dict[str, Any]) -> list[str]:
+    markdown = str(((draft.get("fields") or {}).get("subquestions") or {}).get("markdown") or "")
+    labels: list[str] = []
+    for line in markdown.splitlines():
+        text = line.strip()
+        if not text:
+            continue
+        match = re.match(r"^((?:\(|（)\s*[0-9一二三四五六七八九十]+\s*(?:\)|）)|[①②③④⑤⑥⑦⑧⑨⑩])", text)
+        if match:
+            labels.append(match.group(1).replace(" ", ""))
+    return labels
+
+
+def preserve_subquestion_labels(refined: dict[str, Any], draft: dict[str, Any]) -> None:
+    q = refined.get("standard_question") or {}
+    subquestions = q.get("subquestions") if isinstance(q.get("subquestions"), list) else []
+    labels = source_subquestion_labels(draft)
+    if not labels or len(labels) != len(subquestions):
+        return
+    changed = False
+    for item, label in zip(subquestions, labels):
+        if not isinstance(item, dict):
+            continue
+        markdown = str(item.get("markdown") or "").strip()
+        current_label = str(item.get("label") or "").strip()
+        if not current_label:
+            item["label"] = label
+            changed = True
+        if markdown and not markdown.startswith(label):
+            item["markdown"] = markdown
+    if changed:
+        refined.setdefault("normalization_actions", []).append(
+            {
+                "action": "preserve_source_subquestion_labels",
+                "scope": "question_refiner_shape_repair",
+                "labels": labels,
+            }
+        )
+
+
+def canonical_render_markdown(q: dict[str, Any]) -> str:
+    parts: list[str] = []
+    title = str(q.get("title") or "").strip()
+    if title:
+        parts.append(title)
+    stem = str(q.get("stem_md") or "").strip()
+    if stem:
+        parts.append(stem)
+    subquestions = q.get("subquestions") if isinstance(q.get("subquestions"), list) else []
+    for item in subquestions:
+        if not isinstance(item, dict):
+            continue
+        value = subquestion_markdown(item)
+        if value:
+            parts.append(value)
+    options = q.get("options") if isinstance(q.get("options"), list) else []
+    for option in options:
+        if not isinstance(option, dict):
+            continue
+        label = str(option.get("label") or "").strip()
+        markdown = str(option.get("markdown") or "").strip()
+        if label or markdown:
+            parts.append(f"{label}. {markdown}".strip())
+    answer = str(q.get("answer_md") or "").strip()
+    if answer:
+        parts.append(f"【答案】{answer}")
+    explanation = str(q.get("explanation_md") or "").strip()
+    if explanation:
+        parts.append(f"【解析】{explanation}")
+    teaching_note = str(q.get("teaching_note_md") or "").strip()
+    if teaching_note:
+        parts.append(f"【点睛】{teaching_note}")
+    return "\n\n".join(part for part in parts if part)
+
+
 def empty_refined(draft: dict[str, Any], prompt_version: str, status: str, reason: str) -> dict[str, Any]:
     fields = draft.get("fields") or {}
     stem = str((fields.get("stem") or {}).get("markdown") or "")
@@ -236,7 +319,6 @@ def empty_refined(draft: dict[str, Any], prompt_version: str, status: str, reaso
     explanation = str((fields.get("explanation") or {}).get("markdown") or "")
     teaching = str((fields.get("teaching_note") or {}).get("markdown") or "")
     context = strip_context_assets(str((fields.get("context") or {}).get("markdown") or ""))
-    render = "\n\n".join(part for part in [stem, subs_md, answer, explanation, teaching] if part.strip())
     warnings = list(draft.get("warnings") or [])
     warnings.append({"code": "deterministic_preserve", "message": reason, "refs": [str(draft.get("draft_id") or "")]})
     refined = {
@@ -257,7 +339,7 @@ def empty_refined(draft: dict[str, Any], prompt_version: str, status: str, reaso
             "explanation_md": explanation,
             "teaching_note_md": teaching,
             "context_md": context,
-            "render_markdown": render,
+            "render_markdown": "",
         },
         "condition_groups": [],
         "source_refs": required_source_refs(draft),
@@ -266,6 +348,7 @@ def empty_refined(draft: dict[str, Any], prompt_version: str, status: str, reaso
         "warnings": warnings,
         "normalization_actions": [],
     }
+    refined["standard_question"]["render_markdown"] = canonical_render_markdown(refined["standard_question"])
     apply_latex_json_escape_gate(refined)
     apply_solution_policy_gate(refined)
     refined["status_breakdown"] = compute_status(refined)
@@ -301,6 +384,9 @@ def repair_shape(refined: dict[str, Any], draft: dict[str, Any], prompt_version:
     if not isinstance(q.get("options"), list):
         q["options"] = []
     fixed["standard_question"] = q
+    preserve_subquestion_labels(fixed, draft)
+    q = fixed["standard_question"]
+    q["render_markdown"] = canonical_render_markdown(q)
     if not isinstance(fixed.get("condition_groups"), list):
         fixed["condition_groups"] = []
     refs = dict(fixed.get("source_refs") or {})

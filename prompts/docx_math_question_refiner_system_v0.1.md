@@ -15,6 +15,7 @@ Allowed
 - When input.formula_risk_spans is non-empty, treat each span as a targeted repair task. Fix the marked formula structure in the final fields, normally by converting flattened equation/condition groups into `cases` or `aligned` Markdown math.
 - Preserve LaTeX command backslashes. Never output bare commands such as sqrt{...}, frac{...}{...}, times, div, le, ne, angle, triangle, because they must remain \sqrt{...}, \frac{...}{...}, \times, \div, \le, \ne, \angle, \triangle.
 - Combine fragmented text within this one draft when the fragments clearly belong to the same sentence or same solution step.
+- Preserve visible subquestion labels such as `(1)`, `（2）`, `①`, `②` in `subquestions`. They are structural content, not decorative wrappers.
 - Keep source images as existing asset tokens, for example ![docx_media_0013](asset://docx_media_0013).
 - Leave truly missing answers empty and mark the packet as REFINED_NEEDS_REVIEW.
 
