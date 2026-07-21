@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import html
 import json
+import re
 import shutil
 import struct
 import zipfile
@@ -261,6 +262,49 @@ def tokens_to_markdown(tokens: list[dict[str, Any]]) -> str:
     return "".join(item["text"] for item in rendered).strip()
 
 
+def formula_structural_risks(markdown: str) -> list[dict[str, Any]]:
+    text = str(markdown or "")
+    risks: list[dict[str, Any]] = []
+
+    def add(code: str, match: re.Match[str], message: str, action: str) -> None:
+        start = max(0, match.start() - 80)
+        end = min(len(text), match.end() + 120)
+        risks.append(
+            {
+                "risk_code": code,
+                "span": text[start:end],
+                "match": match.group(0),
+                "char_start": match.start(),
+                "char_end": match.end(),
+                "message": message,
+                "suggested_action": action,
+            }
+        )
+
+    for match in re.finditer(r"\\left(?![A-Za-z])\s*\{", text):
+        add(
+            "bad_left_brace_delimiter",
+            match,
+            r"Found \left{. KaTeX requires \left\{ or a cases/aligned environment.",
+            "convert_to_cases_or_left_brace_aligned",
+        )
+    for match in re.finditer(r"\\right(?![A-Za-z])(?=\s*(?:\$|$|[，,。；;]))", text):
+        add(
+            "bad_right_missing_delimiter",
+            match,
+            r"Found \right without a visible delimiter.",
+            "close_with_right_dot_or_convert_to_cases",
+        )
+    for match in re.finditer(r"\\left(?![A-Za-z])\s*\{[^$]{0,160}=[^$]{1,160}=", text):
+        add(
+            "possible_equation_group_flattened",
+            match,
+            "Multiple equations appear flattened into one inline formula.",
+            "split_equations_into_cases_or_aligned_rows",
+        )
+    return risks
+
+
 def collect_image_refs(el: ET.Element, rels: dict[str, str], media: dict[str, dict[str, Any]], counter: list[int]) -> list[dict[str, Any]]:
     refs: list[dict[str, Any]] = []
     mode = "anchor" if el.findall(".//wp:anchor", NS) else "inline"
@@ -359,6 +403,8 @@ def loss_flags_for_block(block: dict[str, Any]) -> list[str]:
             flags.append("table_structure_missing")
     if block.get("formula_count") and "$" not in markdown:
         flags.append("formula_count_without_display_formula")
+    if block.get("formula_structural_risks"):
+        flags.append("formula_structural_risk")
     for finding in block.get("formula_findings", []) or []:
         if finding.get("type") == "legacy_mtef_formula" and not finding.get("has_latex"):
             flags.append("legacy_mtef_missing_latex")
@@ -377,11 +423,13 @@ def annotate_block_contract(block: dict[str, Any], order: int) -> dict[str, Any]
     block["plain_text_lossy"] = str(block.get("text") or "")
     block["asset_refs"] = list(block.get("image_refs") or [])
     block["formula_refs"] = formula_refs_for_block(block)
+    block["formula_structural_risks"] = formula_structural_risks(block["display_markdown"])
     block["content_loss_flags"] = loss_flags_for_block(block)
     serious = {
         "formula_count_without_display_formula",
         "legacy_mtef_missing_latex",
         "table_structure_missing",
+        "formula_structural_risk",
     }
     block["qa_status"] = "needs_review" if serious.intersection(block["content_loss_flags"]) else "ok"
     block["content_contract"] = {
@@ -562,6 +610,7 @@ def extract_stream(docx_path: Path, out_dir: Path, formula_manifest: Path | None
         "run_superscripts": sum(1 for p in paragraphs for f in p.get("formula_findings", []) if f.get("type") == "run_superscript"),
         "run_subscripts": sum(1 for p in paragraphs for f in p.get("formula_findings", []) if f.get("type") == "run_subscript"),
         "nested_run_texts": sum(1 for p in paragraphs for f in p.get("formula_findings", []) if f.get("type") == "nested_run_text"),
+        "formula_structural_risk_blocks": sum(1 for p in paragraphs if p.get("formula_structural_risks")),
     }
     loss_flag_counts: dict[str, int] = {}
     for block in paragraphs:
@@ -595,6 +644,17 @@ def build_audit(paragraphs: list[dict[str, Any]], counts: dict[str, Any]) -> dic
             issues.append({"code": "formula_count_without_formula_markdown", "paragraph_index": p.get("paragraph_index"), "sample": markdown[:200]})
         if any(f.get("has_sqrt") for f in p.get("formula_findings", [])) and "\\sqrt" not in markdown:
             issues.append({"code": "sqrt_formula_missing_in_markdown", "paragraph_index": p.get("paragraph_index"), "sample": markdown[:200]})
+        for risk in p.get("formula_structural_risks", []) or []:
+            issues.append(
+                {
+                    "code": "formula_structural_risk",
+                    "risk_code": risk.get("risk_code"),
+                    "paragraph_index": p.get("paragraph_index"),
+                    "block_id": p.get("block_id"),
+                    "sample": risk.get("span"),
+                    "suggested_action": risk.get("suggested_action"),
+                }
+            )
     return {
         "schema_version": "docx_formula_token_audit.v0.1",
         "status": "ok" if not issues else "needs_review",

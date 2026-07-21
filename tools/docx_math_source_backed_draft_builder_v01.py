@@ -117,6 +117,7 @@ def refs_to_field(block_ids: list[str], block_index: dict[str, dict[str, Any]]) 
     texts: list[str] = []
     markdowns: list[str] = []
     formula_count = 0
+    formula_structural_risks: list[dict[str, Any]] = []
     for block_id in clean_ids:
         block = block_index.get(block_id)
         if not block:
@@ -129,6 +130,9 @@ def refs_to_field(block_ids: list[str], block_index: dict[str, dict[str, Any]]) 
             markdowns.append(markdown)
             block_markdowns.append({"block_id": block_id, "markdown": markdown})
         formula_count += int(block.get("formula_count") or 0)
+        for risk in block.get("formula_structural_risks") or []:
+            if isinstance(risk, dict):
+                formula_structural_risks.append({"block_id": block_id, **risk})
     return {
         "block_ids": clean_ids,
         "text": "\n\n".join(texts),
@@ -136,6 +140,7 @@ def refs_to_field(block_ids: list[str], block_index: dict[str, dict[str, Any]]) 
         "block_markdowns": block_markdowns,
         "missing_block_ids": missing,
         "formula_count": formula_count,
+        "formula_structural_risks": formula_structural_risks,
         "asset_refs": asset_refs_for_blocks(clean_ids, block_index),
     }
 

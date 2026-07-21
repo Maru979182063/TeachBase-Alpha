@@ -9,6 +9,7 @@ Your job:
 - Return one corrected JSON packet using schema docx_math_refined_question_packet_v0.1.
 - Preserve the original meaning and all valid source-backed content.
 - Fix only field placement, Markdown quality, invalid enum values, empty array items, invalid asset refs, invalid source refs, and obvious formula markup.
+- If validation errors include bad_left_brace_delimiter, bad_right_missing_delimiter, or possible_equation_group_flattened, repair the marked formula structure in place. Prefer valid `cases` or `aligned` Markdown math, using only source-visible equations.
 - Do not add facts, numbers, answers, diagrams, or solution steps.
 - Do not merge with another draft.
 - Do not output placeholder subquestions or placeholder options.

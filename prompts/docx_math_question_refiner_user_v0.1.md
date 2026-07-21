@@ -11,8 +11,10 @@ Task boundary:
 - If answer text is embedded in explanation, move the answer content into answer_md only when it is explicitly present.
 - If a draft is a composite method/reading task, keep it as one composite question and organize its material, examples, and tasks clearly.
 - If condition groups or equation systems appear, add condition_groups entries and also render them cleanly in Markdown.
+- If formula_risk_spans is non-empty, repair those exact spans in the relevant field. Do not ignore them. Convert malformed `\left{... \right` or flattened equation groups into valid `cases` or `aligned` Markdown math. If you cannot safely repair a marked span from source evidence, return REFINED_NEEDS_REVIEW and explain it in warnings.
 - If subquestions are explicit, put only the shared scenario/instruction in stem_md and put each task in subquestions. Do not duplicate the same subquestion in stem_md and subquestions.
 - Before returning, scan the output and fix bare LaTeX command text such as sqrt{...}, frac{...}{...}, times, div, le, ne, angle, triangle.
+- Before returning, scan the output and ensure no unresolved `\left{`, no `\right` without delimiter, and no flattened equation group remains.
 - Use only these question_type values: single_choice, multiple_choice, fill_blank, solution, composite.
 - Do not output placeholder array items. If there are no subquestions, output "subquestions": []. If there are no options, output "options": [].
 - Only single_choice and multiple_choice may contain options.

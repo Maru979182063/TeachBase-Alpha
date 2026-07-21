@@ -103,14 +103,63 @@ def strip_context_assets(markdown: str) -> str:
     return re.sub(r"!\[[^\]]*\]\(asset://[^)]+\)", "", str(markdown or "")).strip()
 
 
+def formula_structural_risks(markdown: str, *, field_name: str = "", block_ids: list[str] | None = None) -> list[dict[str, Any]]:
+    text = str(markdown or "")
+    risks: list[dict[str, Any]] = []
+
+    def add(code: str, match: re.Match[str], message: str, action: str) -> None:
+        start = max(0, match.start() - 80)
+        end = min(len(text), match.end() + 120)
+        risks.append(
+            {
+                "risk_code": code,
+                "field": field_name,
+                "block_ids": list(block_ids or []),
+                "span": text[start:end],
+                "match": match.group(0),
+                "char_start": match.start(),
+                "char_end": match.end(),
+                "message": message,
+                "suggested_action": action,
+            }
+        )
+
+    for match in re.finditer(r"\\left(?![A-Za-z])\s*\{", text):
+        add(
+            "bad_left_brace_delimiter",
+            match,
+            r"Found \left{. KaTeX requires \left\{ or a cases/aligned environment.",
+            "convert_to_cases_or_left_brace_aligned",
+        )
+    for match in re.finditer(r"\\right(?![A-Za-z])(?=\s*(?:\$|$|[，,。；;]))", text):
+        add(
+            "bad_right_missing_delimiter",
+            match,
+            r"Found \right without a visible delimiter.",
+            "close_with_right_dot_or_convert_to_cases",
+        )
+    for match in re.finditer(r"\\left(?![A-Za-z])\s*\{[^$]{0,160}=[^$]{1,160}=", text):
+        add(
+            "possible_equation_group_flattened",
+            match,
+            "Multiple equations appear flattened into one inline formula.",
+            "split_equations_into_cases_or_aligned_rows",
+        )
+    return risks
+
+
 def compact_field(field: dict[str, Any], *, strip_assets: bool = False) -> dict[str, Any]:
     markdown = str(field.get("markdown") or "")
     if strip_assets:
         markdown = strip_context_assets(markdown)
+    block_ids = list(field.get("block_ids") or [])
+    upstream_risks = [risk for risk in field.get("formula_structural_risks") or [] if isinstance(risk, dict)]
+    detected_risks = formula_structural_risks(markdown, field_name="", block_ids=block_ids)
     return {
-        "block_ids": list(field.get("block_ids") or []),
+        "block_ids": block_ids,
         "markdown": markdown,
         "formula_count": int(field.get("formula_count") or 0),
+        "formula_structural_risks": upstream_risks or detected_risks,
         "asset_ids": [str(asset.get("asset_id") or "") for asset in field.get("asset_refs") or [] if asset.get("asset_id")],
     }
 
@@ -139,6 +188,21 @@ def required_source_refs(draft: dict[str, Any]) -> dict[str, list[str]]:
 
 def build_model_input(draft: dict[str, Any]) -> dict[str, Any]:
     fields = draft.get("fields") or {}
+    compact_fields = {
+        "context": compact_field(fields.get("context") or {}, strip_assets=True),
+        "stem": compact_field(fields.get("stem") or {}),
+        "subquestions": compact_field(fields.get("subquestions") or {}),
+        "options": compact_field(fields.get("options") or {}),
+        "answer": compact_field(fields.get("answer") or {}),
+        "explanation": compact_field(fields.get("explanation") or {}),
+        "teaching_note": compact_field(fields.get("teaching_note") or {}),
+        "other_evidence": compact_field(fields.get("other_evidence") or {}),
+    }
+    formula_risk_spans: list[dict[str, Any]] = []
+    for field_name, field in compact_fields.items():
+        for risk in field.get("formula_structural_risks") or []:
+            if isinstance(risk, dict):
+                formula_risk_spans.append({**risk, "field": field_name})
     return {
         "draft_id": draft.get("draft_id"),
         "doc_id": draft.get("doc_id"),
@@ -146,16 +210,8 @@ def build_model_input(draft: dict[str, Any]) -> dict[str, Any]:
         "record_kind": draft.get("record_kind"),
         "builder_status": draft.get("builder_status"),
         "solution_policy": draft.get("solution_policy"),
-        "fields": {
-            "context": compact_field(fields.get("context") or {}, strip_assets=True),
-            "stem": compact_field(fields.get("stem") or {}),
-            "subquestions": compact_field(fields.get("subquestions") or {}),
-            "options": compact_field(fields.get("options") or {}),
-            "answer": compact_field(fields.get("answer") or {}),
-            "explanation": compact_field(fields.get("explanation") or {}),
-            "teaching_note": compact_field(fields.get("teaching_note") or {}),
-            "other_evidence": compact_field(fields.get("other_evidence") or {}),
-        },
+        "fields": compact_fields,
+        "formula_risk_spans": formula_risk_spans,
         "asset_refs": draft.get("asset_refs") or [],
         "source_refs": draft.get("source_refs") or [],
         "required_source_refs": required_source_refs(draft),
@@ -438,15 +494,22 @@ def markdown_risk_errors(refined: dict[str, Any]) -> list[dict[str, str]]:
         "bare_frac_command": r"(?<!\\)\bfrac\s*\{",
         "bare_times_command": r"(?<!\\)\btimes\b",
         "bare_div_command": r"(?<!\\)\bdiv\b",
+        "bad_left_brace_delimiter": r"\\left(?![A-Za-z])\s*\{",
+        "bad_right_missing_delimiter": r"\\right(?![A-Za-z])(?=\s*(?:\$|$|[，,。；;]))",
+        "possible_equation_group_flattened": r"\\left(?![A-Za-z])\s*\{[^$]{0,160}=[^$]{1,160}=",
         "math_error_literal": r"Math input error|Missing open brace|Missing or unrecognized delimiter|Double exponent",
     }
     errors: list[dict[str, str]] = []
     for code, pattern in checks.items():
         if re.search(pattern, text):
-            errors.append({"path": "$.standard_question", "message": code})
+            errors.append({"path": "$.standard_question", "code": code, "message": code})
     for index, chunk in enumerate(chunks):
         if chunk.count("$") % 2:
-            errors.append({"path": f"$.standard_question.markdown_chunk[{index}]", "message": "unbalanced_math_dollar_delimiter"})
+            errors.append({
+                "path": f"$.standard_question.markdown_chunk[{index}]",
+                "code": "unbalanced_math_dollar_delimiter",
+                "message": "unbalanced_math_dollar_delimiter",
+            })
     return errors
 
 

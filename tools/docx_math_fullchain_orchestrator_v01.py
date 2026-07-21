@@ -279,6 +279,12 @@ def markdown_issues(text: str) -> list[str]:
     for marker in ["Math input error", "Missing open brace", "Missing close brace", "Double exponent", "Extra close brace"]:
         if marker in text:
             issues.append(marker)
+    if re.search(r"\\left(?![A-Za-z])\s*\{", text):
+        issues.append("bad_left_brace_delimiter")
+    if re.search(r"\\right(?![A-Za-z])(?=\s*(?:\$|$|[，,。；;]))", text):
+        issues.append("bad_right_missing_delimiter")
+    if re.search(r"\\left(?![A-Za-z])\s*\{[^$]{0,160}=[^$]{1,160}=", text):
+        issues.append("possible_equation_group_flattened")
     # A literal "\n" is suspicious only when it is not starting a TeX command such as \ne or \neq.
     if re.search(r"\\n(?![A-Za-z])", text):
         issues.append("literal_backslash_n")

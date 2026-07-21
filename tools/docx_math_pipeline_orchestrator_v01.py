@@ -155,6 +155,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         env=env,
     )
     block_tags = require_artifact((tagger.get("artifacts") or {}).get("block_tags", ""), "block tags")
+    tagger_block_stream = require_artifact(block_tags.parent / "immutable_block_stream.json", "tagger immutable block stream")
 
     grouper = run_child(
         [
@@ -213,7 +214,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     part_root = Path("outputs/docx_question_part_normalizer_v0_1") / f"{run_id}__part_normalizer"
 
     block_stream_root = run_root / "block_streams"
-    copy_block_stream(paragraph_stream, block_stream_root / doc_id / "immutable_block_stream.json")
+    copy_block_stream(tagger_block_stream, block_stream_root / doc_id / "immutable_block_stream.json")
 
     draft_root = Path("outputs/docx_math_source_backed_draft_builder_v0_1") / f"{run_id}__draft_builder"
     builder = run_child(
@@ -301,6 +302,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "artifacts": {
             "run_root": rel(run_root),
             "paragraph_stream": rel(paragraph_stream),
+            "immutable_block_stream": rel(tagger_block_stream),
             "block_tags": rel(block_tags),
             "question_packet_candidates": rel(packet_candidates),
             "membership_groups": rel(membership_path),

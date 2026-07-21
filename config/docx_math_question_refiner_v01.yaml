@@ -14,7 +14,7 @@
       "entrypoint": "tools/docx_math_question_refiner_v01.py",
       "model": "doubao-seed-2-0-mini-260428",
       "temperature": 0,
-      "prompt_version": "docx_math_question_refiner_v0.1_strict_fields_with_repair_20260717",
+      "prompt_version": "docx_math_question_refiner_v0.1_strict_fields_with_formula_risk_gate_20260721",
       "system_prompt_path": "prompts/docx_math_question_refiner_system_v0.1.md",
       "user_prompt_path": "prompts/docx_math_question_refiner_user_v0.1.md",
       "repair_user_prompt_path": "prompts/docx_math_question_refiner_repair_user_v0.1.md",
