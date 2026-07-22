@@ -1265,7 +1265,10 @@ def refine_asset(
             debug["final_refine_expanded_bbox"] = {"x1": rx1, "y1": ry1, "x2": rx2, "y2": ry2}
             debug["final_refine_action"] = "refined_by_model"
             asset["debug"] = debug
-            asset["storage_key"] = str(refined_path.relative_to(out_dir)).replace("\\", "/")
+            refined_storage_key = str(refined_path.relative_to(out_dir)).replace("\\", "/")
+            asset["storage_key"] = refined_storage_key
+            asset["review_storage_key"] = refined_storage_key
+            asset["delivery_storage_key"] = refined_storage_key
             asset["image_width"] = refined.width
             asset["image_height"] = refined.height
             asset["review_flags"] = sorted(set(flags + ["final_asset_quality_refined_by_model"]))

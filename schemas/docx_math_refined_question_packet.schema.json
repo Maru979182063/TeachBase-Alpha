@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "docx_math_refined_question_packet.schema.json",
+  "type": "object",
+  "required": [
+    "schema",
+    "doc_id",
+    "source_draft_id",
+    "source_group_id",
+    "prompt_version",
+    "refine_status",
+    "question_type",
+    "solution_policy",
+    "standard_question",
+    "condition_groups",
+    "source_refs",
+    "asset_refs",
+    "status_breakdown",
+    "missing_fields",
+    "warnings",
+    "normalization_actions"
+  ],
+  "properties": {
+    "schema": {"const": "docx_math_refined_question_packet_v0.1"},
+    "doc_id": {"type": "string"},
+    "source_draft_id": {"type": "string"},
+    "source_group_id": {"type": "string"},
+    "prompt_version": {"type": "string"},
+    "refine_status": {"enum": ["REFINED_READY", "REFINED_NEEDS_REVIEW", "REFINE_FAILED"]},
+    "question_type": {"enum": ["single_choice", "multiple_choice", "fill_blank", "solution", "composite"]},
+    "solution_policy": {"enum": ["required", "absent_expected", "partial_solution_expected", "unknown"]},
+    "standard_question": {
+      "type": "object",
+      "required": [
+        "title",
+        "stem_md",
+        "subquestions",
+        "options",
+        "answer_md",
+        "explanation_md",
+        "teaching_note_md",
+        "context_md",
+        "render_markdown"
+      ],
+      "properties": {
+        "title": {"type": "string"},
+        "stem_md": {"type": "string"},
+        "subquestions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "markdown"],
+            "properties": {
+              "label": {"type": "string"},
+              "markdown": {"type": "string"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "markdown"],
+            "properties": {
+              "label": {"type": "string"},
+              "markdown": {"type": "string"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "answer_md": {"type": "string"},
+        "explanation_md": {"type": "string"},
+        "teaching_note_md": {"type": "string"},
+        "context_md": {"type": "string"},
+        "render_markdown": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "condition_groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["group_id", "kind", "markdown", "items", "source_block_ids"],
+        "properties": {
+          "group_id": {"type": "string"},
+          "kind": {"type": "string"},
+          "markdown": {"type": "string"},
+          "items": {"type": "array", "items": {"type": "string"}},
+          "source_block_ids": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": true
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string"}
+      }
+    },
+    "asset_refs": {
+      "type": "object",
+      "required": ["visual_refs"],
+      "properties": {
+        "visual_refs": {"type": "array"}
+      },
+      "additionalProperties": true
+    },
+    "status_breakdown": {
+      "type": "object",
+      "required": ["content_status", "source_status", "projection_status", "risk_codes"],
+      "properties": {
+        "content_status": {"enum": ["CLEAN", "PARTIAL", "BROKEN"]},
+        "source_status": {"enum": ["CLEAN", "SOURCE_WARNINGS", "INCOMPLETE_SOURCE", "MODEL_FAILED"]},
+        "projection_status": {"enum": ["READY", "READY_WITH_WARNINGS", "NEEDS_REVIEW", "BLOCKED"]},
+        "risk_codes": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "missing_fields": {"type": "array", "items": {"type": "string"}},
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {"type": "string"},
+          "message": {"type": "string"},
+          "refs": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": true
+      }
+    },
+    "normalization_actions": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

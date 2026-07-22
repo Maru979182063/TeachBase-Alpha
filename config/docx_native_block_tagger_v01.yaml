@@ -1,0 +1,26 @@
+{
+  "schema_version": "docx_native_block_tagger_v01.config",
+  "pipeline_id": "docx_native_block_tagger_v01",
+  "status": "experimental_isolated",
+  "model_provider": "volcengine_ark",
+  "default_model_alias": "doubao2.0mini",
+  "default_model_endpoint_id": "doubao-seed-2-0-mini-260428",
+  "api_key_env": "ARK_API_KEY",
+  "owned_output_root": "outputs/docx_native_block_tagger_v0_1",
+  "runtime_import_enabled": false,
+  "database_write_enabled": false,
+  "window": {
+    "core_blocks": 12,
+    "stride_blocks": 6,
+    "context_left_blocks": 4,
+    "context_right_blocks": 4,
+    "max_block_preview_chars": 520
+  },
+  "runner": {
+    "max_workers": 4,
+    "per_window_timeout_seconds": 90,
+    "resume": true
+  },
+  "prompt_version": "docx_native_block_tagger_v01",
+  "system_prompt_path": "prompts/docx_native_block_tagger_v01.system.md"
+}

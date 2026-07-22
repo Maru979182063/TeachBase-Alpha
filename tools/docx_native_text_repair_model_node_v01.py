@@ -324,7 +324,19 @@ def main() -> int:
                 write_json(raw_response_path, result.get("raw_response", {}))
                 raw_content = str(result.get("raw_content") or "")
                 raw_content_path.write_text(raw_content, encoding="utf-8")
-                parsed = json.loads(strip_json_content(raw_content))
+                try:
+                    parsed = json.loads(strip_json_content(raw_content))
+                except json.JSONDecodeError as exc:
+                    validation_issues = [
+                        {
+                            "type": "model_json_parse_error",
+                            "reason": str(exc),
+                        }
+                    ]
+                    if attempt < max(0, args.repair_retries):
+                        active_prompt = build_retry_prompt(question, raw_content, validation_issues)
+                        continue
+                    raise
                 repaired_markdown = str(parsed.get("repaired_display_markdown") or "")
                 validation_issues = validate_repair(question, repaired_markdown)
                 if repaired_markdown and not validation_issues:

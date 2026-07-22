@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sliding_window_groups.schema.json",
+  "type": "object",
+  "required": ["schema", "doc_id", "current_page", "window_id", "prompt_version", "groups", "open_continuations", "dedupe_hints", "qa_flags"],
+  "properties": {
+    "schema": {"const": "sliding_window_groups_v0.1"},
+    "doc_id": {"type": "string"},
+    "current_page": {"type": "integer", "minimum": 1},
+    "window_id": {"type": "string"},
+    "prompt_version": {"type": "string"},
+    "groups": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/group"}
+    },
+    "open_continuations": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/open_continuation"}
+    },
+    "dedupe_hints": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/dedupe_hint"}
+    },
+    "qa_flags": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/qa_flag"}
+    }
+  },
+  "$defs": {
+    "ref_array": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "non_empty_ref_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"}
+    },
+    "group": {
+      "type": "object",
+      "required": [
+        "group_id",
+        "group_kind",
+        "anchor_block_refs",
+        "member_block_refs",
+        "context_block_refs",
+        "solution_block_refs",
+        "analysis_block_refs",
+        "translation_block_refs",
+        "visual_block_refs",
+        "carryover_block_refs",
+        "open_status",
+        "confidence"
+      ],
+      "properties": {
+        "group_id": {"type": "string", "pattern": "^g_[0-9]{3,}$|^fallback_.+"},
+        "group_kind": {"type": "string"},
+        "anchor_block_refs": {"$ref": "#/$defs/ref_array"},
+        "member_block_refs": {"$ref": "#/$defs/non_empty_ref_array"},
+        "context_block_refs": {"$ref": "#/$defs/ref_array"},
+        "solution_block_refs": {"$ref": "#/$defs/ref_array"},
+        "analysis_block_refs": {"$ref": "#/$defs/ref_array"},
+        "translation_block_refs": {"$ref": "#/$defs/ref_array"},
+        "visual_block_refs": {"$ref": "#/$defs/ref_array"},
+        "carryover_block_refs": {"$ref": "#/$defs/ref_array"},
+        "open_status": {"enum": ["closed", "open_from_previous", "open_to_next", "open_both", "fragment", "unknown"]},
+        "confidence": {"enum": ["low", "medium", "high"]}
+      },
+      "additionalProperties": true
+    },
+    "open_continuation": {
+      "type": "object",
+      "required": ["continuation_id", "direction", "reason", "source_block_refs", "expected_next"],
+      "properties": {
+        "continuation_id": {"type": "string"},
+        "direction": {"enum": ["from_previous", "to_next"]},
+        "reason": {"type": "string"},
+        "source_block_refs": {"$ref": "#/$defs/non_empty_ref_array"},
+        "expected_next": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "dedupe_hint": {
+      "type": "object",
+      "required": ["candidate_id", "source_block_refs", "prefer_if_duplicate", "reason"],
+      "properties": {
+        "candidate_id": {"type": "string"},
+        "source_block_refs": {"$ref": "#/$defs/non_empty_ref_array"},
+        "prefer_if_duplicate": {"type": "boolean"},
+        "reason": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "qa_flag": {
+      "type": "object",
+      "required": ["code", "severity", "message", "source_block_refs"],
+      "properties": {
+        "code": {"type": "string"},
+        "severity": {"enum": ["warning", "error"]},
+        "message": {"type": "string"},
+        "source_block_refs": {"$ref": "#/$defs/ref_array"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

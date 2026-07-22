@@ -1,0 +1,26 @@
+{
+  "schema_version": "docx_native_boundary_resolver_v01.config",
+  "pipeline_id": "docx_native_unit_boundary_resolver_v01",
+  "status": "experimental_isolated",
+  "model_provider": "volcengine_ark",
+  "default_model_alias": "doubao2.0mini",
+  "default_model_endpoint_id": "doubao-seed-2-0-mini-260428",
+  "api_key_env": "ARK_API_KEY",
+  "owned_output_root": "outputs/docx_native_boundary_resolver_v0_1",
+  "runtime_import_enabled": false,
+  "database_write_enabled": false,
+  "window": {
+    "core_blocks": 24,
+    "context_left_blocks": 6,
+    "context_right_blocks": 6,
+    "max_block_preview_chars": 520
+  },
+  "gates": {
+    "require_full_block_coverage": true,
+    "reject_section_inside_question": true,
+    "reject_invalid_source_refs": true,
+    "reject_ambiguous_attachment": true,
+    "reject_non_contiguous_unit": true
+  },
+  "prompt_version": "docx_math_unit_tagger_v01"
+}

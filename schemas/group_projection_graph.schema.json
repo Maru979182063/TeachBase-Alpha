@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "group_projection_graph.schema.json",
+  "type": "object",
+  "required": [
+    "schema",
+    "doc_id",
+    "prompt_version",
+    "nodes",
+    "relations",
+    "overlap_resolutions",
+    "open_issues"
+  ],
+  "properties": {
+    "schema": {"const": "group_projection_graph_v0.1"},
+    "doc_id": {"type": "string"},
+    "prompt_version": {"type": "string"},
+    "nodes": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/node"}
+    },
+    "relations": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/relation"}
+    },
+    "overlap_resolutions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/overlap_resolution"}
+    },
+    "open_issues": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/issue"}
+    }
+  },
+  "$defs": {
+    "ref_array": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "document_group_id",
+        "semantic_role",
+        "projection_target_hint",
+        "project_directly_to_question",
+        "reason",
+        "evidence_refs"
+      ],
+      "properties": {
+        "document_group_id": {"type": "string"},
+        "semantic_role": {"type": "string"},
+        "projection_target_hint": {"type": "string"},
+        "project_directly_to_question": {"type": "boolean"},
+        "reason": {"type": "string"},
+        "evidence_refs": {"$ref": "#/$defs/ref_array"}
+      },
+      "additionalProperties": true
+    },
+    "relation": {
+      "type": "object",
+      "required": [
+        "subject_group_id",
+        "predicate",
+        "object_group_id",
+        "predicate_open_text",
+        "evidence_refs",
+        "confidence",
+        "reason"
+      ],
+      "properties": {
+        "subject_group_id": {"type": "string"},
+        "predicate": {"enum": ["contains", "uses_context", "is_child_of", "shares_stimulus", "continues_on", "other"]},
+        "object_group_id": {"type": "string"},
+        "predicate_open_text": {"type": "string"},
+        "evidence_refs": {"$ref": "#/$defs/ref_array"},
+        "confidence": {"enum": ["low", "medium", "high"]},
+        "reason": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "overlap_resolution": {
+      "type": "object",
+      "required": [
+        "block_ref",
+        "primary_owner_group_id",
+        "secondary_group_ids",
+        "secondary_usage",
+        "reason"
+      ],
+      "properties": {
+        "block_ref": {"type": "string"},
+        "primary_owner_group_id": {"type": "string"},
+        "secondary_group_ids": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "secondary_usage": {"type": "string"},
+        "reason": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "issue": {
+      "type": "object",
+      "required": ["code", "message", "source_refs"],
+      "properties": {
+        "code": {"type": "string"},
+        "message": {"type": "string"},
+        "source_refs": {"$ref": "#/$defs/ref_array"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

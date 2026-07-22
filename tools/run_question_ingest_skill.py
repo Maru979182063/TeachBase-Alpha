@@ -2,15 +2,18 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import html
 import json
 import os
 import shutil
 import subprocess
 import sys
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import assetize_question_images
 from PIL import Image
 
 
@@ -610,6 +613,18 @@ def run_figure_detection(args: argparse.Namespace, paths: dict[str, Path], env: 
             ]
             if args.disable_heuristic_figure_fallback:
                 cmd.append("--disable-heuristic-figure-fallback")
+            if args.enable_mineru_fallback:
+                cmd += [
+                    "--enable-mineru-fallback",
+                    "--mineru-exe",
+                    str(args.mineru_exe or "mineru"),
+                    "--mineru-api-url",
+                    str(args.mineru_api_url or ""),
+                    "--mineru-out-dir",
+                    str(paths["figure_dir"] / "_mineru_fallback"),
+                    "--mineru-timeout-seconds",
+                    str(args.mineru_timeout_seconds),
+                ]
             futures.append(
                 pool.submit(
                     run_cmd,
@@ -640,6 +655,18 @@ def run_figure_detection(args: argparse.Namespace, paths: dict[str, Path], env: 
         ]
         if args.disable_heuristic_figure_fallback:
             cmd.append("--disable-heuristic-figure-fallback")
+        if args.enable_mineru_fallback:
+            cmd += [
+                "--enable-mineru-fallback",
+                "--mineru-exe",
+                str(args.mineru_exe or "mineru"),
+                "--mineru-api-url",
+                str(args.mineru_api_url or ""),
+                "--mineru-out-dir",
+                str(paths["figure_dir"] / "_mineru_fallback"),
+                "--mineru-timeout-seconds",
+                str(args.mineru_timeout_seconds),
+            ]
         result = run_cmd(
             cmd,
             cwd=paths["workspace"],
@@ -652,11 +679,33 @@ def run_figure_detection(args: argparse.Namespace, paths: dict[str, Path], env: 
 
     if not prepared_paths:
         copied = read_json(paths["abs_source_json"])
-        for question in copied.get("questions", []):
+        questions = copied.get("questions", []) if isinstance(copied, dict) else []
+        no_image_count = 0
+        for question in questions:
             if isinstance(question, dict):
+                question_id = str(question.get("question_id", "") or "")
+                gate_path = paths["gate_dir"] / "gate" / f"{question_id}.gate.json"
+                if gate_path.exists():
+                    question["image_need_gate"] = read_json(gate_path)
                 question["staged_visual_assets"] = []
+                question["option_visual_blocks"] = []
+                question["stem_image_bboxes"] = []
+                question["analysis_image_bboxes"] = []
+                question["unassigned_image_bboxes"] = []
                 question["option_detection_review_flags"] = ["figure_detection_skipped_no_candidates"]
+                no_image_count += 1
         write_json(paths["prepared_merged_json"], copied)
+        write_json(
+            paths["prepared_merged_json"].with_suffix(".summary.json"),
+            {
+                "question_count": len([item for item in questions if isinstance(item, dict)]),
+                "candidate_prepared_count": 0,
+                "no_image_skipped_count": no_image_count,
+                "debug_rows": 0,
+                "out_json": str(paths["prepared_merged_json"]),
+                "merge_mode": "no_candidates_with_gate_backfill",
+            },
+        )
         return paths["prepared_merged_json"]
 
     cmd = [
@@ -747,6 +796,71 @@ def run_asset_package_audit(args: argparse.Namespace, paths: dict[str, Path], en
     return paths["asset_audit_dir"] / "asset_package_audit_summary.json"
 
 
+def resolve_asset_file_for_final_review(asset: dict[str, Any], paths: dict[str, Path]) -> Path | None:
+    debug = asset.get("debug", {}) if isinstance(asset.get("debug"), dict) else {}
+    raw_local = str(debug.get("local_path", "") or "").strip()
+    if raw_local:
+        local_path = Path(raw_local)
+        if local_path.exists():
+            return local_path
+
+    keys = [
+        str(asset.get("delivery_storage_key", "") or "").strip(),
+        str(asset.get("review_storage_key", "") or "").strip(),
+        str(asset.get("storage_key", "") or "").strip(),
+    ]
+    bases = [paths["out_dir"], paths["asset_bundle_dir"], paths["asset_reconcile_dir"]]
+    for key in [item for item in keys if item]:
+        for base in bases:
+            candidate = base / Path(key)
+            if candidate.exists():
+                return candidate
+    return None
+
+
+def rewrite_asset_paths_for_final_review(payload: dict[str, Any], paths: dict[str, Path]) -> dict[str, Any]:
+    review_payload = deepcopy(payload)
+    for record in review_payload.get("questions", []) or []:
+        if not isinstance(record, dict):
+            continue
+        for asset in record.get("assets", []) or []:
+            if not isinstance(asset, dict):
+                continue
+            asset_path = resolve_asset_file_for_final_review(asset, paths)
+            if not asset_path:
+                continue
+            rel_key = safe_rel(asset_path, paths["out_dir"])
+            asset["storage_key"] = rel_key
+            asset["review_storage_key"] = rel_key
+            asset["delivery_storage_key"] = rel_key
+    return review_payload
+
+
+def promote_final_review_entrypoint(paths: dict[str, Path]) -> Path | None:
+    final_manifest = paths["asset_reconcile_dir"] / "reconciled_refined_manifest.json"
+    if not final_manifest.exists():
+        return None
+
+    root_review = paths["out_dir"] / "question_asset_review.html"
+    root_debug_review = paths["out_dir"] / "question_asset_review_debug.html"
+    assetize_stage_backup = paths["out_dir"] / "question_asset_review_assetize_stage.html"
+    if root_review.exists() and not assetize_stage_backup.exists():
+        shutil.copy2(root_review, assetize_stage_backup)
+    assetize_debug_backup = paths["out_dir"] / "question_asset_review_debug_assetize_stage.html"
+    if root_debug_review.exists() and not assetize_debug_backup.exists():
+        shutil.copy2(root_debug_review, assetize_debug_backup)
+
+    payload = read_json(final_manifest)
+    if not isinstance(payload, dict):
+        return None
+    review_payload = rewrite_asset_paths_for_final_review(payload, paths)
+    review_payload["generated_at"] = now()
+    review_payload["final_review_source_manifest"] = str(final_manifest)
+    assetize_question_images.write_html_clean(root_review, review_payload)
+    assetize_question_images.write_html_clean(root_debug_review, review_payload, show_asset_debug=True)
+    return root_review
+
+
 def summarize(paths: dict[str, Path], visual_results: Path | None) -> dict[str, Any]:
     if visual_results is not None and not isinstance(visual_results, Path):
         visual_results = Path(visual_results).expanduser().resolve()
@@ -793,6 +907,9 @@ def summarize(paths: dict[str, Path], visual_results: Path | None) -> dict[str, 
         "status": "complete",
         "source_json": str(paths["source_json"]),
         "visual_results": str(visual_results) if visual_results else "",
+        "final_review_html": str(paths["out_dir"] / "question_asset_review.html")
+        if (paths["out_dir"] / "question_asset_review.html").exists()
+        else "",
         "planner": {k: gate_summary.get(k) for k in ("question_count", "ok_count", "failed_count", "needs_figure_detection_count", "no_figure_count", "total_tokens")},
         "candidate": candidate_summary,
         "figure_prepared": prepared_summary,
@@ -861,6 +978,10 @@ def main() -> None:
     parser.add_argument("--skip-transcription-retry", action="store_true")
     parser.add_argument("--skip-figure-detection", action="store_true")
     parser.add_argument("--disable-heuristic-figure-fallback", action="store_true")
+    parser.add_argument("--enable-mineru-fallback", action="store_true")
+    parser.add_argument("--mineru-exe", default=os.environ.get("MINERU_EXE", "mineru"))
+    parser.add_argument("--mineru-api-url", default=os.environ.get("MINERU_API_URL", ""))
+    parser.add_argument("--mineru-timeout-seconds", type=int, default=int(os.environ.get("MINERU_TIMEOUT_SECONDS", "240") or 240))
     parser.add_argument("--force-planner", action="store_true")
     args = parser.parse_args()
 
@@ -938,6 +1059,9 @@ def main() -> None:
 
     run_asset_package_audit(args, paths, env, reconciled_manifest_path)
     state_update(paths["state"], asset_package_audit="done")
+
+    final_review = promote_final_review_entrypoint(paths)
+    state_update(paths["state"], final_review_html=str(final_review) if final_review else "")
 
     summary = summarize(paths, visual_results)
     write_json(paths["summary"], summary)

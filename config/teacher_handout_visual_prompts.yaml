@@ -299,6 +299,96 @@ prompts:
           }
         ]
       }
+  math_panel_planner:
+    prompt_version: "math_panel_planner_en_v0.1"
+    system_prompt: |
+      You are a visual layout planner for K12 math teacher handouts.
+      The image is a rendered PDF canvas, sometimes assembled from page fragments.
+      Your job is to classify large visual panels before question splitting.
+      Do not transcribe text. Do not solve math. Return JSON only.
+    user_template: |
+      Inspect the canvas and output large panels in reading order.
+
+      Context:
+      - group_id: {{GROUP_ID}}
+      - component_kind: {{COMPONENT_KIND}}
+      - component_label: {{COMPONENT_LABEL}}
+      - checkpoint: {{CHECKPOINT}}
+      - page_span: {{PAGE_SPAN}}
+
+      Panel types:
+      - single_question: one complete math question, example, variant, or exercise, including its diagrams, options, answer, and analysis when visible.
+      - multi_question_panel: a panel containing multiple independent numbered math questions or examples that must be split later.
+      - knowledge_panel: method summary, concept explanation, theorem notes, tables, tree diagrams, page titles, answer keys, or other teaching material with no standalone question to enter the question bank.
+      - mixed_panel: question content and non-question teaching content are visibly mixed and need a second pass.
+
+      Rules:
+      1. Prefer a panel bbox that covers a coherent unit. Do not split a multi-question exercise area into many small boxes here.
+      2. Keep every diagram, table, coordinate plane, geometry figure, option row, answer block, and analysis block with its owning question panel.
+      3. If a question continues across adjacent stacked page fragments, use one panel bbox covering all visible continuation parts.
+      4. Exclude page headers, page numbers, unrelated decorative bars, and empty margins when possible.
+      5. Treat the whole canvas as a normalized 1000 x 1000 coordinate system.
+      6. Top-left is (0, 0), bottom-right is (1000, 1000). All bbox x/y/w/h values must use this normalized coordinate system.
+
+      Output schema:
+      {
+        "image_width": 1000,
+        "image_height": 1000,
+        "panels": [
+          {
+            "panel_type": "single_question|multi_question_panel|knowledge_panel|mixed_panel",
+            "bbox": {"x": 0, "y": 0, "w": 0, "h": 0},
+            "confidence": 0.0,
+            "reason": "short visual reason"
+          }
+        ]
+      }
+  math_question_splitter:
+    prompt_version: "math_question_splitter_grounding1000_en_v0.1"
+    system_prompt: |
+      You split K12 math handout panels into question-sized visual crops.
+      The image is the only source of truth. Do not transcribe or solve.
+      Return strict JSON only.
+    user_template: |
+      Split the provided panel into standalone math question boxes.
+
+      Context:
+      - group_id: {{GROUP_ID}}
+      - component_kind: {{COMPONENT_KIND}}
+      - component_label: {{COMPONENT_LABEL}}
+      - checkpoint: {{CHECKPOINT}}
+      - page_span: {{PAGE_SPAN}}
+
+      Coordinate contract:
+      1. Treat the whole input image as a normalized 1000 x 1000 canvas.
+      2. Top-left is (0, 0), bottom-right is (1000, 1000).
+      3. All bbox x/y/w/h values must use this normalized coordinate system.
+      4. Output image_width=1000 and image_height=1000.
+
+      Hard rules:
+      1. A valid question bbox must include a visible question head: a question number, example marker, variant marker, exercise marker, or the first complete question sentence.
+      2. Do not output headless fragments. If an area only contains answer/explanation continuation without the question head, do not create a separate question for it.
+      3. Stop before the next visible independent question head. Never include the next question's first line in the current question box.
+      4. Keep the current question's diagrams, coordinate planes, tables, options, answer, proof, and analysis if they visibly belong to that question.
+      5. For dense numbered exercises, prefer tight boxes from one question head to just before the next question head.
+      6. For a cross-page continuation, include it only when it visibly continues the same question's answer or analysis.
+      7. Exclude page headers, page numbers, blank margins, and unrelated knowledge summaries.
+      8. If the page contains exactly one complete standalone question, return one box around that whole question.
+      9. If no reliable standalone question exists, return questions=[].
+
+      Output schema:
+      {
+        "image_width": 1000,
+        "image_height": 1000,
+        "questions": [
+          {
+            "local_number": "1",
+            "bbox": {"x": 0, "y": 0, "w": 0, "h": 0},
+            "confidence": 0.0,
+            "reason": "short visual reason"
+          }
+        ]
+      }
   transcription:
     active_variant: "v7"
     system_prompt: |
@@ -949,6 +1039,48 @@ prompts:
         ],
         "unresolved_format_spans": [
           {"field":"stem|answer|analysis|handwriting","text":"...","reason":"still_ambiguous"}
+        ]
+      }
+  latex_span_patch:
+    prompt_version: "latex_span_patch_v0.1_katex_gate"
+    system_prompt: |
+      You are a K12 math LaTeX span repair assistant.
+      Local code has already selected the exact Markdown math spans that fail KaTeX validation.
+      Return patch actions only. Do not rewrite a whole field, do not move content across fields, and do not invent numbers, labels, asset ids, or solution steps.
+      Return strict JSON only.
+    user_template: |
+      Repair only the listed KaTeX-failing spans.
+
+      Input JSON:
+      {{PATCH_INPUT_JSON}}
+
+      Rules:
+      1. Use task_id to identify each span. Do not return find_text.
+      2. source_span is the exact substring selected by local code.
+      3. replacement_text must be the smallest Markdown/LaTeX replacement that preserves the same visible mathematical meaning.
+      4. Keep $...$ or $$...$$ delimiters in replacement_text.
+      5. Do not rewrite surrounding prose.
+      6. If the visible meaning is unclear from the text/image, do not patch it; put the task in unresolved.
+      7. The repaired span must be expected to pass KaTeX.
+
+      Required output:
+      {
+        "schema": "latex_span_patch_actions_v0.1",
+        "record_id": "{{RECORD_ID}}",
+        "question_id": "{{QUESTION_ID}}",
+        "patches": [
+          {
+            "task_id": "lx_0001",
+            "replacement_text": "",
+            "confidence": "high|medium|low",
+            "notes": ""
+          }
+        ],
+        "unresolved": [
+          {
+            "task_id": "",
+            "reason": ""
+          }
         ]
       }
   refine:

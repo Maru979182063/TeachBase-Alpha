@@ -1,0 +1,30 @@
+{
+  "schema_version": "docx_question_grouper_v01.config",
+  "pipeline_id": "docx_question_grouper_v01",
+  "status": "experimental_isolated",
+  "model_provider": "volcengine_ark",
+  "default_model_alias": "doubao2.0mini",
+  "default_model_endpoint_id": "doubao-seed-2-0-mini-260428",
+  "api_key_env": "ARK_API_KEY",
+  "owned_output_root": "outputs/docx_question_grouper_v0_1",
+  "runtime_import_enabled": false,
+  "database_write_enabled": false,
+  "prompt_version": "docx_question_grouper_v0.1_question_content_boundary_20260717",
+  "system_prompt_path": "prompts/docx_question_grouper_v01.system.md",
+  "user_prompt_path": "prompts/docx_question_grouper_v01.user.md",
+  "window_policy": {
+    "core_blocks": 28,
+    "stride_blocks": 18,
+    "previous_tail_blocks": 8,
+    "next_head_blocks": 8,
+    "max_window_blocks": 44,
+    "max_block_preview_chars": 620
+  },
+  "dedupe_policy": {
+    "prefer_more_core_coverage": true,
+    "prefer_more_blocks": true,
+    "merge_identical_block_sets": true,
+    "suppress_subset_packets": true,
+    "allow_adjacent_merge_when_same_start": false
+  }
+}

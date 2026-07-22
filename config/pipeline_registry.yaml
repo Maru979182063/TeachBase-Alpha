@@ -147,6 +147,180 @@
       "rollback_method": "disable semantic_role_adapter_shadow and remove sidecar output",
       "baseline_id": "control_plane_20260714_v02;semantic_shadow_review_path_20260714_v01",
       "last_validated_commit": "878ad4a9"
+    },
+    {
+      "pipeline_id": "english_text_first_v05",
+      "pipeline_name": "English image-PDF text-first isolated v0.5",
+      "pipeline_version": "v0.5",
+      "status": "experimental",
+      "owner": "TeachBase-Alpha English ingest maintainers",
+      "description": "Isolated English image-PDF text-first review runner. It consumes existing VLM/unit artifacts, creates exact-copy SemanticNode and QuestionPacket candidates, materializes visual asset files from source pages, and keeps unsafe outputs on HOLD.",
+      "entrypoint": "tools/english_text_first_v05_pipeline.py",
+      "config_path": "config/english_text_first_v05.yaml",
+      "feature_flags": ["english_text_first_enabled"],
+      "input_contracts": [
+        "vlm_page_transcription.json",
+        "unit_bundle.json",
+        "evidence_bundle.json"
+      ],
+      "output_contracts": [
+        "semantic_nodes.json",
+        "asset_manifest.json",
+        "question_packet_candidates.json",
+        "run_summary.json",
+        "review.html"
+      ],
+      "owned_output_roots": [
+        "outputs/english_text_first_pipeline_v02_spec_20260715/regression/endpoint_v05_isolated"
+      ],
+      "forbidden_write_roots": [
+        "out",
+        "outputs/split_v03",
+        "outputs/semantic_role_shadow",
+        "outputs/docx_native_ingest_v01",
+        "outputs/runtime_validation",
+        "outputs/pipeline_baseline_snapshot"
+      ],
+      "stable_dependencies": ["python", "Pillow"],
+      "optional_dependencies": ["ARK_API_KEY for future model assembler/builder reruns"],
+      "model_provider": "volcengine_ark",
+      "default_model": "doubao-seed-2-0-lite-260428",
+      "prompt_bundle": "outputs/english_text_first_pipeline_v02_spec_20260715/prompts",
+      "prompt_version": "v0.2/v0.5 isolated review",
+      "downstream_pipelines": ["runtime_backend"],
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "forbidden in v0.5 isolated review; QuestionPacket candidates are not imported"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "forbidden"
+      },
+      "release_gate_policy": "HOLD unless exact source text, required solution evidence, and real precise visual assets are present",
+      "fallback_pipeline": "manual_review_or_visual_first",
+      "rollback_method": "disable english_text_first_enabled and remove endpoint_v05_isolated artifacts",
+      "baseline_id": "english_text_first_v05_isolated_20260715",
+      "last_validated_commit": ""
+    },
+    {
+      "pipeline_id": "docx_native_stage0_router_v01",
+      "pipeline_name": "DOCX native Stage0 formula router",
+      "pipeline_version": "v0.1",
+      "status": "experimental",
+      "owner": "TeachBase-Alpha DOCX ingest maintainers",
+      "description": "DOCX-native entry node that inspects Office Math XML and legacy Equation Editor OLE objects, optionally builds an MTEF formula manifest, then runs the existing native Stage0 block stream. It does not cut questions, refine text, import Runtime, or write the database.",
+      "entrypoint": "tools/docx_native_stage0_router_v01.py",
+      "config_path": "config/docx_native_stage0_router_v01.yaml",
+      "feature_flags": ["docx_native_ingest_enabled"],
+      "input_contracts": ["docx_file"],
+      "output_contracts": [
+        "router_summary.json",
+        "handoff_manifest.json",
+        "formula_manifest_backend_preview.json",
+        "paragraph_stream_formula_tokens.json",
+        "asset_manifest_native.json",
+        "formula_token_audit.json"
+      ],
+      "owned_output_roots": [
+        "outputs/docx_native_stage0_router_v0_1",
+        "outputs/docx_legacy_formula_recovery_v0_1",
+        "outputs/docx_native_formula_token_stream_v0_1"
+      ],
+      "forbidden_write_roots": [
+        "out",
+        "outputs/split_v03",
+        "outputs/semantic_role_shadow",
+        "outputs/english_text_first_pipeline_v02_spec_20260715/regression/endpoint_v05_isolated",
+        "outputs/runtime_validation",
+        "outputs/pipeline_baseline_snapshot"
+      ],
+      "stable_dependencies": ["python"],
+      "optional_dependencies": [
+        "ruby and mathtype_to_mathml_plus for legacy Equation Editor OLE/MTEF",
+        "node and mathml-to-latex for MathML to LaTeX conversion"
+      ],
+      "model_provider": "none",
+      "default_model": "",
+      "prompt_bundle": "",
+      "prompt_version": "",
+      "downstream_pipelines": [],
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "forbidden; this entry emits Stage0 artifacts only"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "forbidden"
+      },
+      "release_gate_policy": "not a release node; unresolved formulas set needs_review/fallback_signal before downstream processing",
+      "fallback_pipeline": "split_v03",
+      "rollback_method": "disable docx_native_ingest_enabled and call tools/docx_native_formula_token_stream_v01.py directly",
+      "baseline_id": "docx_native_stage0_router_v01_20260720",
+      "last_validated_commit": ""
+    },
+    {
+      "pipeline_id": "docx_math_pipeline_orchestrator_v01",
+      "pipeline_name": "DOCX native math pipeline orchestrator",
+      "pipeline_version": "v0.1",
+      "status": "experimental",
+      "owner": "TeachBase-Alpha DOCX ingest maintainers",
+      "description": "One-command reproducibility wrapper that runs DOCX native Stage0 router, block tagger, question grouper, membership adapter, part normalizer, source-backed draft builder, fullchain refiner, and optional side-by-side review packaging. It is for regression and handoff only; it does not import Runtime or write the database.",
+      "entrypoint": "tools/docx_math_pipeline_orchestrator_v01.py",
+      "config_path": "docs/docx_math_pipeline_repro.md",
+      "feature_flags": ["docx_native_ingest_enabled"],
+      "input_contracts": ["docx_file", "ARK_API_KEY"],
+      "output_contracts": [
+        "pipeline_summary.json",
+        "paragraph_stream_formula_tokens.json",
+        "block_tags.json",
+        "question_packet_candidates.json",
+        "membership_groups.json",
+        "docx_math_source_backed_draft_items.json",
+        "final_packets.json",
+        "side_by_side review package"
+      ],
+      "owned_output_roots": [
+        "outputs/docx_math_pipeline_orchestrator_v0_1",
+        "outputs/docx_native_stage0_router_v0_1",
+        "outputs/docx_legacy_formula_recovery_v0_1",
+        "outputs/docx_native_formula_token_stream_v0_1",
+        "outputs/docx_native_block_tagger_v0_1",
+        "outputs/docx_question_grouper_v0_1",
+        "outputs/docx_question_part_normalizer_v0_1",
+        "outputs/docx_math_source_backed_draft_builder_v0_1",
+        "outputs/docx_math_fullchain_orchestrator_v0_1",
+        "outputs/docx_math_side_by_side_review_v0_1"
+      ],
+      "forbidden_write_roots": [
+        "out",
+        "outputs/split_v03",
+        "outputs/semantic_role_shadow",
+        "outputs/runtime_validation",
+        "outputs/pipeline_baseline_snapshot"
+      ],
+      "stable_dependencies": ["python", "node", "ruby"],
+      "optional_dependencies": [
+        "mathtype_to_mathml_plus for legacy Equation Editor OLE/MTEF",
+        "mathml-to-latex for MathML to LaTeX conversion"
+      ],
+      "model_provider": "volcengine_ark",
+      "default_model": "doubao-seed-2-0-mini-260428",
+      "prompt_bundle": "prompts/docx_*",
+      "prompt_version": "node-owned prompt configs",
+      "downstream_pipelines": [],
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "forbidden; final_packets.json is review output, not Runtime import"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "forbidden"
+      },
+      "release_gate_policy": "HOLD for manual review; wrapper may emit ready packets but is not a production release decision",
+      "fallback_pipeline": "image_or_pdf_formula_fallback signal only; no automatic PDF visual chain invocation",
+      "rollback_method": "run individual DOCX nodes manually following docs/docx_math_pipeline_repro.md",
+      "baseline_id": "docx_math_pipeline_orchestrator_v01_20260721",
+      "last_validated_commit": ""
     }
   ]
 }
