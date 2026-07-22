@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -19,6 +20,7 @@ SPLIT_SCRIPT = WORKSPACE_ROOT / "tools" / "teacher_pdf_visual_question_split_v02
 TRANSCRIBE_SCRIPT = WORKSPACE_ROOT / "tools" / "teacher_handout_visual_transcribe_doubao.py"
 ASSETIZE_SCRIPT = WORKSPACE_ROOT / "tools" / "assetize_question_images.py"
 PREPARE_OPTION_SOURCE_SCRIPT = WORKSPACE_ROOT / "tools" / "prepare_option_visual_source.py"
+INGEST_RUNTIME_SCRIPT = WORKSPACE_ROOT / "tools" / "run_question_ingest_skill.py"
 ROUTE_PLANNER_API_URL = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
 ROUTE_AUTO = "auto"
 ROUTE_TEXT_LAYER_FIRST = "split_text_layer_first"
@@ -584,6 +586,35 @@ def run_subprocess(command: list[str], env: dict[str, str], timeout_seconds: flo
     return extract_json_block(completed.stdout)
 
 
+def python_has_module(executable: str, module: str) -> bool:
+    try:
+        completed = subprocess.run(
+            [executable, "-c", f"import {module}"],
+            cwd=str(WORKSPACE_ROOT),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+            timeout=10,
+        )
+    except Exception:
+        return False
+    return completed.returncode == 0
+
+
+def select_unified_ingest_python(env: dict[str, str]) -> str:
+    explicit = str(env.get("QUESTION_INGEST_PYTHON_EXE", "") or "").strip()
+    if explicit and python_has_module(explicit, "cv2"):
+        return explicit
+    if python_has_module(sys.executable, "cv2"):
+        return sys.executable
+    candidate = shutil.which("python")
+    if candidate and python_has_module(candidate, "cv2"):
+        return candidate
+    return sys.executable
+
+
 def build_default_transcribe_out_dir(split_out_dir: Path | None, out_name: str) -> Path:
     if split_out_dir is not None:
         return split_out_dir / out_name
@@ -766,6 +797,82 @@ def run_assetize_stage(
     return run_subprocess(command, env=env)
 
 
+def run_unified_ingest_stage(
+    env: dict[str, str],
+    source_json_path: Path,
+    visual_result_path: Path | None,
+    split_out_dir: Path | None,
+) -> dict:
+    explicit_out_dir = str(os.environ.get("QUESTION_INGEST_OUT_DIR", "") or "").strip()
+    out_name = str(os.environ.get("QUESTION_INGEST_OUT_NAME", "") or "").strip() or "question_ingest_runtime_v0.1"
+    out_dir = resolve_workspace_path(explicit_out_dir) if explicit_out_dir else (
+        (split_out_dir or source_json_path.parent) / out_name
+    )
+    python_exe = select_unified_ingest_python(env)
+    command = [
+        python_exe,
+        str(INGEST_RUNTIME_SCRIPT),
+        "--source-json",
+        str(source_json_path),
+        "--out-dir",
+        str(out_dir),
+        "--model",
+        str(env.get("QUESTION_INGEST_MODEL", "") or env.get("VISUAL_TRANSCRIBE_MODEL", "") or "doubao-seed-2-0-lite-260428"),
+        "--planner-concurrency",
+        str(env.get("QUESTION_INGEST_PLANNER_CONCURRENCY", "") or "4"),
+        "--figure-concurrency",
+        str(env.get("QUESTION_INGEST_FIGURE_CONCURRENCY", "") or "4"),
+        "--transcription-concurrency",
+        str(env.get("QUESTION_INGEST_TRANSCRIPTION_CONCURRENCY", "") or "3"),
+        "--model-timeout",
+        str(env.get("QUESTION_INGEST_MODEL_TIMEOUT", "") or "120"),
+        "--model-retries",
+        str(env.get("QUESTION_INGEST_MODEL_RETRIES", "") or "1"),
+    ]
+    if visual_result_path is not None and visual_result_path.exists():
+        command.extend(["--transcription-results", str(visual_result_path)])
+    if env_flag_from(env, "QUESTION_INGEST_SKIP_TRANSCRIPTION_RETRY", default=False):
+        command.append("--skip-transcription-retry")
+    if env_flag_from(env, "QUESTION_INGEST_DISABLE_HEURISTIC_FIGURE_FALLBACK", default=False):
+        command.append("--disable-heuristic-figure-fallback")
+    if env_flag_from(env, "QUESTION_INGEST_MINERU_FALLBACK_ENABLE", default=False):
+        command.append("--enable-mineru-fallback")
+        mineru_exe = str(env.get("MINERU_EXE", "") or "mineru")
+        mineru_api_url = str(env.get("MINERU_API_URL", "") or "")
+        mineru_timeout = str(env.get("MINERU_TIMEOUT_SECONDS", "") or "240")
+        command.extend(
+            [
+                "--mineru-exe",
+                mineru_exe,
+                "--mineru-api-url",
+                mineru_api_url,
+                "--mineru-timeout-seconds",
+                mineru_timeout,
+            ]
+        )
+
+    result = run_subprocess(command, env=env, timeout_seconds=None)
+    result["out_dir"] = str(out_dir)
+    result["python_executable"] = python_exe
+    result["source_json"] = str(source_json_path)
+    result["visual_results"] = str(visual_result_path) if visual_result_path is not None else ""
+    return result
+
+
+def build_question_asset_stage_from_unified(unified_result: dict) -> dict:
+    asset_bundle = unified_result.get("asset_bundle", {}) if isinstance(unified_result.get("asset_bundle"), dict) else {}
+    return {
+        "status": "from_unified_ingest",
+        "out_dir": str(Path(str(unified_result.get("out_dir", "") or "")) / "06_asset_bundle"),
+        "manifest": str(asset_bundle.get("manifest", "") or ""),
+        "html": str(asset_bundle.get("review_html", "") or ""),
+        "question_count": asset_bundle.get("question_count", 0),
+        "asset_count": asset_bundle.get("asset_count", 0),
+        "unified_ingest_summary": str(Path(str(unified_result.get("out_dir", "") or "")) / "runtime_summary.json"),
+        "python_executable": str(unified_result.get("python_executable", "") or ""),
+    }
+
+
 def main() -> None:
     transcribe_only = env_flag("VISUAL_TRANSCRIBE_ONLY", default=False)
     transcribe_enable = env_flag("VISUAL_TRANSCRIBE_ENABLE", default=False) or transcribe_only
@@ -935,13 +1042,25 @@ def main() -> None:
         effective_asset_source = prepared_source_json_path or merged_source_json_path or source_json_path
         if effective_asset_source is None:
             raise RuntimeError("missing_question_asset_source_json")
-        assetize_result = run_assetize_stage(
-            env=env,
-            source_json_path=effective_asset_source,
-            visual_result_path=None if merged_source_json_path is not None else visual_result_path,
-            split_out_dir=split_out_dir,
-        )
-        summary["question_asset_stage"] = assetize_result
+        unified_ingest_enable = env_flag("QUESTION_ASSET_UNIFIED_INGEST_ENABLE", default=True)
+        prepare_only = env_flag("VISUAL_TRANSCRIBE_PREPARE_ONLY", default=False)
+        if unified_ingest_enable and not prepare_only:
+            unified_result = run_unified_ingest_stage(
+                env=env,
+                source_json_path=effective_asset_source,
+                visual_result_path=None if merged_source_json_path is not None else visual_result_path,
+                split_out_dir=split_out_dir,
+            )
+            summary["unified_ingest_stage"] = unified_result
+            summary["question_asset_stage"] = build_question_asset_stage_from_unified(unified_result)
+        else:
+            assetize_result = run_assetize_stage(
+                env=env,
+                source_json_path=effective_asset_source,
+                visual_result_path=None if merged_source_json_path is not None else visual_result_path,
+                split_out_dir=split_out_dir,
+            )
+            summary["question_asset_stage"] = assetize_result
 
     ensure_dir(summary_path.parent)
     write_json(summary_path, summary)

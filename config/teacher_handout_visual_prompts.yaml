@@ -1041,6 +1041,48 @@ prompts:
           {"field":"stem|answer|analysis|handwriting","text":"...","reason":"still_ambiguous"}
         ]
       }
+  latex_span_patch:
+    prompt_version: "latex_span_patch_v0.1_katex_gate"
+    system_prompt: |
+      You are a K12 math LaTeX span repair assistant.
+      Local code has already selected the exact Markdown math spans that fail KaTeX validation.
+      Return patch actions only. Do not rewrite a whole field, do not move content across fields, and do not invent numbers, labels, asset ids, or solution steps.
+      Return strict JSON only.
+    user_template: |
+      Repair only the listed KaTeX-failing spans.
+
+      Input JSON:
+      {{PATCH_INPUT_JSON}}
+
+      Rules:
+      1. Use task_id to identify each span. Do not return find_text.
+      2. source_span is the exact substring selected by local code.
+      3. replacement_text must be the smallest Markdown/LaTeX replacement that preserves the same visible mathematical meaning.
+      4. Keep $...$ or $$...$$ delimiters in replacement_text.
+      5. Do not rewrite surrounding prose.
+      6. If the visible meaning is unclear from the text/image, do not patch it; put the task in unresolved.
+      7. The repaired span must be expected to pass KaTeX.
+
+      Required output:
+      {
+        "schema": "latex_span_patch_actions_v0.1",
+        "record_id": "{{RECORD_ID}}",
+        "question_id": "{{QUESTION_ID}}",
+        "patches": [
+          {
+            "task_id": "lx_0001",
+            "replacement_text": "",
+            "confidence": "high|medium|low",
+            "notes": ""
+          }
+        ],
+        "unresolved": [
+          {
+            "task_id": "",
+            "reason": ""
+          }
+        ]
+      }
   refine:
     prompt_version: "local_refine_v0.1"
     user_template: |

@@ -13,6 +13,8 @@ from typing import Any
 
 import requests
 
+import math_formula_library_gate as math_formula_gate
+
 
 ROOT = Path(__file__).resolve().parents[1]
 REFINER_VERSION = "docx_math_question_refiner_v0.1_strict_fields_with_repair_20260717"
@@ -104,48 +106,11 @@ def strip_context_assets(markdown: str) -> str:
 
 
 def formula_structural_risks(markdown: str, *, field_name: str = "", block_ids: list[str] | None = None) -> list[dict[str, Any]]:
-    text = str(markdown or "")
-    risks: list[dict[str, Any]] = []
-
-    def add(code: str, match: re.Match[str], message: str, action: str) -> None:
-        start = max(0, match.start() - 80)
-        end = min(len(text), match.end() + 120)
-        risks.append(
-            {
-                "risk_code": code,
-                "field": field_name,
-                "block_ids": list(block_ids or []),
-                "span": text[start:end],
-                "match": match.group(0),
-                "char_start": match.start(),
-                "char_end": match.end(),
-                "message": message,
-                "suggested_action": action,
-            }
-        )
-
-    for match in re.finditer(r"\\left(?![A-Za-z])\s*\{", text):
-        add(
-            "bad_left_brace_delimiter",
-            match,
-            r"Found \left{. KaTeX requires \left\{ or a cases/aligned environment.",
-            "convert_to_cases_or_left_brace_aligned",
-        )
-    for match in re.finditer(r"\\right(?![A-Za-z])(?=\s*(?:\$|$|[，,。；;]))", text):
-        add(
-            "bad_right_missing_delimiter",
-            match,
-            r"Found \right without a visible delimiter.",
-            "close_with_right_dot_or_convert_to_cases",
-        )
-    for match in re.finditer(r"\\left(?![A-Za-z])\s*\{[^$]{0,160}=[^$]{1,160}=", text):
-        add(
-            "possible_equation_group_flattened",
-            match,
-            "Multiple equations appear flattened into one inline formula.",
-            "split_equations_into_cases_or_aligned_rows",
-        )
-    return risks
+    return math_formula_gate.formula_structural_risks(
+        markdown,
+        field_name=field_name,
+        block_ids=block_ids,
+    )
 
 
 def compact_field(field: dict[str, Any], *, strip_assets: bool = False) -> dict[str, Any]:
@@ -218,9 +183,15 @@ def build_model_input(draft: dict[str, Any]) -> dict[str, Any]:
         "upstream_warnings": draft.get("warnings") or [],
         "refiner_policy": {
             "one_draft_only": True,
+            "upstream_fields_are_authoritative": True,
             "may_clean_markdown": True,
             "may_repair_obvious_formula_markup": True,
-            "may_reorganize_within_same_draft": True,
+            "may_reorganize_within_same_field_only": True,
+            "must_not_reassign_fields": True,
+            "must_not_regroup_question": True,
+            "must_not_summarize_or_compress_solution": True,
+            "must_return_render_markdown_empty": True,
+            "render_markdown_is_code_generated": True,
             "must_preserve_meaning": True,
             "must_not_invent_missing_answer": True,
             "must_not_invent_block_or_asset_refs": True,
@@ -234,6 +205,24 @@ def subquestion_markdown(item: dict[str, Any]) -> str:
     if label and markdown and not markdown.startswith(label):
         return f"{label}{markdown}" if label.endswith((")", "）", ".")) else f"{label} {markdown}"
     return markdown or label
+
+
+def parse_source_options(markdown: str) -> list[dict[str, str]]:
+    text = str(markdown or "").strip()
+    if not text:
+        return []
+    matches = list(re.finditer(r"(?<![A-Za-z])([A-H])\s*[．.、]\s*", text))
+    if len(matches) < 2:
+        return []
+    options: list[dict[str, str]] = []
+    for index, match in enumerate(matches):
+        label = match.group(1)
+        start = match.end()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        value = text[start:end].strip(" \t\r\n；;")
+        if value:
+            options.append({"label": label, "markdown": value})
+    return options if len(options) >= 2 else []
 
 
 def source_subquestion_labels(draft: dict[str, Any]) -> list[str]:
@@ -311,14 +300,19 @@ def canonical_render_markdown(q: dict[str, Any]) -> str:
     return "\n\n".join(part for part in parts if part)
 
 
-def empty_refined(draft: dict[str, Any], prompt_version: str, status: str, reason: str) -> dict[str, Any]:
+def source_preserve_refined(draft: dict[str, Any], prompt_version: str, status: str, reason: str) -> dict[str, Any]:
     fields = draft.get("fields") or {}
     stem = str((fields.get("stem") or {}).get("markdown") or "")
     subs_md = str((fields.get("subquestions") or {}).get("markdown") or "")
+    options_md = str((fields.get("options") or {}).get("markdown") or "")
     answer = str((fields.get("answer") or {}).get("markdown") or "")
     explanation = str((fields.get("explanation") or {}).get("markdown") or "")
     teaching = str((fields.get("teaching_note") or {}).get("markdown") or "")
     context = strip_context_assets(str((fields.get("context") or {}).get("markdown") or ""))
+    options = parse_source_options(options_md)
+    if options_md.strip() and not options:
+        stem = "\n\n".join(part for part in [stem, options_md] if part.strip())
+    question_type = "single_choice" if len(options) >= 2 else "solution"
     warnings = list(draft.get("warnings") or [])
     warnings.append({"code": "deterministic_preserve", "message": reason, "refs": [str(draft.get("draft_id") or "")]})
     refined = {
@@ -328,13 +322,13 @@ def empty_refined(draft: dict[str, Any], prompt_version: str, status: str, reaso
         "source_group_id": draft.get("source_group_id", ""),
         "prompt_version": prompt_version,
         "refine_status": status,
-        "question_type": "solution",
+        "question_type": question_type,
         "solution_policy": draft.get("solution_policy") if draft.get("solution_policy") in ALLOWED_SOLUTION_POLICIES else "unknown",
         "standard_question": {
             "title": "",
             "stem_md": stem,
             "subquestions": [{"label": "", "markdown": subs_md}] if subs_md.strip() else [],
-            "options": [],
+            "options": options,
             "answer_md": answer,
             "explanation_md": explanation,
             "teaching_note_md": teaching,
@@ -346,7 +340,13 @@ def empty_refined(draft: dict[str, Any], prompt_version: str, status: str, reaso
         "asset_refs": {"visual_refs": draft.get("asset_refs") or []},
         "missing_fields": [],
         "warnings": warnings,
-        "normalization_actions": [],
+        "normalization_actions": [
+            {
+                "action": "source_preserve_fallback",
+                "scope": "question_refiner_fallback",
+                "reason": reason,
+            }
+        ],
     }
     refined["standard_question"]["render_markdown"] = canonical_render_markdown(refined["standard_question"])
     apply_latex_json_escape_gate(refined)
@@ -386,6 +386,7 @@ def repair_shape(refined: dict[str, Any], draft: dict[str, Any], prompt_version:
     fixed["standard_question"] = q
     preserve_subquestion_labels(fixed, draft)
     q = fixed["standard_question"]
+    model_render_markdown = str(q.get("render_markdown") or "").strip()
     q["render_markdown"] = canonical_render_markdown(q)
     if not isinstance(fixed.get("condition_groups"), list):
         fixed["condition_groups"] = []
@@ -401,6 +402,21 @@ def repair_shape(refined: dict[str, Any], draft: dict[str, Any], prompt_version:
     for key in ["missing_fields", "warnings", "normalization_actions"]:
         if not isinstance(fixed.get(key), list):
             fixed[key] = []
+    if model_render_markdown:
+        fixed["normalization_actions"].append(
+            {
+                "action": "ignore_model_render_markdown",
+                "scope": "question_refiner_shape_repair",
+                "reason": "render_markdown is synthesized from structured fields by local code",
+            }
+        )
+    fixed["normalization_actions"].append(
+        {
+            "action": "synthesize_render_markdown_from_structured_fields",
+            "scope": "question_refiner_shape_repair",
+        }
+    )
+    fixed["normalization_actions"] = dedupe_actions(fixed.get("normalization_actions"))
     apply_latex_json_escape_gate(fixed)
     apply_solution_policy_gate(fixed)
     fixed["status_breakdown"] = compute_status(fixed)
@@ -555,6 +571,148 @@ def extract_asset_tokens(text: str) -> set[str]:
     return set(re.findall(r"asset://([A-Za-z0-9_\\-]+)", str(text or "")))
 
 
+def option_markdown_text(options: Any) -> str:
+    if not isinstance(options, list):
+        return ""
+    chunks: list[str] = []
+    for option in options:
+        if not isinstance(option, dict):
+            continue
+        chunks.append(str(option.get("markdown") or option.get("md") or ""))
+    return "\n".join(chunks)
+
+
+def subquestion_markdown_text(subquestions: Any) -> str:
+    if not isinstance(subquestions, list):
+        return ""
+    chunks: list[str] = []
+    for item in subquestions:
+        if not isinstance(item, dict):
+            continue
+        chunks.append(str(item.get("markdown") or ""))
+    return "\n".join(chunks)
+
+
+def output_field_text(q: dict[str, Any], key: str) -> str:
+    if key == "subquestions":
+        return subquestion_markdown_text(q.get("subquestions"))
+    if key == "options":
+        return option_markdown_text(q.get("options"))
+    return str(q.get(f"{key}_md") if key not in {"stem", "context"} else q.get(f"{key}_md") or "")
+
+
+def field_asset_ids(field: Any) -> set[str]:
+    if not isinstance(field, dict):
+        return set()
+    return {str(item) for item in field.get("asset_ids") or [] if item}
+
+
+def draft_required_asset_ids(draft: dict[str, Any]) -> set[str]:
+    fields = draft.get("fields") or {}
+    assets: set[str] = set()
+    for field in fields.values():
+        assets.update(field_asset_ids(field))
+    for asset in draft.get("asset_refs") or []:
+        if isinstance(asset, dict) and asset.get("asset_id"):
+            assets.add(str(asset["asset_id"]))
+    return assets
+
+
+def dedupe_actions(actions: Any) -> list[Any]:
+    if not isinstance(actions, list):
+        return []
+    seen: set[str] = set()
+    deduped: list[Any] = []
+    for item in actions:
+        key = json.dumps(item, ensure_ascii=False, sort_keys=True) if isinstance(item, dict) else str(item)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+    return deduped
+
+
+def source_field_coverage_errors(refined: dict[str, Any], draft: dict[str, Any]) -> list[dict[str, str]]:
+    q = refined.get("standard_question") or {}
+    fields = draft.get("fields") or {}
+    errors: list[dict[str, str]] = []
+    field_pairs = [
+        ("stem", "stem_md"),
+        ("subquestions", "subquestions"),
+        ("options", "options"),
+        ("answer", "answer_md"),
+        ("explanation", "explanation_md"),
+        ("teaching_note", "teaching_note_md"),
+    ]
+    for source_key, output_key in field_pairs:
+        source = fields.get(source_key) or {}
+        source_markdown = str(source.get("markdown") or "").strip()
+        if not source_markdown:
+            continue
+        if output_key == "subquestions":
+            output_markdown = subquestion_markdown_text(q.get("subquestions")).strip()
+        elif output_key == "options":
+            output_markdown = option_markdown_text(q.get("options")).strip()
+        else:
+            output_markdown = str(q.get(output_key) or "").strip()
+        if not output_markdown:
+            errors.append(
+                {
+                    "path": f"$.standard_question.{output_key}",
+                    "code": f"source_field_missing_{source_key}",
+                    "message": f"source field {source_key} has content but output {output_key} is empty",
+                }
+            )
+            continue
+        if len(source_markdown) >= 80 and len(output_markdown) < max(24, int(len(source_markdown) * 0.35)):
+            errors.append(
+                {
+                    "path": f"$.standard_question.{output_key}",
+                    "code": f"source_field_shrunk_{source_key}",
+                    "message": f"source field {source_key} appears heavily shortened",
+                }
+            )
+
+    output_text = "\n".join(refined_text_chunks(refined))
+    for asset_id in sorted(draft_required_asset_ids(draft)):
+        if asset_id not in extract_asset_tokens(output_text):
+            errors.append(
+                {
+                    "path": "$.standard_question",
+                    "code": "source_asset_missing",
+                    "message": f"source asset {asset_id} is not present in output markdown fields",
+                }
+            )
+    return errors
+
+
+def projection_coverage_errors(refined: dict[str, Any]) -> list[dict[str, str]]:
+    q = refined.get("standard_question") or {}
+    render = str(q.get("render_markdown") or "")
+    errors: list[dict[str, str]] = []
+    for key in ["answer_md", "explanation_md", "teaching_note_md"]:
+        value = str(q.get(key) or "").strip()
+        if value and value[: min(40, len(value))] not in render:
+            errors.append(
+                {
+                    "path": f"$.standard_question.render_markdown",
+                    "code": f"render_missing_{key.removesuffix('_md')}",
+                    "message": f"render_markdown does not include {key}",
+                }
+            )
+    field_assets = extract_asset_tokens("\n".join(refined_text_chunks(refined)))
+    render_assets = extract_asset_tokens(render)
+    for asset_id in sorted(field_assets - render_assets):
+        errors.append(
+            {
+                "path": "$.standard_question.render_markdown",
+                "code": "render_missing_asset",
+                "message": f"render_markdown does not include asset {asset_id}",
+            }
+        )
+    return errors
+
+
 def refined_text_chunks(refined: dict[str, Any]) -> list[str]:
     q = refined.get("standard_question") or {}
     chunks = [
@@ -572,30 +730,49 @@ def refined_text_chunks(refined: dict[str, Any]) -> list[str]:
     return chunks
 
 
+def refined_markdown_fields(refined: dict[str, Any]) -> list[tuple[str, str]]:
+    q = refined.get("standard_question") or {}
+    fields: list[tuple[str, str]] = [
+        ("title", str(q.get("title") or "")),
+        ("stem_md", str(q.get("stem_md") or "")),
+        ("answer_md", str(q.get("answer_md") or "")),
+        ("explanation_md", str(q.get("explanation_md") or "")),
+        ("teaching_note_md", str(q.get("teaching_note_md") or "")),
+        ("context_md", str(q.get("context_md") or "")),
+    ]
+    for index, item in enumerate(q.get("subquestions") or []):
+        if isinstance(item, dict):
+            fields.append((f"subquestions[{index}].markdown", str(item.get("markdown") or "")))
+    for index, item in enumerate(q.get("options") or []):
+        if isinstance(item, dict):
+            fields.append((f"options[{index}].markdown", str(item.get("markdown") or "")))
+    for index, item in enumerate(refined.get("condition_groups") or []):
+        if isinstance(item, dict):
+            fields.append((f"condition_groups[{index}].markdown", str(item.get("markdown") or "")))
+    return fields
+
+
+def strip_asset_markdown(text: str) -> str:
+    stripped = re.sub(r"!\[[^\]]*\]\(asset://[^)]*\)", "", str(text or ""))
+    return re.sub(r"asset://[A-Za-z0-9_\-]+", "", stripped)
+
+
 def markdown_risk_errors(refined: dict[str, Any]) -> list[dict[str, str]]:
-    chunks = refined_text_chunks(refined)
-    text = "\n".join(chunks)
-    checks = {
-        "bare_sqrt_command": r"(?<!\\)\bsqrt\s*\{",
-        "bare_frac_command": r"(?<!\\)\bfrac\s*\{",
-        "bare_times_command": r"(?<!\\)\btimes\b",
-        "bare_div_command": r"(?<!\\)\bdiv\b",
-        "bad_left_brace_delimiter": r"\\left(?![A-Za-z])\s*\{",
-        "bad_right_missing_delimiter": r"\\right(?![A-Za-z])(?=\s*(?:\$|$|[，,。；;]))",
-        "possible_equation_group_flattened": r"\\left(?![A-Za-z])\s*\{[^$]{0,160}=[^$]{1,160}=",
-        "math_error_literal": r"Math input error|Missing open brace|Missing or unrecognized delimiter|Double exponent",
-    }
     errors: list[dict[str, str]] = []
-    for code, pattern in checks.items():
-        if re.search(pattern, text):
-            errors.append({"path": "$.standard_question", "code": code, "message": code})
-    for index, chunk in enumerate(chunks):
-        if chunk.count("$") % 2:
-            errors.append({
-                "path": f"$.standard_question.markdown_chunk[{index}]",
-                "code": "unbalanced_math_dollar_delimiter",
-                "message": "unbalanced_math_dollar_delimiter",
-            })
+    for field, raw_chunk in refined_markdown_fields(refined):
+        chunk = strip_asset_markdown(raw_chunk)
+        report = math_formula_gate.validate_markdown_text(chunk, field=field)
+        for risk in report.get("risks", []) or []:
+            if not isinstance(risk, dict):
+                continue
+            code = str(risk.get("risk_code") or "latex_validation_failed")
+            errors.append(
+                {
+                    "path": f"$.standard_question.{field}",
+                    "code": code,
+                    "message": str(risk.get("message") or code),
+                }
+            )
     return errors
 
 
@@ -669,6 +846,8 @@ def validate_refined(refined: dict[str, Any], draft: dict[str, Any], prompt_vers
         asset_id = str(asset.get("asset_id") if isinstance(asset, dict) else asset)
         if asset_id and asset_id not in allowed_assets:
             errors.append({"path": "$.asset_refs.visual_refs", "message": f"invented asset ref {asset_id}"})
+    errors.extend(source_field_coverage_errors(refined, draft))
+    errors.extend(projection_coverage_errors(refined))
     errors.extend(markdown_risk_errors(refined))
     return {"valid": not errors, "errors": errors}
 
@@ -734,7 +913,12 @@ def refine_one(
     parse_validation_errors: list[dict[str, Any]] = []
     if model_result["parsed"] is None:
         parse_validation_errors.append({"path": "$", "message": f"json_parse_failed: {model_result['parse_error']}"})
-        refined = empty_refined(draft, node["prompt_version"], "REFINE_FAILED", model_result["parse_error"])
+        refined = source_preserve_refined(
+            draft,
+            node["prompt_version"],
+            "REFINED_READY",
+            f"Model output could not be parsed; preserved source draft instead: {model_result['parse_error']}",
+        )
     else:
         refined = repair_shape(model_result["parsed"], draft, node["prompt_version"])
     validation = validate_refined(refined, draft, node["prompt_version"])
@@ -764,17 +948,32 @@ def refine_one(
             write_json(draft_dir / "repair_raw_response.json", repair_result["raw_response"])
             write_text(draft_dir / "repair_raw_content.txt", repair_result["raw_content"])
             if repair_result["parsed"] is None:
-                refined = empty_refined(draft, node["prompt_version"], "REFINE_FAILED", repair_result["parse_error"])
+                refined = source_preserve_refined(
+                    draft,
+                    node["prompt_version"],
+                    "REFINED_READY",
+                    f"Model repair output could not be parsed; preserved source draft instead: {repair_result['parse_error']}",
+                )
             else:
                 refined = repair_shape(repair_result["parsed"], draft, node["prompt_version"])
             validation = validate_refined(refined, draft, node["prompt_version"])
         except Exception as exc:
             write_text(draft_dir / "repair_error.txt", str(exc))
-            refined = empty_refined(draft, node["prompt_version"], "REFINE_FAILED", "Model output failed local validation and repair failed.")
+            refined = source_preserve_refined(
+                draft,
+                node["prompt_version"],
+                "REFINED_READY",
+                f"Model output failed local validation and repair failed; preserved source draft instead: {exc}",
+            )
             validation = validate_refined(refined, draft, node["prompt_version"])
     if not validation["valid"]:
         write_json(draft_dir / "repair_invalid_model_output.json", refined)
-        refined = empty_refined(draft, node["prompt_version"], "REFINE_FAILED", "Model output failed local validation after repair.")
+        refined = source_preserve_refined(
+            draft,
+            node["prompt_version"],
+            "REFINED_READY",
+            "Model output failed local validation after repair; preserved source draft instead.",
+        )
         validation = validate_refined(refined, draft, node["prompt_version"])
 
     write_json(draft_dir / "input_draft.json", draft)

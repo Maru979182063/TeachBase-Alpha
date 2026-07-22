@@ -202,6 +202,21 @@ def get_format_normalize_prompt_bundle() -> dict[str, str]:
     }
 
 
+def get_latex_span_patch_prompt_bundle() -> dict[str, str]:
+    config = load_prompt_config()
+    prompts = config.get("prompts", {})
+    if not isinstance(prompts, dict):
+        raise PromptConfigError("missing_prompts_root")
+    latex_span_patch = prompts.get("latex_span_patch", {})
+    if not isinstance(latex_span_patch, dict):
+        raise PromptConfigError("missing_latex_span_patch_prompt_config")
+    return {
+        "prompt_version": str(latex_span_patch.get("prompt_version", "") or ""),
+        "system_prompt": str(latex_span_patch.get("system_prompt", "") or ""),
+        "user_template": str(latex_span_patch.get("user_template", "") or ""),
+    }
+
+
 def get_refine_prompt_bundle() -> dict[str, str]:
     config = load_prompt_config()
     prompts = config.get("prompts", {})

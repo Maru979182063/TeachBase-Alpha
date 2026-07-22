@@ -6,12 +6,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
+import math_formula_library_gate as math_formula_gate
 import visual_transcription_core as vision_core
 
 
 PipelineFn = Callable[..., Any]
 
-PIPELINE_VERSION = "vision_pipeline_v0.4"
+PIPELINE_VERSION = "vision_pipeline_v0.5_latex_library_gate"
 PIPELINE_TOPOLOGY = {
     "version": PIPELINE_VERSION,
     "final_contract": "general_vision_v0.1",
@@ -38,12 +39,18 @@ PIPELINE_TOPOLOGY = {
                 "format_normalize_prompt_node",
                 "format_normalize_model_node",
                 "format_normalize_parse_node",
+                "math_normalize_node",
+                "latex_validation_gate_node",
+                "latex_deterministic_patch_apply_node",
+                "latex_span_patch_model_node",
+                "latex_span_patch_parse_node",
+                "latex_span_patch_apply_node",
             ],
         },
         {
             "layer": 5,
             "mode": "serial",
-            "nodes": ["math_normalize_node"],
+            "nodes": ["final_math_normalize_node"],
         },
         {
             "layer": 6,
@@ -191,6 +198,58 @@ def run_math_normalize_node(
     )
 
 
+def run_latex_validation_gate_node(normalized_payload: dict[str, Any]) -> dict[str, Any]:
+    tasks = math_formula_gate.build_patch_tasks(normalized_payload)
+    validation = normalized_payload.get("formula_validation", {})
+    return {
+        "validator": "katex",
+        "valid": bool(validation.get("valid", False)) if isinstance(validation, dict) else False,
+        "task_count": len(tasks),
+        "tasks": tasks,
+        "risk_count": int(validation.get("risk_count", 0) or 0) if isinstance(validation, dict) else len(tasks),
+    }
+
+
+def run_latex_span_patch_prompt_node(
+    *,
+    question: dict[str, Any],
+    record_id: str,
+    question_id: str,
+    normalized_payload: dict[str, Any],
+    tasks: list[dict[str, Any]],
+    prompt_builder: PipelineFn,
+) -> dict[str, Any]:
+    patch_input = math_formula_gate.build_patch_input(
+        record_id=record_id,
+        question_id=question_id,
+        normalized_payload=normalized_payload,
+        tasks=tasks,
+    )
+    prompt = str(prompt_builder(question, record_id, patch_input))
+    return {
+        "prompt": prompt,
+        "patch_input": patch_input,
+        "task_count": len(tasks),
+    }
+
+
+def run_latex_span_patch_apply_node(
+    *,
+    normalized_payload: dict[str, Any],
+    parsed_actions: dict[str, Any] | None,
+    tasks: list[dict[str, Any]],
+) -> dict[str, Any]:
+    patched_payload, report = math_formula_gate.apply_patch_actions(
+        normalized_payload,
+        parsed_actions,
+        tasks,
+    )
+    return {
+        "patched_payload": patched_payload,
+        "report": report,
+    }
+
+
 def run_render_contract_node(normalized_payload: dict[str, Any]) -> dict[str, Any]:
     display_fields = normalized_payload.get("display_normalized_text", {}) or {}
     return {
@@ -300,6 +359,8 @@ def run_question_pipeline(
     format_normalize_prompt_builder: PipelineFn,
     format_normalize_call_model_fn: PipelineFn,
     extract_json_fn: PipelineFn,
+    latex_span_patch_prompt_builder: PipelineFn | None = None,
+    latex_span_patch_call_model_fn: PipelineFn | None = None,
 ) -> dict[str, Any]:
     pipeline_trace: dict[str, Any] = {
         "pipeline_version": PIPELINE_VERSION,
@@ -367,6 +428,7 @@ def run_question_pipeline(
     raw_blocks_model_result: dict[str, Any] | None = None
     field_mapping_model_result: dict[str, Any] | None = None
     format_normalize_model_result: dict[str, Any] | None = None
+    latex_span_patch_model_result: dict[str, Any] | None = None
     try:
         model_node = _run_named_node(
             "raw_blocks_model_node",
@@ -469,6 +531,128 @@ def run_question_pipeline(
         pipeline_trace["nodes"].append(normalize_node)
         normalized_payload = normalize_node["result"]
 
+        latex_gate_node = _run_named_node(
+            "latex_validation_gate_node",
+            run_latex_validation_gate_node,
+            normalized_payload,
+        )
+        pipeline_trace["nodes"].append(latex_gate_node)
+        latex_tasks = list(latex_gate_node["result"].get("tasks", []) or [])
+
+        deterministic_actions = math_formula_gate.build_deterministic_patch_actions(
+            record_id=record_id,
+            question_id=str(item["question_id"]),
+            tasks=latex_tasks,
+        )
+        if deterministic_actions.get("patches"):
+            deterministic_apply_node = _run_named_node(
+                "latex_deterministic_patch_apply_node",
+                run_latex_span_patch_apply_node,
+                normalized_payload=normalized_payload,
+                parsed_actions=deterministic_actions,
+                tasks=latex_tasks,
+            )
+            pipeline_trace["nodes"].append(deterministic_apply_node)
+            pipeline_trace["latex_deterministic_patch_report"] = deterministic_apply_node["result"]["report"]
+            deterministic_normalize_node = _run_named_node(
+                "latex_deterministic_patch_normalize_node",
+                run_math_normalize_node,
+                parsed_payload=deterministic_apply_node["result"]["patched_payload"],
+                record_id=record_id,
+                question_id=str(item["question_id"]),
+                visual_refs=structure_result["visual_refs"],
+                prompt_version=prompt_version,
+                model_name=model_name,
+                question_context=question,
+            )
+            pipeline_trace["nodes"].append(deterministic_normalize_node)
+            normalized_payload = deterministic_normalize_node["result"]
+            latex_gate_node = _run_named_node(
+                "latex_validation_gate_node",
+                run_latex_validation_gate_node,
+                normalized_payload,
+            )
+            pipeline_trace["nodes"].append(latex_gate_node)
+            latex_tasks = list(latex_gate_node["result"].get("tasks", []) or [])
+
+        if latex_tasks and latex_span_patch_prompt_builder is not None and latex_span_patch_call_model_fn is not None:
+            latex_prompt_node = _run_named_node(
+                "latex_span_patch_prompt_node",
+                run_latex_span_patch_prompt_node,
+                question=question,
+                record_id=record_id,
+                question_id=str(item["question_id"]),
+                normalized_payload=normalized_payload,
+                tasks=latex_tasks,
+                prompt_builder=latex_span_patch_prompt_builder,
+            )
+            pipeline_trace["nodes"].append(latex_prompt_node)
+            prepared_payload["latex_span_patch_prompt"] = str(latex_prompt_node["result"].get("prompt", "") or "")
+            prepared_payload["latex_span_patch_input"] = latex_prompt_node["result"].get("patch_input", {})
+
+            latex_model_node = _run_named_node(
+                "latex_span_patch_model_node",
+                run_raw_transcription_node,
+                api_key=api_key,
+                model_name=model_name,
+                prompt=str(latex_prompt_node["result"]["prompt"]),
+                image_paths=list(structure_result["image_paths"]),
+                call_model_fn=latex_span_patch_call_model_fn,
+            )
+            pipeline_trace["nodes"].append(latex_model_node)
+            latex_span_patch_model_result = latex_model_node["result"]
+
+            latex_parse_node = _run_named_node(
+                "latex_span_patch_parse_node",
+                run_json_parse_node,
+                str(latex_span_patch_model_result.get("raw_content", "") or ""),
+                extract_json_fn,
+            )
+            pipeline_trace["nodes"].append(latex_parse_node)
+
+            latex_apply_node = _run_named_node(
+                "latex_span_patch_apply_node",
+                run_latex_span_patch_apply_node,
+                normalized_payload=normalized_payload,
+                parsed_actions=latex_parse_node["result"],
+                tasks=latex_tasks,
+            )
+            pipeline_trace["nodes"].append(latex_apply_node)
+            pipeline_trace["latex_span_patch_report"] = latex_apply_node["result"]["report"]
+
+            final_normalize_node = _run_named_node(
+                "final_math_normalize_node",
+                run_math_normalize_node,
+                parsed_payload=latex_apply_node["result"]["patched_payload"],
+                record_id=record_id,
+                question_id=str(item["question_id"]),
+                visual_refs=structure_result["visual_refs"],
+                prompt_version=prompt_version,
+                model_name=model_name,
+                question_context=question,
+            )
+            pipeline_trace["nodes"].append(final_normalize_node)
+            normalized_payload = final_normalize_node["result"]
+        else:
+            skip_reason = "no_latex_validation_tasks" if not latex_tasks else "latex_span_patch_callbacks_missing"
+            pipeline_trace["nodes"].append(
+                {
+                    "node": "latex_span_patch_apply_node",
+                    "status": "skipped",
+                    "latency_seconds": 0.0,
+                    "result": {
+                        "report": {
+                            "schema": "latex_span_patch_application_v0.1",
+                            "task_count": len(latex_tasks),
+                            "applied": [],
+                            "rejected": [],
+                            "unresolved": [],
+                            "skip_reason": skip_reason,
+                        }
+                    },
+                }
+            )
+
         with ThreadPoolExecutor(max_workers=2) as executor:
             render_future = executor.submit(
                 _run_named_node,
@@ -504,6 +688,7 @@ def run_question_pipeline(
                     ).get(key, 0)
                     + ((field_mapping_model_result or {}).get("usage", {}) or {}).get(key, 0)
                     + ((format_normalize_model_result or {}).get("usage", {}) or {}).get(key, 0)
+                    + ((latex_span_patch_model_result or {}).get("usage", {}) or {}).get(key, 0)
                     for key in (
                         "prompt_tokens",
                         "completion_tokens",
@@ -533,6 +718,8 @@ def run_question_pipeline(
             "field_mapping_content": str((field_mapping_model_result or {}).get("raw_content", "") or ""),
             "format_normalize_response": (format_normalize_model_result or {}).get("raw_response", {}),
             "format_normalize_content": str((format_normalize_model_result or {}).get("raw_content", "") or ""),
+            "latex_span_patch_response": (latex_span_patch_model_result or {}).get("raw_response", {}),
+            "latex_span_patch_content": str((latex_span_patch_model_result or {}).get("raw_content", "") or ""),
             "record": assemble_node["result"],
         }
     except Exception as exc:  # noqa: BLE001
@@ -543,6 +730,7 @@ def run_question_pipeline(
                 ((raw_blocks_model_result or {}).get("usage", {}) or {}).get(key, 0)
                 + ((field_mapping_model_result or {}).get("usage", {}) or {}).get(key, 0)
                 + ((format_normalize_model_result or {}).get("usage", {}) or {}).get(key, 0)
+                + ((latex_span_patch_model_result or {}).get("usage", {}) or {}).get(key, 0)
             )
             for key in (
                 "prompt_tokens",
@@ -561,6 +749,8 @@ def run_question_pipeline(
             "field_mapping_content": str((field_mapping_model_result or {}).get("raw_content", "") or ""),
             "format_normalize_response": (format_normalize_model_result or {}).get("raw_response", {}),
             "format_normalize_content": str((format_normalize_model_result or {}).get("raw_content", "") or ""),
+            "latex_span_patch_response": (latex_span_patch_model_result or {}).get("raw_response", {}),
+            "latex_span_patch_content": str((latex_span_patch_model_result or {}).get("raw_content", "") or ""),
             "record": build_failure_record(
                 record_id=record_id,
                 question_id=str(item["question_id"]),

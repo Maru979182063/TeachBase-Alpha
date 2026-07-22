@@ -26,10 +26,12 @@ PROMPT_VERSION = ACTIVE_TRANSCRIPTION_PROMPT["prompt_version"]
 RAW_BLOCKS_PROMPT = vision_prompt_store.get_raw_blocks_prompt_bundle()
 FIELD_MAPPING_PROMPT = vision_prompt_store.get_field_mapping_prompt_bundle()
 FORMAT_NORMALIZE_PROMPT = vision_prompt_store.get_format_normalize_prompt_bundle()
+LATEX_SPAN_PATCH_PROMPT = vision_prompt_store.get_latex_span_patch_prompt_bundle()
 PIPELINE_PROMPT_VERSION = (
     f"{RAW_BLOCKS_PROMPT['prompt_version']}"
     f"+{FIELD_MAPPING_PROMPT['prompt_version']}"
     f"+{FORMAT_NORMALIZE_PROMPT['prompt_version']}"
+    f"+{LATEX_SPAN_PATCH_PROMPT['prompt_version']}"
 )
 
 
@@ -472,6 +474,19 @@ def build_format_normalize_prompt(question: dict, record_id: str, field_mapping_
     )
 
 
+def build_latex_span_patch_prompt(question: dict, record_id: str, patch_input: dict) -> str:
+    question_id = str(question.get("question_id", "") or patch_input.get("question_id", "") or "")
+    patch_input_json = json.dumps(patch_input, ensure_ascii=False, indent=2)
+    return vision_prompt_store.render_template(
+        LATEX_SPAN_PATCH_PROMPT["user_template"],
+        {
+            "PATCH_INPUT_JSON": patch_input_json,
+            "RECORD_ID": record_id,
+            "QUESTION_ID": question_id,
+        },
+    )
+
+
 def build_prompt(question: dict, record_id: str) -> str:
     context_lines = [f"- record_id: {record_id}", f"- question_id: {question.get('question_id', '')}"]
     for label, value in (
@@ -791,6 +806,16 @@ def call_format_normalize_model(api_key: str, model: str, prompt: str, image_pat
     )
 
 
+def call_latex_span_patch_model(api_key: str, model: str, prompt: str, image_paths: list[Path]) -> dict:
+    return call_model_with_system(
+        api_key,
+        model,
+        LATEX_SPAN_PATCH_PROMPT["system_prompt"],
+        prompt,
+        image_paths,
+    )
+
+
 def load_source_questions(source_json_path: Path) -> dict[str, dict]:
     payload = read_json(source_json_path)
     questions = payload.get("questions", []) if isinstance(payload, dict) else []
@@ -1053,6 +1078,8 @@ def main() -> None:
             format_normalize_prompt_builder=build_format_normalize_prompt,
             format_normalize_call_model_fn=call_format_normalize_model,
             extract_json_fn=extract_json_block,
+            latex_span_patch_prompt_builder=build_latex_span_patch_prompt,
+            latex_span_patch_call_model_fn=call_latex_span_patch_model,
         )
 
         prepared_payload = pipeline_result.get("prepared_payload", {}) or {}
@@ -1064,6 +1091,8 @@ def main() -> None:
         field_mapping_content = str(pipeline_result.get("field_mapping_content", "") or "")
         format_normalize_response = pipeline_result.get("format_normalize_response", {}) or {}
         format_normalize_content = str(pipeline_result.get("format_normalize_content", "") or "")
+        latex_span_patch_response = pipeline_result.get("latex_span_patch_response", {}) or {}
+        latex_span_patch_content = str(pipeline_result.get("latex_span_patch_content", "") or "")
         record = pipeline_result.get("record", {}) or {}
         status = str(record.get("status", "") or "")
 
@@ -1095,6 +1124,14 @@ def main() -> None:
         if format_normalize_content:
             target_name = "format_normalize.response.txt" if status == "ok" else "format_normalize.response_failed_parse.txt"
             (raw_dir / f"{record_id}.{target_name}").write_text(format_normalize_content, encoding="utf-8")
+        if latex_span_patch_response:
+            if status == "ok":
+                write_json(raw_dir / f"{record_id}.latex_span_patch.response.json", latex_span_patch_response)
+            else:
+                write_json(raw_dir / f"{record_id}.latex_span_patch.response_failed_parse.json", latex_span_patch_response)
+        if latex_span_patch_content:
+            target_name = "latex_span_patch.response.txt" if status == "ok" else "latex_span_patch.response_failed_parse.txt"
+            (raw_dir / f"{record_id}.{target_name}").write_text(latex_span_patch_content, encoding="utf-8")
 
         records.append(record)
         write_live_progress(

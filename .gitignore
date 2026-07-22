@@ -24,6 +24,7 @@ tmp_script_check.js
 tmp_script_check2.js
 .tmp_check_working_copy.js
 tmp_preview_check.js
+tools/tmp_generate_long_review_static.py
 
 # Local preview and backup artifacts
 .codex_assets/

@@ -5,6 +5,7 @@ import os
 import re
 from pathlib import Path
 
+import math_formula_library_gate as math_formula_gate
 from compose_legacy_stem_md import compose_legacy_stem_md
 from question_visual_structure_contract import SCHEMA_VERSION, normalize_review_flags
 
@@ -343,7 +344,7 @@ def _apply_safe_string_normalization(text: str, field: str) -> tuple[str, list[d
 
     def _normalize_valid_latex_operator_spacing(value: str) -> str:
         repaired = value
-        for command in ("neq", "leq", "geq", "notin", "in"):
+        for command in ("neq", "notin"):
             repaired = re.sub(
                 rf"\\{command}\s*(?=[A-Za-z0-9(\\-])",
                 rf"\\{command} ",
@@ -777,11 +778,36 @@ def safe_normalize_transcription_payload(
     normalized_payload["field_boundary_flags"] = boundary_flags
     normalized_payload["visual_refs"] = normalized_visual_refs
     normalized_payload["structure_mapping"] = build_structure_mapping(display_fields, boundary_flags)
-    normalized_payload["risk_spans"] = detect_risk_spans(
+    risk_spans = detect_risk_spans(
         display_fields,
         normalized_uncertain,
         normalized_visual_refs,
     )
+    formula_validation = math_formula_gate.validate_fields(
+        display_fields,
+        field_names=FIELD_TO_SHORT,
+    )
+    for risk in formula_validation.get("risks", []) or []:
+        if not isinstance(risk, dict):
+            continue
+        field = str(risk.get("field", "") or "")
+        visual_ref_key = FIELD_TO_VISUAL_REF.get(field, "question_image")
+        risk_spans.append(
+            {
+                "field": field,
+                "text": str(risk.get("source_span") or risk.get("span") or ""),
+                "reason": str(risk.get("risk_code") or "latex_validation_failed"),
+                "source": "katex_library_gate",
+                "visual_ref_key": visual_ref_key,
+                "evidence_ref": normalized_visual_refs.get(visual_ref_key, "") or normalized_visual_refs.get("question_image", ""),
+                "char_start": risk.get("char_start"),
+                "char_end": risk.get("char_end"),
+                "validator": risk.get("validator", ""),
+                "message": risk.get("message", ""),
+            }
+        )
+    normalized_payload["formula_validation"] = formula_validation
+    normalized_payload["risk_spans"] = risk_spans
     normalized_payload["handwriting_requires_review"] = bool(payload.get("handwriting_requires_review", False))
     normalized_payload["handwriting_consistency"] = normalize_handwriting_consistency(
         payload.get("handwriting_consistency", {}) or {}
@@ -789,7 +815,7 @@ def safe_normalize_transcription_payload(
     normalized_payload["quality_gate"] = build_quality_gate(
         display_fields,
         boundary_flags,
-        normalized_payload["risk_spans"],
+        risk_spans,
     )
     apply_handwriting_gate(normalized_payload["quality_gate"], normalized_payload)
     normalized_payload["source_of_truth"] = "rendered_image"
@@ -1756,7 +1782,14 @@ def build_quality_gate(
         item
         for item in risk_spans
         if str(item.get("reason", "") or "")
-        in {"math_command_prefix_loss", "equation_system_layout_loss", "vector_coordinate_layout_loss"}
+        in {
+            "math_command_prefix_loss",
+            "equation_system_layout_loss",
+            "vector_coordinate_layout_loss",
+            "latex_parse_error",
+            "math_delimiter_unclosed",
+            "math_span_empty",
+        }
     ]
     for reason in sorted({str(item.get("reason", "") or "") for item in layout_check_risks}):
         count = sum(1 for item in layout_check_risks if str(item.get("reason", "") or "") == reason)

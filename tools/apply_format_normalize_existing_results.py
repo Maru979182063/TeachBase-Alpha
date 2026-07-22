@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import assetize_question_images as assetize
+import math_formula_library_gate as math_formula_gate
 import teacher_handout_visual_transcribe_doubao as transcribe
 import visual_transcription_core as vision_core
 
@@ -56,8 +57,10 @@ def aggregate_usage(records: list[dict[str, Any]]) -> dict[str, int]:
     }
     for record in records:
         usage = (record.get("format_normalize_only", {}) or {}).get("usage", {}) or {}
+        patch_usage = (record.get("format_normalize_only", {}) or {}).get("latex_span_patch_usage", {}) or {}
         for key in totals:
             totals[key] += int(usage.get(key, 0) or 0)
+            totals[key] += int(patch_usage.get(key, 0) or 0)
     return totals
 
 
@@ -259,6 +262,72 @@ def run_one_record(
             model_name=model,
             question_context=question,
         )
+        latex_span_patch_report: dict[str, Any] = {
+            "schema": "latex_span_patch_application_v0.1",
+            "task_count": 0,
+            "applied": [],
+            "rejected": [],
+            "unresolved": [],
+            "skip_reason": "no_latex_validation_tasks",
+        }
+        latex_span_patch_usage: dict[str, Any] = {}
+        latex_span_patch_tasks = math_formula_gate.build_patch_tasks(normalized_payload)
+        if latex_span_patch_tasks:
+            deterministic_actions = math_formula_gate.build_deterministic_patch_actions(
+                record_id=record_id,
+                question_id=question_id,
+                tasks=latex_span_patch_tasks,
+            )
+            if deterministic_actions.get("patches"):
+                patched_payload, latex_span_patch_report = math_formula_gate.apply_patch_actions(
+                    normalized_payload,
+                    deterministic_actions,
+                    latex_span_patch_tasks,
+                )
+                normalized_payload = vision_core.safe_normalize_transcription_payload(
+                    patched_payload,
+                    record_id=record_id,
+                    question_id=question_id,
+                    visual_refs=vision_core.build_visual_refs(question),
+                    prompt_version=str(transcribe.FORMAT_NORMALIZE_PROMPT.get("prompt_version", "") or ""),
+                    model_name=model,
+                    question_context=question,
+                )
+                latex_span_patch_report["deterministic"] = True
+                latex_span_patch_tasks = math_formula_gate.build_patch_tasks(normalized_payload)
+        if latex_span_patch_tasks:
+            patch_input = math_formula_gate.build_patch_input(
+                record_id=record_id,
+                question_id=question_id,
+                normalized_payload=normalized_payload,
+                tasks=latex_span_patch_tasks,
+            )
+            patch_prompt = transcribe.build_latex_span_patch_prompt(question, record_id, patch_input)
+            patch_prompt_path = raw_dir / f"{record_id}.latex_span_patch.prompt.txt"
+            patch_prompt_path.write_text(patch_prompt, encoding="utf-8")
+            patch_model_result = transcribe.call_latex_span_patch_model(api_key, model, patch_prompt, image_paths)
+            latex_span_patch_usage = patch_model_result.get("usage", {}) or {}
+            patch_raw_response_path = raw_dir / f"{record_id}.latex_span_patch.response.json"
+            patch_raw_content_path = raw_dir / f"{record_id}.latex_span_patch.response.txt"
+            write_json(patch_raw_response_path, patch_model_result.get("raw_response", {}) or {})
+            patch_raw_content_path.write_text(str(patch_model_result.get("raw_content", "") or ""), encoding="utf-8")
+            patch_parsed = transcribe.extract_json_block(str(patch_model_result.get("raw_content", "") or ""))
+            patch_parsed_path = raw_dir / f"{record_id}.latex_span_patch.parsed.json"
+            write_json(patch_parsed_path, patch_parsed)
+            patched_payload, latex_span_patch_report = math_formula_gate.apply_patch_actions(
+                normalized_payload,
+                patch_parsed,
+                latex_span_patch_tasks,
+            )
+            normalized_payload = vision_core.safe_normalize_transcription_payload(
+                patched_payload,
+                record_id=record_id,
+                question_id=question_id,
+                visual_refs=vision_core.build_visual_refs(question),
+                prompt_version=str(transcribe.FORMAT_NORMALIZE_PROMPT.get("prompt_version", "") or ""),
+                model_name=model,
+                question_context=question,
+            )
 
         finished_at = now_iso()
         latency_seconds = round(time.perf_counter() - started_perf, 3)
@@ -274,6 +343,8 @@ def run_one_record(
             "raw_content_path": str(raw_content_path),
             "parsed_path": str(parsed_path),
             "image_count": len(image_paths),
+            "latex_span_patch": latex_span_patch_report,
+            "latex_span_patch_usage": latex_span_patch_usage,
         }
         base_record["transcription"] = normalized_payload
         return base_record

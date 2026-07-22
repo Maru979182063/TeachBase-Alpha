@@ -11,11 +11,13 @@ from typing import Any
 from english_text_first_normalizer.common import read_json, rel_workspace, workspace_path, write_json, write_text
 
 
-PLANNER_VERSION = "english_runtime_projection_planner_v0.1_graph_first_no_model_20260717"
+PLANNER_VERSION = "english_runtime_projection_planner_v0.2_resolved_stimulus_20260721"
 QUESTION_STATUSES = {"REFINED_READY", "REFINED_NEEDS_REVIEW"}
 ABSORBING_RELATIONS = {"is_child_of"}
 CONTEXT_RELATIONS = {"uses_context", "depends_on"}
+CONTAINER_RELATIONS = {"contains"}
 TARGET_CONTRACT = "teacher_answered_question_bank_v0.1"
+STIMULUS_NODE_KINDS = {"shared_stimulus", "stimulus_description", "stimulus_with_own_interaction"}
 
 
 def text_of(value: Any) -> str:
@@ -63,14 +65,25 @@ def has_critical_source_risk(packet: dict[str, Any]) -> bool:
     return any(marker in risk_text for marker in critical_markers)
 
 
-def infer_question_form(packet: dict[str, Any], parent_node_ids: list[str]) -> str:
+def has_resolved_stimulus(resolved_parent_nodes: list[dict[str, Any]] | None) -> bool:
+    return any(
+        node.get("node_kind") in STIMULUS_NODE_KINDS and bool(text_of(node.get("text")))
+        for node in (resolved_parent_nodes or [])
+    )
+
+
+def infer_question_form(
+    packet: dict[str, Any],
+    parent_node_ids: list[str],
+    resolved_parent_nodes: list[dict[str, Any]] | None = None,
+) -> str:
     question = packet.get("standard_question") or {}
     asset_refs = packet.get("asset_refs") or {}
     if packet.get("refine_status") == "PRESERVED_NON_DIRECT":
         return "material_only"
     if asset_refs.get("writing_surface_refs") or text_of(question.get("rubric")):
         return "writing_prompt"
-    if text_of(question.get("passage")) or any("stimulus" in node_id for node_id in parent_node_ids):
+    if text_of(question.get("passage")) or has_resolved_stimulus(resolved_parent_nodes) or any("stimulus" in node_id for node_id in parent_node_ids):
         if question.get("options"):
             return "reading_with_options"
         return "question_with_shared_context"
@@ -81,7 +94,12 @@ def infer_question_form(packet: dict[str, Any], parent_node_ids: list[str]) -> s
     return "question_like"
 
 
-def field_presence(question: dict[str, Any], asset_refs: dict[str, Any], parent_node_ids: list[str]) -> dict[str, bool]:
+def field_presence(
+    question: dict[str, Any],
+    asset_refs: dict[str, Any],
+    parent_node_ids: list[str],
+    resolved_parent_nodes: list[dict[str, Any]] | None = None,
+) -> dict[str, bool]:
     return {
         "stem": bool(text_of(question.get("stem"))),
         "answer": bool(text_of(question.get("answer"))),
@@ -95,14 +113,19 @@ def field_presence(question: dict[str, Any], asset_refs: dict[str, Any], parent_
         "visual_refs": bool(asset_refs.get("visual_refs")),
         "writing_surface_refs": bool(asset_refs.get("writing_surface_refs")),
         "parent_refs": bool(parent_node_ids),
+        "resolved_stimulus": bool(text_of(question.get("passage"))) or has_resolved_stimulus(resolved_parent_nodes),
     }
 
 
-def build_field_contract(packet: dict[str, Any], parent_node_ids: list[str]) -> dict[str, Any]:
+def build_field_contract(
+    packet: dict[str, Any],
+    parent_node_ids: list[str],
+    resolved_parent_nodes: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     question = packet.get("standard_question") or {}
     asset_refs = packet.get("asset_refs") or {}
-    presence = field_presence(question, asset_refs, parent_node_ids)
-    question_form = infer_question_form(packet, parent_node_ids)
+    presence = field_presence(question, asset_refs, parent_node_ids, resolved_parent_nodes)
+    question_form = infer_question_form(packet, parent_node_ids, resolved_parent_nodes)
 
     requirements = {
         "stem": "required",
@@ -117,12 +140,14 @@ def build_field_contract(packet: dict[str, Any], parent_node_ids: list[str]) -> 
         "passage": "not_applicable",
         "rubric": "not_applicable",
         "writing_surface_refs": "not_applicable",
+        "resolved_stimulus": "not_applicable",
     }
     if question_form in {"selected_response", "reading_with_options"}:
         requirements["options"] = "required"
     if question_form in {"reading_with_options", "question_with_shared_context"}:
-        requirements["passage"] = "required" if not presence["parent_refs"] else "optional"
+        requirements["passage"] = "required" if not presence["resolved_stimulus"] else "optional"
         requirements["parent_refs"] = "required" if presence["parent_refs"] else "optional"
+        requirements["resolved_stimulus"] = "required"
     if question_form == "writing_prompt":
         requirements["writing_surface_refs"] = "required"
         requirements["rubric"] = "optional"
@@ -136,7 +161,7 @@ def build_field_contract(packet: dict[str, Any], parent_node_ids: list[str]) -> 
     missing_optional = []
     missing_not_applicable = []
     for field, requirement in requirements.items():
-        present = presence[field]
+        present = bool(presence[field])
         status = "present" if present else "missing"
         field_requirements.append({"field": field, "requirement": requirement, "presence": status})
         if not present and requirement == "required":
@@ -231,6 +256,64 @@ def connected_components(edges: list[tuple[str, str]]) -> list[list[str]]:
     return components
 
 
+def material_text(packet: dict[str, Any]) -> str:
+    question = packet.get("standard_question") or {}
+    return text_of(question.get("passage")) or text_of(question.get("context")) or text_of(packet.get("final_markdown"))
+
+
+def material_node_from_packet(
+    *,
+    doc_id: str,
+    group_id: str,
+    packet: dict[str, Any],
+    candidate: dict[str, Any],
+    graph_node: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "semantic_node_id": f"material_{safe_id(doc_id)}_{group_id}",
+        "node_kind": graph_node.get("projection_target_hint") or "material_node",
+        "source_group_ids": [group_id],
+        "source_packet_ids": [packet.get("source_packet_id")],
+        "text": material_text(packet),
+        "evidence_refs": candidate.get("evidence", {}).get("source_refs") or [],
+        "asset_refs": packet.get("asset_refs") or {},
+        "projection_status": "EVIDENCE_ONLY",
+        "reason": "non-direct material is preserved for context/evidence, not projected as standalone question",
+    }
+
+
+def resolved_parent_entry(node: dict[str, Any], *, relation: dict[str, Any] | None = None) -> dict[str, Any]:
+    return {
+        "semantic_node_id": node.get("semantic_node_id"),
+        "node_kind": node.get("node_kind"),
+        "source_group_ids": node.get("source_group_ids") or [],
+        "source_packet_ids": node.get("source_packet_ids") or [],
+        "text": text_of(node.get("text")),
+        "evidence_refs": node.get("evidence_refs") or [],
+        "asset_refs": node.get("asset_refs") or {},
+        "resolution_status": "RESOLVED" if text_of(node.get("text")) else "MISSING_TEXT",
+        "relation": predicate(relation or {}) if relation else "",
+        "relation_reason": (relation or {}).get("reason", ""),
+        "relation_evidence_refs": (relation or {}).get("evidence_refs") or [],
+    }
+
+
+def first_resolved_stimulus(resolved_parent_nodes: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for node in resolved_parent_nodes:
+        if node.get("node_kind") in STIMULUS_NODE_KINDS and text_of(node.get("text")):
+            return {
+                "semantic_node_id": node.get("semantic_node_id"),
+                "node_kind": node.get("node_kind"),
+                "source_group_ids": node.get("source_group_ids") or [],
+                "source_packet_ids": node.get("source_packet_ids") or [],
+                "text": text_of(node.get("text")),
+                "evidence_refs": node.get("evidence_refs") or [],
+                "asset_refs": node.get("asset_refs") or {},
+                "binding_status": "BOUND",
+            }
+    return None
+
+
 def build_review(plan: dict[str, Any]) -> str:
     rows = []
     for item in plan["projection_report"]:
@@ -299,6 +382,7 @@ def plan_projection(
     projection_report: list[dict[str, Any]] = []
     asset_manifest: list[dict[str, Any]] = []
     parent_nodes_by_group: dict[str, str] = {}
+    semantic_node_by_id: dict[str, dict[str, Any]] = {}
 
     for component_index, component in enumerate(connected_components(share_edges), start=1):
         component_packets = [refined_by_group[group_id] for group_id in component if group_id in refined_by_group]
@@ -310,19 +394,19 @@ def plan_projection(
         if not passage_owner or not text_of((passage_owner.get("standard_question") or {}).get("passage")):
             continue
         node_id = f"stimulus_{safe_id(doc_id)}_{component_index:03d}"
-        semantic_nodes.append(
-            {
-                "semantic_node_id": node_id,
-                "node_kind": "shared_stimulus",
-                "source_group_ids": component,
-                "source_packet_ids": [packet.get("source_packet_id") for packet in component_packets],
-                "text": text_of((passage_owner.get("standard_question") or {}).get("passage")),
-                "evidence_refs": (passage_owner.get("source_refs") or {}).get("passage_refs") or [],
-                "asset_refs": passage_owner.get("asset_refs") or {},
-                "projection_status": "READY",
-                "reason": "groups are connected by shares_stimulus and at least one packet carries the shared passage text",
-            }
-        )
+        node = {
+            "semantic_node_id": node_id,
+            "node_kind": "shared_stimulus",
+            "source_group_ids": component,
+            "source_packet_ids": [packet.get("source_packet_id") for packet in component_packets],
+            "text": text_of((passage_owner.get("standard_question") or {}).get("passage")),
+            "evidence_refs": (passage_owner.get("source_refs") or {}).get("passage_refs") or [],
+            "asset_refs": passage_owner.get("asset_refs") or {},
+            "projection_status": "READY",
+            "reason": "groups are connected by shares_stimulus and at least one packet carries the shared passage text",
+        }
+        semantic_nodes.append(node)
+        semantic_node_by_id[node_id] = node
         for group_id in component:
             parent_nodes_by_group[group_id] = node_id
 
@@ -332,17 +416,82 @@ def plan_projection(
         rel_out = outgoing.get(group_id, [])
         rel_in = incoming.get(group_id, [])
         out_is_child = [rel for rel in rel_out if predicate(rel) in ABSORBING_RELATIONS]
-        parent_group_ids = [rel.get("object_group_id") for rel in rel_out if predicate(rel) in CONTEXT_RELATIONS | ABSORBING_RELATIONS]
+        parent_group_ids = [
+            rel.get("object_group_id")
+            for rel in rel_out
+            if predicate(rel) in CONTEXT_RELATIONS | ABSORBING_RELATIONS
+        ]
+        parent_group_ids.extend(
+            rel.get("subject_group_id")
+            for rel in rel_in
+            if predicate(rel) in CONTAINER_RELATIONS and rel.get("subject_group_id")
+        )
         parent_node_ids = [parent_nodes_by_group[group_id]] if group_id in parent_nodes_by_group else []
+        parent_group_by_node_id: dict[str, str] = {}
+        parent_relation_by_group = {
+            rel.get("object_group_id"): rel
+            for rel in rel_out
+            if predicate(rel) in CONTEXT_RELATIONS | ABSORBING_RELATIONS and rel.get("object_group_id")
+        }
+        parent_relation_by_group.update(
+            {
+                rel.get("subject_group_id"): rel
+                for rel in rel_in
+                if predicate(rel) in CONTAINER_RELATIONS and rel.get("subject_group_id")
+            }
+        )
 
         for parent_group_id in parent_group_ids:
             if parent_group_id and parent_group_id in refined_by_group:
                 parent_packet = refined_by_group[parent_group_id]
                 if parent_packet.get("refine_status") == "PRESERVED_NON_DIRECT":
-                    parent_node_ids.append(f"material_{safe_id(doc_id)}_{parent_group_id}")
+                    node_id = f"material_{safe_id(doc_id)}_{parent_group_id}"
                 else:
-                    parent_node_ids.append(f"projection_{safe_id(parent_packet.get('source_packet_id', parent_group_id))}")
+                    node_id = f"projection_{safe_id(parent_packet.get('source_packet_id', parent_group_id))}"
+                parent_node_ids.append(node_id)
+                parent_group_by_node_id[node_id] = parent_group_id
         parent_node_ids = sorted(set(parent_node_ids))
+        resolved_parent_nodes: list[dict[str, Any]] = []
+        for node_id in parent_node_ids:
+            node = semantic_node_by_id.get(node_id)
+            if node:
+                resolved_parent_nodes.append(resolved_parent_entry(node))
+                continue
+            if node_id.startswith(f"material_{safe_id(doc_id)}_"):
+                parent_group_id = node_id.removeprefix(f"material_{safe_id(doc_id)}_")
+                parent_packet = refined_by_group.get(parent_group_id)
+                if parent_packet:
+                    parent_node = material_node_from_packet(
+                        doc_id=doc_id,
+                        group_id=parent_group_id,
+                        packet=parent_packet,
+                        candidate=candidate_by_group.get(parent_group_id) or {},
+                        graph_node=graph_nodes.get(parent_group_id) or {},
+                    )
+                    resolved_parent_nodes.append(
+                        resolved_parent_entry(parent_node, relation=parent_relation_by_group.get(parent_group_id))
+                    )
+                    continue
+            parent_group_id = parent_group_by_node_id.get(node_id)
+            parent_packet = refined_by_group.get(parent_group_id or "")
+            if parent_packet and material_text(parent_packet):
+                parent_question = parent_packet.get("standard_question") or {}
+                node_kind = "shared_stimulus" if text_of(parent_question.get("passage")) else (graph_nodes.get(parent_group_id or "") or {}).get("projection_target_hint") or "projection_context"
+                parent_node = {
+                    "semantic_node_id": node_id,
+                    "node_kind": node_kind,
+                    "source_group_ids": [parent_group_id],
+                    "source_packet_ids": [parent_packet.get("source_packet_id")],
+                    "text": material_text(parent_packet),
+                    "evidence_refs": (parent_packet.get("source_refs") or {}).get("passage_refs") or [],
+                    "asset_refs": parent_packet.get("asset_refs") or {},
+                    "projection_status": "READY",
+                    "reason": "projected parent packet carries context/passage text",
+                }
+                resolved_parent_nodes.append(
+                    resolved_parent_entry(parent_node, relation=parent_relation_by_group.get(parent_group_id))
+                )
+        resolved_stimulus = first_resolved_stimulus(resolved_parent_nodes)
 
         reasons: list[str] = []
         projection_kind = ""
@@ -367,20 +516,15 @@ def plan_projection(
             reasons.append("PRESERVED_NON_DIRECT child fragment is absorbed by parent/owner group")
         elif packet.get("refine_status") == "PRESERVED_NON_DIRECT":
             if has_meaningful_material(packet) or rel_in:
-                node_id = f"material_{safe_id(doc_id)}_{group_id}"
-                semantic_nodes.append(
-                    {
-                        "semantic_node_id": node_id,
-                        "node_kind": graph_node.get("projection_target_hint") or "material_node",
-                        "source_group_ids": [group_id],
-                        "source_packet_ids": [packet.get("source_packet_id")],
-                        "text": packet.get("final_markdown") or "",
-                        "evidence_refs": candidate.get("evidence", {}).get("source_refs") or [],
-                        "asset_refs": packet.get("asset_refs") or {},
-                        "projection_status": "EVIDENCE_ONLY",
-                        "reason": "non-direct material is preserved for context/evidence, not projected as standalone question",
-                    }
+                node = material_node_from_packet(
+                    doc_id=doc_id,
+                    group_id=group_id,
+                    packet=packet,
+                    candidate=candidate,
+                    graph_node=graph_node,
                 )
+                semantic_nodes.append(node)
+                semantic_node_by_id[node["semantic_node_id"]] = node
                 projection_kind = "material_node"
                 projection_status = "EVIDENCE_ONLY"
                 reasons.append("non-direct material kept as semantic/evidence node")
@@ -389,7 +533,11 @@ def plan_projection(
                 projection_status = "EVIDENCE_ONLY"
                 reasons.append("non-direct fragment has no standalone question projection")
         elif packet.get("refine_status") in QUESTION_STATUSES:
-            field_contract = build_field_contract(packet=packet, parent_node_ids=parent_node_ids)
+            field_contract = build_field_contract(
+                packet=packet,
+                parent_node_ids=parent_node_ids,
+                resolved_parent_nodes=resolved_parent_nodes,
+            )
             if field_contract.get("missing_required_fields"):
                 projection_kind = "incomplete_question_candidate"
                 projection_status = "NEEDS_REVIEW"
@@ -400,7 +548,9 @@ def plan_projection(
                 projection_status = status_from_packet(packet, needs_parent, field_contract)
                 if needs_parent:
                     reasons.append("question requires parent/context/stimulus node before runtime projection")
-                else:
+                if resolved_stimulus:
+                    reasons.append("resolved shared stimulus payload attached for child projection")
+                elif not needs_parent:
                     reasons.append("question has core fields and no required parent relation")
                 if field_contract.get("missing_not_applicable_fields"):
                     reasons.append("missing not-applicable fields ignored by target contract")
@@ -414,11 +564,17 @@ def plan_projection(
                     "projection_kind": projection_kind,
                     "projection_status": projection_status,
                     "parent_node_ids": parent_node_ids,
+                    "resolved_parent_nodes": resolved_parent_nodes,
+                    "resolved_stimulus": resolved_stimulus or {},
                     "standard_question": packet.get("standard_question") or {},
                     "source_refs": packet.get("source_refs") or {},
                     "asset_refs": packet.get("asset_refs") or {},
                     "status_breakdown": packet.get("status_breakdown") or {},
-                    "field_contract": build_field_contract(packet=packet, parent_node_ids=parent_node_ids),
+                    "field_contract": build_field_contract(
+                        packet=packet,
+                        parent_node_ids=parent_node_ids,
+                        resolved_parent_nodes=resolved_parent_nodes,
+                    ),
                     "reasons": reasons,
                 }
             )
@@ -441,7 +597,13 @@ def plan_projection(
                 "projection_status": projection_status,
                 "parent_group_ids": sorted(set(parent_group_id for parent_group_id in parent_group_ids if parent_group_id)),
                 "parent_node_ids": parent_node_ids,
-                "field_contract": build_field_contract(packet=packet, parent_node_ids=parent_node_ids),
+                "resolved_parent_nodes": resolved_parent_nodes,
+                "resolved_stimulus": resolved_stimulus or {},
+                "field_contract": build_field_contract(
+                    packet=packet,
+                    parent_node_ids=parent_node_ids,
+                    resolved_parent_nodes=resolved_parent_nodes,
+                ),
                 "incoming_relation_count": len(rel_in),
                 "outgoing_relation_count": len(rel_out),
                 "reasons": reasons,

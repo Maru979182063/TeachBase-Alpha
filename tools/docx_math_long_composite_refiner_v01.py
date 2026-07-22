@@ -110,7 +110,7 @@ def build_planner_input(draft: dict[str, Any]) -> dict[str, Any]:
     fields = draft.get("fields") or {}
     field_blocks = {
         name: split_field_blocks(fields.get(name) or {})
-        for name in ["stem", "subquestions", "answer", "explanation", "teaching_note", "context"]
+        for name in ["stem", "subquestions", "options", "answer", "explanation", "teaching_note", "context"]
     }
     return {
         "draft_id": draft.get("draft_id"),
@@ -121,6 +121,7 @@ def build_planner_input(draft: dict[str, Any]) -> dict[str, Any]:
         "route_signals": {
             "stem_block_count": len(field_blocks["stem"]),
             "subquestion_block_count": len(field_blocks["subquestions"]),
+            "option_block_count": len(field_blocks["options"]),
             "answer_block_count": len(field_blocks["answer"]),
             "explanation_block_count": len(field_blocks["explanation"]),
             "asset_count": len(draft.get("asset_refs") or []),
@@ -191,6 +192,9 @@ def validate_plan(plan: dict[str, Any], planner_input: dict[str, Any]) -> dict[s
     if not isinstance(segments, list) or not segments:
         errors.append({"path": "$.segments", "message": "missing segments"})
         return {"valid": False, "errors": errors}
+    stem_count = sum(1 for segment in segments if isinstance(segment, dict) and segment.get("role") == "stem")
+    if stem_count != 1:
+        errors.append({"path": "$.segments", "message": f"expected exactly one shared stem segment, got {stem_count}"})
     block_ids = allowed_block_ids(planner_input)
     asset_ids = allowed_asset_ids(planner_input)
     seen: set[str] = set()
@@ -278,6 +282,44 @@ def validate_segment(segment: dict[str, Any], segment_input: dict[str, Any]) -> 
     return {"valid": not errors, "errors": errors}
 
 
+def source_preserve_segment(
+    segment_input: dict[str, Any],
+    *,
+    warning_code: str,
+    warning_message: str,
+) -> dict[str, Any]:
+    return {
+        "schema": SEGMENT_SCHEMA,
+        "segment_id": segment_input.get("segment_id"),
+        "label": segment_input.get("label") or "",
+        "level": segment_input.get("level") or 0,
+        "parent_id": segment_input.get("parent_id") or "",
+        "role": segment_input.get("role") or "subquestion",
+        "prompt_md": "\n\n".join(block["markdown"] for block in segment_input.get("question_blocks") or []),
+        "answer_md": "\n\n".join(block["markdown"] for block in segment_input.get("answer_blocks") or []),
+        "explanation_md": "\n\n".join(block["markdown"] for block in segment_input.get("explanation_blocks") or []),
+        "asset_ids": segment_input.get("asset_ids") or [],
+        "source_refs": {
+            "question_block_ids": [block["block_id"] for block in segment_input.get("question_blocks") or []],
+            "answer_block_ids": [block["block_id"] for block in segment_input.get("answer_blocks") or []],
+            "explanation_block_ids": [block["block_id"] for block in segment_input.get("explanation_blocks") or []],
+        },
+        "warnings": [
+            {
+                "code": warning_code,
+                "message": warning_message,
+            }
+        ],
+        "normalization_actions": [
+            {
+                "action": "segment_source_preserve_fallback",
+                "scope": "long_composite_segment_refiner",
+                "reason": warning_message,
+            }
+        ],
+    }
+
+
 def refine_segment(
     *,
     config: dict[str, Any],
@@ -306,24 +348,11 @@ def refine_segment(
     write_json(segment_dir / "raw_response.json", result["raw_response"])
     write_text(segment_dir / "raw_content.txt", result["raw_content"])
     if result["parsed"] is None:
-        refined = {
-            "schema": SEGMENT_SCHEMA,
-            "segment_id": segment_id,
-            "label": segment_input.get("label") or "",
-            "level": segment_input.get("level") or 0,
-            "parent_id": segment_input.get("parent_id") or "",
-            "role": segment_input.get("role") or "subquestion",
-            "prompt_md": "\n\n".join(block["markdown"] for block in segment_input.get("question_blocks") or []),
-            "answer_md": "\n\n".join(block["markdown"] for block in segment_input.get("answer_blocks") or []),
-            "explanation_md": "\n\n".join(block["markdown"] for block in segment_input.get("explanation_blocks") or []),
-            "asset_ids": segment_input.get("asset_ids") or [],
-            "source_refs": {
-                "question_block_ids": [block["block_id"] for block in segment_input.get("question_blocks") or []],
-                "answer_block_ids": [block["block_id"] for block in segment_input.get("answer_blocks") or []],
-                "explanation_block_ids": [block["block_id"] for block in segment_input.get("explanation_blocks") or []],
-            },
-            "warnings": [{"code": "segment_parse_failed", "message": result["parse_error"]}],
-        }
+        refined = source_preserve_segment(
+            segment_input,
+            warning_code="segment_parse_failed",
+            warning_message=str(result["parse_error"]),
+        )
     else:
         refined = result["parsed"]
     if isinstance(refined, dict):
@@ -361,6 +390,14 @@ def refine_segment(
                 refined["parent_id"] = segment_input.get("parent_id") or ""
                 refined["role"] = segment_input.get("role") or "subquestion"
             validation = validate_segment(refined, segment_input)
+    if not validation["valid"]:
+        write_json(segment_dir / "invalid_model_segment_before_source_preserve.json", refined)
+        refined = source_preserve_segment(
+            segment_input,
+            warning_code="segment_validation_failed_after_repair",
+            warning_message=json.dumps(validation["errors"], ensure_ascii=False),
+        )
+        validation = validate_segment(refined, segment_input)
     write_json(segment_dir / "refined_segment.json", refined)
     write_json(segment_dir / "validation_report.json", validation)
     return {
@@ -409,28 +446,134 @@ def segment_has_children(segment: dict[str, Any], plan: dict[str, Any]) -> bool:
     return False
 
 
+def strip_field_heading(markdown: str, heading: str) -> str:
+    text = str(markdown or "").strip()
+    if text.startswith(heading):
+        return text[len(heading):].strip()
+    return text
+
+
+def source_solution_field(draft: dict[str, Any], field_name: str, heading: str) -> str:
+    return strip_field_heading(source_field_markdown(draft, field_name), heading)
+
+
+def markdown_health_issues(markdown: str) -> list[str]:
+    text = str(markdown or "")
+    issues: list[str] = []
+    if text.count("$") % 2:
+        issues.append("unbalanced_math_dollar")
+    for marker, code in [
+        ("$$", "inline_double_dollar"),
+        ("$_", "math_closed_before_subscript"),
+        ("$^", "math_closed_before_superscript"),
+        ("Missing open brace", "mathjax_missing_open_brace"),
+        ("Missing close brace", "mathjax_missing_close_brace"),
+        ("Math input error", "mathjax_input_error"),
+    ]:
+        if marker in text:
+            issues.append(code)
+    return issues
+
+
+def solution_candidate_from_segments(segments: list[dict[str, Any]], key: str) -> str:
+    chunks: list[str] = []
+    for segment in segments:
+        value = str(segment.get(key) or "").strip()
+        if value:
+            label = str(segment.get("label") or "").strip()
+            chunks.append(f"{label} {value}".strip() if label else value)
+    return "\n\n".join(chunks)
+
+
+def choose_solution_field(
+    *,
+    field_name: str,
+    source_value: str,
+    refined_value: str,
+    normalization_actions: list[dict[str, Any]],
+) -> str:
+    source = str(source_value or "").strip()
+    refined = str(refined_value or "").strip()
+    if not source:
+        return refined
+    if not refined:
+        return source
+    source_issues = markdown_health_issues(source)
+    refined_issues = markdown_health_issues(refined)
+    if source_issues and len(refined_issues) < len(source_issues):
+        minimum_chars = max(1, int(len(source) * 0.35)) if len(source) < 80 else max(24, int(len(source) * 0.35))
+        if len(refined) >= minimum_chars:
+            normalization_actions.append(
+                {
+                    "action": "prefer_refined_solution_field",
+                    "scope": "long_composite_assemble_packet",
+                    "field": field_name,
+                    "reason": "source field has broken markdown delimiters and refined candidate is healthier",
+                    "source_issues": source_issues,
+                    "refined_issues": refined_issues,
+                }
+            )
+            return refined
+    return source
+
+
 def assemble_packet(draft: dict[str, Any], plan: dict[str, Any], refined_segments: list[dict[str, Any]], config: dict[str, Any]) -> dict[str, Any]:
     segment_by_id = {segment["segment_id"]: segment for segment in refined_segments}
     stem_segment = next((segment for segment in refined_segments if segment.get("role") == "stem"), None)
     subquestions = [segment for segment in refined_segments if segment.get("role") != "stem"]
-    leaf_or_terminal_subquestions = [segment for segment in subquestions if not segment_has_children(segment, plan)]
     prompt_md = render_tree(refined_segments)
-    answer_md = "\n\n".join(
-        f"{segment.get('label','')} {segment.get('answer_md','')}".strip()
-        for segment in leaf_or_terminal_subquestions
-        if str(segment.get("answer_md") or "").strip()
+    source_stem_md = source_field_markdown(draft, "stem")
+    stem_md = str((stem_segment or {}).get("prompt_md") or "").strip()
+    if source_stem_md and (not stem_md or (len(source_stem_md) >= 80 and len(stem_md) < max(24, int(len(source_stem_md) * 0.35)))):
+        stem_md = source_stem_md
+    normalization_actions = [
+        {
+            "action": "source_backed_solution_fields",
+            "scope": "long_composite_assemble_packet",
+            "reason": "long composite solution sections keep upstream field boundaries unless source markdown is structurally broken",
+        }
+    ]
+    source_answer_md = source_solution_field(draft, "answer", "【答案】")
+    refined_answer_md = solution_candidate_from_segments(refined_segments, "answer_md")
+    answer_md = choose_solution_field(
+        field_name="answer_md",
+        source_value=source_answer_md,
+        refined_value=refined_answer_md,
+        normalization_actions=normalization_actions,
     )
-    explanation_md = "\n\n".join(
-        f"{segment.get('label','')} {segment.get('explanation_md','')}".strip()
-        for segment in leaf_or_terminal_subquestions
-        if str(segment.get("explanation_md") or "").strip()
+    options_md = source_field_markdown(draft, "options")
+    source_explanation_md = source_solution_field(draft, "explanation", "【解析】")
+    refined_explanation_md = solution_candidate_from_segments(refined_segments, "explanation_md")
+    explanation_md = choose_solution_field(
+        field_name="explanation_md",
+        source_value=source_explanation_md,
+        refined_value=refined_explanation_md,
+        normalization_actions=normalization_actions,
     )
+    teaching_note_md = source_field_markdown(draft, "teaching_note")
     assets = []
     for asset in draft.get("asset_refs") or []:
         asset_id = asset.get("asset_id") if isinstance(asset, dict) else str(asset)
-        if asset_id and any(asset_id in (segment.get("asset_ids") or []) for segment in refined_segments):
+        if asset_id:
             assets.append(asset)
-    render_markdown = "\n\n".join(part for part in [prompt_md, "【答案】\n" + answer_md if answer_md else "", "【解析】\n" + explanation_md if explanation_md else ""] if part.strip())
+    rendered_asset_ids = set(asset_tokens("\n".join([prompt_md, options_md, answer_md, explanation_md, teaching_note_md])))
+    fallback_asset_tokens = []
+    for asset in assets:
+        asset_id = asset.get("asset_id") if isinstance(asset, dict) else str(asset)
+        if asset_id and asset_id not in rendered_asset_ids:
+            fallback_asset_tokens.append(f"![{asset_id}](asset://{asset_id})")
+    render_markdown = "\n\n".join(
+        part
+        for part in [
+            prompt_md,
+            options_md,
+            "\n\n".join(fallback_asset_tokens),
+            "【答案】\n" + answer_md if answer_md else "",
+            "【解析】\n" + explanation_md if explanation_md else "",
+            "【点睛】\n" + teaching_note_md if teaching_note_md else "",
+        ]
+        if part.strip()
+    )
     return {
         "schema": PACKET_SCHEMA,
         "doc_id": draft.get("doc_id"),
@@ -442,15 +585,87 @@ def assemble_packet(draft: dict[str, Any], plan: dict[str, Any], refined_segment
         "status": "READY" if all(segment.get("_validation_valid", True) for segment in refined_segments) else "NEEDS_REVIEW",
         "standard_question": {
             "question_type": "composite",
-            "stem_md": str((stem_segment or {}).get("prompt_md") or ""),
+            "stem_md": stem_md,
             "nested_subquestions": subquestions,
+            "options_md": options_md,
+            "asset_fallback_md": "\n\n".join(fallback_asset_tokens),
             "answer_md": answer_md,
             "explanation_md": explanation_md,
+            "teaching_note_md": teaching_note_md,
             "render_markdown": render_markdown,
         },
         "asset_refs": {"visual_refs": assets},
         "plan": plan,
         "segment_ids": list(segment_by_id),
+        "normalization_actions": normalization_actions,
+    }
+
+
+def source_field_markdown(draft: dict[str, Any], field_name: str) -> str:
+    return str(((draft.get("fields") or {}).get(field_name) or {}).get("markdown") or "").strip()
+
+
+def source_preserve_failed_packet(
+    draft: dict[str, Any],
+    plan: dict[str, Any],
+    plan_validation: dict[str, Any],
+    config: dict[str, Any],
+) -> dict[str, Any]:
+    stem_md = source_field_markdown(draft, "stem")
+    subquestions_md = source_field_markdown(draft, "subquestions")
+    answer_md = source_solution_field(draft, "answer", "【答案】")
+    options_md = source_field_markdown(draft, "options")
+    explanation_md = source_solution_field(draft, "explanation", "【解析】")
+    teaching_note_md = source_field_markdown(draft, "teaching_note")
+    render_markdown = "\n\n".join(
+        part
+        for part in [
+            stem_md,
+            subquestions_md,
+            options_md,
+            f"【答案】{answer_md}" if answer_md else "",
+            f"【解析】{explanation_md}" if explanation_md else "",
+            f"【点睛】{teaching_note_md}" if teaching_note_md else "",
+        ]
+        if part.strip()
+    )
+    asset_fallback_md = "\n\n".join(
+        f"![{asset.get('asset_id')}](asset://{asset.get('asset_id')})"
+        for asset in draft.get("asset_refs") or []
+        if isinstance(asset, dict) and asset.get("asset_id")
+    )
+    return {
+        "schema": PACKET_SCHEMA,
+        "doc_id": draft.get("doc_id"),
+        "source_draft_id": draft.get("draft_id"),
+        "source_group_id": draft.get("source_group_id"),
+        "route": "long_composite",
+        "planner_prompt_version": config["nodes"]["node4a_structure_planner"]["prompt_version"],
+        "segment_prompt_version": config["nodes"]["node4b_segment_refiner"]["prompt_version"],
+        "status": "READY",
+        "standard_question": {
+            "question_type": "composite",
+            "stem_md": stem_md,
+            "subquestions": [{"label": "", "markdown": subquestions_md}] if subquestions_md else [],
+            "nested_subquestions": [],
+            "options_md": options_md,
+            "asset_fallback_md": asset_fallback_md,
+            "answer_md": answer_md,
+            "explanation_md": explanation_md,
+            "teaching_note_md": teaching_note_md,
+            "render_markdown": render_markdown,
+        },
+        "asset_refs": {"visual_refs": draft.get("asset_refs") or []},
+        "plan": plan,
+        "plan_validation": plan_validation,
+        "segment_ids": [],
+        "warnings": [
+            {
+                "code": "long_composite_plan_invalid",
+                "message": "Planner output failed structural validation; source draft was preserved instead of assembling an unsafe long packet.",
+                "errors": plan_validation.get("errors") or [],
+            }
+        ],
     }
 
 
@@ -529,7 +744,33 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     write_json(out_root / "node4a_planner" / "plan.json", plan)
     write_json(out_root / "node4a_planner" / "validation_report.json", plan_validation)
     if not plan_validation["valid"]:
-        raise SystemExit(f"planner validation failed: {plan_validation['errors'][:3]}")
+        packet = source_preserve_failed_packet(draft, plan, plan_validation, config)
+        summary = {
+            "schema": "docx_math_long_composite_refiner.run_summary",
+            "run_id": args.run_id,
+            "generated_at": datetime.now().isoformat(timespec="seconds"),
+            "out_dir": rel(out_root),
+            "runtime_import_enabled": False,
+            "database_write_enabled": False,
+            "planner_parsed": True,
+            "planner_valid": False,
+            "planner_errors": plan_validation["errors"],
+            "segment_count": 0,
+            "segment_valid_count": 0,
+            "segment_parse_failed_count": 0,
+            "segment_repair_called_count": 0,
+            "segment_repair_parsed_count": 0,
+            "packet_status": packet["status"],
+            "total_tokens": int((planner_result["raw_response"].get("usage") or {}).get("total_tokens") or 0),
+            "planner_tokens": planner_result["raw_response"].get("usage", {}),
+            "segment_records": [],
+            "packet_json": rel(out_root / "long_composite_refined_packet.json"),
+            "review_html": rel(out_root / "review.html"),
+        }
+        write_json(out_root / "long_composite_refined_packet.json", packet)
+        write_json(out_root / "run_summary.json", summary)
+        write_text(out_root / "review.html", render_review(packet, summary))
+        return summary
 
     segment_system = workspace_path(segment_node["system_prompt_path"]).read_text(encoding="utf-8")
     segment_template = workspace_path(segment_node["user_prompt_path"]).read_text(encoding="utf-8")

@@ -295,7 +295,7 @@
       "entrypoint": "tools/english_text_first_question_render_normalizer_v01.py",
       "model": "doubao-seed-2-0-lite-260428",
       "temperature": 0,
-      "prompt_version": "english_question_render_normalizer_v0.1_one_packet_surface_restore_20260720",
+      "prompt_version": "english_question_render_normalizer_v0.7_answer_exact_postprocess_20260721",
       "system_prompt_path": "prompts/english_question_render_normalizer_system_v0.1.md",
       "user_prompt_path": "prompts/english_question_render_normalizer_user_v0.1.md",
       "output_schema_path": "schemas/rendered_question_record.schema.json",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import json
 import os
@@ -137,6 +138,14 @@ def pick_bool(question: dict[str, Any], visual: dict[str, Any], key: str) -> boo
     if key in visual:
         return bool(visual.get(key))
     return bool(question.get(key))
+
+
+def pick_requires_image(question: dict[str, Any], visual: dict[str, Any], key: str) -> bool:
+    scope_key = "stem" if key == "stem_requires_image" else "analysis" if key == "analysis_requires_image" else ""
+    scope = question.get("figure_detection_scope") if isinstance(question.get("figure_detection_scope"), dict) else {}
+    if scope_key and scope_key in scope:
+        return bool(scope.get(scope_key))
+    return pick_bool(question, visual, key)
 
 
 def image_extension(path: Path) -> str:
@@ -652,6 +661,11 @@ def _write_review_display_copy(
 
     review_key = (Path("_delivery_assets") / Path(storage_key)).as_posix()
     review_path = out_dir / review_key
+    if len(str(review_path)) > 240:
+        digest = hashlib.sha1(str(storage_key).encode("utf-8", errors="replace")).hexdigest()[:24]
+        suffix = Path(storage_key).suffix or ".png"
+        review_key = (Path("_delivery_assets") / "_short" / f"{digest}{suffix}").as_posix()
+        review_path = out_dir / review_key
     review_path.parent.mkdir(parents=True, exist_ok=True)
 
     review_width = max(1, int(round(cleaned_image.width * scale)))
@@ -675,6 +689,63 @@ def _write_review_display_copy(
     if clean_meta:
         meta["edge_clean"] = clean_meta
     return review_key, meta
+
+
+def _short_storage_key(storage_key: str) -> str:
+    digest = hashlib.sha1(str(storage_key).encode("utf-8", errors="replace")).hexdigest()[:24]
+    suffix = Path(storage_key).suffix or ".png"
+    return (Path("question_assets") / "_short" / f"{digest}{suffix}").as_posix()
+
+
+def _ensure_storage_key_fits(out_dir: Path, asset: dict[str, Any], storage_key: str) -> str:
+    target_path = out_dir / Path(storage_key)
+    if len(str(target_path)) <= 240:
+        return storage_key
+    short_key = _short_storage_key(storage_key)
+    asset["original_storage_key"] = storage_key
+    asset["storage_key"] = short_key
+    return short_key
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = str(os.environ.get(name, "") or "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+def _expand_asset_bbox_for_crop(bbox: dict[str, Any], image: Image.Image) -> dict[str, Any]:
+    if str(os.environ.get("ASSETIZE_FIGURE_CROP_PADDING_ENABLE", "") or "1").strip().lower() in {"0", "false", "no", "off"}:
+        return dict(bbox)
+    x = max(int(bbox.get("x", 0) or 0), 0)
+    y = max(int(bbox.get("y", 0) or 0), 0)
+    w = max(int(bbox.get("w", 0) or 0), 0)
+    h = max(int(bbox.get("h", 0) or 0), 0)
+    pad_x = max(_env_int("ASSETIZE_FIGURE_CROP_PAD_X", 14), int(round(w * 0.04)))
+    pad_top = max(_env_int("ASSETIZE_FIGURE_CROP_PAD_TOP", 8), int(round(h * 0.03)))
+    pad_bottom = max(_env_int("ASSETIZE_FIGURE_CROP_PAD_BOTTOM", 36), int(round(h * 0.12)))
+    x1 = max(x - pad_x, 0)
+    y1 = max(y - pad_top, 0)
+    x2 = min(x + w + pad_x, image.width)
+    y2 = min(y + h + pad_bottom, image.height)
+    expanded = dict(bbox)
+    expanded["x"] = x1
+    expanded["y"] = y1
+    expanded["w"] = max(x2 - x1, 1)
+    expanded["h"] = max(y2 - y1, 1)
+    if (x1, y1, x2, y2) != (x, y, min(x + w, image.width), min(y + h, image.height)):
+        expanded["detected_bbox_json"] = dict(bbox)
+        expanded["crop_padding_json"] = {
+            "left": x - x1,
+            "top": y - y1,
+            "right": x2 - min(x + w, image.width),
+            "bottom": y2 - min(y + h, image.height),
+            "policy": "assetize_figure_crop_padding_v0.1",
+        }
+    return expanded
 
 
 def _hamming_distance(a: str, b: str) -> int:
@@ -787,6 +858,7 @@ def materialize_staged_asset(
             asset["file_status"] = "failed"
             asset["review_flags"] = normalize_review_flags(list(asset.get("review_flags", []) or []) + ["asset_materialize_failed"])
             return asset
+        storage_key = _ensure_storage_key_fits(out_dir, asset, storage_key)
         target_path = out_dir / Path(storage_key)
         target_path.parent.mkdir(parents=True, exist_ok=True)
         review_key: str | None = None
@@ -847,6 +919,7 @@ def materialize_staged_asset(
         asset["file_status"] = "failed"
         asset["review_flags"] = normalize_review_flags(list(asset.get("review_flags", []) or []) + ["asset_materialize_failed"])
         return asset
+    storage_key = _ensure_storage_key_fits(out_dir, asset, storage_key)
     target_path = out_dir / Path(storage_key)
     target_path.parent.mkdir(parents=True, exist_ok=True)
     x = max(int(bbox.get("x", 0) or 0), 0)
@@ -857,6 +930,12 @@ def materialize_staged_asset(
     review_meta: dict[str, Any] | None = None
     try:
         with Image.open(source_path) as image:
+            bbox = _expand_asset_bbox_for_crop(bbox, image)
+            asset["bbox_json"] = bbox
+            x = max(int(bbox.get("x", 0) or 0), 0)
+            y = max(int(bbox.get("y", 0) or 0), 0)
+            w = max(int(bbox.get("w", 0) or 0), 0)
+            h = max(int(bbox.get("h", 0) or 0), 0)
             crop = image.crop((x, y, min(x + w, image.width), min(y + h, image.height))).convert("RGB")
             if crop.width <= 0 or crop.height <= 0 or _is_suspicious_crop(crop):
                 if str(asset.get("asset_role", "") or "") == "option":
@@ -1887,8 +1966,8 @@ def build_records(
             "stem_text_md": pick_text(question, visual, "stem_text", "stem_text_md"),
             "answer_text_md": pick_text(question, visual, "answer_text", "answer_text_md"),
             "analysis_text_md": pick_text(question, visual, "analysis_text", "analysis_text_md"),
-            "stem_requires_image": pick_bool(question, visual, "stem_requires_image"),
-            "analysis_requires_image": pick_bool(question, visual, "analysis_requires_image"),
+            "stem_requires_image": pick_requires_image(question, visual, "stem_requires_image"),
+            "analysis_requires_image": pick_requires_image(question, visual, "analysis_requires_image"),
             "assets": all_assets,
             "missing_assets": missing_assets,
             "removed_duplicate_assets": removed_duplicate_assets,

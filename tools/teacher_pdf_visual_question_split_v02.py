@@ -1005,6 +1005,16 @@ def env_flag(name: str, default: str = "0") -> bool:
     return str(os.environ.get(name, default) or default).strip().lower() not in {"0", "false", "no", "off"}
 
 
+def env_int(name: str, default: int) -> int:
+    raw = str(os.environ.get(name, "") or "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
 def profile_question_splitter_bundle(profile: str) -> dict[str, str]:
     if profile in MATH_MODEL_SPLIT_PROFILES:
         return vision_prompt_store.get_math_question_splitter_prompt_bundle()
@@ -2613,6 +2623,75 @@ def fill_transcription_fields(
     q.transcription_note = ",".join(note_bits)
 
 
+def apply_question_crop_padding(questions: list[QuestionSlice], page_images: dict[int, Image.Image]) -> None:
+    if not env_flag("QUESTION_CROP_PADDING_ENABLE", "1"):
+        return
+
+    pad_x = max(0, env_int("QUESTION_CROP_PAD_X", 8))
+    pad_top = max(0, env_int("QUESTION_CROP_PAD_TOP", 6))
+    pad_bottom = max(0, env_int("QUESTION_CROP_PAD_BOTTOM", 48))
+    guard = max(0, env_int("QUESTION_CROP_BOUNDARY_GUARD", 2))
+    bottom_overlap = max(0, env_int("QUESTION_CROP_BOTTOM_OVERLAP", 24))
+    if pad_x == 0 and pad_top == 0 and pad_bottom == 0:
+        return
+
+    page_tops: dict[int, list[tuple[str, int]]] = {}
+    page_bottoms: dict[int, list[tuple[str, int]]] = {}
+    for q in questions:
+        for frag in q.fragments:
+            page = int(frag.get("page", 0) or 0)
+            box = frag.get("bbox_image", [])
+            if len(box) != 4:
+                continue
+            x0, y0, x1, y1 = [int(v) for v in box]
+            if x1 <= x0 or y1 <= y0:
+                continue
+            page_tops.setdefault(page, []).append((q.question_id, y0))
+            page_bottoms.setdefault(page, []).append((q.question_id, y1))
+
+    for q in questions:
+        for frag in q.fragments:
+            page = int(frag.get("page", 0) or 0)
+            page_img = page_images.get(page)
+            box = frag.get("bbox_image", [])
+            if page_img is None or len(box) != 4:
+                continue
+            x0, y0, x1, y1 = [int(v) for v in box]
+            if x1 <= x0 or y1 <= y0:
+                continue
+
+            prev_bottoms = [
+                bottom
+                for other_qid, bottom in page_bottoms.get(page, [])
+                if other_qid != q.question_id and bottom < y0
+            ]
+            next_tops = [
+                top
+                for other_qid, top in page_tops.get(page, [])
+                if other_qid != q.question_id and top > y0
+            ]
+            top_limit = max(prev_bottoms) + guard if prev_bottoms else 0
+            if next_tops:
+                next_top = min(next_tops)
+                bottom_limit = next_top - guard
+                if bottom_overlap:
+                    bottom_limit = min(page_img.height, max(bottom_limit, next_top + bottom_overlap))
+            else:
+                bottom_limit = page_img.height
+
+            new_x0 = max(0, x0 - pad_x)
+            new_x1 = min(page_img.width, x1 + pad_x)
+            new_y0 = max(0, y0 - pad_top)
+            new_y1 = min(page_img.height, y1 + pad_bottom)
+            if top_limit < y0:
+                new_y0 = max(new_y0, top_limit)
+            if bottom_limit > y1:
+                new_y1 = min(new_y1, bottom_limit)
+            if new_y1 <= new_y0 + 1 or new_x1 <= new_x0 + 1:
+                continue
+            frag["bbox_image"] = [new_x0, new_y0, new_x1, new_y1]
+
+
 def build_question_canvas(q: QuestionSlice, page_images: dict[int, Image.Image], with_labels: bool = True) -> Image.Image | None:
     font = load_font(20)
     parts: list[Image.Image] = []
@@ -3837,6 +3916,7 @@ def main() -> None:
     if profile == PROFILE_ENGLISH or profile in MATH_MODEL_SPLIT_PROFILES:
         questions = repair_tail_head_shift(questions, lines_by_page, profile)
         questions = merge_orphan_tail_questions(questions, lines_by_page, profile)
+    apply_question_crop_padding(questions, page_images)
 
     for q in questions:
         out = question_dir / f"{q.question_id}_{safe_name(q.checkpoint)}_{safe_name(q.component_label)}_Q{q.local_number}.png"

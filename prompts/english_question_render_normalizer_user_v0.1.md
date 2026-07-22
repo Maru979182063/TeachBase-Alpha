@@ -36,6 +36,18 @@ Return one JSON object with:
     ],
     "rendering_blocks": ["ordered_items", "fill_blank", "markdown_table"]
   },
+  "admission_profile": {
+    "admission_mode": "READY_DIRECT | READY_DIRECT_WITH_SURFACE | READY_WITH_PARENT_CONTEXT | READY_AS_EXAMPLE_CHILD | READY_WITH_VISUAL_PARENT | FIELD_REPAIR_THEN_READY | FIELD_REPAIR_OR_SOURCE_REVIEW | SPLIT_OR_PARENT_CLUSTER_REQUIRED | DO_NOT_IMPORT_DUPLICATE_COMPOSITE | NOT_RENDERABLE",
+    "direct_import_allowed": true,
+    "builder_action": "build_direct_packet",
+    "parent_required": false,
+    "source_review_required": false,
+    "split_required": false,
+    "surface_required": false,
+    "visual_parent_required": false,
+    "field_repairs": [],
+    "reason": "short source-backed reason"
+  },
   "source_refs_used": [],
   "unresolved_issues": [],
   "normalization_actions": []
