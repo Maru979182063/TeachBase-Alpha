@@ -68,13 +68,22 @@ def load_drafts(input_root: Path, doc_ids: set[str], doc_id_contains: list[str],
 
 def q_fields(packet: dict[str, Any]) -> dict[str, str]:
     q = packet.get("standard_question") or {}
-    return {
+    fields = {
         "standard_question.stem_md": str(q.get("stem_md") or ""),
         "standard_question.answer_md": str(q.get("answer_md") or ""),
         "standard_question.explanation_md": str(q.get("explanation_md") or ""),
         "standard_question.teaching_note_md": str(q.get("teaching_note_md") or ""),
         "standard_question.context_md": str(q.get("context_md") or ""),
     }
+    for index, item in enumerate(q.get("subquestions") or []):
+        if isinstance(item, dict):
+            fields[f"standard_question.subquestions[{index}].markdown"] = str(item.get("markdown") or "")
+            fields[f"standard_question.subquestions[{index}].answer_md"] = str(item.get("answer_md") or "")
+            fields[f"standard_question.subquestions[{index}].explanation_md"] = str(item.get("explanation_md") or "")
+    for index, item in enumerate(q.get("options") or []):
+        if isinstance(item, dict):
+            fields[f"standard_question.options[{index}].markdown"] = str(item.get("markdown") or "")
+    return fields
 
 
 def set_q_field(packet: dict[str, Any], field_path: str, value: str) -> bool:
@@ -82,6 +91,17 @@ def set_q_field(packet: dict[str, Any], field_path: str, value: str) -> bool:
         return False
     key = field_path.split(".", 1)[1]
     q = packet.get("standard_question") or {}
+    match = re.fullmatch(r"(subquestions|options)\[(\d+)\]\.(markdown|answer_md|explanation_md)", key)
+    if match:
+        list_key, index_text, item_key = match.groups()
+        items = q.get(list_key)
+        index = int(index_text)
+        if not isinstance(items, list) or index >= len(items) or not isinstance(items[index], dict):
+            return False
+        if item_key not in items[index] or not isinstance(items[index].get(item_key), str):
+            return False
+        items[index][item_key] = value
+        return True
     if key not in q or not isinstance(q.get(key), str):
         return False
     q[key] = value

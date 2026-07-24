@@ -184,6 +184,33 @@
         "family_specific_gate"
       ]
     },
+    "node3c_group_ownership_reconciler": {
+      "entrypoint": "tools/english_text_first_group_ownership_reconciler_v01.py",
+      "model_call_enabled": false,
+      "reconciler_version": "english_group_ownership_reconciler_v0.1_overlap_projection_view_20260723",
+      "input_contract": {
+        "input_type": "node3_normalized_records_with_node3b_projection_graph",
+        "required_fields": [
+          "node3_run",
+          "group_projection_graph_json"
+        ]
+      },
+      "output_contract": {
+        "output_type": "ownership_adjusted_normalized_records",
+        "compatible_with": "node4_source_backed_draft_builder.node3_run"
+      },
+      "forbidden": [
+        "model_call",
+        "Runtime QuestionPacket",
+        "Runtime release decision",
+        "database_write",
+        "inventing_text",
+        "inventing_group_ids",
+        "inventing_block_refs",
+        "family_specific_gate",
+        "semantic_reinterpretation"
+      ]
+    },
     "node4_source_backed_draft_builder": {
       "entrypoint": "tools/english_text_first_source_backed_draft_builder_v01.py",
       "builder_version": "english_source_backed_draft_builder_v0.1_ref_expansion_20260717",
@@ -242,8 +269,14 @@
       "entrypoint": "tools/english_text_first_question_packet_refiner_v01.py",
       "model": "doubao-seed-2-0-lite-260428",
       "temperature": 0,
-      "prompt_version": "english_question_packet_refiner_v0.1_one_packet_standard_fields_20260717",
+      "prompt_version": "english_question_packet_refiner_v0.6_clean_node_boundary_20260723",
+      "common_system_prompt_path": "prompts/english_question_packet_refiner_common_v0.2.md",
       "system_prompt_path": "prompts/english_question_packet_refiner_system_v0.1.md",
+      "family_system_prompt_paths": {
+        "reading": "prompts/english_question_packet_refiner_reading_system_v0.1.md",
+        "grammar": "prompts/english_question_packet_refiner_grammar_system_v0.1.md",
+        "writing": "prompts/english_question_packet_refiner_writing_system_v0.1.md"
+      },
       "user_prompt_path": "prompts/english_question_packet_refiner_user_v0.1.md",
       "output_schema_path": "schemas/refined_question_packet.schema.json",
       "input_contract": {
@@ -295,10 +328,17 @@
       "entrypoint": "tools/english_text_first_question_render_normalizer_v01.py",
       "model": "doubao-seed-2-0-lite-260428",
       "temperature": 0,
-      "prompt_version": "english_question_render_normalizer_v0.7_answer_exact_postprocess_20260721",
-      "system_prompt_path": "prompts/english_question_render_normalizer_system_v0.1.md",
-      "user_prompt_path": "prompts/english_question_render_normalizer_user_v0.1.md",
+      "prompt_version": "english_question_render_normalizer_v1.3_clean_layout_visual_boundary_20260723",
+      "common_system_prompt_path": "",
+      "system_prompt_path": "prompts/english_render_instruction_planner_system_v0.1.md",
+      "family_system_prompt_paths": {
+        "reading": "prompts/english_render_instruction_planner_reading_system_v0.1.md",
+        "grammar": "prompts/english_render_instruction_planner_grammar_system_v0.1.md",
+        "writing": "prompts/english_render_instruction_planner_writing_system_v0.1.md"
+      },
+      "user_prompt_path": "prompts/english_render_instruction_planner_user_v0.1.md",
       "output_schema_path": "schemas/rendered_question_record.schema.json",
+      "planner_output_schema_path": "schemas/render_instruction_plan.schema.json",
       "input_contract": {
         "input_type": "one_refined_packet_with_source_page_images",
         "one_packet_per_model_call": true,
@@ -318,6 +358,62 @@
         "finding_new_answers",
         "inventing_text",
         "merging_packets",
+        "changing_source_refs"
+      ]
+    },
+    "node6c_render_verifier_repair": {
+      "entrypoint": "tools/english_text_first_render_verifier_repair_v01.py",
+      "model_call_enabled": false,
+      "verifier_version": "english_render_verifier_repair_v0.1_source_surface_contract_20260722",
+      "input_contract": {
+        "input_type": "node6b_rendered_records_with_refined_packets",
+        "required_fields": [
+          "rendered_question_records_json",
+          "refined_packets_json"
+        ]
+      },
+      "forbidden": [
+        "model_call",
+        "Runtime import",
+        "database_write",
+        "question_grouping",
+        "finding_new_answers",
+        "inventing_text",
+        "semantic_reinterpretation",
+        "changing_source_refs"
+      ]
+    },
+    "node6d_render_gate_point_repair": {
+      "entrypoint": "tools/english_text_first_render_gate_point_repair_v01.py",
+      "model_call_enabled": false,
+      "gate_version": "english_render_gate_point_repair_v0.1_md_contract_20260722",
+      "input_contract": {
+        "input_type": "node6c_verified_rendered_records_with_refined_packets",
+        "required_fields": [
+          "verified_rendered_records_json",
+          "refined_packets_json"
+        ]
+      },
+      "checks": [
+        "rendered_record_schema",
+        "markdown_parse",
+        "markdown_table_shape",
+        "field_boundary_contamination",
+        "admission_contract"
+      ],
+      "safe_repairs": [
+        "markdown_table_column_normalization",
+        "exact_line_field_boundary_removal"
+      ],
+      "forbidden": [
+        "model_call",
+        "Runtime import",
+        "database_write",
+        "question_grouping",
+        "finding_new_answers",
+        "inventing_text",
+        "semantic_reinterpretation",
+        "whole_question_rewrite",
         "changing_source_refs"
       ]
     }

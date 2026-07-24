@@ -16,6 +16,14 @@ Important rules:
 - Only use the provided `question_blocks` block_ids in `parts` or `unassigned_block_ids`.
 - Do NOT include `section_context` block_ids in `parts`.
 - Every question block should appear exactly once, either in one part or in `unassigned_block_ids`.
+- Respect source image ownership:
+  - Images needed to read the problem go with `stem` or the relevant `subquestions`.
+  - Images introduced by analysis, solution, proof, or worked steps go with `explanation`.
+  - Blocks marked with `block_role=decorative` or `noise_tags` such as `decorative_image`, logo, banner, watermark, page chrome, or section decoration should go to `unassigned_block_ids`, not question fields.
+  - A trailing image-only block must NOT be assigned to `stem` when it appears after answer, analysis, explanation, proof, solution steps, "故选", or "故答案为" in source order.
+  - For math handouts, a trailing non-decorative geometry/graph/table image after answer or solution usually belongs to the current question's `explanation`, even if the preceding text already says "故选" or "故答案为".
+  - Put a trailing image in `unassigned_block_ids` only when it is clearly a banner, divider, logo, watermark, page chrome, section decoration, or unrelated next-section material.
+  - Only assign a later image-only block to `stem` when it appears before answer/explanation starts, or when an adjacent stem/subquestion block explicitly refers to it as the problem figure.
 - Prefer source-local part boundaries over content guessing. If a final numeric result appears inside an explanation/solution process, keep that block in `explanation`; do not move it to `answer` only because it looks like a final answer.
 - If the source document's answer area contains a proof or worked content, keep that source-local answer area in `answer`; do not rewrite or summarize it.
 - Do NOT rewrite any text, formula, markdown, image token, or block_id.

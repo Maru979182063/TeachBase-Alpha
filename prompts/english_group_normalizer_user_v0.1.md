@@ -5,6 +5,10 @@ Task boundary:
 - You are only identifying which existing block refs serve which field.
 - If a field is absent in the evidence, mark it missing or not_applicable. Do not fill it.
 - A block ref may appear in more than one field only when it genuinely serves both roles, for example an instruction that is also the visible stem.
+- Do not duplicate a block ref across stem/answer/analysis/translation/example just because the group is related.
+- Assign each block ref to the most specific visible role indicated by its own content and printed label.
+- If one block physically contains mixed roles and cannot be split, put the ref in the primary field and add a `normalizer_warnings` item with code `mixed_role_block`.
+- Never put answer-key refs into stem_refs, analysis_refs into stem_refs, translation_refs into stem_refs, or example_refs into answer_refs unless the same printed block is physically indivisible.
 - Keep visual/table/diagram/writing-surface refs if they carry information that text alone may not preserve.
 
 Field meanings:

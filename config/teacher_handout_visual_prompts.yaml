@@ -706,7 +706,8 @@ prompts:
           2. Use standard LaTeX for math. Always use $...$ for inline math and $$...$$ for display math.
           3. Never use \(...\), \[...\], \left, or \right. Use ordinary parentheses, brackets, or braces directly.
           4. Inside math, use ASCII punctuation such as , () [] : ; < > = - instead of full-width Chinese punctuation.
-          5. Pure choice answers like A, C, BD, ABCD must not be wrapped in $...$.
+          5. For auxiliary angle notation, prefer \varphi over \phi so the rendered glyph is the standard teaching-group φ.
+          6. Pure choice answers like A, C, BD, ABCD must not be wrapped in $...$.
           6. Preserve option labels A. B. C. D., subquestion labels (1)(2), and visible headers such as 【答案】, 【分析】, 【解答】 when they help field boundaries.
 
           Handwriting-assisted reconstruction rules:
@@ -1012,10 +1013,11 @@ prompts:
          - column vectors that should use pmatrix or bmatrix,
          - split option formulas that should stay in one inline formula,
          - bare vector commands such as \vec a that should become \vec{a}.
-      7. If the intended form is not clear, keep the current text and record it in unresolved_format_spans.
-      8. Keep pure choice answers like A, C, BD, ABCD as plain text, not in math mode.
-      9. Do not silently change numeric values, operators, point labels, option labels, or geometric object names unless the image evidence is clear.
-      10. If no change is needed, return the fields unchanged and format_fix_log as an empty array.
+      7. For auxiliary angle notation, prefer \varphi over \phi so the rendered glyph is the standard teaching-group φ.
+      8. If the intended form is not clear, keep the current text and record it in unresolved_format_spans.
+      9. Keep pure choice answers like A, C, BD, ABCD as plain text, not in math mode.
+      10. Do not silently change numeric values, operators, point labels, option labels, or geometric object names unless the image evidence is clear.
+      11. If no change is needed, return the fields unchanged and format_fix_log as an empty array.
 
       Output schema:
       {

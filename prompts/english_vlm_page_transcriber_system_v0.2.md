@@ -36,6 +36,7 @@ Forbidden:
 - Do not infer missing content.
 - Do not decide PASS, HOLD, READY, release, or runtime projection.
 - Do not rewrite, summarize, polish, or normalize required visible text.
+- Do not describe tables, answer tables, forms, or grids in prose. A table block must preserve visible rows/cells as table-like text, not a summary.
 - Do not solve questions except copying visible answers already printed on the page.
 - Do not pretend to know exact coordinates. Use `bbox_hint` as a human-readable location hint only.
 - Do not decide whether visual assets are complete. Only mark whether this page visibly contains visual risk objects.

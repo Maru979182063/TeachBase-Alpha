@@ -280,6 +280,13 @@ def canonical_render_markdown(q: dict[str, Any]) -> str:
         value = subquestion_markdown(item)
         if value:
             parts.append(value)
+    nested_subquestions = q.get("nested_subquestions") if isinstance(q.get("nested_subquestions"), list) else []
+    for item in nested_subquestions:
+        if not isinstance(item, dict):
+            continue
+        value = subquestion_markdown(item)
+        if value:
+            parts.append(value)
     options = q.get("options") if isinstance(q.get("options"), list) else []
     for option in options:
         if not isinstance(option, dict):
@@ -297,6 +304,9 @@ def canonical_render_markdown(q: dict[str, Any]) -> str:
     teaching_note = str(q.get("teaching_note_md") or "").strip()
     if teaching_note:
         parts.append(f"【点睛】{teaching_note}")
+    asset_fallback = str(q.get("asset_fallback_md") or "").strip()
+    if asset_fallback:
+        parts.append(asset_fallback)
     return "\n\n".join(part for part in parts if part)
 
 
@@ -589,7 +599,7 @@ def subquestion_markdown_text(subquestions: Any) -> str:
     for item in subquestions:
         if not isinstance(item, dict):
             continue
-        chunks.append(str(item.get("markdown") or ""))
+        chunks.append(subquestion_markdown(item))
     return "\n".join(chunks)
 
 
@@ -673,7 +683,7 @@ def source_field_coverage_errors(refined: dict[str, Any], draft: dict[str, Any])
                 }
             )
 
-    output_text = "\n".join(refined_text_chunks(refined))
+    output_text = "\n".join(structured_source_text_chunks(refined))
     for asset_id in sorted(draft_required_asset_ids(draft)):
         if asset_id not in extract_asset_tokens(output_text):
             errors.append(
@@ -684,6 +694,67 @@ def source_field_coverage_errors(refined: dict[str, Any], draft: dict[str, Any])
                 }
             )
     return errors
+
+
+def structured_source_text_chunks(refined: dict[str, Any]) -> list[str]:
+    q = refined.get("standard_question") or {}
+    chunks = [
+        str(q.get("title") or ""),
+        str(q.get("stem_md") or ""),
+        str(q.get("answer_md") or ""),
+        str(q.get("explanation_md") or ""),
+        str(q.get("teaching_note_md") or ""),
+        str(q.get("context_md") or ""),
+    ]
+    chunks.extend(subquestion_markdown(item) for item in q.get("subquestions") or [] if isinstance(item, dict))
+    chunks.extend(subquestion_markdown(item) for item in q.get("nested_subquestions") or [] if isinstance(item, dict))
+    chunks.extend(str(item.get("answer_md") or "") for item in q.get("subquestions") or [] if isinstance(item, dict))
+    chunks.extend(str(item.get("explanation_md") or "") for item in q.get("subquestions") or [] if isinstance(item, dict))
+    chunks.extend(str(item.get("answer_md") or "") for item in q.get("nested_subquestions") or [] if isinstance(item, dict))
+    chunks.extend(str(item.get("explanation_md") or "") for item in q.get("nested_subquestions") or [] if isinstance(item, dict))
+    chunks.extend(str(item.get("markdown") or "") for item in q.get("options") or [] if isinstance(item, dict))
+    chunks.extend(str(item.get("markdown") or "") for item in refined.get("condition_groups") or [] if isinstance(item, dict))
+    return chunks
+
+
+def restore_source_field_assets(refined: dict[str, Any], draft: dict[str, Any]) -> int:
+    q = refined.get("standard_question")
+    if not isinstance(q, dict):
+        return 0
+    fields = draft.get("fields") or {}
+    restored = 0
+    scalar_pairs = [
+        ("stem", "stem_md"),
+        ("answer", "answer_md"),
+        ("explanation", "explanation_md"),
+        ("teaching_note", "teaching_note_md"),
+    ]
+    actions: list[dict[str, Any]] = []
+    for source_key, output_key in scalar_pairs:
+        source_markdown = str((fields.get(source_key) or {}).get("markdown") or "").strip()
+        if not source_markdown:
+            continue
+        source_assets = extract_asset_tokens(source_markdown)
+        if not source_assets:
+            continue
+        output_markdown = str(q.get(output_key) or "").strip()
+        missing_assets = sorted(source_assets - extract_asset_tokens(output_markdown))
+        if not missing_assets:
+            continue
+        q[output_key] = source_markdown
+        restored += 1
+        actions.append(
+            {
+                "action": "restore_source_field_for_missing_assets",
+                "scope": "post_refine_gate_source_coverage",
+                "field": output_key,
+                "source_field": source_key,
+                "asset_ids": missing_assets,
+            }
+        )
+    if actions:
+        refined.setdefault("normalization_actions", []).extend(actions)
+    return restored
 
 
 def projection_coverage_errors(refined: dict[str, Any]) -> list[dict[str, str]]:
@@ -715,18 +786,10 @@ def projection_coverage_errors(refined: dict[str, Any]) -> list[dict[str, str]]:
 
 def refined_text_chunks(refined: dict[str, Any]) -> list[str]:
     q = refined.get("standard_question") or {}
-    chunks = [
-        str(q.get("title") or ""),
-        str(q.get("stem_md") or ""),
-        str(q.get("answer_md") or ""),
-        str(q.get("explanation_md") or ""),
-        str(q.get("teaching_note_md") or ""),
-        str(q.get("context_md") or ""),
+    chunks = structured_source_text_chunks(refined) + [
         str(q.get("render_markdown") or ""),
+        str(q.get("asset_fallback_md") or ""),
     ]
-    chunks.extend(str(item.get("markdown") or "") for item in q.get("subquestions") or [] if isinstance(item, dict))
-    chunks.extend(str(item.get("markdown") or "") for item in q.get("options") or [] if isinstance(item, dict))
-    chunks.extend(str(item.get("markdown") or "") for item in refined.get("condition_groups") or [] if isinstance(item, dict))
     return chunks
 
 
@@ -743,6 +806,13 @@ def refined_markdown_fields(refined: dict[str, Any]) -> list[tuple[str, str]]:
     for index, item in enumerate(q.get("subquestions") or []):
         if isinstance(item, dict):
             fields.append((f"subquestions[{index}].markdown", str(item.get("markdown") or "")))
+            fields.append((f"subquestions[{index}].answer_md", str(item.get("answer_md") or "")))
+            fields.append((f"subquestions[{index}].explanation_md", str(item.get("explanation_md") or "")))
+    for index, item in enumerate(q.get("nested_subquestions") or []):
+        if isinstance(item, dict):
+            fields.append((f"nested_subquestions[{index}].markdown", str(item.get("markdown") or item.get("prompt_md") or "")))
+            fields.append((f"nested_subquestions[{index}].answer_md", str(item.get("answer_md") or "")))
+            fields.append((f"nested_subquestions[{index}].explanation_md", str(item.get("explanation_md") or "")))
     for index, item in enumerate(q.get("options") or []):
         if isinstance(item, dict):
             fields.append((f"options[{index}].markdown", str(item.get("markdown") or "")))

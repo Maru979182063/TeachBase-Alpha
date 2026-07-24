@@ -370,6 +370,7 @@ def _apply_safe_string_normalization(text: str, field: str) -> tuple[str, list[d
         # Keep inline option fractions compact and editor-friendly. This is
         # visually equivalent to \dfrac but avoids broken tall option rows.
         repaired = re.sub(r"\\dfrac\b", r"\\frac", repaired)
+        repaired = repaired.replace("\\phi", "\\varphi")
         # Normalize bare vector commands from model output: \vec a -> \vec{a}.
         repaired = re.sub(r"\\vec\s+([A-Za-z])\b", r"\\vec{\1}", repaired)
         return repaired

@@ -151,6 +151,7 @@ def build_blocks(paragraph_stream: dict[str, Any]) -> list[dict[str, Any]]:
         markdown = str(block.get("display_markdown") or block.get("markdown") or "")
         text = str(block.get("plain_text_lossy") or block.get("text") or "")
         image_refs = [item for item in (block.get("image_refs") or block.get("asset_refs") or []) if isinstance(item, dict)]
+        inline_glyph_refs = [item for item in (block.get("inline_glyph_refs") or []) if isinstance(item, dict)]
         formula_refs = [item for item in (block.get("formula_findings") or block.get("formula_refs") or []) if isinstance(item, dict)]
         source_type = str(block.get("source_block_type") or "docx_block")
         blocks.append(
@@ -164,6 +165,7 @@ def build_blocks(paragraph_stream: dict[str, Any]) -> list[dict[str, Any]]:
                 "formula_count": int(block.get("formula_count") or len(formula_refs) or 0),
                 "formula_refs": formula_refs,
                 "image_refs": image_refs,
+                "inline_glyph_refs": inline_glyph_refs,
                 "content_tags": content_tags_for(block),
                 "structural_hints": structural_hints_for(block),
                 "qa_status": block.get("qa_status", "unknown"),

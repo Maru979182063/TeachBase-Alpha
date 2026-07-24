@@ -66,7 +66,7 @@ def packets_to_membership_groups(packet_candidates_path: Path, out_path: Path) -
         block_ids = [str(item) for item in packet.get("source_block_ids") or [] if str(item)]
         if not block_ids:
             continue
-        group_id = str(packet.get("draft_id") or f"dq_{index:04d}")
+        group_id = str(packet.get("packet_id") or packet.get("draft_id") or f"dq_{index:04d}")
         groups.append(
             {
                 "group_id": group_id,
@@ -76,6 +76,8 @@ def packets_to_membership_groups(packet_candidates_path: Path, out_path: Path) -
                 "confidence": str(packet.get("confidence") or "unknown"),
                 "source": "docx_question_grouper_v01.question_packet_candidates",
                 "source_packet": {
+                    "draft_id": packet.get("draft_id"),
+                    "packet_id": packet.get("packet_id"),
                     "window_id": packet.get("window_id"),
                     "evidence_block_ids": packet.get("evidence_block_ids") or [],
                     "completion_status": packet.get("completion_status") or "unknown",
@@ -227,6 +229,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             str(block_stream_root),
             "--membership-root",
             str(membership_root),
+            "--block-tags",
+            str(block_tags),
             "--out-root",
             str(draft_root),
         ],

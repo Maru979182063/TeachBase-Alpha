@@ -863,6 +863,8 @@ def merge_runs(
         text = packet_markdown(packet)
         source_coverage = source_field_coverage(packet, draft_by_group.get(str(packet.get("source_group_id") or "")))
         render_coverage = projection_coverage(packet)
+        packet["source_field_coverage"] = source_coverage
+        packet["projection_coverage"] = render_coverage
         issues = markdown_issues(text)
         coverage_issues = list(source_coverage.get("issues") or []) + list(render_coverage.get("issues") or [])
         if coverage_issues:
@@ -879,6 +881,14 @@ def merge_runs(
             risk_codes = set(status.get("risk_codes") or [])
             risk_codes.update(str(issue.get("code") or "") for issue in coverage_issues)
             status["risk_codes"] = sorted(risk_codes)
+            if packet.get("refine_status") == "REFINED_READY":
+                packet["refine_status"] = "REFINED_NEEDS_REVIEW"
+                packet.setdefault("normalization_actions", []).append(
+                    {
+                        "action": "downgrade_ready_packet_after_source_or_projection_coverage_risk",
+                        "scope": "fullchain_orchestrator_merge",
+                    }
+                )
         elif not issues and packet.get("refine_status") != "REFINED_READY":
             packet["refine_status"] = "REFINED_READY"
             status = packet.setdefault("status_breakdown", {})

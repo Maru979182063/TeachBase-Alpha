@@ -10,10 +10,11 @@ from pathlib import Path
 from typing import Any
 
 from english_text_first_normalizer.common import read_json, rel_workspace, render_template, workspace_path, write_json, write_text
+from english_text_first_normalizer.evidence_text import blank_run_count, unsupported_lines
 from english_text_first_normalizer.model_api import call_model
 
 
-REFINER_VERSION = "english_question_packet_refiner_v0.1_one_packet_model_refine_20260717"
+REFINER_VERSION = "english_question_packet_refiner_v0.4_family_split_source_contract_20260723"
 FIELD_REF_KEYS = {
     "passage_refs": "passage",
     "stem_refs": "stem",
@@ -37,7 +38,7 @@ STATUS_BREAKDOWN_DEFAULT = {
 
 def packet_field_refs(packet: dict[str, Any]) -> dict[str, list[str]]:
     field_map = (packet.get("evidence") or {}).get("field_ref_map") or {}
-    return {
+    refs = {
         "passage_refs": list(field_map.get("passage") or []),
         "stem_refs": list(field_map.get("stem") or []) + list(field_map.get("instruction") or []),
         "option_refs": list(field_map.get("options") or []),
@@ -48,6 +49,24 @@ def packet_field_refs(packet: dict[str, Any]) -> dict[str, list[str]]:
         "example_refs": list(field_map.get("examples") or []),
         "rubric_refs": list(field_map.get("rubric") or []),
     }
+    fields = packet.get("fields") if isinstance(packet.get("fields"), dict) else {}
+    field_key_map = {
+        "passage": "passage_refs",
+        "stem": "stem_refs",
+        "instruction": "stem_refs",
+        "options": "option_refs",
+        "answer": "answer_refs",
+        "analysis": "analysis_refs",
+        "translation": "translation_refs",
+        "context": "context_refs",
+        "examples": "example_refs",
+        "rubric": "rubric_refs",
+    }
+    for field_name, ref_key in field_key_map.items():
+        value = fields.get(field_name)
+        if isinstance(value, dict):
+            refs[ref_key].extend(str(ref) for ref in value.get("refs") or [] if str(ref).strip())
+    return {key: list(dict.fromkeys(values)) for key, values in refs.items()}
 
 
 def empty_standard_question() -> dict[str, Any]:
@@ -110,8 +129,63 @@ def build_final_markdown(refined: dict[str, Any]) -> str:
 def field_text(packet: dict[str, Any], key: str) -> str:
     value = (packet.get("content") or {}).get(key) or {}
     if isinstance(value, dict):
-        return str(value.get("text") or "")
-    return str(value or "")
+        text = str(value.get("text") or "")
+    else:
+        text = str(value or "")
+    if text:
+        return text
+    fields = packet.get("fields") if isinstance(packet.get("fields"), dict) else {}
+    field_value = fields.get(key)
+    if isinstance(field_value, dict):
+        return str(field_value.get("text") or "")
+    return str(field_value or "")
+
+
+def source_text_corpus(packet: dict[str, Any]) -> str:
+    parts: list[str] = []
+    for value in (packet.get("content") or {}).values():
+        if isinstance(value, dict):
+            parts.append(str(value.get("text") or ""))
+        else:
+            parts.append(str(value or ""))
+    for value in (packet.get("fields") or {}).values() if isinstance(packet.get("fields"), dict) else []:
+        if isinstance(value, dict):
+            parts.append(str(value.get("text") or ""))
+        else:
+            parts.append(str(value or ""))
+    return "\n".join(parts)
+
+
+def load_system_prompt_for_packet(node: dict[str, Any], packet: dict[str, Any]) -> str:
+    family = str(packet.get("packet_family") or "open").strip().lower()
+    prompt_paths = node.get("family_system_prompt_paths") if isinstance(node.get("family_system_prompt_paths"), dict) else {}
+    selected_path = prompt_paths.get(family) or node.get("system_prompt_path")
+    system_prompt = workspace_path(selected_path).read_text(encoding="utf-8")
+    common_path = node.get("common_system_prompt_path")
+    if common_path and "{{common_prompt}}" in system_prompt:
+        common_prompt = workspace_path(common_path).read_text(encoding="utf-8")
+        system_prompt = system_prompt.replace("{{common_prompt}}", common_prompt)
+    return system_prompt
+
+
+def refined_user_text(refined: dict[str, Any]) -> str:
+    question = refined.get("standard_question") or {}
+    parts: list[str] = [str(refined.get("final_markdown") or "")]
+    for key in empty_standard_question():
+        value = question.get(key)
+        if isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    parts.append(" ".join(str(item.get(k) or "") for k in ["label", "text"]))
+                else:
+                    parts.append(str(item or ""))
+        else:
+            parts.append(str(value or ""))
+    return "\n".join(parts)
+
+
+def unsupported_output_lines(refined: dict[str, Any], packet: dict[str, Any]) -> list[str]:
+    return unsupported_lines(source_text=source_text_corpus(packet), output_text=refined_user_text(refined))
 
 
 def has_question_like_content(packet: dict[str, Any]) -> bool:
@@ -332,8 +406,81 @@ def validate_refined(refined: dict[str, Any], packet: dict[str, Any], prompt_ver
             errors.append({"path": f"$.standard_question.{key}", "message": "missing key"})
     if not isinstance(question.get("options"), list):
         errors.append({"path": "$.standard_question.options", "message": "options must be array"})
+    packet_refs = packet_field_refs(packet)
+    source_options_text = str((((packet.get("content") or {}).get("options") or {}).get("text")) or "").strip()
+    if (
+        refined.get("refine_status") not in {"PRESERVED_NON_DIRECT", "REFINE_FAILED"}
+        and (packet_refs.get("option_refs") or source_options_text)
+        and not question.get("options")
+    ):
+        errors.append(
+            {
+                "path": "$.standard_question.options",
+                "message": "input option_refs/options text are present; refined options must not be empty",
+            }
+        )
+    packet_warnings = packet.get("builder_warnings") or packet.get("warnings") or []
+    warning_text = json.dumps(packet_warnings, ensure_ascii=False)
+    if (
+        refined.get("refine_status") == "REFINED_READY"
+        and ("truncated_source_block" in warning_text or "analysis:partial" in (packet.get("missing_fields") or []))
+    ):
+        errors.append(
+            {
+                "path": "$.refine_status",
+                "message": "source evidence is explicitly truncated/partial; refinement must remain REFINED_NEEDS_REVIEW",
+            }
+        )
+    reading_context = str(question.get("context") or "")
+    teacher_solution_markers = ["【易错题分析】", "易错题第", "错误原因", "突破关键"]
+    if (
+        packet.get("packet_family") == "reading"
+        and reading_context
+        and any(marker in reading_context for marker in teacher_solution_markers)
+    ):
+        errors.append(
+            {
+                "path": "$.standard_question.context",
+                "message": "reading context contains teacher-solution labels; move those exact source-backed lines to analysis",
+            }
+        )
+    if (
+        refined.get("refine_status") != "PRESERVED_NON_DIRECT"
+        and packet.get("packet_family") == "reading"
+        and packet_refs.get("translation_refs")
+        and not str(question.get("translation") or "").strip()
+    ):
+        errors.append(
+            {
+                "path": "$.standard_question.translation",
+                "message": "translation_refs are present; reading packet translation must be populated or explicitly preserved for review",
+            }
+        )
+    if refined.get("refine_status") not in {"PRESERVED_NON_DIRECT", "REFINE_FAILED"}:
+        unsupported = unsupported_output_lines(refined, packet)
+        if unsupported:
+            errors.append(
+                {
+                    "path": "$.standard_question",
+                    "message": "model output contains user-facing lines not supported by input packet evidence",
+                    "examples": unsupported,
+                }
+            )
+        source_blank_runs = blank_run_count(source_text_corpus(packet))
+        output_blank_runs = blank_run_count(refined_user_text(refined))
+        if source_blank_runs and output_blank_runs < source_blank_runs:
+            errors.append(
+                {
+                    "path": "$.standard_question",
+                    "message": "fill-in blanks/underline runs were lost during refinement",
+                    "source_blank_runs": source_blank_runs,
+                    "output_blank_runs": output_blank_runs,
+                }
+            )
     refs = refined.get("source_refs") or {}
     allowed_refs = set(packet.get("evidence", {}).get("source_refs") or [])
+    if isinstance(packet.get("source_refs"), list):
+        allowed_refs.update(str(ref) for ref in packet.get("source_refs") or [] if str(ref).strip())
     allowed_refs.update(ref for values in packet_field_refs(packet).values() for ref in values)
     for ref_key in FIELD_REF_KEYS:
         values = refs.get(ref_key)
@@ -453,6 +600,12 @@ def refine_one(
             + "\n\nRETRY_CONSTRAINT:\n"
             + "Your previous response failed local JSON/schema/source-ref validation. "
             + "Return one complete JSON object only. Do not invent source refs. "
+            + "Every user-facing line in standard_question and final_markdown must be copied from the input packet evidence, except structural Markdown headings. "
+            + "Do not add task instructions, missing-answer placeholders, or polished wording that is not literally present in the input. "
+            + "Preserve all visible fill-in blanks and underline runs. "
+            + "If the failure mentions standard_question.translation and translation_refs are present, "
+            + "move the source-backed translation evidence into standard_question.translation; "
+            + "do not leave it hidden inside stem or options. "
             + f"Failure detail: {retry_reason[:1000]}"
         )
         retry_result = call_model(config, node, system_prompt, retry_prompt, api_key)
@@ -466,6 +619,13 @@ def refine_one(
             validation = retry_validation
         else:
             write_json(packet_dir / "invalid_model_output.json", refined)
+            write_json(
+                packet_dir / "failed_model_validation_report.json",
+                {
+                    "first_attempt_validation": validation,
+                    "retry_attempt_validation": retry_validation,
+                },
+            )
             refined = deterministic_preserve(packet, node["prompt_version"], "REFINE_FAILED", "Model output failed local validation after retry.")
             validation = validate_refined(refined, packet, node["prompt_version"])
 
@@ -599,7 +759,6 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         packets = packets[: args.max_packets]
 
     out_root = workspace_path(config["owned_output_root"]) / args.run_id
-    system_prompt = workspace_path(node["system_prompt_path"]).read_text(encoding="utf-8")
     user_template = workspace_path(node["user_prompt_path"]).read_text(encoding="utf-8")
 
     records = []
@@ -612,7 +771,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 config=config,
                 node=node,
                 packet=packet,
-                system_prompt=system_prompt,
+                system_prompt=load_system_prompt_for_packet(node, packet),
                 user_template=user_template,
                 api_key=api_key,
                 out_dir=out_root,

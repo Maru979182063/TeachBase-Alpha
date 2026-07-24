@@ -275,6 +275,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "legacy_ole_embeddings": stage0_summary.get("legacy_ole_embeddings"),
             "legacy_mtef_manifest_formulas": stage0_summary.get("legacy_mtef_manifest_formulas"),
             "legacy_mtef_tokens": stage0_summary.get("legacy_mtef_tokens"),
+            "inline_glyph_assets": stage0_summary.get("inline_glyph_assets"),
+            "inline_glyph_blocks": stage0_summary.get("inline_glyph_blocks"),
             "needs_review_blocks": stage0_summary.get("needs_review_blocks"),
             "loss_flag_counts": stage0_summary.get("loss_flag_counts"),
             "audit_status": audit.get("status"),

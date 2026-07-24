@@ -82,6 +82,21 @@ def load_groups(groups_path: Path | None) -> dict[str, dict[str, Any]]:
     return {group["group_id"]: group for group in payload.get("groups", [])}
 
 
+def load_tags(tags_path: Path | None) -> dict[str, dict[str, Any]]:
+    if not tags_path or not tags_path.exists():
+        return {}
+    payload = read_json(tags_path)
+    return {str(item.get("block_id")): item for item in payload.get("tags", []) if isinstance(item, dict)}
+
+
+def is_decorative_block(block_id: str, tags: dict[str, dict[str, Any]]) -> bool:
+    tag = tags.get(block_id) or {}
+    if tag.get("primary_role") == "decorative":
+        return True
+    noise_tags = {str(item) for item in tag.get("noise_tags") or []}
+    return "decorative_image" in noise_tags
+
+
 def asset_refs_for_blocks(block_ids: list[str], block_index: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     assets: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
@@ -108,6 +123,39 @@ def asset_refs_for_blocks(block_ids: list[str], block_index: dict[str, dict[str,
                 }
             )
     return assets
+
+
+def inline_glyph_refs_for_blocks(block_ids: list[str], block_index: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    refs: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for block_id in block_ids:
+        block = block_index.get(block_id) or {}
+        for glyph in block.get("inline_glyph_refs") or []:
+            if not isinstance(glyph, dict):
+                continue
+            asset_id = str(glyph.get("asset_id") or "")
+            storage_key = str(glyph.get("storage_key") or "")
+            key = (asset_id, storage_key)
+            if key in seen:
+                continue
+            seen.add(key)
+            refs.append(
+                {
+                    "asset_id": asset_id,
+                    "storage_key": storage_key,
+                    "format": str(glyph.get("format") or ""),
+                    "bytes": glyph.get("bytes"),
+                    "sha256": str(glyph.get("sha256") or ""),
+                    "mode": str(glyph.get("mode") or ""),
+                    "asset_role": str(glyph.get("asset_role") or "inline_glyph_asset"),
+                    "content_role": str(glyph.get("content_role") or "text_glyph"),
+                    "display_width_in": glyph.get("display_width_in"),
+                    "display_height_in": glyph.get("display_height_in"),
+                    "wp_extent_emu": glyph.get("wp_extent_emu") or {},
+                    "source_block_id": block_id,
+                }
+            )
+    return refs
 
 
 def refs_to_field(block_ids: list[str], block_index: dict[str, dict[str, Any]]) -> dict[str, Any]:
@@ -142,6 +190,7 @@ def refs_to_field(block_ids: list[str], block_index: dict[str, dict[str, Any]]) 
         "formula_count": formula_count,
         "formula_structural_risks": formula_structural_risks,
         "asset_refs": asset_refs_for_blocks(clean_ids, block_index),
+        "inline_glyph_refs": inline_glyph_refs_for_blocks(clean_ids, block_index),
     }
 
 
@@ -156,13 +205,19 @@ def part_field(part_type: str) -> str:
 def fields_from_item(
     item: dict[str, Any],
     block_index: dict[str, dict[str, Any]],
+    block_tags: dict[str, dict[str, Any]],
     *,
     context_block_ids: list[str] | None = None,
 ) -> dict[str, dict[str, Any]]:
     field_ids: dict[str, list[str]] = {field: [] for field in FIELD_ORDER}
     for part in item.get("parts") or []:
         field = part_field(str(part.get("part_type") or ""))
-        field_ids[field].extend(part.get("block_ids") or [])
+        for block_id in part.get("block_ids") or []:
+            clean_id = str(block_id)
+            if field != "context" and is_decorative_block(clean_id, block_tags):
+                field_ids["other_evidence"].append(clean_id)
+            else:
+                field_ids[field].append(clean_id)
     field_ids["context"].extend(context_block_ids or [])
     field_ids["other_evidence"].extend(item.get("unassigned_block_ids") or [])
     return {field: refs_to_field(field_ids[field], block_index) for field in FIELD_ORDER}
@@ -191,6 +246,8 @@ def draft_warnings(
     fields: dict[str, dict[str, Any]],
     source_group_block_ids: list[str],
     group: dict[str, Any] | None,
+    block_tags: dict[str, dict[str, Any]],
+    block_index: dict[str, dict[str, Any]],
 ) -> list[dict[str, Any]]:
     warnings: list[dict[str, Any]] = []
     for warning in item.get("warnings") or []:
@@ -234,6 +291,33 @@ def draft_warnings(
                 "refs": [str(item.get("question_group_id") or "")],
             }
         )
+    isolated_decorative_refs = [
+        block_id
+        for block_id in fields["other_evidence"]["block_ids"]
+        if is_decorative_block(block_id, block_tags)
+    ]
+    if isolated_decorative_refs:
+        warnings.append(
+            {
+                "code": "decorative_blocks_isolated_from_question_fields",
+                "message": "Known decorative blocks were kept as trace evidence instead of question body content.",
+                "refs": isolated_decorative_refs,
+            }
+        )
+    unassigned_image_refs = [
+        block_id
+        for block_id in fields["other_evidence"]["block_ids"]
+        if not is_decorative_block(block_id, block_tags)
+        and asset_refs_for_blocks([block_id], block_index)
+    ]
+    if unassigned_image_refs:
+        warnings.append(
+            {
+                "code": "unassigned_image_evidence_requires_review",
+                "message": "Image evidence was preserved outside question body fields and needs ownership confirmation.",
+                "refs": unassigned_image_refs,
+            }
+        )
     return warnings
 
 
@@ -244,6 +328,7 @@ def build_item(
     full_item: dict[str, Any] | None,
     group: dict[str, Any] | None,
     block_index: dict[str, dict[str, Any]],
+    block_tags: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     group_id = str(item.get("question_group_id") or "")
     context_block_ids = [
@@ -251,7 +336,7 @@ def build_item(
         for ctx in (full_item or {}).get("section_context") or []
         if ctx.get("block_id")
     ]
-    fields = fields_from_item(item, block_index, context_block_ids=context_block_ids)
+    fields = fields_from_item(item, block_index, block_tags, context_block_ids=context_block_ids)
     source_group_block_ids = list((group or {}).get("block_ids") or [])
     source_refs = unique(
         source_group_block_ids
@@ -260,12 +345,20 @@ def build_item(
     question_asset_block_ids = unique(
         block_id
         for field_name, field in fields.items()
-        if field_name != "context"
+        if field_name not in {"context", "other_evidence"}
         for block_id in field["block_ids"]
     )
     asset_refs = asset_refs_for_blocks(question_asset_block_ids, block_index)
     formula_count = sum(int((block_index.get(ref) or {}).get("formula_count") or 0) for ref in source_refs)
-    warnings = draft_warnings(item=item, full_item=full_item, fields=fields, source_group_block_ids=source_group_block_ids, group=group)
+    warnings = draft_warnings(
+        item=item,
+        full_item=full_item,
+        fields=fields,
+        source_group_block_ids=source_group_block_ids,
+        group=group,
+        block_tags=block_tags,
+        block_index=block_index,
+    )
     solution_policy = str(item.get("solution_policy") or "unknown")
     return {
         "draft_id": f"docx_math_draft_{group_id}",
@@ -376,6 +469,7 @@ def build_doc(
     part_path: Path,
     block_stream_path: Path,
     groups_path: Path | None,
+    block_tags_path: Path | None,
     out_root: Path,
 ) -> dict[str, Any]:
     part_payload = read_json(part_path)
@@ -389,6 +483,7 @@ def build_doc(
     doc_id = str(items[0].get("doc_id") if items else part_path.parents[1].name)
     block_index = load_block_index(block_stream_path)
     groups = load_groups(groups_path)
+    block_tags = load_tags(block_tags_path)
     draft_items = [
         build_item(
             doc_id=doc_id,
@@ -396,6 +491,7 @@ def build_doc(
             full_item=full_by_group_id.get(str(item.get("question_group_id") or "")),
             group=groups.get(str(item.get("question_group_id") or "")),
             block_index=block_index,
+            block_tags=block_tags,
         )
         for item in items
     ]
@@ -412,6 +508,7 @@ def build_doc(
             "question_part_normalizations": rel(part_path),
             "immutable_block_stream": rel(block_stream_path),
             "membership_groups": rel(groups_path) if groups_path else "",
+            "block_tags": rel(block_tags_path) if block_tags_path else "",
         },
         "draft_items": draft_items,
         "summary": {
@@ -466,6 +563,7 @@ def main() -> None:
     parser.add_argument("--part-root", action="append", required=True)
     parser.add_argument("--block-stream-root", required=True)
     parser.add_argument("--membership-root", action="append", default=[])
+    parser.add_argument("--block-tags", action="append", default=[])
     parser.add_argument("--exclude-doc-id", action="append", default=[])
     parser.add_argument("--out-root", required=True)
     args = parser.parse_args()
@@ -473,6 +571,7 @@ def main() -> None:
     part_roots = [Path(value) for value in args.part_root]
     block_stream_root = Path(args.block_stream_root)
     membership_roots = [Path(value) for value in args.membership_root]
+    block_tag_paths = [Path(value) for value in args.block_tags]
     out_root = Path(args.out_root)
     excluded = set(args.exclude_doc_id)
 
@@ -489,11 +588,19 @@ def main() -> None:
             if candidate.exists():
                 groups_path = candidate
                 break
+        block_tags_path = None
+        for candidate in block_tag_paths:
+            if candidate.exists() and doc_id in str(candidate):
+                block_tags_path = candidate
+                break
+        if block_tags_path is None and len(block_tag_paths) == 1 and block_tag_paths[0].exists():
+            block_tags_path = block_tag_paths[0]
         doc_payloads.append(
             build_doc(
                 part_path=part_path,
                 block_stream_path=block_stream,
                 groups_path=groups_path,
+                block_tags_path=block_tags_path,
                 out_root=out_root,
             )
         )

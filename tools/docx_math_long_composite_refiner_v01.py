@@ -237,6 +237,34 @@ def materialize_segment_input(segment: dict[str, Any], planner_input: dict[str, 
     by_id = blocks_by_id(planner_input)
     def get_blocks(key: str) -> list[dict[str, Any]]:
         return [by_id[value] for value in segment.get(key) or [] if value in by_id]
+    question_blocks = get_blocks("question_block_ids")
+    answer_blocks = get_blocks("answer_block_ids")
+    explanation_blocks = get_blocks("explanation_block_ids")
+    seen_by_field = {
+        "stem": {str(block.get("block_id") or "") for block in question_blocks},
+        "subquestions": {str(block.get("block_id") or "") for block in question_blocks},
+        "answer": {str(block.get("block_id") or "") for block in answer_blocks},
+        "explanation": {str(block.get("block_id") or "") for block in explanation_blocks},
+    }
+    segment_assets = set(str(item) for item in segment.get("asset_ids") or [] if item)
+    if segment_assets:
+        for block in by_id.values():
+            block_id = str(block.get("block_id") or "")
+            if not block_id:
+                continue
+            block_assets = set(str(item) for item in block.get("asset_ids") or [] if item)
+            if not (block_assets & segment_assets):
+                continue
+            field = str(block.get("field") or "")
+            if field in {"stem", "subquestions"} and block_id not in seen_by_field[field]:
+                question_blocks.append(block)
+                seen_by_field[field].add(block_id)
+            elif field == "answer" and block_id not in seen_by_field[field]:
+                answer_blocks.append(block)
+                seen_by_field[field].add(block_id)
+            elif field == "explanation" and block_id not in seen_by_field[field]:
+                explanation_blocks.append(block)
+                seen_by_field[field].add(block_id)
     return {
         "doc_id": planner_input.get("doc_id"),
         "source_draft_id": planner_input.get("draft_id"),
@@ -247,9 +275,9 @@ def materialize_segment_input(segment: dict[str, Any], planner_input: dict[str, 
         "parent_id": segment.get("parent_id"),
         "role": segment.get("role"),
         "child_segment_ids": segment.get("children") or [],
-        "question_blocks": get_blocks("question_block_ids"),
-        "answer_blocks": get_blocks("answer_block_ids"),
-        "explanation_blocks": get_blocks("explanation_block_ids"),
+        "question_blocks": question_blocks,
+        "answer_blocks": answer_blocks,
+        "explanation_blocks": explanation_blocks,
         "asset_ids": segment.get("asset_ids") or [],
     }
 
@@ -533,6 +561,17 @@ def assemble_packet(draft: dict[str, Any], plan: dict[str, Any], refined_segment
             "reason": "long composite solution sections keep upstream field boundaries unless source markdown is structurally broken",
         }
     ]
+    missing_stem_assets = sorted(set(asset_tokens(source_stem_md)) - set(asset_tokens(stem_md)))
+    if missing_stem_assets:
+        stem_md = source_stem_md
+        normalization_actions.append(
+            {
+                "action": "restore_source_stem_for_missing_assets",
+                "scope": "long_composite_assemble_packet",
+                "asset_ids": missing_stem_assets,
+                "reason": "stem-owned source assets must remain in stem_md, not only in fallback metadata",
+            }
+        )
     source_answer_md = source_solution_field(draft, "answer", "【答案】")
     refined_answer_md = solution_candidate_from_segments(refined_segments, "answer_md")
     answer_md = choose_solution_field(

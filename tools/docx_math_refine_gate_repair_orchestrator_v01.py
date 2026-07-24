@@ -108,6 +108,7 @@ def repair_one(
     user_template: str,
     api_key: str,
     out_dir: Path,
+    max_repair_rounds: int,
 ) -> dict[str, Any]:
     group_id = str(draft.get("source_group_id") or packet.get("source_group_id") or "")
     draft_id = str(draft.get("draft_id") or packet.get("source_draft_id") or "")
@@ -115,20 +116,44 @@ def repair_one(
     write_json(item_dir / "input_draft.json", draft)
     write_json(item_dir / "input_refined_packet.json", packet)
 
-    initial_validation = REF.validate_refined(packet, draft, validation_prompt_version(packet, node["prompt_version"]))
-    tasks = SPAN.field_risk_tasks(packet)
-    write_json(item_dir / "initial_gate_report.json", {"validation": initial_validation, "span_tasks": tasks})
-
-    should_repair = bool(tasks) or not initial_validation.get("valid") or packet.get("refine_status") != "REFINED_READY"
-    model_called = False
-    parsed_ok = False
-    usage: dict[str, Any] = {}
-    patch_result: dict[str, Any] = {"applied": [], "rejected": [], "unresolved": []}
-
     repaired = json.loads(json.dumps(packet, ensure_ascii=False))
-    if should_repair and tasks:
-        model_called = True
-        patch_input = SPAN.build_patch_input(draft, repaired, tasks)
+    pre_validation_source_restores = REF.restore_source_field_assets(repaired, draft)
+    q = repaired.get("standard_question") or {}
+    q["render_markdown"] = REF.canonical_render_markdown(q)
+    initial_validation = REF.validate_refined(repaired, draft, validation_prompt_version(repaired, node["prompt_version"]))
+    initial_tasks = SPAN.field_risk_tasks(repaired)
+    write_json(
+        item_dir / "initial_gate_report.json",
+        {
+            "validation": initial_validation,
+            "span_tasks": initial_tasks,
+            "pre_validation_source_restores": pre_validation_source_restores,
+        },
+    )
+
+    model_called_count = 0
+    parsed_ok_count = 0
+    total_usage: dict[str, int] = {}
+    patch_results: list[dict[str, Any]] = []
+    current_validation = initial_validation
+    current_tasks = initial_tasks
+
+    for round_index in range(1, max(1, int(max_repair_rounds or 1)) + 1):
+        should_repair = bool(current_tasks) or not current_validation.get("valid") or repaired.get("refine_status") != "REFINED_READY"
+        if not should_repair:
+            break
+        if not current_tasks:
+            patch_results.append(
+                {
+                    "round": round_index,
+                    "applied": [],
+                    "rejected": [],
+                    "unresolved": [{"reason": "gate_failed_without_span_tasks"}],
+                }
+            )
+            break
+
+        patch_input = SPAN.build_patch_input(draft, repaired, current_tasks)
         user_prompt = SPAN.render_template(
             user_template,
             {
@@ -138,34 +163,69 @@ def repair_one(
             },
         )
         model_result = SPAN.call_patch_model(config, node, system_prompt, user_prompt, api_key)
-        parsed_ok = model_result["parsed"] is not None
-        usage = model_result["raw_response"].get("usage", {})
-        write_json(item_dir / "span_model_input.json", patch_input)
+        model_called_count += 1
+        if model_result["parsed"] is not None:
+            parsed_ok_count += 1
+        for key, value in (model_result["raw_response"].get("usage") or {}).items():
+            if isinstance(value, int):
+                total_usage[key] = total_usage.get(key, 0) + value
+
+        round_prefix = f"round_{round_index:02d}"
+        write_json(item_dir / f"{round_prefix}_span_model_input.json", patch_input)
         write_text(item_dir / "used_system_prompt.md", system_prompt)
-        write_text(item_dir / "used_user_prompt.md", user_prompt)
-        write_json(item_dir / "request_messages.full.local.json", model_result["request_body"])
-        write_json(item_dir / "raw_response.json", model_result["raw_response"])
-        write_text(item_dir / "raw_content.txt", model_result["raw_content"])
-        write_json(item_dir / "parsed_patch_actions.json", model_result["parsed"] or {"parse_error": model_result["parse_error"]})
-        patch_result = SPAN.apply_patches(repaired, model_result["parsed"], tasks)
-    elif should_repair:
-        patch_result = {
-            "applied": [],
-            "rejected": [],
-            "unresolved": [{"reason": "gate_failed_without_span_tasks"}],
-        }
+        write_text(item_dir / f"{round_prefix}_used_user_prompt.md", user_prompt)
+        write_json(item_dir / f"{round_prefix}_request_messages.full.local.json", model_result["request_body"])
+        write_json(item_dir / f"{round_prefix}_raw_response.json", model_result["raw_response"])
+        write_text(item_dir / f"{round_prefix}_raw_content.txt", model_result["raw_content"])
+        write_json(item_dir / f"{round_prefix}_parsed_patch_actions.json", model_result["parsed"] or {"parse_error": model_result["parse_error"]})
+        if round_index == 1:
+            write_json(item_dir / "span_model_input.json", patch_input)
+            write_text(item_dir / "used_user_prompt.md", user_prompt)
+            write_json(item_dir / "request_messages.full.local.json", model_result["request_body"])
+            write_json(item_dir / "raw_response.json", model_result["raw_response"])
+            write_text(item_dir / "raw_content.txt", model_result["raw_content"])
+            write_json(item_dir / "parsed_patch_actions.json", model_result["parsed"] or {"parse_error": model_result["parse_error"]})
+
+        patch_result = SPAN.apply_patches(repaired, model_result["parsed"], current_tasks)
+        patch_result["round"] = round_index
+        patch_results.append(patch_result)
+
+        q = repaired.get("standard_question") or {}
+        REF.restore_source_field_assets(repaired, draft)
+        q["render_markdown"] = REF.canonical_render_markdown(q)
+        REF.apply_latex_json_escape_gate(repaired)
+        REF.apply_solution_policy_gate(repaired)
+        repaired["status_breakdown"] = REF.compute_status(repaired)
+        current_validation = REF.validate_refined(repaired, draft, validation_prompt_version(repaired, node["prompt_version"]))
+        current_tasks = SPAN.field_risk_tasks(repaired)
+        write_json(
+            item_dir / f"{round_prefix}_gate_report.json",
+            {"validation": current_validation, "span_tasks": current_tasks, "patch_application": patch_result},
+        )
+        if current_validation.get("valid"):
+            break
+
+    patch_result = {
+        "applied": [item for result in patch_results for item in result.get("applied") or []],
+        "rejected": [item for result in patch_results for item in result.get("rejected") or []],
+        "unresolved": [item for result in patch_results for item in result.get("unresolved") or []],
+        "rounds": patch_results,
+    }
 
     q = repaired.get("standard_question") or {}
+    REF.restore_source_field_assets(repaired, draft)
     q["render_markdown"] = REF.canonical_render_markdown(q)
     repaired.setdefault("normalization_actions", []).append(
         {
             "action": "post_refine_gate_targeted_repair",
             "scope": "node4c_refine_gate_repair_orchestrator",
-            "model_called": model_called,
+            "model_called": model_called_count > 0,
+            "model_called_count": model_called_count,
             "initial_validation_valid": bool(initial_validation.get("valid")),
-            "span_task_count": len(tasks),
+            "span_task_count": len(initial_tasks),
             "applied_patch_count": len(patch_result.get("applied") or []),
             "rejected_patch_count": len(patch_result.get("rejected") or []),
+            "max_repair_rounds": max_repair_rounds,
         }
     )
     REF.apply_latex_json_escape_gate(repaired)
@@ -184,16 +244,18 @@ def repair_one(
         "draft_id": draft_id,
         "initial_valid": bool(initial_validation.get("valid")),
         "initial_error_codes": [err.get("code") or err.get("message") for err in initial_validation.get("errors") or []],
-        "span_task_count": len(tasks),
-        "targeted_repair_called": model_called,
-        "parsed": parsed_ok,
+        "span_task_count": len(initial_tasks),
+        "targeted_repair_called": model_called_count > 0,
+        "targeted_repair_call_count": model_called_count,
+        "parsed": parsed_ok_count > 0,
+        "parsed_count": parsed_ok_count,
         "applied_patch_count": len(patch_result.get("applied") or []),
         "rejected_patch_count": len(patch_result.get("rejected") or []),
         "final_valid": bool(final_validation.get("valid")),
         "final_error_codes": [err.get("code") or err.get("message") for err in final_validation.get("errors") or []],
         "refine_status": repaired.get("refine_status"),
         "artifact_path": rel(item_dir / "refined_question_packet.json"),
-        "usage": usage,
+        "usage": total_usage,
     }
 
 
@@ -286,6 +348,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     user_template=user_template,
                     api_key=api_key,
                     out_dir=out_dir,
+                    max_repair_rounds=args.max_repair_rounds,
                 )
             )
         for future in concurrent.futures.as_completed(futures):
@@ -305,6 +368,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "draft_count": len(records),
         "initial_valid_count": sum(1 for record in records if record.get("initial_valid")),
         "targeted_repair_called_count": sum(1 for record in records if record.get("targeted_repair_called")),
+        "targeted_repair_total_call_count": sum(int(record.get("targeted_repair_call_count") or 0) for record in records),
+        "max_repair_rounds": args.max_repair_rounds,
         "final_valid_count": sum(1 for record in records if record.get("final_valid")),
         "refined_ready_count": sum(1 for packet in packets if packet.get("refine_status") == "REFINED_READY"),
         "total_tokens": sum(int((record.get("usage") or {}).get("total_tokens") or 0) for record in records),
@@ -329,6 +394,7 @@ def main() -> None:
     parser.add_argument("--span-config", default="config/docx_math_span_patch_refiner_v01.yaml")
     parser.add_argument("--refiner-run-id", default="")
     parser.add_argument("--skip-refiner", action="store_true")
+    parser.add_argument("--max-repair-rounds", type=int, default=3)
     args = parser.parse_args()
     print(json.dumps(run(args), ensure_ascii=False, indent=2))
 

@@ -239,6 +239,9 @@ def source_subquestion_labels(draft_ref: dict[str, Any] | None) -> list[str]:
 
 def markdown_for_packet(packet: dict[str, Any], draft_ref: dict[str, Any] | None = None) -> str:
     q = packet.get("standard_question") or {}
+    render = str(q.get("render_markdown") or "").strip()
+    if render:
+        return render
     parts: list[str] = []
     title = str(q.get("title") or "").strip()
     if title:

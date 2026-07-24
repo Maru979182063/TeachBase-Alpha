@@ -55,7 +55,13 @@ Return exactly this JSON shape:
 Rules:
 - `block_id` must be sequential: b1, b2, b3...
 - Preserve the original language and visible punctuation as much as possible.
-- For tables, transcribe visible table content in a readable table-like text form.
+- For tables, grids, forms, answer tables, and red teacher-filled tables:
+  - Copy the visible cell text row by row in the original language.
+  - Prefer Markdown-style table rows using `|` when the table has visible columns.
+  - Preserve row/column labels, checkboxes, blanks, answer marks, and red teacher-filled content.
+  - Do not replace the table with an English prose summary such as "Red filled answer table..." or "Headers are...".
+  - Do not output labels such as "Blank exercise table", "Red filled answer table", "Columns:", "group:", or "visible filled rows" unless those exact words are visibly printed on the page.
+  - If some cells are not readable, copy the readable cells and add a `qa_flags` item for the unreadable cells.
 - For diagrams, transcribe visible text but mark the block as `diagram_text`; do not flatten the diagram as if it were ordinary prose.
 - `page_visual_flags` are page-level observations only:
   - `has_table`: true if the page visibly contains a table, grid, checklist, or form.

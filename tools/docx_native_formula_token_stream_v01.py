@@ -111,6 +111,24 @@ def image_metadata(data: bytes, filename: str) -> dict[str, Any]:
     }
 
 
+EMU_PER_INCH = 914400
+
+
+def emu_to_inches(value: int | None) -> float | None:
+    if value is None:
+        return None
+    return round(value / EMU_PER_INCH, 4)
+
+
+def parse_int(value: str | None) -> int | None:
+    if not value:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
+
+
 def parse_relationships(zf: zipfile.ZipFile) -> dict[str, str]:
     name = "word/_rels/document.xml.rels"
     if name not in zf.namelist():
@@ -313,12 +331,22 @@ def collect_image_refs(el: ET.Element, rels: dict[str, str], media: dict[str, di
         asset = media.get(rels.get(rid or "", ""))
         if not asset:
             continue
+        extent = None
+        for candidate in el.findall(".//wp:inline/wp:extent", NS) + el.findall(".//wp:anchor/wp:extent", NS):
+            extent = candidate
+            break
+        cx_emu = parse_int(extent.attrib.get("cx")) if extent is not None else None
+        cy_emu = parse_int(extent.attrib.get("cy")) if extent is not None else None
         counter[0] += 1
         refs.append(
             {
                 "image_ref_id": f"img_ref_{counter[0]:04d}",
                 "asset_id": asset["asset_id"],
                 "mode": mode,
+                "placement": mode,
+                "wp_extent_emu": {"cx": cx_emu, "cy": cy_emu} if cx_emu is not None or cy_emu is not None else {},
+                "display_width_in": emu_to_inches(cx_emu),
+                "display_height_in": emu_to_inches(cy_emu),
                 "storage_key": asset["storage_key"],
                 "filename": asset.get("filename", ""),
                 "format": asset.get("format", ""),
@@ -330,6 +358,46 @@ def collect_image_refs(el: ET.Element, rels: dict[str, str], media: dict[str, di
             }
         )
     return refs
+
+
+def image_ref_is_inline_glyph_candidate(ref: dict[str, Any]) -> bool:
+    if str(ref.get("mode") or "") != "inline":
+        return False
+    width_in = ref.get("display_width_in")
+    height_in = ref.get("display_height_in")
+    if not isinstance(width_in, (int, float)) or not isinstance(height_in, (int, float)):
+        return False
+    if width_in <= 0 or height_in <= 0:
+        return False
+    if width_in > 0.35 or height_in > 0.45:
+        return False
+    if float(width_in) * float(height_in) > 0.08:
+        return False
+    if int(ref.get("bytes") or 0) > 20000:
+        return False
+    return True
+
+
+def token_has_visible_text(token: dict[str, Any]) -> bool:
+    if token.get("type") == "text":
+        return bool(str(token.get("markdown") or "").strip())
+    if token.get("type") in {"omml_formula", "legacy_mtef_formula"}:
+        return bool(str(token.get("markdown") or token.get("latex") or "").strip())
+    return False
+
+
+def classify_inline_glyph_tokens(tokens: list[dict[str, Any]]) -> None:
+    for index, token in enumerate(tokens):
+        if token.get("type") != "image" or not image_ref_is_inline_glyph_candidate(token):
+            continue
+        has_left_text = any(token_has_visible_text(item) for item in tokens[:index])
+        has_right_text = any(token_has_visible_text(item) for item in tokens[index + 1 :])
+        if not (has_left_text and has_right_text):
+            continue
+        token["asset_role"] = "inline_glyph_asset"
+        token["content_role"] = "text_glyph"
+        token["markdown"] = str(token.get("glyph_text") or "")
+        token["suppressed_from_visual_refs"] = True
 
 
 def formula_refs_from_tokens(tokens: list[dict[str, Any]], block_id: str, start_index: int = 0) -> list[dict[str, Any]]:
@@ -411,6 +479,8 @@ def loss_flags_for_block(block: dict[str, Any]) -> list[str]:
             break
     if block.get("image_refs") and not plain and not markdown.replace(" ", ""):
         flags.append("image_only_block_needs_role_classification")
+    if block.get("inline_glyph_refs"):
+        flags.append("inline_glyph_asset_suppressed_from_visual_refs")
     return flags
 
 
@@ -510,6 +580,7 @@ def serialize_paragraph(
         return "".join(collect_plain_text(child) for child in list(node))
 
     walk(p)
+    classify_inline_glyph_tokens(tokens)
     plain = collect_plain_text(p).strip()
     markdown = tokens_to_markdown(tokens)
     return {
@@ -519,7 +590,16 @@ def serialize_paragraph(
         "tokens": tokens,
         "formula_count": formula_count,
         "formula_findings": findings,
-        "image_refs": [token for token in tokens if token.get("type") == "image"],
+        "image_refs": [
+            token
+            for token in tokens
+            if token.get("type") == "image" and token.get("asset_role") != "inline_glyph_asset"
+        ],
+        "inline_glyph_refs": [
+            token
+            for token in tokens
+            if token.get("type") == "image" and token.get("asset_role") == "inline_glyph_asset"
+        ],
     }
 
 
@@ -567,6 +647,7 @@ def serialize_table(
         "formula_findings": [f for row in cell_blocks for cell in row for p in cell["paragraphs"] for f in p.get("formula_findings", [])],
         "table_formula_tokens": table_formula_tokens,
         "image_refs": [ref for row in cell_blocks for cell in row for p in cell["paragraphs"] for ref in p.get("image_refs", [])],
+        "inline_glyph_refs": [ref for row in cell_blocks for cell in row for p in cell["paragraphs"] for ref in p.get("inline_glyph_refs", [])],
         "table_structured": {"rows": rows},
     }
 
@@ -611,6 +692,8 @@ def extract_stream(docx_path: Path, out_dir: Path, formula_manifest: Path | None
         "run_subscripts": sum(1 for p in paragraphs for f in p.get("formula_findings", []) if f.get("type") == "run_subscript"),
         "nested_run_texts": sum(1 for p in paragraphs for f in p.get("formula_findings", []) if f.get("type") == "nested_run_text"),
         "formula_structural_risk_blocks": sum(1 for p in paragraphs if p.get("formula_structural_risks")),
+        "inline_glyph_assets": sum(len(p.get("inline_glyph_refs", []) or []) for p in paragraphs),
+        "inline_glyph_blocks": sum(1 for p in paragraphs if p.get("inline_glyph_refs")),
     }
     loss_flag_counts: dict[str, int] = {}
     for block in paragraphs:

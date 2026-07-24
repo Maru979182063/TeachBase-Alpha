@@ -114,15 +114,33 @@ def load_blocks(path: Path) -> list[dict[str, Any]]:
 
 
 def block_for_model(block: dict[str, Any], tag: dict[str, Any], preview_chars: int) -> dict[str, Any]:
+    image_refs = []
+    for image in block.get("image_refs") or []:
+        if not isinstance(image, dict):
+            continue
+        image_refs.append(
+            {
+                "asset_id": image.get("asset_id"),
+                "format": image.get("format"),
+                "width_px": image.get("width_px"),
+                "height_px": image.get("height_px"),
+                "bytes": image.get("bytes"),
+                "mode": image.get("mode"),
+            }
+        )
     return {
         "block_id": block["block_id"],
         "source_order": block["source_order"],
         "source_block_type": block["source_block_type"],
         "block_role": tag.get("primary_role", "unknown"),
+        "content_tags": tag.get("content_tags", []),
+        "noise_tags": tag.get("noise_tags", []),
+        "needs_resolution": bool(tag.get("needs_resolution", False)),
         "display_markdown_preview": compact_text(block.get("display_markdown", ""), preview_chars),
         "text_preview": compact_text(block.get("text", ""), preview_chars),
         "formula_count": block.get("formula_count", 0),
         "image_ref_count": len(block.get("image_refs") or []),
+        "image_refs": image_refs,
     }
 
 
