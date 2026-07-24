@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vlm_page_transcription.schema.json",
+  "type": "object",
+  "required": ["schema", "doc_id", "page", "page_start", "page_end", "page_visual_flags", "blocks", "qa_flags"],
+  "properties": {
+    "schema": {"const": "vlm_page_transcription_v0.2"},
+    "doc_id": {"type": "string", "minLength": 1},
+    "page": {"type": "integer", "minimum": 1},
+    "page_start": {
+      "type": "object",
+      "required": ["starts_new_part", "continues_previous", "continuation_type", "confidence", "note"],
+      "properties": {
+        "starts_new_part": {"type": "boolean"},
+        "continues_previous": {"type": "boolean"},
+        "continuation_type": {"type": "string"},
+        "confidence": {"enum": ["low", "medium", "high"]},
+        "note": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "page_end": {
+      "type": "object",
+      "required": ["ends_complete", "tail_cutoff", "open_tail_type", "confidence", "note"],
+      "properties": {
+        "ends_complete": {"type": "boolean"},
+        "tail_cutoff": {"type": "boolean"},
+        "open_tail_type": {"type": "string"},
+        "confidence": {"enum": ["low", "medium", "high"]},
+        "note": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "page_visual_flags": {
+      "type": "object",
+      "required": [
+        "has_table",
+        "has_diagram",
+        "has_image",
+        "has_writing_surface",
+        "has_non_text_visual",
+        "visual_review_required",
+        "confidence"
+      ],
+      "properties": {
+        "has_table": {"type": "boolean"},
+        "has_diagram": {"type": "boolean"},
+        "has_image": {"type": "boolean"},
+        "has_writing_surface": {"type": "boolean"},
+        "has_non_text_visual": {"type": "boolean"},
+        "visual_review_required": {"type": "boolean"},
+        "confidence": {"enum": ["low", "medium", "high"]}
+      },
+      "additionalProperties": false
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["block_id", "label", "text", "bbox_hint", "is_complete"],
+        "properties": {
+          "block_id": {"type": "string", "pattern": "^b[0-9]+$"},
+          "label": {
+            "enum": [
+              "header_footer",
+              "section_heading",
+              "knowledge_text",
+              "passage_text",
+              "question_text",
+              "option_text",
+              "answer_text",
+              "analysis_text",
+              "translation_text",
+              "example_text",
+              "exercise_text",
+              "table_text",
+              "diagram_text",
+              "image_caption",
+              "unknown_text"
+            ]
+          },
+          "text": {"type": "string"},
+          "bbox_hint": {"type": "string"},
+          "is_complete": {"type": "boolean"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "qa_flags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "severity", "message", "block_ids"],
+        "properties": {
+          "code": {"type": "string"},
+          "severity": {"enum": ["warning", "error"]},
+          "message": {"type": "string"},
+          "block_ids": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,243 @@
+{
+  "schema": "open_node_trace_v0.3",
+  "events": [
+    {
+      "event": "new_node",
+      "node_id": "english_q_001",
+      "block_id": "english_rb00001",
+      "role": "question_body"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_001",
+      "block_id": "english_rb00002",
+      "role": "answer_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_001",
+      "block_id": "english_rb00003",
+      "role": "analysis_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_001",
+      "block_id": "english_rb00004",
+      "role": "translation_block"
+    },
+    {
+      "event": "new_node",
+      "node_id": "english_q_002",
+      "block_id": "english_rb00005",
+      "role": "question_body"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_002",
+      "block_id": "english_rb00006",
+      "role": "answer_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_002",
+      "block_id": "english_rb00007",
+      "role": "analysis_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_002",
+      "block_id": "english_rb00008",
+      "role": "translation_block"
+    },
+    {
+      "event": "new_node",
+      "node_id": "english_q_003",
+      "block_id": "english_rb00009",
+      "role": "question_body"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_003",
+      "block_id": "english_rb00010",
+      "role": "answer_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_003",
+      "block_id": "english_rb00011",
+      "role": "analysis_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_003",
+      "block_id": "english_rb00012",
+      "role": "translation_block"
+    },
+    {
+      "event": "new_node",
+      "node_id": "english_q_004",
+      "block_id": "english_rb00013",
+      "role": "question_body"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_004",
+      "block_id": "english_rb00014",
+      "role": "answer_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_004",
+      "block_id": "english_rb00015",
+      "role": "analysis_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_004",
+      "block_id": "english_rb00016",
+      "role": "translation_block"
+    },
+    {
+      "event": "new_node",
+      "node_id": "english_q_005",
+      "block_id": "english_rb00017",
+      "role": "question_body"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_005",
+      "block_id": "english_rb00018",
+      "role": "body_continuation"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_005",
+      "block_id": "english_rb00019",
+      "role": "answer_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_005",
+      "block_id": "english_rb00020",
+      "role": "analysis_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_005",
+      "block_id": "english_rb00021",
+      "role": "translation_block"
+    },
+    {
+      "event": "new_node",
+      "node_id": "english_q_006",
+      "block_id": "english_rb00022",
+      "role": "question_body"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_006",
+      "block_id": "english_rb00023",
+      "role": "answer_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_006",
+      "block_id": "english_rb00024",
+      "role": "analysis_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_006",
+      "block_id": "english_rb00025",
+      "role": "translation_block"
+    },
+    {
+      "event": "new_node",
+      "node_id": "english_q_007",
+      "block_id": "english_rb00026",
+      "role": "question_body"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_007",
+      "block_id": "english_rb00027",
+      "role": "answer_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_007",
+      "block_id": "english_rb00028",
+      "role": "analysis_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_007",
+      "block_id": "english_rb00029",
+      "role": "translation_block"
+    },
+    {
+      "event": "new_node",
+      "node_id": "english_q_008",
+      "block_id": "english_rb00030",
+      "role": "question_body"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_008",
+      "block_id": "english_rb00031",
+      "role": "answer_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_008",
+      "block_id": "english_rb00032",
+      "role": "analysis_block"
+    },
+    {
+      "event": "attach_to_existing",
+      "node_id": "english_q_008",
+      "block_id": "english_rb00033",
+      "role": "translation_block"
+    },
+    {
+      "event": "close_node",
+      "node_id": "english_q_001",
+      "fragment_count": 4
+    },
+    {
+      "event": "close_node",
+      "node_id": "english_q_002",
+      "fragment_count": 4
+    },
+    {
+      "event": "close_node",
+      "node_id": "english_q_003",
+      "fragment_count": 4
+    },
+    {
+      "event": "close_node",
+      "node_id": "english_q_004",
+      "fragment_count": 4
+    },
+    {
+      "event": "close_node",
+      "node_id": "english_q_005",
+      "fragment_count": 5
+    },
+    {
+      "event": "close_node",
+      "node_id": "english_q_006",
+      "fragment_count": 4
+    },
+    {
+      "event": "close_node",
+      "node_id": "english_q_007",
+      "fragment_count": 4
+    },
+    {
+      "event": "close_node",
+      "node_id": "english_q_008",
+      "fragment_count": 4
+    }
+  ]
+}

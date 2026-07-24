@@ -1,0 +1,50 @@
+{
+  "schema_version": "pipeline_artifact_hashes.v0.2",
+  "hashes": {
+    "page_manifests": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\page_manifests.json",
+      "sha256": "f9a5babd88307877e2ac662f5c429bd706948ef68799e776c18b0d81a7226f63",
+      "size_bytes": 1541
+    },
+    "blocks": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\blocks.json",
+      "sha256": "2c118ac40fb89c0bfe45ac21cc7c6708d3e1aac12b4b379d640f502b34afeb80",
+      "size_bytes": 33414
+    },
+    "reading_blocks": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\reading_blocks.json",
+      "sha256": "9ef17b400604c06f8669b7e88a6cb1664e00263d1596aa8caf82d54b09fadec9",
+      "size_bytes": 32341
+    },
+    "assignments": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\assignments.json",
+      "sha256": "7a48c99a4e259403dcef7493b4114a866b6481afb20379900b2a73812a16e872",
+      "size_bytes": 9297
+    },
+    "semantic_nodes": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\semantic_nodes.json",
+      "sha256": "cb1f8bd3d02b7b0e040c5793cdcc2282c47dc16706a5d600fa4b89c460dbe327",
+      "size_bytes": 15486
+    },
+    "audit_report": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\audit_report.json",
+      "sha256": "c2ec76c6af38eb69132338db7e92de797c94b7f2e4798b313d9e4faf94501203",
+      "size_bytes": 898
+    },
+    "legacy_bridge_questions": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\legacy_bridge_questions.json",
+      "sha256": "9ddf05b06c08b28ba9ad0581ec21b5c146c7813f8a41606503abbcbea51a349e",
+      "size_bytes": 56698
+    },
+    "review_repair_pool": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\review_repair_pool.json",
+      "sha256": "bddcfd6c066c2a6dad7bcc054eba81f7704f8311149554dd03253a5be6e20783",
+      "size_bytes": 72
+    },
+    "quick_debug_result": {
+      "path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\quick_debug_result.json",
+      "sha256": "cf2e772df410748eb2e84875a89dbdb0e6e6042edb29b1b62cd53f1667dbd5e8",
+      "size_bytes": 1607
+    }
+  }
+}

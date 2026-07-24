@@ -20,6 +20,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const modulePaths = [
+  path.join(workspaceRoot, "tests", "audit", "runtime_architecture_gate.mjs"),
+  path.join(workspaceRoot, "tests", "postgres-sole-source", "runtime_postgres_sole_source.mjs"),
   path.join(workspaceRoot, "tests", "unit", "static_checks.mjs"),
   path.join(workspaceRoot, "tests", "migrations", "postgres_migration_checks.mjs"),
   path.join(workspaceRoot, "tests", "store-contract", "file_and_postgres_contracts.mjs"),
@@ -97,6 +99,12 @@ function computeFinalStatus(results) {
   const skipped = results.filter((item) => item.status === "skipped");
   if (skipped.length > 0) {
     return "CONDITIONALLY_READY";
+  }
+  const validationBaselinePolicy = results.find((item) => item.id === "POLICY-001");
+  // Passing the validation-baseline policy gate means the backend baseline is
+  // structurally sound, but the branch still must not self-report production readiness.
+  if (validationBaselinePolicy?.detail?.releaseChannel === "validation_baseline") {
+    return "NOT_READY";
   }
   return "READY";
 }

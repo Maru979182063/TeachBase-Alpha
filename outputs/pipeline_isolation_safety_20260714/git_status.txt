@@ -1,0 +1,9 @@
+﻿## feat/semantic-role-shadow-v01...origin/feat/semantic-role-shadow-v01
+ M config/docx_native_ingest_v01.yaml
+ M config/english_image_pdf_text_first_v01.yaml
+ M tools/docx_native_runtime_adapter_dry_run_v01.mjs
+ M tools/english_image_pdf_text_first_probe_v01.py
+ M tools/run_english_image_pdf_text_first_v01.py
+?? tools/docx_native_backend_align_v01.py
+?? tools/docx_native_backend_contract_check_v01.mjs
+?? tools/english_text_first_evidence.py

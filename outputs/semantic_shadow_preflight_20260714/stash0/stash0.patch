@@ -1,0 +1,448 @@
+diff --git a/config/english_image_pdf_text_first_v01.yaml b/config/english_image_pdf_text_first_v01.yaml
+new file mode 100644
+index 00000000..7a4d42d4
+--- /dev/null
++++ b/config/english_image_pdf_text_first_v01.yaml
+@@ -0,0 +1,39 @@
++schema: english_image_pdf_text_first_config_v0.1
++pipeline:
++  name: english_image_pdf_text_first
++  version: v0.1
++  entry: tools/run_english_image_pdf_text_first_v01.py
++  isolation_mode: standalone
++input:
++  default_pages: "1-8"
++ocr:
++  provider: rapidocr_onnxruntime_vendor
++  dpi: 180
++  text_layer_required: false
++assembler:
++  provider: ark
++  endpoint: https://ark.cn-beijing.volces.com/api/v3/chat/completions
++  api_key_env: ARK_API_KEY
++  model_alias: doubao2.0mini
++  model: doubao-seed-2-0-lite-260428
++  timeout_seconds: 300
++  max_tokens: 9000
++  response_format_json: true
++  window_pages: 4
++  window_overlap_pages: 0
++  output_mode: compact_evidence
++fallback:
++  visual_first_entry: tools/run_split_v03_full_doc.py
++  visual_first_enabled_by_default: false
++  use_visual_first_only_for_page_level_fallback: true
++output:
++  root: outputs/english_text_first_pipeline_v01_20260714
++release:
++  runtime_import_enabled_by_default: false
++  hold_if_qa_required: true
++  hold_if_model_output_missing: true
++isolation:
++  owns_output_root: outputs/english_text_first_pipeline_v01_20260714
++  does_not_modify_math_visual_first: true
++  does_not_import_split_v03_modules: true
++  shared_secret_env_only: ARK_API_KEY
+diff --git a/tools/run_english_image_pdf_text_first_v01.py b/tools/run_english_image_pdf_text_first_v01.py
+new file mode 100644
+index 00000000..dee50e63
+--- /dev/null
++++ b/tools/run_english_image_pdf_text_first_v01.py
+@@ -0,0 +1,397 @@
++from __future__ import annotations
++
++import argparse, json, os, sys, time, urllib.error, urllib.request
++from pathlib import Path
++from typing import Any
++
++if hasattr(sys.stdout, "reconfigure"):
++    sys.stdout.reconfigure(encoding="utf-8")
++if hasattr(sys.stderr, "reconfigure"):
++    sys.stderr.reconfigure(encoding="utf-8")
++
++REPO_ROOT = Path(__file__).resolve().parents[1]
++VENDOR_DIR = REPO_ROOT / "tools" / "vendor"
++if VENDOR_DIR.exists() and str(VENDOR_DIR) not in sys.path:
++    sys.path.insert(0, str(VENDOR_DIR))
++
++
++def write_json(path: Path, data: Any) -> None:
++    path.parent.mkdir(parents=True, exist_ok=True)
++    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
++
++
++def load_yaml(path: Path) -> dict[str, Any]:
++    if not path.exists():
++        return {}
++    try:
++        import yaml
++        return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
++    except Exception:
++        return {}
++
++
++def nested_get(data: dict[str, Any], path: str, default: Any = None) -> Any:
++    cur: Any = data
++    for part in path.split("."):
++        if not isinstance(cur, dict) or part not in cur:
++            return default
++        cur = cur[part]
++    return cur
++
++
++def parse_pages(spec: str) -> list[int]:
++    out: list[int] = []
++    for part in spec.split(","):
++        part = part.strip()
++        if not part:
++            continue
++        if "-" in part:
++            a, b = part.split("-", 1)
++            out.extend(range(int(a), int(b) + 1))
++        else:
++            out.append(int(part))
++    seen: set[int] = set()
++    return [p for p in out if p > 0 and not (p in seen or seen.add(p))]
++
++
++def page_windows(pages: list[int], window: int, overlap: int) -> list[list[int]]:
++    if window <= 0:
++        return [pages]
++    step = max(1, window - max(0, overlap))
++    chunks: list[list[int]] = []
++    i = 0
++    while i < len(pages):
++        chunks.append(pages[i : i + window])
++        if i + window >= len(pages):
++            break
++        i += step
++    return chunks
++
++
++def text_layer_probe(pdf: Path, pages: list[int]) -> dict[str, Any]:
++    import fitz
++    doc = fitz.open(pdf)
++    rows, total = [], 0
++    for p in pages:
++        if 1 <= p <= doc.page_count:
++            text = doc.load_page(p - 1).get_text("text") or ""
++            count = len(text.strip())
++            total += count
++            rows.append({"page": p, "char_count": count, "sample": text[:300]})
++    doc.close()
++    return {"total_chars": total, "usable": total >= 200, "pages": rows}
++
++
++def render_pages(pdf: Path, pages: list[int], out_dir: Path, dpi: int) -> list[dict[str, Any]]:
++    import fitz
++    out_dir.mkdir(parents=True, exist_ok=True)
++    doc = fitz.open(pdf)
++    rendered = []
++    for p in pages:
++        if 1 <= p <= doc.page_count:
++            pix = doc.load_page(p - 1).get_pixmap(dpi=dpi, alpha=False)
++            path = out_dir / f"page_{p:03d}.png"
++            pix.save(path)
++            rendered.append({"page": p, "image_path": str(path), "width_px": pix.width, "height_px": pix.height, "dpi": dpi})
++    doc.close()
++    return rendered
++
++
++def bbox_from_box(box: Any) -> list[int]:
++    xs = [float(pt[0]) for pt in box]
++    ys = [float(pt[1]) for pt in box]
++    return [int(min(xs)), int(min(ys)), int(max(xs)), int(max(ys))]
++
++
++def run_ocr(rendered: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
++    from rapidocr_onnxruntime import RapidOCR
++    engine = RapidOCR()
++    lines: list[dict[str, Any]] = []
++    meta_pages = []
++    for page in rendered:
++        result, elapsed = engine(page["image_path"])
++        count = 0
++        for item in result or []:
++            if len(item) < 2:
++                continue
++            text = str(item[1]).strip()
++            if not text:
++                continue
++            count += 1
++            lines.append({"line_id": f"p{int(page['page']):03d}_l{count:03d}", "page": int(page["page"]), "text": text, "bbox_px": bbox_from_box(item[0]), "score": float(item[2]) if len(item) > 2 and item[2] is not None else None})
++        meta_pages.append({"page": page["page"], "line_count": count, "elapsed": elapsed, "image_path": page["image_path"]})
++    return lines, {"provider": "rapidocr_onnxruntime_vendor", "pages": meta_pages}
++
++
++def cv_read(path: str):
++    import cv2, numpy as np
++    data = np.fromfile(path, dtype=np.uint8)
++    if data.size == 0:
++        return None
++    return cv2.imdecode(data, cv2.IMREAD_COLOR)
++
++
++def cv_write(path: Path, image) -> None:
++    import cv2
++    ok, enc = cv2.imencode(path.suffix or ".png", image)
++    if ok:
++        enc.tofile(str(path))
++
++
++def overlap(a: list[int], b: list[int]) -> float:
++    ax1, ay1, ax2, ay2 = a
++    bx1, by1, bx2, by2 = b
++    ix1, iy1, ix2, iy2 = max(ax1, bx1), max(ay1, by1), min(ax2, bx2), min(ay2, by2)
++    if ix2 <= ix1 or iy2 <= iy1:
++        return 0.0
++    return ((ix2 - ix1) * (iy2 - iy1)) / max(1, (ax2 - ax1) * (ay2 - ay1))
++
++
++def detect_visuals(rendered: list[dict[str, Any]], lines: list[dict[str, Any]], out_dir: Path) -> list[dict[str, Any]]:
++    import cv2
++    out_dir.mkdir(parents=True, exist_ok=True)
++    by_page: dict[int, list[dict[str, Any]]] = {}
++    for line in lines:
++        by_page.setdefault(int(line["page"]), []).append(line)
++    objects: list[dict[str, Any]] = []
++    oid = 1
++    for page in rendered:
++        p = int(page["page"])
++        image = cv_read(page["image_path"])
++        if image is None:
++            continue
++        h_img, w_img = image.shape[:2]
++        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
++        _, mask = cv2.threshold(gray, 245, 255, cv2.THRESH_BINARY_INV)
++        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (28, 18))
++        merged = cv2.dilate(mask, kernel, iterations=1)
++        contours, _ = cv2.findContours(merged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
++        candidates = []
++        for c in contours:
++            x, y, w, h = cv2.boundingRect(c)
++            area = w * h
++            if area < 18000 or area > w_img * h_img * 0.75 or w < 90 or h < 45:
++                continue
++            bbox = [x, y, x + w, y + h]
++            line_hits = [line for line in by_page.get(p, []) if overlap(bbox, line["bbox_px"]) > 0.25]
++            if len(line_hits) >= 8 and h < h_img * 0.45:
++                continue
++            candidates.append((x, y, w, h))
++        for x, y, w, h in sorted(candidates, key=lambda t: (t[1], t[0]))[:12]:
++            crop_path = out_dir / f"visual_{oid:03d}_p{p:03d}.png"
++            crop = image[max(0, y - 4) : min(h_img, y + h + 4), max(0, x - 4) : min(w_img, x + w + 4)]
++            cv_write(crop_path, crop)
++            aspect = w / max(1, h)
++            objects.append({"object_id": f"v{oid:03d}", "page": p, "kind": "table_or_diagram" if aspect > 1.8 or h > 180 else "non_text_visual", "bbox_px": [x, y, x + w, y + h], "crop_path": str(crop_path), "evidence": {"area_px": int(w * h), "aspect_ratio": round(aspect, 3)}})
++            oid += 1
++    return objects
++
++
++def write_ocr_text(path: Path, lines: list[dict[str, Any]]) -> None:
++    by_page: dict[int, list[dict[str, Any]]] = {}
++    for line in lines:
++        by_page.setdefault(int(line["page"]), []).append(line)
++    chunks: list[str] = []
++    for p in sorted(by_page):
++        chunks.append(f"## Page {p}")
++        chunks.extend(f"{line['line_id']} {line['text']}" for line in by_page[p])
++        chunks.append("")
++    path.write_text("\n".join(chunks), encoding="utf-8")
++
++
++def build_pages_payload(pages: list[int], rendered: list[dict[str, Any]], lines: list[dict[str, Any]]) -> list[dict[str, Any]]:
++    rendered_by_page = {int(r["page"]): r for r in rendered}
++    by_page: dict[int, list[dict[str, Any]]] = {}
++    for line in lines:
++        by_page.setdefault(int(line["page"]), []).append(line)
++    payload = []
++    for p in pages:
++        ordered = sorted(by_page.get(p, []), key=lambda it: (it["bbox_px"][1], it["bbox_px"][0]))
++        payload.append({"page": p, "image_path": rendered_by_page.get(p, {}).get("image_path"), "width_px": rendered_by_page.get(p, {}).get("width_px"), "height_px": rendered_by_page.get(p, {}).get("height_px"), "ocr_lines": [{"line_id": l["line_id"], "text": l["text"], "bbox_px": l["bbox_px"], "score": l.get("score")} for l in ordered]})
++    return payload
++
++
++SYSTEM_PROMPT = """You are an English handout semantic assembler.
++Use OCR line ids and page coordinates as evidence. Recover teaching structure, not visual slices.
++Separate knowledge blocks, examples, exercises, reading passages, question groups, answers, analysis, translation and visual assets.
++For shared reading passages, connect questions to passage_node_id. For answer/analysis/translation, attach back to the question or group they explain.
++For tables, tree diagrams, flowcharts, charts or images, create visual_asset or knowledge_block nodes with visual_refs; do not pretend OCR text alone fully reproduces them.
++Keep output compact. Do not copy long passages; use short excerpts and line_refs. Return one valid JSON object only."""
++
++
++def user_prompt(bundle: dict[str, Any], chunk_pages: list[int], chunk_id: int) -> str:
++    page_set = set(chunk_pages)
++    compact = {"chunk_id": f"c{chunk_id:03d}", "pages": [p for p in bundle["pages"] if int(p["page"]) in page_set], "visual_objects": [v for v in bundle["visual_objects"] if int(v["page"]) in page_set], "output_contract": {"semantic_nodes": [{"node_id": f"c{chunk_id:03d}_n001", "node_type": "lesson_header|knowledge_block|example|exercise_group|reading_passage|question_group|question_packet|answer_key|analysis|translation|visual_asset", "title": "short", "role_in_handout": "short", "model_summary": "short", "source_text": "short excerpt only", "evidence": {"line_refs": ["p001_l001"], "pages": [1]}, "relations": {"belongs_to": [], "answers": [], "explains": [], "uses_passage": []}, "visual_refs": [], "fields": {}}], "question_packets": [{"packet_id": f"c{chunk_id:03d}_q001", "source_node_id": f"c{chunk_id:03d}_n001", "question_type": "reading_mcq|grammar|writing|other", "stem": "short", "options": [], "answer": "", "analysis": "", "translation": "", "passage_node_id": "", "evidence": {"line_refs": ["p001_l001"], "pages": [1]}, "review_status": "MODEL_ASSEMBLED"}], "release_decision": {"decision": "PASS_TO_QA|HOLD_FOR_QA", "reasons": [], "fallback_recommended": False}}}
++    return json.dumps(compact, ensure_ascii=False)
++
++
++def call_ark(endpoint: str, key: str, model: str, bundle: dict[str, Any], chunk_pages: list[int], chunk_id: int, timeout: int, max_tokens: int, out_dir: Path) -> tuple[dict[str, Any] | None, dict[str, Any]]:
++    started = time.time()
++    body = {"model": model, "messages": [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user_prompt(bundle, chunk_pages, chunk_id)}], "temperature": 0.1, "max_tokens": max_tokens, "response_format": {"type": "json_object"}}
++    req = urllib.request.Request(endpoint, data=json.dumps(body, ensure_ascii=False).encode("utf-8"), headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"}, method="POST")
++    meta: dict[str, Any] = {"attempted": True, "called": False, "parsed": False, "chunk_id": f"c{chunk_id:03d}", "pages": chunk_pages, "model": model, "max_tokens": max_tokens}
++    try:
++        with urllib.request.urlopen(req, timeout=timeout) as resp:
++            raw_payload = json.loads(resp.read().decode("utf-8"))
++        meta["called"] = True
++        meta["latency_seconds"] = round(time.time() - started, 3)
++        meta["usage"] = raw_payload.get("usage")
++        choice = (raw_payload.get("choices") or [{}])[0]
++        meta["finish_reason"] = choice.get("finish_reason")
++        content = (choice.get("message") or {}).get("content") or ""
++        (out_dir / f"chunk_{chunk_id:03d}_raw.txt").write_text(content, encoding="utf-8")
++        write_json(out_dir / f"chunk_{chunk_id:03d}_raw_payload.json", raw_payload)
++        try:
++            parsed = json.loads(content)
++        except json.JSONDecodeError as exc:
++            meta["error"] = f"JSONDecodeError: {exc}"
++            return None, meta
++        meta["parsed"] = True
++        write_json(out_dir / f"chunk_{chunk_id:03d}.json", parsed)
++        return parsed, meta
++    except urllib.error.HTTPError as exc:
++        meta["error"] = f"HTTPError {exc.code}: {exc.read().decode('utf-8', errors='replace')[:1000]}"
++    except Exception as exc:
++        meta["error"] = f"{type(exc).__name__}: {exc}"
++    meta["latency_seconds"] = round(time.time() - started, 3)
++    return None, meta
++
++
++def evidence_for_refs(refs: list[str], index: dict[str, dict[str, Any]]) -> dict[str, Any]:
++    pages: set[int] = set()
++    boxes: dict[str, list[int]] = {}
++    missing: list[str] = []
++    for ref in refs:
++        line = index.get(ref)
++        if not line:
++            missing.append(ref)
++            continue
++        p = int(line["page"])
++        pages.add(p)
++        key = str(p)
++        b = line["bbox_px"]
++        if key not in boxes:
++            boxes[key] = list(b)
++        else:
++            c = boxes[key]
++            boxes[key] = [min(c[0], b[0]), min(c[1], b[1]), max(c[2], b[2]), max(c[3], b[3])]
++    return {"line_refs": refs, "missing_line_refs": missing, "pages": sorted(pages), "bbox_px_by_page": boxes}
++
++
++def normalize(outputs: list[dict[str, Any]], source: str, lines: list[dict[str, Any]], visuals: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
++    index = {line["line_id"]: line for line in lines}
++    nodes, packets, seen = [], [], set()
++    warnings: list[str] = []
++    for oi, output in enumerate(outputs, start=1):
++        for ni, raw in enumerate(output.get("semantic_nodes") or [], start=1):
++            if not isinstance(raw, dict):
++                continue
++            nid = str(raw.get("node_id") or f"c{oi:03d}_n{ni:03d}")
++            if nid in seen:
++                nid = f"c{oi:03d}_{nid}"
++            seen.add(nid)
++            refs = (raw.get("evidence") or {}).get("line_refs") or []
++            nodes.append({"node_id": nid, "node_type": raw.get("node_type") or "semantic_node", "title": raw.get("title") or "", "role_in_handout": raw.get("role_in_handout") or "", "review_status": raw.get("review_status") or "MODEL_ASSEMBLED", "source": source, "model_summary": raw.get("model_summary") or "", "source_text": raw.get("source_text") or "", "evidence": evidence_for_refs([str(r) for r in refs], index), "fields": raw.get("fields") or {}, "relations": raw.get("relations") or {}, "visual_refs": raw.get("visual_refs") or []})
++        for qi, raw in enumerate(output.get("question_packets") or [], start=1):
++            if not isinstance(raw, dict):
++                continue
++            refs = (raw.get("evidence") or {}).get("line_refs") or []
++            packets.append({"packet_id": raw.get("packet_id") or f"c{oi:03d}_q{qi:03d}", "source_node_id": raw.get("source_node_id") or "", "question_type": raw.get("question_type") or "other", "stem": raw.get("stem") or "", "options": raw.get("options") or [], "answer": raw.get("answer") or "", "analysis": raw.get("analysis") or "", "translation": raw.get("translation") or "", "passage_node_id": raw.get("passage_node_id") or "", "evidence": evidence_for_refs([str(r) for r in refs], index), "review_status": raw.get("review_status") or "MODEL_ASSEMBLED", "source": source})
++    reasons: list[str] = []
++    for output in outputs:
++        d = output.get("release_decision") or {}
++        if d.get("decision") != "PASS_TO_QA":
++            reasons.extend(d.get("reasons") or ["chunk requires QA"])
++    if not outputs:
++        reasons.append("no parsed model output")
++    if any(n["evidence"]["missing_line_refs"] for n in nodes):
++        warnings.append("some model line_refs were not found in OCR evidence")
++    release = {"schema": "release_decision_v0.1", "decision": "HOLD_FOR_QA" if reasons or warnings else "PASS_TO_QA", "reasons": reasons + warnings, "fallback_recommended": bool(reasons)}
++    runtime = {"schema": "english_runtime_import_candidate_v0.1", "semantic_nodes_path": "normalized/semantic_nodes.json", "question_packets_path": "normalized/question_packets.json", "asset_manifest_path": "normalized/asset_manifest.json", "release_decision_path": "normalized/release_decision.json", "runtime_import_enabled": False}
++    return {"schema": "semantic_nodes_v0.1", "nodes": nodes}, {"schema": "question_packets_v0.1", "packets": packets}, {"schema": "asset_manifest_v0.1", "visual_objects": visuals}, release, runtime
++
++
++def write_review(path: Path, summary: dict[str, Any], pages_payload: list[dict[str, Any]], release: dict[str, Any]) -> None:
++    blocks = []
++    for page in pages_payload:
++        sample = "<br>".join(f"<code>{l['line_id']}</code> {l['text']}" for l in page["ocr_lines"][:24])
++        blocks.append(f"<h2>Page {page['page']}</h2><p>{len(page['ocr_lines'])} OCR lines</p><div>{sample}</div>")
++    html = f"""<!doctype html><meta charset="utf-8"><title>English text-first review</title><style>body{{font-family:Segoe UI,Arial,sans-serif;margin:24px;line-height:1.45}}code{{color:#a33}}pre{{background:#f6f6f6;padding:12px;white-space:pre-wrap}}</style><h1>English Image-PDF Text-First Review</h1><h2>Run Summary</h2><pre>{json.dumps(summary, ensure_ascii=False, indent=2)}</pre><h2>Release</h2><pre>{json.dumps(release, ensure_ascii=False, indent=2)}</pre>{''.join(blocks)}"""
++    path.write_text(html, encoding="utf-8")
++
++
++def main() -> int:
++    ap = argparse.ArgumentParser()
++    ap.add_argument("--config", default="config/english_image_pdf_text_first_v01.yaml")
++    ap.add_argument("--pdf", required=True)
++    ap.add_argument("--pages", default=None)
++    ap.add_argument("--out", required=True)
++    ap.add_argument("--assembler-provider", choices=["none", "ark"], default=None)
++    ap.add_argument("--assembler-window-pages", type=int, default=None)
++    ap.add_argument("--assembler-timeout", type=int, default=None)
++    args = ap.parse_args()
++    config = load_yaml(REPO_ROOT / args.config)
++    pages = parse_pages(args.pages or nested_get(config, "input.default_pages", "1-8"))
++    provider = args.assembler_provider or nested_get(config, "assembler.provider", "none")
++    dpi = int(nested_get(config, "ocr.dpi", 180))
++    endpoint = nested_get(config, "assembler.endpoint", "https://ark.cn-beijing.volces.com/api/v3/chat/completions")
++    model = nested_get(config, "assembler.model", "doubao-seed-2-0-lite-260428")
++    model_alias = nested_get(config, "assembler.model_alias", "doubao2.0mini")
++    api_key_env = nested_get(config, "assembler.api_key_env", "ARK_API_KEY")
++    timeout = args.assembler_timeout or int(nested_get(config, "assembler.timeout_seconds", 300))
++    max_tokens = int(nested_get(config, "assembler.max_tokens", 9000))
++    window_pages = args.assembler_window_pages or int(nested_get(config, "assembler.window_pages", 4))
++    overlap_pages = int(nested_get(config, "assembler.window_overlap_pages", 0))
++    out_dir = Path(args.out).resolve()
++    evidence_dir, normalized_dir, model_dir = out_dir / "evidence", out_dir / "normalized", out_dir / "model_outputs"
++    for d in [evidence_dir, normalized_dir, model_dir]:
++        d.mkdir(parents=True, exist_ok=True)
++    try:
++        (out_dir / "_runner_source_snapshot.py").write_text(Path(__file__).read_text(encoding="utf-8"), encoding="utf-8")
++        (out_dir / "_config_snapshot.yaml").write_text((REPO_ROOT / args.config).read_text(encoding="utf-8"), encoding="utf-8")
++    except Exception:
++        pass
++    pdf = Path(args.pdf).resolve()
++    text_layer = text_layer_probe(pdf, pages)
++    rendered = render_pages(pdf, pages, evidence_dir / "page_images", dpi)
++    lines, ocr_meta = run_ocr(rendered)
++    visuals = detect_visuals(rendered, lines, evidence_dir / "visual_objects")
++    pages_payload = build_pages_payload(pages, rendered, lines)
++    write_json(evidence_dir / "text_layer_probe.json", text_layer)
++    write_json(evidence_dir / "ocr_lines.json", lines)
++    write_json(evidence_dir / "ocr_run_meta.json", ocr_meta)
++    write_json(evidence_dir / "visual_objects.json", visuals)
++    write_ocr_text(evidence_dir / "ocr_page_text.md", lines)
++    bundle = {"schema": "english_text_first_model_input_bundle_v0.1", "pdf": str(pdf), "pages": pages_payload, "text_layer": text_layer, "visual_objects": visuals}
++    write_json(out_dir / "model_input_bundle.json", bundle)
++    outputs: list[dict[str, Any]] = []
++    metas: list[dict[str, Any]] = []
++    if provider == "ark":
++        key = os.environ.get(api_key_env)
++        if not key:
++            metas.append({"attempted": False, "called": False, "parsed": False, "error": f"missing env {api_key_env}"})
++        else:
++            for cid, chunk_pages in enumerate(page_windows(pages, window_pages, overlap_pages), start=1):
++                parsed, meta = call_ark(endpoint, key, model, bundle, chunk_pages, cid, timeout, max_tokens, model_dir)
++                metas.append(meta)
++                write_json(model_dir / f"chunk_{cid:03d}_meta.json", meta)
++                if parsed is not None:
++                    outputs.append(parsed)
++    else:
++        metas.append({"attempted": False, "called": False, "parsed": False, "provider": provider})
++    source = f"ark_text_semantic_assembler:{model}" if provider == "ark" else "ocr_evidence_only"
++    semantic_nodes, question_packets, asset_manifest, release, runtime_import = normalize(outputs, source, lines, visuals)
++    write_json(normalized_dir / "semantic_nodes.json", semantic_nodes)
++    write_json(normalized_dir / "question_packets.json", question_packets)
++    write_json(normalized_dir / "asset_manifest.json", asset_manifest)
++    write_json(normalized_dir / "release_decision.json", release)
++    write_json(normalized_dir / "runtime_import_candidate.json", runtime_import)
++    summary = {"schema": "english_image_pdf_text_first_pipeline_v0.1", "entry": "tools/run_english_image_pdf_text_first_v01.py", "config_path": str((REPO_ROOT / args.config).resolve()), "pdf": str(pdf), "pages": pages, "page_count": len(pages), "text_layer_total_chars": text_layer["total_chars"], "text_layer_usable": text_layer["usable"], "ocr_line_count": len(lines), "visual_object_count": len(visuals), "assembler": {"provider": provider, "model": model, "model_alias": model_alias, "api_key_env": api_key_env, "window_pages": window_pages, "window_overlap_pages": overlap_pages, "chunks": metas}, "parsed_chunk_count": len(outputs), "semantic_node_count": len(semantic_nodes["nodes"]), "question_packet_count": len(question_packets["packets"]), "release_decision": release["decision"], "artifacts": {"model_input_bundle": str(out_dir / "model_input_bundle.json"), "evidence_dir": str(evidence_dir), "model_outputs_dir": str(model_dir), "semantic_nodes": str(normalized_dir / "semantic_nodes.json"), "question_packets": str(normalized_dir / "question_packets.json"), "asset_manifest": str(normalized_dir / "asset_manifest.json"), "release_decision": str(normalized_dir / "release_decision.json"), "runtime_import_candidate": str(normalized_dir / "runtime_import_candidate.json"), "review_html": str(out_dir / "review.html")}}
++    write_json(out_dir / "run_summary.json", summary)
++    write_review(out_dir / "review.html", summary, pages_payload, release)
++    print(json.dumps(summary, ensure_ascii=False, indent=2))
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())

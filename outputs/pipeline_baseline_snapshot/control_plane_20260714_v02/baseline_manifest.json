@@ -1,0 +1,77 @@
+{
+  "schema_version": "pipeline_baseline_manifest.v0.2",
+  "baseline_id": "control_plane_20260714_v02",
+  "created_at": "2026-07-14T08:11:57.686758+00:00",
+  "branch": "chore/pipeline-isolation-control-plane",
+  "commit": "b9dd441025fa41e6a44b2d3138ad3b0cb92fbad6",
+  "baseline_scope": "deterministic mock baseline rerun to complete pre-Semantic-Shadow gate; no paid model call",
+  "deterministic_baselines": [
+    {
+      "baseline_id": "deterministic_english_mock_p5_6_v02",
+      "run_root": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6",
+      "entrypoint": "python -m tools.split_v03_quick_debug",
+      "command": "python -m tools.split_v03_quick_debug --pdf \"C:\\Users\\EDY\\Documents\\WXWork\\1688857912801359\\WeDrive\\领世培优\\领世一对一英语学科资料\\高中英语\\01标准化讲义\\01暑假标准化讲义\\高二暑假\\语法\\词法和句法基础梳理-教师版.pdf\" --doc-key english --pages 5,6 --out C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6 --provider mock --max-vlm-calls 0",
+      "input": {
+        "path": "C:\\Users\\EDY\\Documents\\WXWork\\1688857912801359\\WeDrive\\领世培优\\领世一对一英语学科资料\\高中英语\\01标准化讲义\\01暑假标准化讲义\\高二暑假\\语法\\词法和句法基础梳理-教师版.pdf",
+        "exists": true,
+        "sha256": "cbcb8dfd6e4f11b9ccba00560e2e5d7377326e37570d31fef4b3ed52ae34fa45",
+        "size_bytes": 3271906
+      },
+      "provider": "mock",
+      "model": "",
+      "paid_vlm_used": false,
+      "actual_vlm_calls": 0,
+      "pages": [
+        5,
+        6
+      ],
+      "metrics": {
+        "blocks": 51,
+        "reading_blocks": 33,
+        "nodes": 8,
+        "legacy_bridge_ready_count": 8,
+        "review_repair_pool_count": 0,
+        "node_summary": {
+          "ready": 8,
+          "needs_review": 0,
+          "quarantined": 0,
+          "question_nodes": 8,
+          "knowledge_nodes": 0,
+          "multi_fragment_nodes": 8,
+          "cross_page_nodes": 1
+        }
+      },
+      "required_core_artifacts_present": true,
+      "missing_artifacts": []
+    }
+  ],
+  "canonical_normalization_policy": {
+    "ignored_non_business_fields": [
+      "absolute_path_prefix",
+      "created_at",
+      "started_at",
+      "finished_at",
+      "run_id",
+      "temporary_output_directory",
+      "request_id_when_explicitly_random"
+    ],
+    "strict_business_fields": [
+      "node_count",
+      "node_type",
+      "fragment_page_and_bbox",
+      "review_status",
+      "audit_reasons",
+      "legacy_bridge_question_count",
+      "repair_pool_content",
+      "asset_count_and_ownership",
+      "release_decision",
+      "runtime_import_payload_business_fields"
+    ]
+  },
+  "not_run_this_round": [
+    "No Semantic Role Shadow run",
+    "No DOCX Native run",
+    "No English Text-first run",
+    "No paid model call"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": "semantic_subject_profile_v0.2",
+  "subject": "math",
+  "profile_subtypes": {
+    "math_exercise_pack": {},
+    "math_worked_example_lesson": {},
+    "geometry_proof_example": {},
+    "formula_table": {}
+  }
+}

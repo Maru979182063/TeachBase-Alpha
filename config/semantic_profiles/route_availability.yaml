@@ -1,0 +1,15 @@
+{
+  "schema_version": "semantic_route_availability_v0.2",
+  "routes": {
+    "question_splitter": {"availability": "implemented"},
+    "review_only": {"availability": "implemented"},
+    "noise": {"availability": "implemented"},
+    "knowledge_transcription": {"availability": "shadow_only"},
+    "example_transcription": {"availability": "shadow_only"},
+    "group_splitter": {"availability": "planned"},
+    "shared_material_preserve": {"availability": "planned"},
+    "answer_attachment": {"availability": "planned"},
+    "secondary_visual_split": {"availability": "planned"},
+    "visual_asset_preserve": {"availability": "shadow_only"}
+  }
+}

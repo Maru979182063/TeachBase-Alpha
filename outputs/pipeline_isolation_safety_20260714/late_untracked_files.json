@@ -1,0 +1,8 @@
+﻿{
+    "schema_version":  "pipeline_isolation_late_untracked.v0.1",
+    "captured_at":  "2026-07-14T07:44:53.1032354Z",
+    "note":  "Discovered after switching to control-plane branch; preserved in backup branch supplemental commit.",
+    "files":  [
+                  "tools/docx_native_backend_preview_render_v01.py"
+              ]
+}

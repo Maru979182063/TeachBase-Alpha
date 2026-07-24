@@ -1,0 +1,37 @@
+schema_version: docx_legacy_formula_recovery_config.v0.1
+
+# Node name: LegacyFormulaRecovery
+# 中文：DOCX 公式恢复前置节点。只处理公式资源，不切题、不改正文、不进入 PDF 视觉链。
+node:
+  id: docx_legacy_formula_recovery_v01
+  input: docx_path
+  output:
+    formula_manifest: formula_manifest_backend_preview.json
+    recovery_report: legacy_formula_recovery_report.json
+    extracted_embeddings: embeddings/
+
+# Formula route order:
+# 中文：公式路由顺序。OMML 由 Stage0 原生处理；OLE 才进入老公式恢复；
+# 老公式恢复失败后，只登记 fallback_needed，不在本节点直接渲染整页 PDF。
+route_order:
+  - omml_native
+  - legacy_ole_mtef
+  - image_or_pdf_formula_fallback_needed
+
+# Backends:
+# 中文：后端依赖。Ruby 负责 OLE/MTEF -> MathML；Node 负责 MathML -> LaTeX。
+backends:
+  legacy_ole_to_mathml:
+    command: ruby tools/ruby_mtef_to_mathml_batch.rb
+    dependency: mathtype_to_mathml_plus
+  mathml_to_latex:
+    command: node tools/mathml_to_latex_batch.cjs
+    dependency: mathml-to-latex
+
+# Review policy:
+# 中文：如果 OLE 公式没有恢复成 LaTeX，内容侧必须保留阻断/复核标记，
+# 不允许下游精修模型凭残缺文本自由补全成“成品”。
+quality_policy:
+  require_latex_for_legacy_ole: true
+  unresolved_status: formula_recovery_incomplete
+  fallback_signal: image_or_pdf_formula_fallback_needed

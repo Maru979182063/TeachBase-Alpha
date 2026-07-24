@@ -1,0 +1,60 @@
+{
+  "bundle_id": "three_track_english_senior_bundle",
+  "lesson_id": "three_track_english_senior_lesson",
+  "title": "高中英语 三轨验证样本",
+  "track_code": "english_senior",
+  "subject": "英语",
+  "stage": "senior",
+  "grade": "g12",
+  "season": "winter",
+  "source_tree": [
+    {
+      "source_node_local_id": "root",
+      "node_type": "lesson",
+      "phase": "reading_main",
+      "title": "阅读理解"
+    },
+    {
+      "source_node_local_id": "reading_block",
+      "parent_source_node_local_id": "root",
+      "node_type": "knowledge_block",
+      "phase": "reading_main",
+      "title": "篇章阅读",
+      "checkpoint_codes": ["阅读理解主旨大意", "阅读理解细节定位"]
+    }
+  ],
+  "tasks": [
+    {
+      "local_task_id": "ES-001",
+      "source_node_local_id": "reading_block",
+      "question_type": "single_choice",
+      "stem": "What is the writer mainly discussing?",
+      "answer": "A",
+      "explanation": "The passage repeatedly returns to the same central idea.",
+      "difficulty_level": 3,
+      "difficulty_confidence": 0.9,
+      "subject_tags": ["阅读"],
+      "source_refs_json": {
+        "page_no": 4
+      }
+    },
+    {
+      "local_task_id": "ES-002",
+      "source_node_local_id": "reading_block",
+      "question_type": "single_choice",
+      "stem": "Which sentence best supports the writer's opinion?",
+      "answer": "C",
+      "explanation": "It directly echoes the claim made in the final paragraph.",
+      "difficulty_level": 4,
+      "difficulty_confidence": 0.87,
+      "checkpoint_override": {
+        "mode": "remove",
+        "checkpoint_codes": ["阅读理解细节定位"]
+      },
+      "subject_tags": ["阅读", "推断"],
+      "source_refs_json": {
+        "page_no": 4
+      }
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "schema": "legacy_bridge_questions_v0.5_composite_plus_fragments",
+  "questions": [
+    {
+      "question_id": "synthetic_ready_q_001",
+      "question_uid": "synthetic_ready_q_001",
+      "node_id": "synthetic_ready_q_001",
+      "node_type": "question",
+      "source": "semantic_v03",
+      "text_stub": "Synthetic deterministic ready question with answer evidence.",
+      "fragments": [
+        {
+          "page": 1,
+          "bbox_px": [
+            120,
+            140,
+            880,
+            360
+          ],
+          "role": "question_body",
+          "block_ids": [
+            "synthetic_rb0001"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 1,
+          "bbox_px": [
+            120,
+            370,
+            520,
+            450
+          ],
+          "role": "answer_block",
+          "block_ids": [
+            "synthetic_rb0002"
+          ],
+          "flags": [
+            "answer_like",
+            "reading_block"
+          ]
+        }
+      ],
+      "bridge_contract": {
+        "version": "semantic_v03_bridge_v0.5",
+        "transcription_input": "question_composite",
+        "asset_source": "bridge_fragments",
+        "coordinate_policy": "fragments_keep_page_master_px; composite_has_own_canvas_space",
+        "option_prepare_policy": "do_not_detect_on_composite"
+      },
+      "question_image": "fixtures\\semantic_shadow_review_path\\assets\\synthetic_ready_q_001_review_canvas.png",
+      "stem_image": "fixtures\\semantic_shadow_review_path\\assets\\synthetic_ready_q_001_review_canvas.png",
+      "analysis_image": "",
+      "transcription_image": "fixtures\\semantic_shadow_review_path\\assets\\synthetic_ready_q_001_review_canvas.png",
+      "review_canvas": "fixtures\\semantic_shadow_review_path\\assets\\synthetic_ready_q_001_review_canvas.png",
+      "question_composite": "fixtures\\semantic_shadow_review_path\\assets\\synthetic_ready_q_001_review_canvas.png",
+      "bridge_fragments": [
+        {
+          "fragment_id": "synthetic_ready_q_001_fragment_01",
+          "role": "question_body",
+          "page": 1,
+          "bbox_px": [
+            120,
+            140,
+            880,
+            360
+          ],
+          "fragment_image": "fixtures\\semantic_shadow_review_path\\assets\\synthetic_ready_q_001_fragment_01.png",
+          "coordinate_space": "page_master_px",
+          "source_image_role": "source_page",
+          "placement_scope": "evidence_only",
+          "asset_role": "question_fragment_evidence",
+          "source_block_ids": [
+            "synthetic_rb0001"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block"
+          ]
+        },
+        {
+          "fragment_id": "synthetic_ready_q_001_fragment_02",
+          "role": "answer_block",
+          "page": 1,
+          "bbox_px": [
+            120,
+            370,
+            520,
+            450
+          ],
+          "fragment_image": "fixtures\\semantic_shadow_review_path\\assets\\synthetic_ready_q_001_fragment_02.png",
+          "coordinate_space": "page_master_px",
+          "source_image_role": "source_page",
+          "placement_scope": "evidence_only",
+          "asset_role": "question_fragment_evidence",
+          "source_block_ids": [
+            "synthetic_rb0002"
+          ],
+          "flags": [
+            "answer_like",
+            "reading_block"
+          ]
+        }
+      ],
+      "staged_visual_assets": [],
+      "gating_result": {
+        "decision": "allow",
+        "image_input_policy": "composite_first",
+        "asset_detection_source": "bridge_fragments",
+        "fragment_policy": "bridge_fragments_evidence_only",
+        "requires_visual_transcription": true
+      },
+      "review_status": "AUDITED_READY",
+      "review_reasons": []
+    }
+  ]
+}

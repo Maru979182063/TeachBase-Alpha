@@ -1,0 +1,26 @@
+﻿{
+    "schema_version":  "pipeline_isolation_branch_state.v0.1",
+    "captured_at":  "2026-07-14T07:44:03.2173219Z",
+    "workspace":  "C:\\Users\\EDY\\Documents\\教研基建",
+    "current_branch":  "feat/semantic-role-shadow-v01",
+    "current_commit":  "4e0335edbf168245e4e459bbbfbeb346524ab998",
+    "dirty_worktree":  true,
+    "status_porcelain":  [
+                             " M config/docx_native_ingest_v01.yaml",
+                             " M config/english_image_pdf_text_first_v01.yaml",
+                             " M tools/docx_native_runtime_adapter_dry_run_v01.mjs",
+                             " M tools/english_image_pdf_text_first_probe_v01.py",
+                             " M tools/run_english_image_pdf_text_first_v01.py",
+                             "?? tools/docx_native_backend_align_v01.py",
+                             "?? tools/docx_native_backend_contract_check_v01.mjs",
+                             "?? tools/english_text_first_evidence.py"
+                         ],
+    "untracked_files":  [
+                            "tools/docx_native_backend_align_v01.py",
+                            "tools/docx_native_backend_contract_check_v01.mjs",
+                            "tools/english_text_first_evidence.py"
+                        ],
+    "stash_entries":  [
+                          "stash@{0}: On backup/pre-three-track-baseline-20260624: safety-leftovers-pre-three-track-baseline-20260624"
+                      ]
+}

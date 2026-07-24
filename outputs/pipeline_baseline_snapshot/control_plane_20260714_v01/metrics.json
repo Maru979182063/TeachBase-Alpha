@@ -1,0 +1,92 @@
+{
+  "schema_version": "pipeline_baseline_metrics.v0.1",
+  "deterministic_metrics": {
+    "node_summary": {
+      "ready": 7,
+      "needs_review": 0,
+      "quarantined": 1,
+      "question_nodes": 7,
+      "knowledge_nodes": 0,
+      "multi_fragment_nodes": 1
+    },
+    "refined_node_summary": null,
+    "block_count": 51,
+    "reading_block_count": 9,
+    "node_count": 8,
+    "legacy_bridge_ready_count": 7,
+    "review_repair_pool_count": null,
+    "cross_page_nodes": null
+  },
+  "live_reference_metrics": {
+    "live_math_full_handout_concurrent_20260709": {
+      "node_summary": {
+        "ready": 40,
+        "needs_review": 11,
+        "quarantined": 1,
+        "question_nodes": 47,
+        "knowledge_nodes": 4,
+        "multi_fragment_nodes": 26,
+        "cross_page_nodes": 21
+      },
+      "refined_node_summary": {
+        "ready": 47,
+        "needs_review": 4,
+        "quarantined": 1,
+        "question_nodes": 47,
+        "knowledge_nodes": 4,
+        "multi_fragment_nodes": 26,
+        "cross_page_nodes": 21
+      },
+      "block_count": null,
+      "reading_block_count": null,
+      "node_count": null,
+      "legacy_bridge_ready_count": 40,
+      "review_repair_pool_count": 12,
+      "cross_page_nodes": 21
+    },
+    "live_english_full_handout_concurrent_20260709": {
+      "node_summary": {
+        "ready": 49,
+        "needs_review": 22,
+        "quarantined": 0,
+        "question_nodes": 56,
+        "knowledge_nodes": 15,
+        "multi_fragment_nodes": 13,
+        "cross_page_nodes": 11
+      },
+      "refined_node_summary": {
+        "ready": 55,
+        "needs_review": 15,
+        "quarantined": 0,
+        "question_nodes": 55,
+        "knowledge_nodes": 15,
+        "multi_fragment_nodes": 15,
+        "cross_page_nodes": 13
+      },
+      "block_count": null,
+      "reading_block_count": null,
+      "node_count": null,
+      "legacy_bridge_ready_count": 49,
+      "review_repair_pool_count": 22,
+      "cross_page_nodes": 11
+    },
+    "live_biology_edge_crosspage_20260709": {
+      "node_summary": {
+        "ready": 34,
+        "needs_review": 25,
+        "quarantined": 0,
+        "question_nodes": 41,
+        "knowledge_nodes": 18,
+        "multi_fragment_nodes": 24,
+        "cross_page_nodes": 23
+      },
+      "refined_node_summary": null,
+      "block_count": 84,
+      "reading_block_count": 84,
+      "node_count": 59,
+      "legacy_bridge_ready_count": 34,
+      "review_repair_pool_count": 25,
+      "cross_page_nodes": 23
+    }
+  }
+}

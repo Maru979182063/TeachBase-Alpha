@@ -1,0 +1,39 @@
+{
+  "schema": "page_manifest_v0.3",
+  "pages": [
+    {
+      "doc_key": "english",
+      "page": 5,
+      "source_page": 5,
+      "width_px": 2480,
+      "height_px": 3507,
+      "target_dpi": 300,
+      "render_scale": 4.166666666666667,
+      "provider": "doubao",
+      "provider_detail": "high",
+      "max_vlm_pixels": 9000000,
+      "page_image_master": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\page_images\\english\\master\\p005_master.png",
+      "page_image_vlm": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\page_images\\english\\vlm\\p005_vlm.png",
+      "vlm_width_px": 2480,
+      "vlm_height_px": 3507,
+      "coordinate_space": "master_px"
+    },
+    {
+      "doc_key": "english",
+      "page": 6,
+      "source_page": 6,
+      "width_px": 2480,
+      "height_px": 3507,
+      "target_dpi": 300,
+      "render_scale": 4.166666666666667,
+      "provider": "doubao",
+      "provider_detail": "high",
+      "max_vlm_pixels": 9000000,
+      "page_image_master": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\page_images\\english\\master\\p006_master.png",
+      "page_image_vlm": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\page_images\\english\\vlm\\p006_vlm.png",
+      "vlm_width_px": 2480,
+      "vlm_height_px": 3507,
+      "coordinate_space": "master_px"
+    }
+  ]
+}

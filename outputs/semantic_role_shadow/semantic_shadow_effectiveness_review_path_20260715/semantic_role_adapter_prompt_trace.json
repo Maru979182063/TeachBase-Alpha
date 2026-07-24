@@ -1,0 +1,8 @@
+{
+  "schema_version": "semantic_role_adapter_prompt_trace_shadow.v0.1",
+  "model_invoked": false,
+  "paid_model_invoked": false,
+  "prompt_content_recorded": false,
+  "prompt_content_changed": false,
+  "trace": []
+}

@@ -1,0 +1,66 @@
+{
+  "bundle_id": "math_validation_bundle",
+  "lesson_id": "math_validation_lesson",
+  "title": "七年级数学 方程验证样本",
+  "track_code": "math_junior",
+  "subject": "数学",
+  "stage": "junior",
+  "grade": "g7",
+  "season": "summer",
+  "source_tree": [
+    {
+      "source_node_local_id": "root",
+      "node_type": "lesson",
+      "phase": "knowledge_main",
+      "title": "方程与运算"
+    }
+  ],
+  "tasks": [
+    {
+      "local_task_id": "M-001",
+      "source_node_local_id": "root",
+      "question_type": "single_choice",
+      "stem": "若 2x + 3 = 11，则 x 的值是？",
+      "answer": "4",
+      "explanation": "移项后得到 2x = 8，所以 x = 4。",
+      "difficulty_level": 2,
+      "difficulty_scheme": "difficulty.math.junior.v1",
+      "difficulty_source": "manual_seed",
+      "difficulty_confidence": 0.95,
+      "checkpoint_codes": ["一元一次方程"],
+      "subject_tags": ["代数"],
+      "source_refs_json": {
+        "page_no": 1,
+        "bbox": {
+          "x": 10,
+          "y": 20,
+          "width": 180,
+          "height": 80
+        }
+      }
+    },
+    {
+      "local_task_id": "M-002",
+      "source_node_local_id": "root",
+      "question_type": "fill_blank",
+      "stem": "化简：3a + 2a = ____。",
+      "answer": "5a",
+      "explanation": "同类项相加，系数相加得到 5a。",
+      "difficulty_level": 1,
+      "difficulty_scheme": "difficulty.math.junior.v1",
+      "difficulty_source": "manual_seed",
+      "difficulty_confidence": 0.9,
+      "checkpoint_codes": ["整式加减"],
+      "subject_tags": ["代数"],
+      "source_refs_json": {
+        "page_no": 1,
+        "bbox": {
+          "x": 10,
+          "y": 120,
+          "width": 180,
+          "height": 80
+        }
+      }
+    }
+  ]
+}

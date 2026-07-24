@@ -1,0 +1,75 @@
+{
+  "schema_version": "semantic_shadow_non_interference_report.v0.1",
+  "baseline_root": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01",
+  "current_root": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01",
+  "compared_artifact_count": 5,
+  "ignored_field_count": 0,
+  "equality": true,
+  "baseline_hash": "f245deeab170f06ba24575d4ae40d99138be48ef01041223b11db5beb4f8e7c0",
+  "current_hash": "f245deeab170f06ba24575d4ae40d99138be48ef01041223b11db5beb4f8e7c0",
+  "canonical_hash": "f245deeab170f06ba24575d4ae40d99138be48ef01041223b11db5beb4f8e7c0",
+  "mismatch_json_paths": [],
+  "mismatch_reason": "",
+  "artifacts": [
+    {
+      "baseline_path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\docs\\synthetic_review\\assignments.json",
+      "current_path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\docs\\synthetic_review\\assignments.json",
+      "baseline_hash": "7ab072baae133042c5a6d6dd04b28584cc028ba6265bcd400e8a747748da290a",
+      "current_hash": "7ab072baae133042c5a6d6dd04b28584cc028ba6265bcd400e8a747748da290a",
+      "canonical_hash": "7ab072baae133042c5a6d6dd04b28584cc028ba6265bcd400e8a747748da290a",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "docs/synthetic_review/assignments.json"
+    },
+    {
+      "baseline_path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\docs\\synthetic_review\\semantic_nodes.json",
+      "current_path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\docs\\synthetic_review\\semantic_nodes.json",
+      "baseline_hash": "a212161dc2c64d4a41ff56bea06ba2d251822b684c173c79eb9d1997dfb0dc53",
+      "current_hash": "a212161dc2c64d4a41ff56bea06ba2d251822b684c173c79eb9d1997dfb0dc53",
+      "canonical_hash": "a212161dc2c64d4a41ff56bea06ba2d251822b684c173c79eb9d1997dfb0dc53",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "docs/synthetic_review/semantic_nodes.json"
+    },
+    {
+      "baseline_path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\docs\\synthetic_review\\audit_report.json",
+      "current_path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\docs\\synthetic_review\\audit_report.json",
+      "baseline_hash": "f4fc92b21066c76eeb460a8441e8386ea69a0901e6b635aa35dcb3e12ff7908f",
+      "current_hash": "f4fc92b21066c76eeb460a8441e8386ea69a0901e6b635aa35dcb3e12ff7908f",
+      "canonical_hash": "f4fc92b21066c76eeb460a8441e8386ea69a0901e6b635aa35dcb3e12ff7908f",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "docs/synthetic_review/audit_report.json"
+    },
+    {
+      "baseline_path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\legacy_bridge_questions.json",
+      "current_path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\legacy_bridge_questions.json",
+      "baseline_hash": "0bbbe88e324ec292d7970f2b0259f60a5de0ed16e2e7300722f5edeed5afbd6f",
+      "current_hash": "0bbbe88e324ec292d7970f2b0259f60a5de0ed16e2e7300722f5edeed5afbd6f",
+      "canonical_hash": "0bbbe88e324ec292d7970f2b0259f60a5de0ed16e2e7300722f5edeed5afbd6f",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "legacy_bridge_questions.json"
+    },
+    {
+      "baseline_path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\review_repair_pool.json",
+      "current_path": "outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01\\review_repair_pool.json",
+      "baseline_hash": "f2c8508f2c1ddfc625a6195644038b677754207aad75ff8bc3b8d42d2e6ce169",
+      "current_hash": "f2c8508f2c1ddfc625a6195644038b677754207aad75ff8bc3b8d42d2e6ce169",
+      "canonical_hash": "f2c8508f2c1ddfc625a6195644038b677754207aad75ff8bc3b8d42d2e6ce169",
+      "equality": true,
+      "mismatch_json_paths": [],
+      "mismatch_reason": "",
+      "ignored_field_count": 0,
+      "artifact": "review_repair_pool.json"
+    }
+  ]
+}

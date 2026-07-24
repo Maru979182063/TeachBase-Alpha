@@ -1,0 +1,19 @@
+{
+  "schema_version": "pipeline_baseline_metrics.v0.2",
+  "metrics": {
+    "blocks": 51,
+    "reading_blocks": 33,
+    "nodes": 8,
+    "legacy_bridge_ready_count": 8,
+    "review_repair_pool_count": 0,
+    "node_summary": {
+      "ready": 8,
+      "needs_review": 0,
+      "quarantined": 0,
+      "question_nodes": 8,
+      "knowledge_nodes": 0,
+      "multi_fragment_nodes": 8,
+      "cross_page_nodes": 1
+    }
+  }
+}

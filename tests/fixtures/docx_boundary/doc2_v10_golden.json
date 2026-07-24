@@ -1,0 +1,48 @@
+{
+  "expected_question_count": 76,
+  "expected_question_flow_status": "bulk_ready",
+  "expected_document_content_status": "partial",
+  "expected_quarantined_block_ids": ["b_000226"],
+  "expected_first_candidate_id": "qb_b_000027",
+  "forbidden_candidate_start_block_ids": [
+    "b_000002",
+    "b_000003",
+    "b_000004",
+    "b_000017",
+    "b_000022",
+    "b_000023"
+  ],
+  "forbidden_candidate_ids": ["qb_b_000088"],
+  "expected_boundaries": {
+    "qb_b_000027": ["b_000027", "b_000029"],
+    "qb_b_000047": ["b_000047", "b_000055"],
+    "qb_b_000068": ["b_000068", "b_000068"],
+    "qb_b_000079": ["b_000079", "b_000081"],
+    "qb_b_000082": ["b_000082", "b_000088"],
+    "qb_b_000089": ["b_000089", "b_000096"],
+    "qb_b_000219": ["b_000219", "b_000223"],
+    "qb_b_000229": ["b_000229", "b_000230"],
+    "qb_b_000287": ["b_000287", "b_000288"],
+    "qb_b_000308": ["b_000308", "b_000312"]
+  },
+  "expected_question_block_roles": {
+    "b_000082": "question_start",
+    "b_000083": "shared_material",
+    "b_000084": "analysis",
+    "b_000085": "solution",
+    "b_000086": "solution",
+    "b_000087": "internal_heading",
+    "b_000088": "prompt"
+  },
+  "expected_section_scopes": {
+    "b_000087": "question_internal",
+    "b_000227": "question_group",
+    "b_000228": "assessment_type"
+  },
+  "expected_semantic_boundary_metrics": {
+    "context_dependent_orphan_question_count": 0,
+    "question_internal_heading_split_count": 0,
+    "unresolved_section_scope_count": 0,
+    "shared_material_relation_missing_count": 0
+  }
+}

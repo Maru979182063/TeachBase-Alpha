@@ -1,0 +1,639 @@
+{
+  "schema": "semantic_nodes_v0.3",
+  "nodes": [
+    {
+      "node_id": "english_q_001",
+      "node_type": "question",
+      "source": "semantic_v03",
+      "fragments": [
+        {
+          "page": 5,
+          "bbox_px": [
+            227,
+            455,
+            2254,
+            805
+          ],
+          "role": "question_body",
+          "block_ids": [
+            "english_rb00001"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 5,
+          "bbox_px": [
+            257,
+            826,
+            739,
+            918
+          ],
+          "role": "answer_block",
+          "block_ids": [
+            "english_rb00002"
+          ],
+          "flags": [
+            "answer_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 5,
+          "bbox_px": [
+            227,
+            944,
+            2251,
+            1103
+          ],
+          "role": "analysis_block",
+          "block_ids": [
+            "english_rb00003"
+          ],
+          "flags": [
+            "analysis_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 5,
+          "bbox_px": [
+            257,
+            1132,
+            1906,
+            1224
+          ],
+          "role": "translation_block",
+          "block_ids": [
+            "english_rb00004"
+          ],
+          "flags": [
+            "translation_like",
+            "reading_block"
+          ]
+        }
+      ],
+      "review_status": "AUDITED_READY",
+      "text_stub": "english p5 visual line y=455-509\nenglish p5 visual line y=557-611\nenglish p5 visual line y=659-716\nenglish p5 visual line y=771-805\nenglish p5 visual line y=842-901\nenglish p5 visual line y=944-1005\nenglish p5 visual line y=1048-1103\nenglish p5 visual line y=1149-1207"
+    },
+    {
+      "node_id": "english_q_002",
+      "node_type": "question",
+      "source": "semantic_v03",
+      "fragments": [
+        {
+          "page": 5,
+          "bbox_px": [
+            227,
+            1238,
+            1816,
+            1330
+          ],
+          "role": "question_body",
+          "block_ids": [
+            "english_rb00005"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 5,
+          "bbox_px": [
+            257,
+            1336,
+            703,
+            1428
+          ],
+          "role": "answer_block",
+          "block_ids": [
+            "english_rb00006"
+          ],
+          "flags": [
+            "answer_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 5,
+          "bbox_px": [
+            257,
+            1438,
+            2068,
+            1530
+          ],
+          "role": "analysis_block",
+          "block_ids": [
+            "english_rb00007"
+          ],
+          "flags": [
+            "analysis_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 5,
+          "bbox_px": [
+            257,
+            1539,
+            1156,
+            1631
+          ],
+          "role": "translation_block",
+          "block_ids": [
+            "english_rb00008"
+          ],
+          "flags": [
+            "translation_like",
+            "reading_block"
+          ]
+        }
+      ],
+      "review_status": "AUDITED_READY",
+      "text_stub": "english p5 visual line y=1255-1312\nenglish p5 visual line y=1351-1412\nenglish p5 visual line y=1453-1514\nenglish p5 visual line y=1555-1614"
+    },
+    {
+      "node_id": "english_q_003",
+      "node_type": "question",
+      "source": "semantic_v03",
+      "fragments": [
+        {
+          "page": 5,
+          "bbox_px": [
+            224,
+            1745,
+            2254,
+            2097
+          ],
+          "role": "question_body",
+          "block_ids": [
+            "english_rb00009"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 5,
+          "bbox_px": [
+            257,
+            2118,
+            784,
+            2210
+          ],
+          "role": "answer_block",
+          "block_ids": [
+            "english_rb00010"
+          ],
+          "flags": [
+            "answer_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 5,
+          "bbox_px": [
+            227,
+            2234,
+            2245,
+            2393
+          ],
+          "role": "analysis_block",
+          "block_ids": [
+            "english_rb00011"
+          ],
+          "flags": [
+            "analysis_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 5,
+          "bbox_px": [
+            257,
+            2422,
+            1858,
+            2514
+          ],
+          "role": "translation_block",
+          "block_ids": [
+            "english_rb00012"
+          ],
+          "flags": [
+            "translation_like",
+            "reading_block"
+          ]
+        }
+      ],
+      "review_status": "AUDITED_READY",
+      "text_stub": "english p5 visual line y=1745-1797\nenglish p5 visual line y=1847-1901\nenglish p5 visual line y=1949-2006\nenglish p5 visual line y=2051-2097\nenglish p5 visual line y=2134-2193\nenglish p5 visual line y=2234-2295\nenglish p5 visual line y=2338-2393\nenglish p5 visual line y=2438-2497"
+    },
+    {
+      "node_id": "english_q_004",
+      "node_type": "question",
+      "source": "semantic_v03",
+      "fragments": [
+        {
+          "page": 5,
+          "bbox_px": [
+            227,
+            2545,
+            2254,
+            2691
+          ],
+          "role": "question_body",
+          "block_ids": [
+            "english_rb00013"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 5,
+          "bbox_px": [
+            257,
+            2712,
+            820,
+            2804
+          ],
+          "role": "answer_block",
+          "block_ids": [
+            "english_rb00014"
+          ],
+          "flags": [
+            "answer_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 5,
+          "bbox_px": [
+            227,
+            2830,
+            2245,
+            2989
+          ],
+          "role": "analysis_block",
+          "block_ids": [
+            "english_rb00015"
+          ],
+          "flags": [
+            "analysis_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 5,
+          "bbox_px": [
+            257,
+            3016,
+            2008,
+            3108
+          ],
+          "role": "translation_block",
+          "block_ids": [
+            "english_rb00016"
+          ],
+          "flags": [
+            "translation_like",
+            "reading_block"
+          ]
+        }
+      ],
+      "review_status": "AUDITED_READY",
+      "text_stub": "english p5 visual line y=2545-2602\nenglish p5 visual line y=2645-2691\nenglish p5 visual line y=2728-2787\nenglish p5 visual line y=2830-2889\nenglish p5 visual line y=2930-2989\nenglish p5 visual line y=3032-3091"
+    },
+    {
+      "node_id": "english_q_005",
+      "node_type": "question",
+      "source": "semantic_v03",
+      "fragments": [
+        {
+          "page": 5,
+          "bbox_px": [
+            227,
+            3121,
+            2254,
+            3213
+          ],
+          "role": "question_body",
+          "block_ids": [
+            "english_rb00017"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block",
+            "near_page_bottom"
+          ]
+        },
+        {
+          "page": 6,
+          "bbox_px": [
+            227,
+            265,
+            1360,
+            357
+          ],
+          "role": "body_continuation",
+          "block_ids": [
+            "english_rb00018"
+          ],
+          "flags": [
+            "page_top_continuation",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 6,
+          "bbox_px": [
+            257,
+            349,
+            610,
+            441
+          ],
+          "role": "answer_block",
+          "block_ids": [
+            "english_rb00019"
+          ],
+          "flags": [
+            "answer_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 6,
+          "bbox_px": [
+            236,
+            467,
+            2254,
+            730
+          ],
+          "role": "analysis_block",
+          "block_ids": [
+            "english_rb00020"
+          ],
+          "flags": [
+            "analysis_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 6,
+          "bbox_px": [
+            230,
+            756,
+            406,
+            848
+          ],
+          "role": "translation_block",
+          "block_ids": [
+            "english_rb00021"
+          ],
+          "flags": [
+            "translation_like",
+            "reading_block"
+          ]
+        }
+      ],
+      "review_status": "AUDITED_READY",
+      "text_stub": "english p5 visual line y=3137-3196\nenglish p6 visual line y=294-328\nenglish p6 visual line y=365-424\nenglish p6 visual line y=467-526\nenglish p6 visual line y=571-628\nenglish p6 visual line y=671-730\nenglish p6 visual line y=775-811\nenglish p6 visual line y=805-828"
+    },
+    {
+      "node_id": "english_q_006",
+      "node_type": "question",
+      "source": "semantic_v03",
+      "fragments": [
+        {
+          "page": 6,
+          "bbox_px": [
+            224,
+            878,
+            2254,
+            1024
+          ],
+          "role": "question_body",
+          "block_ids": [
+            "english_rb00022"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 6,
+          "bbox_px": [
+            257,
+            1045,
+            640,
+            1137
+          ],
+          "role": "answer_block",
+          "block_ids": [
+            "english_rb00023"
+          ],
+          "flags": [
+            "answer_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 6,
+          "bbox_px": [
+            230,
+            1163,
+            2239,
+            1322
+          ],
+          "role": "analysis_block",
+          "block_ids": [
+            "english_rb00024"
+          ],
+          "flags": [
+            "analysis_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 6,
+          "bbox_px": [
+            257,
+            1351,
+            1606,
+            1443
+          ],
+          "role": "translation_block",
+          "block_ids": [
+            "english_rb00025"
+          ],
+          "flags": [
+            "translation_like",
+            "reading_block"
+          ]
+        }
+      ],
+      "review_status": "AUDITED_READY",
+      "text_stub": "english p6 visual line y=878-934\nenglish p6 visual line y=978-1024\nenglish p6 visual line y=1061-1120\nenglish p6 visual line y=1163-1222\nenglish p6 visual line y=1265-1322\nenglish p6 visual line y=1367-1426"
+    },
+    {
+      "node_id": "english_q_007",
+      "node_type": "question",
+      "source": "semantic_v03",
+      "fragments": [
+        {
+          "page": 6,
+          "bbox_px": [
+            224,
+            1472,
+            2254,
+            1618
+          ],
+          "role": "question_body",
+          "block_ids": [
+            "english_rb00026"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 6,
+          "bbox_px": [
+            257,
+            1641,
+            751,
+            1733
+          ],
+          "role": "answer_block",
+          "block_ids": [
+            "english_rb00027"
+          ],
+          "flags": [
+            "answer_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 6,
+          "bbox_px": [
+            257,
+            1741,
+            2245,
+            1833
+          ],
+          "role": "analysis_block",
+          "block_ids": [
+            "english_rb00028"
+          ],
+          "flags": [
+            "analysis_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 6,
+          "bbox_px": [
+            257,
+            1843,
+            1729,
+            1935
+          ],
+          "role": "translation_block",
+          "block_ids": [
+            "english_rb00029"
+          ],
+          "flags": [
+            "translation_like",
+            "reading_block"
+          ]
+        }
+      ],
+      "review_status": "AUDITED_READY",
+      "text_stub": "english p6 visual line y=1472-1528\nenglish p6 visual line y=1584-1618\nenglish p6 visual line y=1657-1716\nenglish p6 visual line y=1757-1816\nenglish p6 visual line y=1859-1918"
+    },
+    {
+      "node_id": "english_q_008",
+      "node_type": "question",
+      "source": "semantic_v03",
+      "fragments": [
+        {
+          "page": 6,
+          "bbox_px": [
+            224,
+            1965,
+            2254,
+            2112
+          ],
+          "role": "question_body",
+          "block_ids": [
+            "english_rb00030"
+          ],
+          "flags": [
+            "possible_question_start",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 6,
+          "bbox_px": [
+            257,
+            2133,
+            793,
+            2225
+          ],
+          "role": "answer_block",
+          "block_ids": [
+            "english_rb00031"
+          ],
+          "flags": [
+            "answer_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 6,
+          "bbox_px": [
+            227,
+            2251,
+            2251,
+            2410
+          ],
+          "role": "analysis_block",
+          "block_ids": [
+            "english_rb00032"
+          ],
+          "flags": [
+            "analysis_like",
+            "reading_block"
+          ]
+        },
+        {
+          "page": 6,
+          "bbox_px": [
+            257,
+            2437,
+            2107,
+            2529
+          ],
+          "role": "translation_block",
+          "block_ids": [
+            "english_rb00033"
+          ],
+          "flags": [
+            "translation_like",
+            "reading_block"
+          ]
+        }
+      ],
+      "review_status": "AUDITED_READY",
+      "text_stub": "english p6 visual line y=1965-2022\nenglish p6 visual line y=2065-2112\nenglish p6 visual line y=2149-2208\nenglish p6 visual line y=2251-2310\nenglish p6 visual line y=2355-2410\nenglish p6 visual line y=2453-2512"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+﻿{
+    "schema_version":  "pipeline_control_plane_test_results.v0.1",
+    "generated_at":  "2026-07-14T07:53:37.0777475Z",
+    "commands":  [
+                     {
+                         "command":  "python tools/validate_pipeline_registry.py --json",
+                         "exit_code":  0,
+                         "output":  "{\r\n  \"schema_version\": \"pipeline_registry_validation_result.v0.1\",\r\n  \"registry_path\": \"config\\\\pipeline_registry.yaml\",\r\n  \"flags_path\": \"config\\\\pipeline_feature_flags.yaml\",\r\n  \"pipeline_count\": 2,\r\n  \"error_count\": 0,\r\n  \"warning_count\": 0,\r\n  \"errors\": [],\r\n  \"warnings\": [],\r\n  \"ok\": true\r\n}"
+                     },
+                     {
+                         "command":  "python tests/test_pipeline_registry.py",
+                         "exit_code":  0,
+                         "output":  "python.exe : ...\r\nAt line:8 char:15\r\n+ $unitOutput = \u0026 python tests/test_pipeline_registry.py 2\u003e\u00261\r\n+               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (...:String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError\r\n \r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.006s\r\n\r\nOK"
+                     }
+                 ],
+    "passed":  true
+}

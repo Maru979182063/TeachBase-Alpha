@@ -1,0 +1,309 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "render_instruction_plan.schema.json",
+  "title": "English Text-First Render Instruction Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "doc_id",
+    "source_packet_id",
+    "source_group_id",
+    "planner_version",
+    "plan_status",
+    "operations",
+    "binding_decisions",
+    "review_requirements"
+  ],
+  "properties": {
+    "schema": {
+      "const": "render_instruction_plan_v0.1"
+    },
+    "doc_id": {
+      "type": "string"
+    },
+    "source_packet_id": {
+      "type": "string"
+    },
+    "source_group_id": {
+      "type": "string"
+    },
+    "planner_version": {
+      "type": "string"
+    },
+    "plan_status": {
+      "type": "string",
+      "enum": [
+        "PLAN_READY",
+        "PLAN_NEEDS_REVIEW",
+        "PLAN_BLOCKED"
+      ]
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/operation"
+      }
+    },
+    "layout_sections": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/layoutSection"
+      }
+    },
+    "visual_recovered_sections": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/visualRecoveredSection"
+      }
+    },
+    "binding_decisions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "parent_context",
+        "stimulus",
+        "visual_surface",
+        "writing_surface"
+      ],
+      "properties": {
+        "parent_context": {
+          "$ref": "#/$defs/bindingDecision"
+        },
+        "stimulus": {
+          "$ref": "#/$defs/bindingDecision"
+        },
+        "visual_surface": {
+          "$ref": "#/$defs/bindingDecision"
+        },
+        "writing_surface": {
+          "$ref": "#/$defs/bindingDecision"
+        }
+      }
+    },
+    "review_requirements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/reviewRequirement"
+      }
+    }
+  },
+  "$defs": {
+    "layoutSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "section_id",
+        "display_area",
+        "source_fields",
+        "render_as",
+        "reason"
+      ],
+      "properties": {
+        "section_id": {
+          "type": "string"
+        },
+        "display_area": {
+          "type": "string",
+          "enum": [
+            "stem_markdown",
+            "answer_markdown",
+            "analysis_markdown",
+            "translation_markdown"
+          ]
+        },
+        "source_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "render_as": {
+          "type": "string",
+          "enum": [
+            "source_markdown",
+            "paragraph",
+            "list",
+            "table",
+            "supplement",
+            "surface"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "visualRecoveredSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "section_id",
+        "display_area",
+        "render_as",
+        "source_page_refs",
+        "bbox_hint",
+        "recovered_markdown",
+        "confidence",
+        "recovery_reason"
+      ],
+      "properties": {
+        "section_id": {
+          "type": "string"
+        },
+        "display_area": {
+          "type": "string",
+          "enum": [
+            "stem_markdown",
+            "answer_markdown",
+            "analysis_markdown",
+            "translation_markdown"
+          ]
+        },
+        "render_as": {
+          "type": "string",
+          "enum": [
+            "source_markdown",
+            "paragraph",
+            "list",
+            "table",
+            "supplement",
+            "surface"
+          ]
+        },
+        "source_page_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "bbox_hint": {
+          "type": "string"
+        },
+        "recovered_markdown": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "recovery_reason": {
+          "type": "string"
+        }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "target_field",
+        "source_fields",
+        "source_refs",
+        "reason"
+      ],
+      "properties": {
+        "op": {
+          "type": "string",
+          "enum": [
+            "copy_field",
+            "merge_fields",
+            "move_field",
+            "attach_parent_context",
+            "attach_stimulus",
+            "attach_visual_surface",
+            "attach_writing_surface",
+            "render_table_from_existing_rows",
+            "preserve_material_only",
+            "mark_review_required"
+          ]
+        },
+        "target_field": {
+          "type": "string"
+        },
+        "source_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "bindingDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "resolved_refs",
+        "asset_refs",
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "resolved_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "asset_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "BOUND",
+            "NOT_REQUIRED",
+            "UNRESOLVED",
+            "SOURCE_IMAGE_REQUIRED"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "reviewRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message",
+        "source_refs"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

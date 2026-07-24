@@ -1,0 +1,528 @@
+{
+  "english_q_001": {
+    "fragment_crops": [
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_001\\fragment_01_p005_question_body.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_001\\fragment_02_p005_answer_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_001\\fragment_03_p005_analysis_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_001\\fragment_04_p005_translation_block.png"
+    ],
+    "fragment_records": [
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_001\\fragment_01_p005_question_body.png",
+        "page": 5,
+        "role": "question_body",
+        "bbox_px": [
+          227,
+          455,
+          2254,
+          805
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_001\\fragment_02_p005_answer_block.png",
+        "page": 5,
+        "role": "answer_block",
+        "bbox_px": [
+          257,
+          826,
+          739,
+          918
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_001\\fragment_03_p005_analysis_block.png",
+        "page": 5,
+        "role": "analysis_block",
+        "bbox_px": [
+          227,
+          944,
+          2251,
+          1103
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_001\\fragment_04_p005_translation_block.png",
+        "page": 5,
+        "role": "translation_block",
+        "bbox_px": [
+          257,
+          1132,
+          1906,
+          1224
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      }
+    ],
+    "review_canvas": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_001\\review_canvas.png",
+    "question_composite": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_001\\review_canvas.png"
+  },
+  "english_q_002": {
+    "fragment_crops": [
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_002\\fragment_01_p005_question_body.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_002\\fragment_02_p005_answer_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_002\\fragment_03_p005_analysis_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_002\\fragment_04_p005_translation_block.png"
+    ],
+    "fragment_records": [
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_002\\fragment_01_p005_question_body.png",
+        "page": 5,
+        "role": "question_body",
+        "bbox_px": [
+          227,
+          1238,
+          1816,
+          1330
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_002\\fragment_02_p005_answer_block.png",
+        "page": 5,
+        "role": "answer_block",
+        "bbox_px": [
+          257,
+          1336,
+          703,
+          1428
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_002\\fragment_03_p005_analysis_block.png",
+        "page": 5,
+        "role": "analysis_block",
+        "bbox_px": [
+          257,
+          1438,
+          2068,
+          1530
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_002\\fragment_04_p005_translation_block.png",
+        "page": 5,
+        "role": "translation_block",
+        "bbox_px": [
+          257,
+          1539,
+          1156,
+          1631
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      }
+    ],
+    "review_canvas": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_002\\review_canvas.png",
+    "question_composite": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_002\\review_canvas.png"
+  },
+  "english_q_003": {
+    "fragment_crops": [
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_003\\fragment_01_p005_question_body.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_003\\fragment_02_p005_answer_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_003\\fragment_03_p005_analysis_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_003\\fragment_04_p005_translation_block.png"
+    ],
+    "fragment_records": [
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_003\\fragment_01_p005_question_body.png",
+        "page": 5,
+        "role": "question_body",
+        "bbox_px": [
+          224,
+          1745,
+          2254,
+          2097
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_003\\fragment_02_p005_answer_block.png",
+        "page": 5,
+        "role": "answer_block",
+        "bbox_px": [
+          257,
+          2118,
+          784,
+          2210
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_003\\fragment_03_p005_analysis_block.png",
+        "page": 5,
+        "role": "analysis_block",
+        "bbox_px": [
+          227,
+          2234,
+          2245,
+          2393
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_003\\fragment_04_p005_translation_block.png",
+        "page": 5,
+        "role": "translation_block",
+        "bbox_px": [
+          257,
+          2422,
+          1858,
+          2514
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      }
+    ],
+    "review_canvas": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_003\\review_canvas.png",
+    "question_composite": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_003\\review_canvas.png"
+  },
+  "english_q_004": {
+    "fragment_crops": [
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_004\\fragment_01_p005_question_body.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_004\\fragment_02_p005_answer_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_004\\fragment_03_p005_analysis_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_004\\fragment_04_p005_translation_block.png"
+    ],
+    "fragment_records": [
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_004\\fragment_01_p005_question_body.png",
+        "page": 5,
+        "role": "question_body",
+        "bbox_px": [
+          227,
+          2545,
+          2254,
+          2691
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_004\\fragment_02_p005_answer_block.png",
+        "page": 5,
+        "role": "answer_block",
+        "bbox_px": [
+          257,
+          2712,
+          820,
+          2804
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_004\\fragment_03_p005_analysis_block.png",
+        "page": 5,
+        "role": "analysis_block",
+        "bbox_px": [
+          227,
+          2830,
+          2245,
+          2989
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_004\\fragment_04_p005_translation_block.png",
+        "page": 5,
+        "role": "translation_block",
+        "bbox_px": [
+          257,
+          3016,
+          2008,
+          3108
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      }
+    ],
+    "review_canvas": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_004\\review_canvas.png",
+    "question_composite": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_004\\review_canvas.png"
+  },
+  "english_q_005": {
+    "fragment_crops": [
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_005\\fragment_01_p005_question_body.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_005\\fragment_02_p006_body_continuation.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_005\\fragment_03_p006_answer_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_005\\fragment_04_p006_analysis_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_005\\fragment_05_p006_translation_block.png"
+    ],
+    "fragment_records": [
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_005\\fragment_01_p005_question_body.png",
+        "page": 5,
+        "role": "question_body",
+        "bbox_px": [
+          227,
+          3121,
+          2254,
+          3213
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_005\\fragment_02_p006_body_continuation.png",
+        "page": 6,
+        "role": "body_continuation",
+        "bbox_px": [
+          227,
+          265,
+          1360,
+          357
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_005\\fragment_03_p006_answer_block.png",
+        "page": 6,
+        "role": "answer_block",
+        "bbox_px": [
+          257,
+          349,
+          610,
+          441
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_005\\fragment_04_p006_analysis_block.png",
+        "page": 6,
+        "role": "analysis_block",
+        "bbox_px": [
+          236,
+          467,
+          2254,
+          730
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_005\\fragment_05_p006_translation_block.png",
+        "page": 6,
+        "role": "translation_block",
+        "bbox_px": [
+          230,
+          756,
+          406,
+          848
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      }
+    ],
+    "review_canvas": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_005\\review_canvas.png",
+    "question_composite": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_005\\review_canvas.png"
+  },
+  "english_q_006": {
+    "fragment_crops": [
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_006\\fragment_01_p006_question_body.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_006\\fragment_02_p006_answer_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_006\\fragment_03_p006_analysis_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_006\\fragment_04_p006_translation_block.png"
+    ],
+    "fragment_records": [
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_006\\fragment_01_p006_question_body.png",
+        "page": 6,
+        "role": "question_body",
+        "bbox_px": [
+          224,
+          878,
+          2254,
+          1024
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_006\\fragment_02_p006_answer_block.png",
+        "page": 6,
+        "role": "answer_block",
+        "bbox_px": [
+          257,
+          1045,
+          640,
+          1137
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_006\\fragment_03_p006_analysis_block.png",
+        "page": 6,
+        "role": "analysis_block",
+        "bbox_px": [
+          230,
+          1163,
+          2239,
+          1322
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_006\\fragment_04_p006_translation_block.png",
+        "page": 6,
+        "role": "translation_block",
+        "bbox_px": [
+          257,
+          1351,
+          1606,
+          1443
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      }
+    ],
+    "review_canvas": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_006\\review_canvas.png",
+    "question_composite": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_006\\review_canvas.png"
+  },
+  "english_q_007": {
+    "fragment_crops": [
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_007\\fragment_01_p006_question_body.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_007\\fragment_02_p006_answer_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_007\\fragment_03_p006_analysis_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_007\\fragment_04_p006_translation_block.png"
+    ],
+    "fragment_records": [
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_007\\fragment_01_p006_question_body.png",
+        "page": 6,
+        "role": "question_body",
+        "bbox_px": [
+          224,
+          1472,
+          2254,
+          1618
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_007\\fragment_02_p006_answer_block.png",
+        "page": 6,
+        "role": "answer_block",
+        "bbox_px": [
+          257,
+          1641,
+          751,
+          1733
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_007\\fragment_03_p006_analysis_block.png",
+        "page": 6,
+        "role": "analysis_block",
+        "bbox_px": [
+          257,
+          1741,
+          2245,
+          1833
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_007\\fragment_04_p006_translation_block.png",
+        "page": 6,
+        "role": "translation_block",
+        "bbox_px": [
+          257,
+          1843,
+          1729,
+          1935
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      }
+    ],
+    "review_canvas": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_007\\review_canvas.png",
+    "question_composite": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_007\\review_canvas.png"
+  },
+  "english_q_008": {
+    "fragment_crops": [
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_008\\fragment_01_p006_question_body.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_008\\fragment_02_p006_answer_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_008\\fragment_03_p006_analysis_block.png",
+      "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_008\\fragment_04_p006_translation_block.png"
+    ],
+    "fragment_records": [
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_008\\fragment_01_p006_question_body.png",
+        "page": 6,
+        "role": "question_body",
+        "bbox_px": [
+          224,
+          1965,
+          2254,
+          2112
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_008\\fragment_02_p006_answer_block.png",
+        "page": 6,
+        "role": "answer_block",
+        "bbox_px": [
+          257,
+          2133,
+          793,
+          2225
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_008\\fragment_03_p006_analysis_block.png",
+        "page": 6,
+        "role": "analysis_block",
+        "bbox_px": [
+          227,
+          2251,
+          2251,
+          2410
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      },
+      {
+        "path": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_008\\fragment_04_p006_translation_block.png",
+        "page": 6,
+        "role": "translation_block",
+        "bbox_px": [
+          257,
+          2437,
+          2107,
+          2529
+        ],
+        "page_width": 2480,
+        "page_height": 3507
+      }
+    ],
+    "review_canvas": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_008\\review_canvas.png",
+    "question_composite": "outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6\\docs\\english\\crops\\english_q_008\\review_canvas.png"
+  }
+}

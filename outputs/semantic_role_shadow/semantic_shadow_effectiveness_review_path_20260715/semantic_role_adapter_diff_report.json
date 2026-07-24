@@ -1,0 +1,132 @@
+{
+  "schema_version": "semantic_role_adapter_diff_report_shadow.v0.2",
+  "adapter_mode": "shadow_only",
+  "business_mutation_allowed": false,
+  "diff_count": 3,
+  "metrics": {
+    "node_type_shadow_role_diffs": 3,
+    "route_fallbacks": 1,
+    "needs_manual_review": 2,
+    "answer_target_missing": 0
+  },
+  "rows": [
+    {
+      "node_id": "synthetic_ready_q_001",
+      "current_node_type": "question",
+      "current_review_status": "AUDITED_READY",
+      "shadow_role": "exercise",
+      "presentation_kind": "text",
+      "disposition_candidate": "processable",
+      "route_candidate": "question_splitter",
+      "route_availability": "implemented",
+      "effective_route_candidate": "question_splitter",
+      "confidence": 0.82,
+      "hard_constraints_passed": true,
+      "relations": [],
+      "review_reasons": [],
+      "needs_role_review": false,
+      "business_mutation_allowed": false,
+      "diff_reason": "type_role_semantic_layer_diff"
+    },
+    {
+      "node_id": "synthetic_review_q_002",
+      "current_node_type": "question",
+      "current_review_status": "NEEDS_REVIEW",
+      "shadow_role": "exercise",
+      "presentation_kind": "text",
+      "disposition_candidate": "structurally_blocked",
+      "route_candidate": "question_splitter",
+      "route_availability": "implemented",
+      "effective_route_candidate": "review_only",
+      "confidence": 0.82,
+      "hard_constraints_passed": false,
+      "relations": [],
+      "review_reasons": [
+        "page_bottom_may_continue"
+      ],
+      "needs_role_review": true,
+      "business_mutation_allowed": false,
+      "diff_reason": "route_fallback_by_availability_or_constraints"
+    },
+    {
+      "node_id": "synthetic_orphan_003",
+      "current_node_type": "quarantined_orphan",
+      "current_review_status": "QUARANTINED",
+      "shadow_role": "unknown",
+      "presentation_kind": "unknown",
+      "disposition_candidate": "structurally_blocked",
+      "route_candidate": "review_only",
+      "route_availability": "implemented",
+      "effective_route_candidate": "review_only",
+      "confidence": 0.35,
+      "hard_constraints_passed": false,
+      "relations": [],
+      "review_reasons": [
+        "orphan_unresolved"
+      ],
+      "needs_role_review": true,
+      "business_mutation_allowed": false,
+      "diff_reason": "type_role_semantic_layer_diff"
+    }
+  ],
+  "diffs": [
+    {
+      "node_id": "synthetic_ready_q_001",
+      "current_node_type": "question",
+      "current_review_status": "AUDITED_READY",
+      "shadow_role": "exercise",
+      "presentation_kind": "text",
+      "disposition_candidate": "processable",
+      "route_candidate": "question_splitter",
+      "route_availability": "implemented",
+      "effective_route_candidate": "question_splitter",
+      "confidence": 0.82,
+      "hard_constraints_passed": true,
+      "relations": [],
+      "review_reasons": [],
+      "needs_role_review": false,
+      "business_mutation_allowed": false,
+      "diff_reason": "type_role_semantic_layer_diff"
+    },
+    {
+      "node_id": "synthetic_review_q_002",
+      "current_node_type": "question",
+      "current_review_status": "NEEDS_REVIEW",
+      "shadow_role": "exercise",
+      "presentation_kind": "text",
+      "disposition_candidate": "structurally_blocked",
+      "route_candidate": "question_splitter",
+      "route_availability": "implemented",
+      "effective_route_candidate": "review_only",
+      "confidence": 0.82,
+      "hard_constraints_passed": false,
+      "relations": [],
+      "review_reasons": [
+        "page_bottom_may_continue"
+      ],
+      "needs_role_review": true,
+      "business_mutation_allowed": false,
+      "diff_reason": "route_fallback_by_availability_or_constraints"
+    },
+    {
+      "node_id": "synthetic_orphan_003",
+      "current_node_type": "quarantined_orphan",
+      "current_review_status": "QUARANTINED",
+      "shadow_role": "unknown",
+      "presentation_kind": "unknown",
+      "disposition_candidate": "structurally_blocked",
+      "route_candidate": "review_only",
+      "route_availability": "implemented",
+      "effective_route_candidate": "review_only",
+      "confidence": 0.35,
+      "hard_constraints_passed": false,
+      "relations": [],
+      "review_reasons": [
+        "orphan_unresolved"
+      ],
+      "needs_role_review": true,
+      "business_mutation_allowed": false,
+      "diff_reason": "type_role_semantic_layer_diff"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "group_field_relation_bundle.schema.json",
+  "type": "object",
+  "required": [
+    "schema",
+    "doc_id",
+    "prompt_version",
+    "normalized_records",
+    "projection_graph"
+  ],
+  "properties": {
+    "schema": {"const": "group_field_relation_bundle_v0.1"},
+    "doc_id": {"type": "string"},
+    "prompt_version": {"type": "string"},
+    "normalized_records": {
+      "type": "array",
+      "items": {"$ref": "normalized_group_record.schema.json"}
+    },
+    "projection_graph": {"$ref": "group_projection_graph.schema.json"}
+  },
+  "additionalProperties": false
+}
+

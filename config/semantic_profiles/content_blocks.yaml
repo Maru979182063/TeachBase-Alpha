@@ -1,0 +1,48 @@
+{
+  "schema_version": "semantic_content_blocks_v0.2",
+  "semantic_roles": {
+    "knowledge": {"default_route": "knowledge_transcription", "eligible_for_question_bank": false},
+    "worked_example": {"default_route": "example_transcription", "eligible_for_question_bank": "configurable"},
+    "exercise": {"default_route": "question_splitter", "eligible_for_question_bank": true},
+    "question_group": {"default_route": "group_splitter", "eligible_for_question_bank": true},
+    "source_material": {"default_route": "shared_material_preserve", "eligible_for_question_bank": false},
+    "answer_explanation": {"default_route": "answer_attachment", "eligible_for_question_bank": false},
+    "method_or_strategy": {"default_route": "knowledge_transcription", "eligible_for_question_bank": false},
+    "mixed": {"default_route": "secondary_visual_split", "eligible_for_question_bank": false},
+    "unknown": {"default_route": "review_only", "eligible_for_question_bank": false}
+  },
+  "presentation_kinds": {
+    "text": {},
+    "table": {},
+    "diagram": {},
+    "image_text_mixed": {},
+    "formula_heavy": {},
+    "handwritten": {},
+    "unknown": {}
+  },
+  "dispositions": {
+    "processable": {},
+    "noise": {},
+    "review_required": {},
+    "structurally_blocked": {}
+  },
+  "relation_types": {
+    "shared_material_for": {},
+    "answers": {},
+    "explains": {},
+    "continues": {},
+    "contains": {}
+  },
+  "routes": {
+    "knowledge_transcription": {},
+    "example_transcription": {},
+    "question_splitter": {},
+    "group_splitter": {},
+    "shared_material_preserve": {},
+    "answer_attachment": {},
+    "visual_asset_preserve": {},
+    "secondary_visual_split": {},
+    "review_only": {},
+    "noise": {}
+  }
+}

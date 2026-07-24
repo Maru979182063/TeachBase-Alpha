@@ -1,0 +1,1 @@
+python -m tools.split_v03_quick_debug --pdf "C:\Users\EDY\Documents\WXWork\1688857912801359\WeDrive\领世培优\领世一对一英语学科资料\高中英语\01标准化讲义\01暑假标准化讲义\高二暑假\语法\词法和句法基础梳理-教师版.pdf" --doc-key english --pages 5,6 --out C:\Users\EDY\Documents\教研基建\outputs\pipeline_baseline_snapshot\control_plane_20260714_v02\deterministic_english_mock_p5_6 --provider mock --max-vlm-calls 0

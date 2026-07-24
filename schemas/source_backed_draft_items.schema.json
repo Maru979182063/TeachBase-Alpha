@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "source_backed_draft_items.schema.json",
+  "type": "object",
+  "required": [
+    "schema",
+    "doc_id",
+    "builder_version",
+    "draft_items",
+    "summary"
+  ],
+  "properties": {
+    "schema": {"const": "source_backed_draft_items_v0.1"},
+    "doc_id": {"type": "string"},
+    "builder_version": {"type": "string"},
+    "draft_items": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/draft_item"}
+    },
+    "summary": {
+      "type": "object",
+      "required": [
+        "draft_count",
+        "direct_question_count",
+        "non_direct_count",
+        "missing_block_ref_count",
+        "warning_count"
+      ],
+      "properties": {
+        "draft_count": {"type": "integer"},
+        "direct_question_count": {"type": "integer"},
+        "non_direct_count": {"type": "integer"},
+        "missing_block_ref_count": {"type": "integer"},
+        "warning_count": {"type": "integer"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "ref_array": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "text_field": {
+      "type": "object",
+      "required": ["refs", "text", "missing_refs"],
+      "properties": {
+        "refs": {"$ref": "#/$defs/ref_array"},
+        "text": {"type": "string"},
+        "missing_refs": {"$ref": "#/$defs/ref_array"}
+      },
+      "additionalProperties": false
+    },
+    "draft_item": {
+      "type": "object",
+      "required": [
+        "draft_id",
+        "doc_id",
+        "source_group_id",
+        "record_kind",
+        "semantic_role",
+        "projection_target_hint",
+        "project_directly_to_question",
+        "fields",
+        "relations",
+        "source_refs",
+        "source_pages",
+        "page_image_refs",
+        "missing_fields",
+        "warnings",
+        "open_issues"
+      ],
+      "properties": {
+        "draft_id": {"type": "string"},
+        "doc_id": {"type": "string"},
+        "source_group_id": {"type": "string"},
+        "record_kind": {"type": "string"},
+        "semantic_role": {"type": "string"},
+        "projection_target_hint": {"type": "string"},
+        "project_directly_to_question": {"type": "boolean"},
+        "fields": {
+          "type": "object",
+          "required": [
+            "instruction",
+            "stem",
+            "options",
+            "passage",
+            "answer",
+            "analysis",
+            "translation",
+            "context",
+            "examples",
+            "visual",
+            "writing_surface",
+            "rubric",
+            "other_evidence"
+          ],
+          "properties": {
+            "instruction": {"$ref": "#/$defs/text_field"},
+            "stem": {"$ref": "#/$defs/text_field"},
+            "options": {"$ref": "#/$defs/text_field"},
+            "passage": {"$ref": "#/$defs/text_field"},
+            "answer": {"$ref": "#/$defs/text_field"},
+            "analysis": {"$ref": "#/$defs/text_field"},
+            "translation": {"$ref": "#/$defs/text_field"},
+            "context": {"$ref": "#/$defs/text_field"},
+            "examples": {"$ref": "#/$defs/text_field"},
+            "visual": {"$ref": "#/$defs/text_field"},
+            "writing_surface": {"$ref": "#/$defs/text_field"},
+            "rubric": {"$ref": "#/$defs/text_field"},
+            "other_evidence": {"$ref": "#/$defs/text_field"}
+          },
+          "additionalProperties": false
+        },
+        "relations": {
+          "type": "object",
+          "required": ["outgoing", "incoming", "overlap_resolutions"],
+          "properties": {
+            "outgoing": {"type": "array"},
+            "incoming": {"type": "array"},
+            "overlap_resolutions": {"type": "array"}
+          },
+          "additionalProperties": false
+        },
+        "source_refs": {"$ref": "#/$defs/ref_array"},
+        "source_pages": {
+          "type": "array",
+          "items": {"type": "integer"}
+        },
+        "page_image_refs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["page", "path", "exists"],
+            "properties": {
+              "page": {"type": "integer"},
+              "path": {"type": "string"},
+              "exists": {"type": "boolean"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "missing_fields": {"$ref": "#/$defs/ref_array"},
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "message", "refs"],
+            "properties": {
+              "code": {"type": "string"},
+              "message": {"type": "string"},
+              "refs": {"$ref": "#/$defs/ref_array"}
+            },
+            "additionalProperties": true
+          }
+        },
+        "open_issues": {
+          "type": "array",
+          "items": {"type": "object"}
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

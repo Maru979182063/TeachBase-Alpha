@@ -1,0 +1,47 @@
+﻿{
+    "schema_version":  "pipeline_isolation_late_business_files.v0.1",
+    "captured_at":  "2026-07-14T07:52:49.2708669Z",
+    "note":  "Files appeared as untracked business-pipeline files after control-plane branch creation; copied here, then stashed with pathspec only.",
+    "files":  [
+                  {
+                      "path":  "config/docx_native_pipeline_v01.yaml",
+                      "copied_to":  "outputs/pipeline_isolation_safety_20260714/late_business_files_after_control_branch/config/docx_native_pipeline_v01.yaml",
+                      "sha1_git_hash":  "41ff9f846d7258c3b7b62a7bcd9e3b258cf1e316",
+                      "sha256":  "97f971b3242f330ae6a90a9073d7221373224778ce39b93ae550a10302774e13",
+                      "length":  1106,
+                      "last_write_time_utc":  "2026-07-14T07:49:15.5588402Z"
+                  },
+                  {
+                      "path":  "config/english_image_pdf_text_first_v01.yaml",
+                      "copied_to":  "outputs/pipeline_isolation_safety_20260714/late_business_files_after_control_branch/config/english_image_pdf_text_first_v01.yaml",
+                      "sha1_git_hash":  "7a4d42d4b014c85bab67d40c20b4b8cdbfba5565",
+                      "sha256":  "71365997ce1bc92daea613b270247c67b08821854ca2b925dd8ebe50c9c5feeb",
+                      "length":  1191,
+                      "last_write_time_utc":  "2026-07-14T07:50:48.7861237Z"
+                  },
+                  {
+                      "path":  "tools/docx_native_pipeline_v01.py",
+                      "copied_to":  "outputs/pipeline_isolation_safety_20260714/late_business_files_after_control_branch/tools/docx_native_pipeline_v01.py",
+                      "sha1_git_hash":  "1c4aa7de7503c01fbeff6cf85ca0223c318b92cf",
+                      "sha256":  "89ab3c491d0d7c559ba59f276f70264d3ccaac825971da33b1f7d0a5c04198e0",
+                      "length":  46567,
+                      "last_write_time_utc":  "2026-07-14T07:51:47.3837597Z"
+                  },
+                  {
+                      "path":  "tools/english_text_first_evidence.py",
+                      "copied_to":  "outputs/pipeline_isolation_safety_20260714/late_business_files_after_control_branch/tools/english_text_first_evidence.py",
+                      "sha1_git_hash":  "b4d04ba4cd0e64b5c453f0c5f1410e44f8f4ad6d",
+                      "sha256":  "d4cef42789c2e22cbc008127aa568f551d2dcdc8a71ed29ef17de952f70bfad7",
+                      "length":  8871,
+                      "last_write_time_utc":  "2026-07-14T07:50:48.7866416Z"
+                  },
+                  {
+                      "path":  "tools/run_english_image_pdf_text_first_v01.py",
+                      "copied_to":  "outputs/pipeline_isolation_safety_20260714/late_business_files_after_control_branch/tools/run_english_image_pdf_text_first_v01.py",
+                      "sha1_git_hash":  "f018323c75ebf6b03f8da48d26f90f71cff242a6",
+                      "sha256":  "11deff76d185e06af666869ce60406216164648d33194bffd2a51b3d1f9d1844",
+                      "length":  21138,
+                      "last_write_time_utc":  "2026-07-14T07:50:48.7871606Z"
+                  }
+              ]
+}

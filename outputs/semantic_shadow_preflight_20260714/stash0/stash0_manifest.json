@@ -1,0 +1,34 @@
+{
+  "schema_version": "stash_preflight_record.v0.2",
+  "captured_at": "2026-07-14T08:09:40.664101+00:00",
+  "stash_ref": "stash@{0}",
+  "stash_commit_sha": "c2211f2b07f56313dd4c2c78a9ab6fbde764bf9e",
+  "stash_subject": "On chore/pipeline-isolation-control-plane: safety-reappeared-english-files-after-final-recheck-20260714",
+  "parents": [
+    "c2211f2b07f56313dd4c2c78a9ab6fbde764bf9e",
+    "b9dd441025fa41e6a44b2d3138ad3b0cb92fbad6",
+    "8158a45344e243cf799c14ef68a134f24eab2dd6",
+    "b7fc8daa74acebed894760f5097983e72c73f137"
+  ],
+  "tracked_file_count": 0,
+  "untracked_file_count": 2,
+  "file_count": 2,
+  "patch_path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\semantic_shadow_preflight_20260714\\stash0\\stash0.patch",
+  "file_list_path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\semantic_shadow_preflight_20260714\\stash0\\stash0_files.txt",
+  "files": [
+    {
+      "path": "config/english_image_pdf_text_first_v01.yaml",
+      "kind": "untracked",
+      "sha256": "71365997ce1bc92daea613b270247c67b08821854ca2b925dd8ebe50c9c5feeb",
+      "size_bytes": 1191,
+      "extracted_path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\semantic_shadow_preflight_20260714\\stash0\\extracted\\config\\english_image_pdf_text_first_v01.yaml"
+    },
+    {
+      "path": "tools/run_english_image_pdf_text_first_v01.py",
+      "kind": "untracked",
+      "sha256": "b59021f67c95ba80804add9a967f7ad1d0bba4fafeb0a7b4c23cb6cdaccb1cf4",
+      "size_bytes": 23243,
+      "extracted_path": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\semantic_shadow_preflight_20260714\\stash0\\extracted\\tools\\run_english_image_pdf_text_first_v01.py"
+    }
+  ]
+}

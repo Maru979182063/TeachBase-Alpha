@@ -1,0 +1,13 @@
+{
+  "schema_version": "semantic_role_adapter_metrics_shadow.v0.1",
+  "shadow_enabled": true,
+  "model_invoked": false,
+  "paid_model_invoked": false,
+  "assignments_count": 4,
+  "semantic_node_count": 3,
+  "audit_record_count": 3,
+  "legacy_bridge_question_count": 1,
+  "review_repair_pool_count": 2,
+  "adapter_observation_count": 3,
+  "diff_count": 0
+}

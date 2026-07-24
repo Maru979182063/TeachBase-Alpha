@@ -1,0 +1,42 @@
+{
+  "schema_version": "semantic_shadow_real_rerun_validation.v0.1",
+  "status": "PASS",
+  "paid_model_invoked": false,
+  "ready_path": {
+    "baseline_root": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\control_plane_20260714_v02\\deterministic_english_mock_p5_6",
+    "current_root": "outputs\\semantic_role_shadow_effectiveness_validation_20260715_rerun2\\ready_path_real_rerun\\deterministic_english_mock_p5_6",
+    "command": [
+      "C:\\Users\\EDY\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "-m",
+      "tools.split_v03_quick_debug",
+      "--pdf",
+      "C:\\Users\\EDY\\Documents\\WXWork\\1688857912801359\\WeDrive\\领世培优\\领世一对一英语学科资料\\高中英语\\01标准化讲义\\01暑假标准化讲义\\高二暑假\\语法\\词法和句法基础梳理-教师版.pdf",
+      "--doc-key",
+      "english",
+      "--pages",
+      "5,6",
+      "--out",
+      "outputs\\semantic_role_shadow_effectiveness_validation_20260715_rerun2\\ready_path_real_rerun\\deterministic_english_mock_p5_6",
+      "--provider",
+      "mock",
+      "--max-vlm-calls",
+      "0"
+    ],
+    "equality": true,
+    "compared_artifact_count": 5,
+    "report_path": "outputs\\semantic_role_shadow_effectiveness_validation_20260715_rerun2\\ready_path_real_rerun_non_interference_report.json"
+  },
+  "review_path": {
+    "baseline_root": "C:\\Users\\EDY\\Documents\\教研基建\\outputs\\pipeline_baseline_snapshot\\semantic_shadow_review_path_20260714_v01",
+    "current_root": "outputs\\semantic_role_shadow_effectiveness_validation_20260715_rerun2\\review_path_real_rerun\\semantic_shadow_review_path_20260714_v01",
+    "command": [
+      "C:\\Users\\EDY\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "tools/build_semantic_shadow_review_baseline.py",
+      "--out",
+      "outputs\\semantic_role_shadow_effectiveness_validation_20260715_rerun2\\review_path_real_rerun\\semantic_shadow_review_path_20260714_v01"
+    ],
+    "equality": true,
+    "compared_artifact_count": 5,
+    "report_path": "outputs\\semantic_role_shadow_effectiveness_validation_20260715_rerun2\\review_path_real_rerun_non_interference_report.json"
+  }
+}
