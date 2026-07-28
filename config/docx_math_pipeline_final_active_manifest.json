@@ -1,0 +1,90 @@
+{
+  "schema_version": "docx_math_pipeline_final_active_manifest.v0.1",
+  "active_pipeline_id": "docx_math_pipeline_final_v01",
+  "active_pipeline_name": "DOCX Math Native Final Pipeline",
+  "status": "experimental_final_candidate",
+  "entrypoint": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+  "config_path": "config/docx_math_pipeline_final_v01.yaml",
+  "owned_output_root": "outputs/docx_math_pipeline_final_v0_1",
+  "active_output_roots": [
+    "outputs/docx_math_pipeline_final_v0_1",
+    "outputs/docx_native_stage0_router_v0_1",
+    "outputs/docx_legacy_formula_recovery_v0_1",
+    "outputs/docx_native_formula_token_stream_v0_1",
+    "outputs/docx_run_math_normalizer_v0_1",
+    "outputs/docx_native_block_tagger_v0_1",
+    "outputs/docx_asset_role_visual_tagger_v0_1",
+    "outputs/docx_question_boundary_cutter_v0_1",
+    "outputs/docx_question_complexity_router_v0_1",
+    "outputs/docx_question_part_normalizer_v0_1",
+    "outputs/docx_question_part_long_normalizer_v0_1",
+    "outputs/docx_question_part_twostage_probe_v0_1",
+    "outputs/docx_math_source_backed_draft_builder_v0_1",
+    "outputs/docx_math_fullchain_orchestrator_v0_1",
+    "outputs/docx_math_question_refiner_v0_1",
+    "outputs/docx_math_long_composite_refiner_v0_1",
+    "outputs/docx_math_long_packet_assembler_v0_1",
+    "outputs/docx_math_refine_gate_repair_orchestrator_v0_1",
+    "outputs/docx_math_side_by_side_review_v0_1",
+    "outputs/docx_native_transcription_package_v0_1"
+  ],
+  "do_not_use_as_final": [
+    "tools/docx_math_pipeline_orchestrator_v01.py",
+    "tools/docx_question_grouper_v01.py",
+    "outputs/docx_question_grouper_v0_1",
+    "outputs/docx_math_pipeline_orchestrator_v0_1",
+    "outputs/docx_native_pipeline_v0_1",
+    "outputs/docx_native_model_segment_v0_1",
+    "outputs/docx_native_text_repair_model_v0_1",
+    "outputs/docx_native_boundary_resolver_v0_1"
+  ],
+  "boundary_node": {
+    "entrypoint": "tools/docx_question_boundary_cutter_v01.py",
+    "config_path": "config/docx_question_boundary_cutter_v01.yaml",
+    "system_prompt_path": "prompts/docx_question_boundary_cutter_v01.system.md",
+    "user_prompt_path": "prompts/docx_question_boundary_cutter_v01.user.md",
+    "owned_output_root": "outputs/docx_question_boundary_cutter_v0_1"
+  },
+  "complexity_router_node": {
+    "entrypoint": "tools/docx_question_complexity_router_v01.py",
+    "config_path": "config/docx_question_complexity_router_v01.yaml",
+    "owned_output_root": "outputs/docx_question_complexity_router_v0_1",
+    "model_node": false,
+    "role": "mechanical route bridge: normal_part_normalizer | long_part_normalizer | hard_fail"
+  },
+  "part_normalizer_nodes": {
+    "normal": {
+      "entrypoint": "tools/docx_question_part_normalizer_v01.py",
+      "config_path": "config/docx_question_part_normalizer_v01.yaml",
+      "system_prompt_path": "prompts/docx_question_part_normalizer_v01.system.md",
+      "user_prompt_path": "prompts/docx_question_part_normalizer_v01.user.md",
+      "owned_output_root": "outputs/docx_question_part_normalizer_v0_1",
+      "model_node": true,
+      "role": "per-question-group field normalization into stem/options/subquestions/answer/explanation/teaching_note/unknown"
+    },
+    "long": {
+      "entrypoint": "tools/docx_question_part_long_normalizer_v01.py",
+      "config_path": "config/docx_question_part_long_normalizer_v01.yaml",
+      "owned_output_root": "outputs/docx_question_part_long_normalizer_v0_1",
+      "model_node": true,
+      "backend": "tools/docx_question_part_twostage_probe_v01.py",
+      "role": "long-question zone-then-problem normalization, emitted back into the standard part normalizer contract"
+    }
+  },
+  "source_backed_draft_builder_node": {
+    "entrypoint": "tools/docx_math_source_backed_draft_builder_v01.py",
+    "owned_output_root": "outputs/docx_math_source_backed_draft_builder_v0_1",
+    "schema_path": "schemas/docx_math_source_backed_draft_items.schema.json",
+    "model_node": false,
+    "role": "mechanically builds source-backed draft items from normalized question parts, membership groups, block streams, and asset references"
+  },
+  "hard_gates": [
+    "stage0_router.handoff_manifest.status == READY_FOR_BLOCK_TAGGER",
+    "boundary_cutter.unassigned_candidate_block_count == 0",
+    "complexity_router.hard_fail_group_count == 0",
+    "part_normalizer_merge.blocking_issue_count == 0"
+  ],
+  "runtime_import_enabled": false,
+  "database_write_enabled": false,
+  "last_updated": "2026-07-27"
+}

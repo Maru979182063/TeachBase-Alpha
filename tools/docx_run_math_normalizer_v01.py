@@ -419,12 +419,21 @@ def block_has_run_script_formula(block: dict[str, Any]) -> bool:
     return False
 
 
+def stream_items(payload: dict[str, Any]) -> tuple[str, list[dict[str, Any]]]:
+    if isinstance(payload.get("blocks"), list):
+        return "blocks", payload["blocks"]
+    if isinstance(payload.get("paragraphs"), list):
+        return "paragraphs", payload["paragraphs"]
+    return "blocks", []
+
+
 def normalize_stream(payload: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
     out = json.loads(json.dumps(payload, ensure_ascii=False))
+    container_key, items = stream_items(out)
     actions: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
     touched_blocks = 0
-    for block in out.get("blocks") or []:
+    for block in items:
         if not block_has_run_script_formula(block):
             continue
         before = str(block.get("display_markdown") or "")
@@ -485,12 +494,15 @@ def normalize_stream(payload: dict[str, Any]) -> tuple[dict[str, Any], dict[str,
     out["normalization"] = {
         "schema": NORMALIZER_VERSION,
         "run_at": dt.datetime.now().isoformat(timespec="seconds"),
+        "stream_container": container_key,
         "changed_block_count": touched_blocks,
         "action_count": sum(len(item["actions"]) for item in actions),
         "skipped_block_count": len(skipped),
     }
     report = {
         "schema": NORMALIZER_VERSION + "_report",
+        "stream_container": container_key,
+        "input_item_count": len(items),
         "changed_block_count": touched_blocks,
         "action_count": sum(len(item["actions"]) for item in actions),
         "skipped_block_count": len(skipped),
@@ -557,7 +569,22 @@ def main() -> int:
     write_json(out_dir / "run_math_normalization_report.json", report)
     if args.probe_html:
         render_probe_html(report, out_dir / "index.html")
-    print(json.dumps({"run_id": run_id, "out_dir": str(out_dir), **normalized["normalization"]}, ensure_ascii=False, indent=2))
+    print(
+        json.dumps(
+            {
+                "run_id": run_id,
+                "out_dir": str(out_dir),
+                "artifacts": {
+                    "normalized_stream": str(out_dir / "normalized_block_stream.json"),
+                    "normalization_report": str(out_dir / "run_math_normalization_report.json"),
+                    "preview_html": str(out_dir / "index.html") if args.probe_html else "",
+                },
+                **normalized["normalization"],
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
     return 0
 
 

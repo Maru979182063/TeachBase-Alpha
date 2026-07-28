@@ -1,0 +1,25 @@
+{
+  "schema_version": "docx_question_complexity_router_v01.config",
+  "pipeline_id": "docx_question_complexity_router_v01",
+  "status": "experimental_isolated",
+  "owned_output_root": "outputs/docx_question_complexity_router_v0_1",
+  "runtime_import_enabled": false,
+  "database_write_enabled": false,
+  "route_thresholds": {
+    "long_block_count": 35,
+    "long_nonempty_block_count": 28,
+    "long_image_count": 3,
+    "long_table_block_count": 1,
+    "long_table_min_blocks": 12,
+    "long_formula_count": 80,
+    "long_formula_min_blocks": 20,
+    "mixed_block_count": 28,
+    "mixed_image_count": 2
+  },
+  "hard_fail": {
+    "fail_on_empty_source_blocks": true,
+    "fail_on_missing_block_refs": true,
+    "fail_on_zero_nonempty_blocks": true,
+    "fail_on_missing_asset_files": true
+  }
+}

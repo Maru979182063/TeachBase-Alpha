@@ -49,7 +49,10 @@ def find_block_stream(doc_id: str, root: Path) -> Path:
     matches = []
     for path in root.rglob("immutable_block_stream.json"):
         payload = read_json(path)
-        if payload.get("blocks") and str(path.parent.name) == doc_id:
+        blocks = payload.get("blocks")
+        if blocks is None:
+            blocks = payload.get("paragraphs")
+        if blocks and str(path.parent.name) == doc_id:
             matches.append(path)
         elif str(payload.get("source_docx") or "") and doc_id in str(path.parent.name):
             matches.append(path)
@@ -378,7 +381,14 @@ def build_doc_review(run_dir: Path, out_dir: Path, block_stream_root: Path, *, d
     source_docx = Path(block_stream.get("source_docx") or "")
     if not source_docx.exists():
         raise FileNotFoundError(f"source DOCX does not exist: {source_docx}")
-    block_by_id = {str(block.get("block_id")): block for block in block_stream.get("blocks") or []}
+    blocks = block_stream.get("blocks")
+    if blocks is None:
+        blocks = block_stream.get("paragraphs", [])
+    block_by_id = {
+        str(block.get("block_id")): block
+        for block in blocks
+        if isinstance(block, dict) and block.get("block_id")
+    }
 
     page_info = export_docx_pages(source_docx, doc_out_dir / "original_pages", force=force_render)
     asset_rel = copy_assets(run_dir, doc_out_dir)

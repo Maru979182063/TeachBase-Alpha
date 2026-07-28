@@ -382,6 +382,7 @@ def run_one_window(
     config_hash: str,
     timeout: int,
     resume: bool,
+    max_attempts: int,
     system_prompt: str,
 ) -> dict[str, Any]:
     payload_path = raw_dir / f"{window.window_id}.prompt.json"
@@ -391,24 +392,51 @@ def run_one_window(
     payload = build_payload(window, blocks, preview_chars, config_hash)
     write_json(payload_path, payload)
     started = time.time()
-    try:
-        if resume and content_path.exists():
+    attempts: list[dict[str, Any]] = []
+    source = "failed"
+    result: dict[str, Any] = {"usage": {}, "finish_reason": "failed", "latency_seconds": 0.0}
+    block_by_id = {block["block_id"]: block for block in blocks}
+    tags: list[dict[str, Any]] = []
+    issues: list[dict[str, Any]] = []
+    max_attempts = max(1, int(max_attempts or 1))
+    if resume and content_path.exists():
+        try:
             parsed = read_json(content_path)
             result = {"parsed": parsed, "usage": {}, "finish_reason": "replay", "latency_seconds": 0.0}
+            tags, issues = validate_window_result(window, result["parsed"], block_by_id)
             source = "replay"
-        else:
-            result = call_model(api_key, model, payload, timeout, system_prompt)
-            write_json(response_path, result["raw_response"])
-            content_path.write_text(result["raw_content"], encoding="utf-8")
-            source = "model"
-        block_by_id = {block["block_id"]: block for block in blocks}
-        tags, issues = validate_window_result(window, result["parsed"], block_by_id)
-    except (json.JSONDecodeError, urllib.error.URLError, urllib.error.HTTPError, TimeoutError, RuntimeError, OSError) as exc:
+        except (json.JSONDecodeError, RuntimeError, OSError) as exc:
+            attempts.append({"attempt": 0, "source": "replay", "error": type(exc).__name__, "message": str(exc)})
+    if source == "failed":
+        for attempt in range(1, max_attempts + 1):
+            try:
+                result = call_model(api_key, model, payload, timeout, system_prompt)
+                write_json(raw_dir / f"{window.window_id}.attempt_{attempt}.response.json", result["raw_response"])
+                (raw_dir / f"{window.window_id}.attempt_{attempt}.content.json").write_text(result["raw_content"], encoding="utf-8")
+                tags, issues = validate_window_result(window, result["parsed"], block_by_id)
+                write_json(response_path, result["raw_response"])
+                content_path.write_text(result["raw_content"], encoding="utf-8")
+                source = "model"
+                attempts.append({"attempt": attempt, "source": "model", "status": "ok"})
+                break
+            except (json.JSONDecodeError, urllib.error.URLError, urllib.error.HTTPError, TimeoutError, RuntimeError, OSError) as exc:
+                attempts.append({"attempt": attempt, "source": "model", "error": type(exc).__name__, "message": str(exc)})
+                if attempt < max_attempts:
+                    time.sleep(min(2.0 * attempt, 6.0))
+    if source == "failed":
         core_ids = [f"b_{idx:06d}" for idx in range(window.core_start, window.core_end_exclusive)]
         tags = [fallback_tag(block_id, "window_failed") for block_id in core_ids]
-        issues = [{"type": "window_failed", "window_id": window.window_id, "reason": str(exc), "block_ids": core_ids}]
+        issues = [
+            {
+                "type": "window_failed",
+                "window_id": window.window_id,
+                "reason": attempts[-1].get("message", "") if attempts else "unknown_error",
+                "attempt_count": len([item for item in attempts if item.get("source") == "model"]),
+                "attempts": attempts,
+                "block_ids": core_ids,
+            }
+        ]
         result = {"usage": {}, "finish_reason": "failed", "latency_seconds": round(time.time() - started, 3)}
-        source = "failed"
     validated = {
         "window_id": window.window_id,
         "source": source,
@@ -417,6 +445,7 @@ def run_one_window(
         "usage": result.get("usage", {}),
         "finish_reason": result.get("finish_reason", ""),
         "latency_seconds": result.get("latency_seconds", round(time.time() - started, 3)),
+        "attempts": attempts,
     }
     write_json(result_path, validated)
     return validated
@@ -531,6 +560,7 @@ def build_summary(
     dedupe_audit: list[dict[str, Any]],
     started_at: float,
     model: str,
+    max_attempts: int,
     config: dict[str, Any],
     system_prompt: str,
 ) -> dict[str, Any]:
@@ -540,7 +570,7 @@ def build_summary(
     latencies = [float(item.get("latency_seconds") or 0.0) for item in window_results if item.get("source") == "model"]
     failed_windows = [item["window_id"] for item in window_results if item.get("source") == "failed"]
     resolution_blocks = [tag["block_id"] for tag in tags if tag.get("needs_resolution")]
-    status = "needs_resolution" if issues or failed_windows or resolution_blocks else "ok"
+    status = "failed" if failed_windows else ("needs_resolution" if issues or resolution_blocks else "ok")
     return {
         "schema_version": "docx_native_block_tagger_summary.v0.1",
         "status": status,
@@ -560,6 +590,7 @@ def build_summary(
         "content_tag_counts": dict(sorted(content_counts.items())),
         "model_provider": config.get("model_provider"),
         "model": model,
+        "max_window_attempts": max_attempts,
         "prompt_version": config.get("prompt_version"),
         "system_prompt_path": config.get("system_prompt_path", ""),
         "prompt_hash": sha256_text(system_prompt),
@@ -663,6 +694,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     config_hash = stable_hash(config)
     max_workers = max(1, int(args.max_workers or runner_cfg.get("max_workers") or 1))
     timeout = int(args.timeout or runner_cfg.get("per_window_timeout_seconds") or 90)
+    max_attempts = max(1, int(args.max_window_attempts or runner_cfg.get("max_window_attempts") or 3))
     resume = bool(runner_cfg.get("resume", True)) and not args.no_resume
 
     window_results: list[dict[str, Any]] = []
@@ -694,6 +726,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     config_hash=config_hash,
                     timeout=timeout,
                     resume=resume,
+                    max_attempts=max_attempts,
                     system_prompt=system_prompt,
                 )
                 for window in windows
@@ -733,6 +766,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         dedupe_audit=dedupe_audit,
         started_at=started_at,
         model=model,
+        max_attempts=max_attempts,
         config=config,
         system_prompt=system_prompt,
     )
@@ -749,6 +783,7 @@ def main() -> int:
     parser.add_argument("--api-key", default="")
     parser.add_argument("--model", default="")
     parser.add_argument("--timeout", type=int, default=0)
+    parser.add_argument("--max-window-attempts", type=int, default=0)
     parser.add_argument("--max-workers", type=int, default=0)
     parser.add_argument("--core-blocks", type=int, default=0)
     parser.add_argument("--stride-blocks", type=int, default=0)
@@ -761,7 +796,7 @@ def main() -> int:
     args = parser.parse_args()
     summary = run(args)
     print(json.dumps(summary, ensure_ascii=False, indent=2))
-    return 0
+    return 2 if int(summary.get("failed_window_count") or 0) > 0 else 0
 
 
 if __name__ == "__main__":

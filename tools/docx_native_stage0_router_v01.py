@@ -16,6 +16,7 @@ from docx_legacy_formula_recovery_v01 import safe_slug
 
 
 DEFAULT_OUT_ROOT = Path("outputs/docx_native_stage0_router_v0_1")
+DEFAULT_LEGACY_FORMULA_MISSING_TOLERANCE = 50
 
 NS = {
     "m": "http://schemas.openxmlformats.org/officeDocument/2006/math",
@@ -115,6 +116,38 @@ def resolve_mathml_node_module_dir(value: Path | None) -> Path | None:
     return value
 
 
+def mathml_to_latex_available(repo_root: Path, node_module_dir: Path | None) -> dict[str, Any]:
+    env = os.environ.copy()
+    if node_module_dir:
+        env["MATHML_TO_LATEX_NODE_MODULE_DIR"] = str(node_module_dir.resolve())
+    script = (
+        "const paths=[];"
+        "if(process.env.MATHML_TO_LATEX_NODE_MODULE_DIR) paths.push(process.env.MATHML_TO_LATEX_NODE_MODULE_DIR);"
+        "paths.push(process.cwd());"
+        "let resolved='';"
+        "for (const base of paths) {"
+        "  try { resolved=require.resolve('mathml-to-latex',{paths:[base]}); break; } catch(e) {}"
+        "}"
+        "if(!resolved){process.exit(1);}"
+        "process.stdout.write(resolved);"
+    )
+    result = subprocess.run(
+        ["node", "-e", script],
+        cwd=repo_root,
+        env=env,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        capture_output=True,
+    )
+    return {
+        "available": result.returncode == 0,
+        "resolved_path": result.stdout.strip() if result.returncode == 0 else "",
+        "error": (result.stderr or result.stdout or "").strip() if result.returncode != 0 else "",
+        "node_module_dir": str(node_module_dir) if node_module_dir else "",
+    }
+
+
 def render_html(summary: dict[str, Any]) -> str:
     counts = summary.get("stage0_counts") or {}
     route = summary.get("route_decision") or {}
@@ -155,23 +188,86 @@ def build_handoff_manifest(
 ) -> dict[str, Any]:
     route = summary.get("route_decision") or {}
     artifacts = summary.get("artifacts") or {}
+    counts = summary.get("stage0_counts") or {}
     fallback_needed = bool(route.get("fallback_needed"))
+    hard_fallback_reasons: list[str] = []
+    repairable_formula_reasons: list[str] = []
+    missing_legacy = int(counts.get("legacy_ole_embeddings") or 0) - int(counts.get("legacy_mtef_tokens") or 0)
+    tolerance = int(route.get("legacy_formula_missing_tolerance") or DEFAULT_LEGACY_FORMULA_MISSING_TOLERANCE)
+    legacy_gap_is_tolerable = 0 < missing_legacy <= tolerance
+    if missing_legacy > tolerance:
+        hard_fallback_reasons.append("legacy_formula_recovery_incomplete")
+    elif legacy_gap_is_tolerable:
+        repairable_formula_reasons.append("legacy_formula_recovery_incomplete_tolerated")
+    if route.get("legacy_formula_recovery_status") in {"child_failed", "non_json_stdout"}:
+        hard_fallback_reasons.append(f"legacy_formula_recovery_status:{route.get('legacy_formula_recovery_status')}")
+    elif route.get("legacy_formula_recovery_status") == "formula_recovery_incomplete":
+        if legacy_gap_is_tolerable:
+            repairable_formula_reasons.append(f"legacy_formula_recovery_status:{route.get('legacy_formula_recovery_status')}")
+        else:
+            hard_fallback_reasons.append(f"legacy_formula_recovery_status:{route.get('legacy_formula_recovery_status')}")
+    if route.get("mathml_to_latex_dependency_available") is False:
+        hard_fallback_reasons.append("mathml_to_latex_dependency_missing")
+    if int(counts.get("needs_review_blocks") or 0) > 0:
+        repairable_formula_reasons.append("stage0_needs_review_blocks")
+    if str(counts.get("audit_status") or "") not in {"", "ok"}:
+        repairable_formula_reasons.append(f"formula_audit_status:{counts.get('audit_status')}")
+    hard_fallback_required = fallback_needed or bool(hard_fallback_reasons)
+    repairable_formula_risk = bool(repairable_formula_reasons)
+    may_enter_native = not hard_fallback_required
+    handoff_status = (
+        "NEEDS_FORMULA_FALLBACK"
+        if hard_fallback_required
+        else "READY_FOR_BLOCK_TAGGER_WITH_FORMULA_RISK"
+        if repairable_formula_risk
+        else "READY_FOR_BLOCK_TAGGER"
+    )
+    fallback_reasons = hard_fallback_reasons + repairable_formula_reasons
     return {
         "schema_version": "docx_native_stage0_handoff_manifest.v0.1",
         "source_docx": summary.get("source_docx", ""),
         "source_pipeline_id": "docx_native_stage0_router_v01",
-        "status": "READY_FOR_BLOCK_TAGGER" if not fallback_needed and summary.get("status") == "ok" else "NEEDS_FORMULA_FALLBACK",
+        "status": handoff_status,
+        "routing_contract": {
+            "may_enter_native_block_tagger": may_enter_native,
+            "must_not_enter_native_block_tagger": hard_fallback_required,
+            "required_next_action": "image_or_pdf_formula_fallback" if hard_fallback_required else "native_block_tagger",
+            "fallback_reasons": fallback_reasons,
+            "hard_fallback_reasons": hard_fallback_reasons,
+            "repairable_formula_reasons": repairable_formula_reasons,
+            "repairable_formula_risk": repairable_formula_risk,
+            "legacy_formula_missing_count": missing_legacy,
+            "legacy_formula_missing_tolerance": tolerance,
+        },
         "next_node_inputs": {
             "docx_native_block_tagger_v01": {
                 "paragraph_stream": artifacts.get("stage0_paragraph_stream", ""),
+                "raw_paragraph_stream": artifacts.get("stage0_raw_paragraph_stream", ""),
                 "asset_manifest": artifacts.get("stage0_asset_manifest", ""),
             },
             "image_or_pdf_formula_fallback": {
-                "enabled": fallback_needed,
+                "enabled": hard_fallback_required,
                 "fallback_signal": route.get("fallback_signal", ""),
                 "source_docx": summary.get("source_docx", ""),
             },
         },
+        "fallback_jobs": [
+            {
+                "job_id": "formula_visual_fallback_001",
+                "status": "PENDING_IMPLEMENTED_RUNNER",
+                "fallback_type": "image_or_pdf_formula_fallback",
+                "source_docx": summary.get("source_docx", ""),
+                "reason_codes": hard_fallback_reasons,
+                "blocked_native_artifacts": {
+                    "paragraph_stream": artifacts.get("stage0_paragraph_stream", ""),
+                    "raw_paragraph_stream": artifacts.get("stage0_raw_paragraph_stream", ""),
+                    "formula_audit": artifacts.get("stage0_formula_audit", ""),
+                },
+                "handoff_policy": "Native downstream is blocked until this fallback produces trustworthy formula text or the run is explicitly resumed with --stage0-fallback-policy allow.",
+            }
+        ]
+        if hard_fallback_required
+        else [],
         "formula_inputs": {
             "formula_manifest": str(manifest_path or ""),
             "formula_audit": artifacts.get("stage0_formula_audit", ""),
@@ -180,13 +276,19 @@ def build_handoff_manifest(
             "stage0_audit_status": (summary.get("stage0_counts") or {}).get("audit_status"),
             "stage0_audit_issue_count": (summary.get("stage0_counts") or {}).get("audit_issue_count"),
             "needs_review_blocks": (summary.get("stage0_counts") or {}).get("needs_review_blocks"),
-            "fallback_needed": fallback_needed,
+            "fallback_needed": hard_fallback_required,
+            "repairable_formula_risk": repairable_formula_risk,
+            "repairable_formula_reasons": repairable_formula_reasons,
+            "legacy_formula_missing_count": missing_legacy,
+            "legacy_formula_missing_tolerance": tolerance,
         },
         "artifacts": {
             "router_summary": rel(doc_out / "router_summary.json"),
             "router_review": rel(doc_out / "index.html"),
             "handoff_manifest": rel(doc_out / "handoff_manifest.json"),
             "stage0_preview_html": stage0_summary.get("artifacts", {}).get("preview_html", ""),
+            "run_math_normalization_report": artifacts.get("run_math_normalization_report", ""),
+            "run_math_normalization_preview": artifacts.get("run_math_normalization_preview", ""),
         },
         "no_runtime_import": True,
         "no_database_write": True,
@@ -206,6 +308,69 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
     mathml_node_module_dir = resolve_mathml_node_module_dir(args.mathml_node_module_dir)
+    mathml_converter = mathml_to_latex_available(repo_root, mathml_node_module_dir)
+    if (source_probe["ole_objects"] > 0 or source_probe["embedding_files"] > 0) and not mathml_converter["available"]:
+        summary = {
+            "schema_version": "docx_native_stage0_router_summary.v0.1",
+            "run_id": args.run_id,
+            "source_docx": str(docx_path),
+            "status": "needs_review",
+            "source_probe": source_probe,
+            "route_decision": {
+                "omml_native_available": source_probe["omml_elements"] > 0,
+                "legacy_ole_detected": True,
+                "legacy_formula_recovery_status": "blocked_dependency_missing",
+                "mathml_node_module_dir": str(mathml_node_module_dir) if mathml_node_module_dir else "",
+                "mathml_to_latex_dependency_available": False,
+                "mathml_to_latex_dependency_error": mathml_converter.get("error", ""),
+                "legacy_manifest_attached": False,
+                "fallback_needed": True,
+                "fallback_signal": "mathml_to_latex_dependency_missing",
+            },
+            "stage0_counts": {
+                "paragraphs": None,
+                "tables": None,
+                "native_media": source_probe["native_media"],
+                "image_insertions": None,
+                "formula_elements": None,
+                "legacy_ole_embeddings": source_probe["embedding_files"],
+                "legacy_mtef_manifest_formulas": 0,
+                "legacy_mtef_tokens": 0,
+                "inline_glyph_assets": None,
+                "inline_glyph_blocks": None,
+                "needs_review_blocks": None,
+                "loss_flag_counts": {"mathml_to_latex_dependency_missing": source_probe["embedding_files"]},
+                "audit_status": "not_run_dependency_missing",
+                "audit_issue_count": source_probe["embedding_files"],
+                "run_math_normalizer_changed_blocks": 0,
+                "run_math_normalizer_actions": 0,
+                "run_math_normalizer_skipped_blocks": 0,
+                "run_math_normalizer_status": "not_run_dependency_missing",
+            },
+            "artifacts": {
+                "router_summary": rel(doc_out / "router_summary.json"),
+                "router_review": rel(doc_out / "index.html"),
+                "formula_recovery_report": "",
+                "formula_manifest": "",
+                "stage0_paragraph_stream": "",
+                "stage0_raw_paragraph_stream": "",
+                "stage0_asset_manifest": "",
+                "stage0_formula_audit": "",
+                "stage0_preview_html": "",
+                "run_math_normalized_stream": "",
+                "run_math_normalization_report": "",
+                "run_math_normalization_preview": "",
+            },
+            "no_runtime_import": True,
+            "no_database_write": True,
+        }
+        write_json(doc_out / "router_summary.json", summary)
+        handoff = build_handoff_manifest(summary=summary, doc_out=doc_out, stage0_summary={}, manifest_path="")
+        write_json(doc_out / "handoff_manifest.json", handoff)
+        summary["artifacts"]["handoff_manifest"] = rel(doc_out / "handoff_manifest.json")
+        write_json(doc_out / "router_summary.json", summary)
+        (doc_out / "index.html").write_text(render_html(summary), encoding="utf-8")
+        return summary
     manifest_path = ""
     recovery_report: dict[str, Any] | None = None
     recovery_status = "not_needed"
@@ -245,11 +410,37 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     stage0_out_dir = find_stage0_out_dir(stage0_summary) if stage0_summary.get("out_dir") else Path()
     audit_path = stage0_out_dir / "formula_token_audit.json" if stage0_out_dir else Path()
     audit = read_json(audit_path) if audit_path.exists() else {}
+    raw_paragraph_stream = str(stage0_summary.get("artifacts", {}).get("paragraph_stream", "") or "")
+    normalized_paragraph_stream = raw_paragraph_stream
+    run_math_summary: dict[str, Any] = {"status": "not_run"}
+    run_math_report_path = ""
+    run_math_preview_path = ""
+    if raw_paragraph_stream and Path(raw_paragraph_stream).exists():
+        run_math_cmd = [
+            sys.executable,
+            "tools/docx_run_math_normalizer_v01.py",
+            "--input-block-stream",
+            raw_paragraph_stream,
+            "--output-root",
+            "outputs/docx_run_math_normalizer_v0_1",
+            "--run-id",
+            f"{args.run_id}__run_math_normalizer",
+            "--probe-html",
+        ]
+        run_math_summary = run_child(run_math_cmd, repo_root, env, log_dir / "run_math_normalizer.json")
+        run_math_artifacts = run_math_summary.get("artifacts") or {}
+        candidate_stream = str(run_math_artifacts.get("normalized_stream") or "")
+        if candidate_stream and Path(candidate_stream).exists():
+            normalized_paragraph_stream = candidate_stream
+        run_math_report_path = str(run_math_artifacts.get("normalization_report") or "")
+        run_math_preview_path = str(run_math_artifacts.get("preview_html") or "")
 
     missing_legacy = int(stage0_summary.get("legacy_ole_embeddings") or 0) - int(stage0_summary.get("legacy_mtef_tokens") or 0)
-    fallback_needed = missing_legacy > 0 or recovery_status in {"formula_recovery_incomplete", "child_failed", "non_json_stdout"}
+    legacy_missing_tolerance = DEFAULT_LEGACY_FORMULA_MISSING_TOLERANCE
+    fallback_needed = missing_legacy > legacy_missing_tolerance or recovery_status in {"child_failed", "non_json_stdout"}
     fallback_signal = "image_or_pdf_formula_fallback_needed" if fallback_needed else ""
-    status = "ok" if not fallback_needed and stage0_summary.get("needs_review_blocks") == 0 else "needs_review"
+    run_math_failed = run_math_summary.get("status") in {"child_failed", "non_json_stdout"}
+    status = "ok" if not fallback_needed and not run_math_failed and stage0_summary.get("needs_review_blocks") == 0 else "needs_review"
 
     summary = {
         "schema_version": "docx_native_stage0_router_summary.v0.1",
@@ -261,6 +452,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "omml_native_available": source_probe["omml_elements"] > 0,
             "legacy_ole_detected": source_probe["ole_objects"] > 0 or source_probe["embedding_files"] > 0,
             "legacy_formula_recovery_status": recovery_status,
+            "legacy_formula_missing_count": missing_legacy,
+            "legacy_formula_missing_tolerance": legacy_missing_tolerance,
             "mathml_node_module_dir": str(mathml_node_module_dir) if mathml_node_module_dir else "",
             "legacy_manifest_attached": bool(manifest_path and Path(manifest_path).exists()),
             "fallback_needed": fallback_needed,
@@ -281,16 +474,24 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "loss_flag_counts": stage0_summary.get("loss_flag_counts"),
             "audit_status": audit.get("status"),
             "audit_issue_count": audit.get("issue_count"),
+            "run_math_normalizer_changed_blocks": run_math_summary.get("changed_block_count"),
+            "run_math_normalizer_actions": run_math_summary.get("action_count"),
+            "run_math_normalizer_skipped_blocks": run_math_summary.get("skipped_block_count"),
+            "run_math_normalizer_status": run_math_summary.get("status", "ok" if run_math_summary.get("run_id") else "not_run"),
         },
         "artifacts": {
             "router_summary": rel(doc_out / "router_summary.json"),
             "router_review": rel(doc_out / "index.html"),
             "formula_recovery_report": rel(Path((recovery_report or {}).get("artifacts", {}).get("recovery_report", ""))) if recovery_report else "",
             "formula_manifest": rel(Path(manifest_path)) if manifest_path else "",
-            "stage0_paragraph_stream": stage0_summary.get("artifacts", {}).get("paragraph_stream", ""),
+            "stage0_paragraph_stream": normalized_paragraph_stream,
+            "stage0_raw_paragraph_stream": raw_paragraph_stream,
             "stage0_asset_manifest": stage0_summary.get("artifacts", {}).get("asset_manifest", ""),
             "stage0_formula_audit": stage0_summary.get("artifacts", {}).get("formula_token_audit", ""),
             "stage0_preview_html": stage0_summary.get("artifacts", {}).get("preview_html", ""),
+            "run_math_normalized_stream": normalized_paragraph_stream if normalized_paragraph_stream != raw_paragraph_stream else "",
+            "run_math_normalization_report": run_math_report_path,
+            "run_math_normalization_preview": run_math_preview_path,
         },
         "no_runtime_import": True,
         "no_database_write": True,

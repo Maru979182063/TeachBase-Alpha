@@ -978,7 +978,19 @@ def refine_one(
             "prompt_version": node["prompt_version"],
         },
     )
-    model_result = call_model(config, node, system_prompt, user_prompt, api_key)
+    try:
+        model_result = call_model(config, node, system_prompt, user_prompt, api_key)
+        model_error = ""
+    except Exception as exc:  # Keep one transient API failure from aborting the whole batch.
+        model_error = str(exc)
+        model_result = {
+            "request_body": {},
+            "raw_response": {},
+            "raw_content": "",
+            "parsed": None,
+            "parse_error": model_error,
+            "latency_seconds": None,
+        }
     parsed = model_result["parsed"] is not None
     parse_validation_errors: list[dict[str, Any]] = []
     if model_result["parsed"] is None:
@@ -1000,42 +1012,43 @@ def refine_one(
     if not validation["valid"]:
         write_json(draft_dir / "invalid_model_output.json", refined)
         write_json(draft_dir / "initial_validation_report.json", validation)
-        repair_called = True
-        repair_user_prompt = render_template(
-            repair_user_template,
-            {
-                "input_json": json.dumps(input_payload, ensure_ascii=False, indent=2),
-                "previous_output_json": json.dumps(refined, ensure_ascii=False, indent=2),
-                "validation_errors_json": json.dumps(validation["errors"], ensure_ascii=False, indent=2),
-            },
-        )
-        try:
-            repair_result = call_model(config, node, system_prompt, repair_user_prompt, api_key)
-            repair_parsed = repair_result["parsed"] is not None
-            repair_usage = repair_result["raw_response"].get("usage", {})
-            write_text(draft_dir / "repair_user_prompt.md", repair_user_prompt)
-            write_json(draft_dir / "repair_request_messages.full.local.json", repair_result["request_body"])
-            write_json(draft_dir / "repair_raw_response.json", repair_result["raw_response"])
-            write_text(draft_dir / "repair_raw_content.txt", repair_result["raw_content"])
-            if repair_result["parsed"] is None:
+        if not model_error:
+            repair_called = True
+            repair_user_prompt = render_template(
+                repair_user_template,
+                {
+                    "input_json": json.dumps(input_payload, ensure_ascii=False, indent=2),
+                    "previous_output_json": json.dumps(refined, ensure_ascii=False, indent=2),
+                    "validation_errors_json": json.dumps(validation["errors"], ensure_ascii=False, indent=2),
+                },
+            )
+            try:
+                repair_result = call_model(config, node, system_prompt, repair_user_prompt, api_key)
+                repair_parsed = repair_result["parsed"] is not None
+                repair_usage = repair_result["raw_response"].get("usage", {})
+                write_text(draft_dir / "repair_user_prompt.md", repair_user_prompt)
+                write_json(draft_dir / "repair_request_messages.full.local.json", repair_result["request_body"])
+                write_json(draft_dir / "repair_raw_response.json", repair_result["raw_response"])
+                write_text(draft_dir / "repair_raw_content.txt", repair_result["raw_content"])
+                if repair_result["parsed"] is None:
+                    refined = source_preserve_refined(
+                        draft,
+                        node["prompt_version"],
+                        "REFINED_READY",
+                        f"Model repair output could not be parsed; preserved source draft instead: {repair_result['parse_error']}",
+                    )
+                else:
+                    refined = repair_shape(repair_result["parsed"], draft, node["prompt_version"])
+                validation = validate_refined(refined, draft, node["prompt_version"])
+            except Exception as exc:
+                write_text(draft_dir / "repair_error.txt", str(exc))
                 refined = source_preserve_refined(
                     draft,
                     node["prompt_version"],
                     "REFINED_READY",
-                    f"Model repair output could not be parsed; preserved source draft instead: {repair_result['parse_error']}",
+                    f"Model output failed local validation and repair failed; preserved source draft instead: {exc}",
                 )
-            else:
-                refined = repair_shape(repair_result["parsed"], draft, node["prompt_version"])
-            validation = validate_refined(refined, draft, node["prompt_version"])
-        except Exception as exc:
-            write_text(draft_dir / "repair_error.txt", str(exc))
-            refined = source_preserve_refined(
-                draft,
-                node["prompt_version"],
-                "REFINED_READY",
-                f"Model output failed local validation and repair failed; preserved source draft instead: {exc}",
-            )
-            validation = validate_refined(refined, draft, node["prompt_version"])
+                validation = validate_refined(refined, draft, node["prompt_version"])
     if not validation["valid"]:
         write_json(draft_dir / "repair_invalid_model_output.json", refined)
         refined = source_preserve_refined(
@@ -1053,6 +1066,8 @@ def refine_one(
     write_json(draft_dir / "request_messages.full.local.json", model_result["request_body"])
     write_json(draft_dir / "raw_response.json", model_result["raw_response"])
     write_text(draft_dir / "raw_content.txt", model_result["raw_content"])
+    if model_error:
+        write_text(draft_dir / "model_error.txt", model_error)
     write_json(draft_dir / "refined_question_packet.json", refined)
     write_json(draft_dir / "validation_report.json", validation)
     return {
@@ -1069,6 +1084,7 @@ def refine_one(
         "repair_parsed": repair_parsed,
         "repair_usage": repair_usage,
         "latency_seconds": model_result["latency_seconds"],
+        "model_error": model_error,
     }
 
 

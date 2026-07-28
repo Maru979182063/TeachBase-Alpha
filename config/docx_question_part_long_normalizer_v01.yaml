@@ -1,0 +1,28 @@
+{
+  "schema_version": "docx_question_part_long_normalizer_v01.config",
+  "pipeline_id": "docx_question_part_long_normalizer_v01",
+  "status": "experimental_connected",
+  "owned_output_root": "outputs/docx_question_part_long_normalizer_v0_1",
+  "output_dir_name": "question_part_long_normalization",
+  "runtime_import_enabled": false,
+  "database_write_enabled": false,
+  "default_model_alias": "doubao2.0mini",
+  "default_model_endpoint_id": "doubao-seed-2-0-mini-260428",
+  "api_key_env": "ARK_API_KEY",
+  "prompt_version": "docx_question_part_long_normalizer_v0.1_zone_then_problem_20260724",
+  "zone_system_prompt_path": "prompts/docx_question_part_twostage_zone_system_v0.1.md",
+  "zone_user_prompt_path": "prompts/docx_question_part_twostage_zone_user_v0.1.md",
+  "problem_system_prompt_path": "prompts/docx_question_part_twostage_problem_system_v0.1.md",
+  "problem_user_prompt_path": "prompts/docx_question_part_twostage_problem_user_v0.1.md",
+  "zone_preview_chars": 520,
+  "problem_preview_chars": 900,
+  "max_section_context_blocks": 3,
+  "runner": {
+    "max_group_attempts": 3
+  },
+  "output_contract": {
+    "normalization_schema": "docx_question_part_normalizer_v0.1",
+    "builder_compatible": true,
+    "notes": "Long question groups are normalized with a two-stage zone-then-problem model call, then merged back into the standard question_part_normalization contract before Builder."
+  }
+}

@@ -216,6 +216,19 @@ def recover_internal_blocks(
     return effective, recovered
 
 
+def ignorable_unassigned_ids(question_blocks: list[dict[str, Any]]) -> set[str]:
+    structural_roles = {"blank", "decorative", "document_meta", "section"}
+    result: set[str] = set()
+    for block in question_blocks:
+        block_id = str(block.get("block_id") or "")
+        if not block_id:
+            continue
+        role = str(block.get("block_role") or "unknown")
+        if role in structural_roles:
+            result.add(block_id)
+    return result
+
+
 def structural_section_ids(groups: list[dict[str, Any]], tags: dict[str, dict[str, Any]]) -> set[str]:
     spans = [span for group in groups if (span := group_span(group)) is not None]
     result: set[str] = set()
@@ -269,11 +282,13 @@ def validate_parts(
     doc_id: str,
     question_group_id: str,
     valid_ids: set[str],
+    ignorable_unassigned_ids: set[str] | None = None,
     allowed_part_types: set[str],
     allowed_solution_policies: set[str],
     solution_policy_hint: str = "unknown",
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     issues: list[dict[str, Any]] = []
+    ignorable_unassigned_ids = ignorable_unassigned_ids or set()
     if not isinstance(payload, dict):
         return {
             "schema": "docx_question_part_normalizer_v0.1",
@@ -326,7 +341,18 @@ def validate_parts(
     assigned = set(owner)
     missing = sorted(valid_ids - assigned - set(unassigned), key=source_order)
     if missing:
-        issues.append({"type": "unaccounted_question_block_ids", "block_ids": missing})
+        blocking_missing = [block_id for block_id in missing if block_id not in ignorable_unassigned_ids]
+        ignorable_missing = [block_id for block_id in missing if block_id in ignorable_unassigned_ids]
+        if blocking_missing:
+            issues.append({"type": "unaccounted_question_block_ids", "block_ids": blocking_missing})
+        if ignorable_missing:
+            issues.append(
+                {
+                    "type": "unaccounted_ignorable_block_ids",
+                    "block_ids": ignorable_missing,
+                    "severity": "warning",
+                }
+            )
         unassigned = sorted(set(unassigned) | set(missing), key=source_order)
 
     overlap_unassigned = sorted(assigned & set(unassigned), key=source_order)
@@ -347,6 +373,8 @@ def validate_parts(
         issues.append({"type": "missing_required_answer_part", "severity": "warning"})
     if solution_policy == "required" and "explanation" not in part_types:
         issues.append({"type": "missing_required_explanation_part", "severity": "warning"})
+    if valid_ids and not parts:
+        issues.append({"type": "empty_parts_for_nonempty_question"})
 
     normalized = {
         "schema": "docx_question_part_normalizer_v0.1",
@@ -401,6 +429,7 @@ def normalize_one_group(
     api_key: str,
     timeout: int,
     resume: bool,
+    max_attempts: int,
 ) -> dict[str, Any]:
     group_id = str(group.get("group_id"))
     prompt = render_user_prompt(
@@ -419,34 +448,93 @@ def normalize_one_group(
     content_path = raw_dir / "content.json"
     parsed_path = raw_dir / "parsed.json"
     write_json(prompt_path, {"section_context": section_context, "question_blocks": question_blocks, "system_prompt": system_prompt, "user_prompt": prompt})
+    ignorable_ids = ignorable_unassigned_ids(question_blocks)
     if resume and parsed_path.exists():
         parsed = read_json(parsed_path)
         raw_response = read_json(response_path) if response_path.exists() else {}
         result = {"parsed": parsed, "raw_response": raw_response, "raw_content": "", "parse_error": "", "latency_seconds": 0.0, "source": "replay"}
+        valid_ids = {block["block_id"] for block in question_blocks}
+        normalized, issues = validate_parts(
+            result["parsed"],
+            doc_id=doc_id,
+            question_group_id=group_id,
+            valid_ids=valid_ids,
+            ignorable_unassigned_ids=ignorable_ids,
+            allowed_part_types=set(config.get("allowed_part_types") or []),
+            allowed_solution_policies=set(config.get("solution_policies") or []),
+            solution_policy_hint=solution_policy_hint,
+        )
+        attempts = []
     else:
-        result = call_model(config, system_prompt, prompt, api_key, timeout)
-        write_json(response_path, result["raw_response"])
-        content_path.write_text(result["raw_content"], encoding="utf-8")
-        if result["parsed"] is not None:
-            write_json(parsed_path, result["parsed"])
-        result["source"] = "model"
-
-    valid_ids = {block["block_id"] for block in question_blocks}
-    normalized, issues = validate_parts(
-        result["parsed"],
-        doc_id=doc_id,
-        question_group_id=group_id,
-        valid_ids=valid_ids,
-        allowed_part_types=set(config.get("allowed_part_types") or []),
-        allowed_solution_policies=set(config.get("solution_policies") or []),
-        solution_policy_hint=solution_policy_hint,
-    )
+        attempts: list[dict[str, Any]] = []
+        valid_ids = {block["block_id"] for block in question_blocks}
+        normalized = {}
+        issues = [{"type": "normalizer_not_run"}]
+        result = {"parsed": None, "raw_response": {}, "raw_content": "", "parse_error": "not_run", "latency_seconds": None, "source": "failed"}
+        succeeded = False
+        for attempt_index in range(1, max(1, max_attempts) + 1):
+            attempt_response_path = raw_dir / f"attempt{attempt_index}.response.json"
+            attempt_content_path = raw_dir / f"attempt{attempt_index}.content.json"
+            attempt_parsed_path = raw_dir / f"attempt{attempt_index}.parsed.json"
+            try:
+                result = call_model(config, system_prompt, prompt, api_key, timeout)
+                write_json(attempt_response_path, result["raw_response"])
+                attempt_content_path.write_text(result["raw_content"], encoding="utf-8")
+                if result["parsed"] is not None:
+                    write_json(attempt_parsed_path, result["parsed"])
+                normalized, issues = validate_parts(
+                    result["parsed"],
+                    doc_id=doc_id,
+                    question_group_id=group_id,
+                    valid_ids=valid_ids,
+                    ignorable_unassigned_ids=ignorable_ids,
+                    allowed_part_types=set(config.get("allowed_part_types") or []),
+                    allowed_solution_policies=set(config.get("solution_policies") or []),
+                    solution_policy_hint=solution_policy_hint,
+                )
+                attempt_record = {
+                    "attempt": attempt_index,
+                    "source": "model",
+                    "parse_error": result.get("parse_error", ""),
+                    "status": "ok" if not has_blocking_issues(issues) else "needs_resolution",
+                    "part_count": len(normalized.get("parts") or []),
+                    "issue_count": len(issues),
+                    "latency_seconds": result.get("latency_seconds"),
+                }
+                attempts.append(attempt_record)
+                if result.get("parse_error") or has_blocking_issues(issues):
+                    continue
+                write_json(response_path, result["raw_response"])
+                content_path.write_text(result["raw_content"], encoding="utf-8")
+                write_json(parsed_path, result["parsed"])
+                result["source"] = "model" if attempt_index == 1 else "model_retry"
+                succeeded = True
+                break
+            except Exception as exc:  # noqa: BLE001 - preserve attempt details for audit
+                result = {"parsed": None, "raw_response": {}, "raw_content": "", "parse_error": str(exc), "latency_seconds": None, "source": "failed"}
+                normalized = {}
+                issues = [{"type": "normalizer_exception", "message": str(exc)}]
+                attempts.append(
+                    {
+                        "attempt": attempt_index,
+                        "source": "exception",
+                        "parse_error": str(exc),
+                        "status": "needs_resolution",
+                        "part_count": 0,
+                        "issue_count": 1,
+                        "latency_seconds": None,
+                    }
+                )
+        if not succeeded:
+            result["source"] = "failed"
     return {
         "question_group_id": group_id,
         "source": result["source"],
         "section_context": section_context,
         "normalization": normalized,
         "issues": issues,
+        "attempts": attempts,
+        "attempt_count": len(attempts) or 1,
         "status": "ok" if not has_blocking_issues(issues) else "needs_resolution",
         "parse_error": result.get("parse_error", ""),
         "latency_seconds": result.get("latency_seconds"),
@@ -482,6 +570,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     max_sections = int(config.get("max_section_context_blocks") or 3)
     solution_policy_hint = str(args.solution_policy_hint or "unknown")
     section_ids = structural_section_ids(groups, tags)
+    runner_config = config.get("runner", {}) or {}
+    max_group_attempts = int(args.max_group_attempts or runner_config.get("max_group_attempts") or 1)
 
     selected_groups = groups
     if args.group_ids:
@@ -521,21 +611,14 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 api_key=api_key,
                 timeout=args.timeout,
                 resume=not args.no_resume,
+                max_attempts=max_group_attempts,
             )
         except Exception as exc:  # Keep one failed question from erasing the whole regression artifact.
             result = {
                 "question_group_id": group_id,
                 "source": "exception",
                 "section_context": item["section_context"],
-                "normalization": {
-                    "schema": "docx_question_part_normalizer_v0.1",
-                    "doc_id": doc_id,
-                    "question_group_id": group_id,
-                    "solution_policy": "unknown",
-                    "parts": [],
-                    "unassigned_block_ids": [block["block_id"] for block in item["question_blocks"]],
-                    "warnings": [],
-                },
+                "normalization": {},
                 "issues": [{"type": "normalizer_exception", "message": str(exc)}],
                 "status": "needs_resolution",
                 "parse_error": "",
@@ -563,7 +646,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         usage.update({key: int(value or 0) for key, value in (result.get("usage") or {}).items() if isinstance(value, int)})
     blocking = [issue for result in results for issue in result.get("issues", []) if str(issue.get("severity") or "blocking") != "warning"]
     warnings = [issue for result in results for issue in result.get("issues", []) if str(issue.get("severity") or "blocking") == "warning"]
-    normalizations = [result["normalization"] for result in results]
+    normalizations = [result["normalization"] for result in results if isinstance(result.get("normalization"), dict) and result.get("normalization")]
 
     write_json(out_dir / "question_part_normalizations.json", {"schema_version": "docx_question_part_normalizer_results.v0.1", "items": normalizations})
     write_json(out_dir / "normalization_results_full.json", {"schema_version": "docx_question_part_normalizer_full_results.v0.1", "items": results})
@@ -581,6 +664,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "blocking_issue_count": len(blocking),
         "warning_count": len(warnings),
         "recovered_internal_block_count": recovered_internal_block_count,
+        "max_group_attempts": max_group_attempts,
+        "retried_group_count": sum(1 for result in results if int(result.get("attempt_count") or 1) > 1),
+        "failed_group_count": sum(1 for result in results if result.get("source") in {"failed", "exception"}),
         "usage": dict(usage),
         "prompt_hashes": {"system": sha256_text(system_prompt), "user": sha256_text(user_template)},
         "artifacts": {
@@ -611,11 +697,13 @@ def main() -> int:
     parser.add_argument("--api-key", default="")
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--concurrency", type=int, default=1)
+    parser.add_argument("--max-group-attempts", type=int, default=0)
     parser.add_argument("--solution-policy-hint", default="unknown", choices=["required", "optional", "absent_expected", "unknown"])
     parser.add_argument("--no-resume", action="store_true")
     args = parser.parse_args()
-    print(json.dumps(run(args), ensure_ascii=False, indent=2))
-    return 0
+    summary = run(args)
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    return 0 if summary.get("status") == "ok" else 2
 
 
 if __name__ == "__main__":

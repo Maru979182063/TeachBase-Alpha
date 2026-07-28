@@ -19,6 +19,7 @@
   "runner": {
     "max_workers": 4,
     "per_window_timeout_seconds": 90,
+    "max_window_attempts": 3,
     "resume": true
   },
   "prompt_version": "docx_native_block_tagger_v01",
