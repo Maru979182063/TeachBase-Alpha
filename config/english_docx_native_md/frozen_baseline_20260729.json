@@ -1,0 +1,63 @@
+{
+  "schema_version": "english_docx_frozen_baseline.v0.1",
+  "baseline_id": "english_docx_native_md_grouping_asset_filtered_v06_20260729",
+  "status": "frozen_sample_baseline",
+  "frozen_at": "2026-07-29",
+  "scope": "English DOCX isolated sample baseline for Stage0, visual asset filtering, and group boundary cutting.",
+  "stage0": {
+    "entrypoint": "tools/english_docx_native_md_v01.py",
+    "run_id": "english_docx_native_md_samples_20260729_v01",
+    "output_root": "outputs/english_docx_native_md_v0_1"
+  },
+  "asset_role_tagger": {
+    "entrypoint": "tools/docx_asset_role_visual_tagger_v01.py",
+    "config_path": "config/english_docx_native_md/asset_role_visual_tagger_v01.json",
+    "prompt_path": "prompts/english_docx_asset_role_visual_tagger_v01.system.md",
+    "run_ids": [
+      "english_docx_asset_role_v01_20260729",
+      "english_docx_asset_role_v01_20260729_doc2"
+    ],
+    "output_root": "outputs/english_docx_asset_role_visual_tagger_v0_1"
+  },
+  "asset_filter": {
+    "entrypoint": "tools/english_docx_apply_asset_roles_v01.py",
+    "run_id": "english_docx_asset_filter_v01_20260729",
+    "output_root": "outputs/english_docx_asset_filter_v0_1"
+  },
+  "group_boundary_cutter": {
+    "entrypoint": "tools/english_docx_group_boundary_cutter_v01.py",
+    "config_path": "config/english_docx_native_md/group_boundary_cutter_v01.json",
+    "prompt_version": "english_docx_group_boundary_cutter_v0.6_exercise_label_opening_anchor_20260729",
+    "run_id": "english_docx_group_boundary_prompt_v06_asset_filtered_20260729_v01",
+    "output_root": "outputs/english_docx_group_boundary_cutter_v0_1"
+  },
+  "sample_results": [
+    {
+      "doc_id": "高二下_名校期中题型专练1-教师版",
+      "expected_group_count": 10,
+      "expected_uncovered_context_block_ids": [
+        "b_000000",
+        "b_000001",
+        "b_000064",
+        "b_000196"
+      ],
+      "summary_path": "outputs/english_docx_group_boundary_cutter_v0_1/english_docx_group_boundary_prompt_v06_asset_filtered_20260729_v01/高二下_名校期中题型专练1-教师版/summary.json",
+      "assembled_groups_path": "outputs/english_docx_group_boundary_cutter_v0_1/english_docx_group_boundary_prompt_v06_asset_filtered_20260729_v01/高二下_名校期中题型专练1-教师版/assembled_groups.json"
+    },
+    {
+      "doc_id": "高二下_名校期中题型专练2-教师版",
+      "expected_group_count": 7,
+      "expected_uncovered_context_block_ids": [
+        "b_000000",
+        "b_000001",
+        "b_000128",
+        "b_000192"
+      ],
+      "summary_path": "outputs/english_docx_group_boundary_cutter_v0_1/english_docx_group_boundary_prompt_v06_asset_filtered_20260729_v01/高二下_名校期中题型专练2-教师版/summary.json",
+      "assembled_groups_path": "outputs/english_docx_group_boundary_cutter_v0_1/english_docx_group_boundary_prompt_v06_asset_filtered_20260729_v01/高二下_名校期中题型专练2-教师版/assembled_groups.json"
+    }
+  ],
+  "freeze_rule": "Do not modify frozen upstream nodes for normalization experiments. If normalization exposes an upstream issue, record it as a finding and rerun the frozen sample regression before adopting any upstream change.",
+  "runtime_import_enabled": false,
+  "database_write_enabled": false
+}
