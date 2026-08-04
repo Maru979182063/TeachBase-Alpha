@@ -1,0 +1,248 @@
+{
+  "schema_version": "final_chain_cleanroom_import_audit.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "chain_count": 4,
+  "source_labels": [
+    "old_local",
+    "pdf_english_handoff"
+  ],
+  "handoff_inventory_labels": [
+    "doc_math"
+  ],
+  "row_count": 8,
+  "missing_in_cleanroom_count": 7,
+  "importable_candidate_count": 7,
+  "rows": [
+    {
+      "chain_id": "doc_math",
+      "role": "canonical_entrypoint",
+      "relative_path": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+      "cleanroom_exists": false,
+      "cleanroom_bytes": 0,
+      "cleanroom_sha256": "",
+      "handoff_inventory_sha256": "d77939c9a111f37609db12c88b469ebd29b93574463261c5a4ffddfee4c9009f",
+      "source_candidates": [
+        {
+          "source_label": "old_local",
+          "relative_path": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+          "exists": true,
+          "bytes": 27056,
+          "sha256": "d77939c9a111f37609db12c88b469ebd29b93574463261c5a4ffddfee4c9009f",
+          "matches_handoff_inventory": true
+        },
+        {
+          "source_label": "pdf_english_handoff",
+          "relative_path": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+          "exists": false,
+          "bytes": 0,
+          "sha256": "",
+          "matches_handoff_inventory": null
+        }
+      ],
+      "import_action": "candidate_available_for_reviewed_import"
+    },
+    {
+      "chain_id": "doc_math",
+      "role": "canonical_config_1",
+      "relative_path": "config/docx_math_pipeline_final_v01.yaml",
+      "cleanroom_exists": false,
+      "cleanroom_bytes": 0,
+      "cleanroom_sha256": "",
+      "handoff_inventory_sha256": "36336f7c5e5cfe63fce7542b7451340e98f8492a3921795b13098e4d790ad943",
+      "source_candidates": [
+        {
+          "source_label": "old_local",
+          "relative_path": "config/docx_math_pipeline_final_v01.yaml",
+          "exists": true,
+          "bytes": 3471,
+          "sha256": "36336f7c5e5cfe63fce7542b7451340e98f8492a3921795b13098e4d790ad943",
+          "matches_handoff_inventory": true
+        },
+        {
+          "source_label": "pdf_english_handoff",
+          "relative_path": "config/docx_math_pipeline_final_v01.yaml",
+          "exists": false,
+          "bytes": 0,
+          "sha256": "",
+          "matches_handoff_inventory": null
+        }
+      ],
+      "import_action": "candidate_available_for_reviewed_import"
+    },
+    {
+      "chain_id": "doc_math",
+      "role": "canonical_config_2",
+      "relative_path": "config/docx_math_pipeline_final_active_manifest.json",
+      "cleanroom_exists": false,
+      "cleanroom_bytes": 0,
+      "cleanroom_sha256": "",
+      "handoff_inventory_sha256": "cb336031c400a46c376cf6c36dbafb39bb901b2677014f695d81f8ee2788a528",
+      "source_candidates": [
+        {
+          "source_label": "old_local",
+          "relative_path": "config/docx_math_pipeline_final_active_manifest.json",
+          "exists": true,
+          "bytes": 4486,
+          "sha256": "cb336031c400a46c376cf6c36dbafb39bb901b2677014f695d81f8ee2788a528",
+          "matches_handoff_inventory": true
+        },
+        {
+          "source_label": "pdf_english_handoff",
+          "relative_path": "config/docx_math_pipeline_final_active_manifest.json",
+          "exists": false,
+          "bytes": 0,
+          "sha256": "",
+          "matches_handoff_inventory": null
+        }
+      ],
+      "import_action": "candidate_available_for_reviewed_import"
+    },
+    {
+      "chain_id": "doc_english",
+      "role": "canonical_entrypoint",
+      "relative_path": "tools/english_docx_native_md_v01.py",
+      "cleanroom_exists": false,
+      "cleanroom_bytes": 0,
+      "cleanroom_sha256": "",
+      "handoff_inventory_sha256": null,
+      "source_candidates": [
+        {
+          "source_label": "old_local",
+          "relative_path": "tools/english_docx_native_md_v01.py",
+          "exists": true,
+          "bytes": 24665,
+          "sha256": "1ce2008b5daae86347199d9afa5b5acbac2a8c94cea405800c6ba7b1be95eb06",
+          "matches_handoff_inventory": null
+        },
+        {
+          "source_label": "pdf_english_handoff",
+          "relative_path": "tools/english_docx_native_md_v01.py",
+          "exists": false,
+          "bytes": 0,
+          "sha256": "",
+          "matches_handoff_inventory": null
+        }
+      ],
+      "import_action": "candidate_available_for_reviewed_import"
+    },
+    {
+      "chain_id": "doc_english",
+      "role": "canonical_config_1",
+      "relative_path": "config/english_docx_native_md/active_manifest.json",
+      "cleanroom_exists": false,
+      "cleanroom_bytes": 0,
+      "cleanroom_sha256": "",
+      "handoff_inventory_sha256": null,
+      "source_candidates": [
+        {
+          "source_label": "old_local",
+          "relative_path": "config/english_docx_native_md/active_manifest.json",
+          "exists": true,
+          "bytes": 4345,
+          "sha256": "8878920e58ce16f97c17847968a3ce81eaa2ced1976b22ba1a1d9fde22d983f5",
+          "matches_handoff_inventory": null
+        },
+        {
+          "source_label": "pdf_english_handoff",
+          "relative_path": "config/english_docx_native_md/active_manifest.json",
+          "exists": false,
+          "bytes": 0,
+          "sha256": "",
+          "matches_handoff_inventory": null
+        }
+      ],
+      "import_action": "candidate_available_for_reviewed_import"
+    },
+    {
+      "chain_id": "doc_english",
+      "role": "canonical_config_2",
+      "relative_path": "config/english_docx_native_md/group_repair_gate_v01.json",
+      "cleanroom_exists": false,
+      "cleanroom_bytes": 0,
+      "cleanroom_sha256": "",
+      "handoff_inventory_sha256": null,
+      "source_candidates": [
+        {
+          "source_label": "old_local",
+          "relative_path": "config/english_docx_native_md/group_repair_gate_v01.json",
+          "exists": true,
+          "bytes": 1319,
+          "sha256": "3d0065643fa32eacedba8e123b6afac97181dbe3c732292d157b6903091f2f30",
+          "matches_handoff_inventory": null
+        },
+        {
+          "source_label": "pdf_english_handoff",
+          "relative_path": "config/english_docx_native_md/group_repair_gate_v01.json",
+          "exists": false,
+          "bytes": 0,
+          "sha256": "",
+          "matches_handoff_inventory": null
+        }
+      ],
+      "import_action": "candidate_available_for_reviewed_import"
+    },
+    {
+      "chain_id": "pdf_math",
+      "role": "canonical_entrypoint",
+      "relative_path": "tools/run_question_ingest_skill.py",
+      "cleanroom_exists": true,
+      "cleanroom_bytes": 41080,
+      "cleanroom_sha256": "0a596451b10b2a22c5eca868544d613018d398436b55e9b377e17cc1bcb1703d",
+      "handoff_inventory_sha256": null,
+      "source_candidates": [
+        {
+          "source_label": "old_local",
+          "relative_path": "tools/run_question_ingest_skill.py",
+          "exists": true,
+          "bytes": 46844,
+          "sha256": "f3038968647eab3570d2d9f3a90cb74e06981c1a9ef4df0eefd2475ae3238732",
+          "matches_handoff_inventory": null
+        },
+        {
+          "source_label": "pdf_english_handoff",
+          "relative_path": "tools/run_question_ingest_skill.py",
+          "exists": false,
+          "bytes": 0,
+          "sha256": "",
+          "matches_handoff_inventory": null
+        }
+      ],
+      "import_action": "already_present_in_cleanroom"
+    },
+    {
+      "chain_id": "pdf_english",
+      "role": "canonical_entrypoint",
+      "relative_path": "config/english_text_first_graph_first/active_manifest.json",
+      "cleanroom_exists": false,
+      "cleanroom_bytes": 0,
+      "cleanroom_sha256": "",
+      "handoff_inventory_sha256": null,
+      "source_candidates": [
+        {
+          "source_label": "old_local",
+          "relative_path": "config/english_text_first_graph_first/active_manifest.json",
+          "exists": false,
+          "bytes": 0,
+          "sha256": "",
+          "matches_handoff_inventory": null
+        },
+        {
+          "source_label": "pdf_english_handoff",
+          "relative_path": "config/english_text_first_graph_first/active_manifest.json",
+          "exists": false,
+          "bytes": 0,
+          "sha256": "",
+          "matches_handoff_inventory": null
+        }
+      ],
+      "import_action": "source_missing_or_not_provided"
+    }
+  ],
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}

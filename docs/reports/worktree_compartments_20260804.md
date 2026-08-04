@@ -5,7 +5,7 @@ All paths are relative git paths; no local absolute path is part of the reproduc
 
 ## Counts
 
-- `final_chain_registry`: 7
+- `final_chain_registry`: 6
 - `mixed_control_file`: 1
 - `worktree_compartment_report`: 1
 
@@ -21,8 +21,7 @@ All paths are relative git paths; no local absolute path is part of the reproduc
 - ` M` `final_chain_registry` `src/teachbase/final_chains/__init__.py`: protected-chain inventory, classifier, or cleanup candidate audit
 - ` M` `final_chain_registry` `tests/test_final_chain_control.py`: protected-chain inventory, classifier, or cleanup candidate audit
 - ` M` `worktree_compartment_report` `tools/build_worktree_compartment_report.py`: review compartment documentation and report generator
-- ` M` `final_chain_registry` `tools/final_chain_control.py`: protected-chain inventory, classifier, or cleanup candidate audit
-- `??` `final_chain_registry` `docs/reports/final_chain_control_dashboard_20260804.json`: protected-chain inventory, classifier, or cleanup candidate audit
-- `??` `final_chain_registry` `docs/reports/final_chain_control_dashboard_20260804.md`: protected-chain inventory, classifier, or cleanup candidate audit
-- `??` `final_chain_registry` `src/teachbase/final_chains/dashboard.py`: protected-chain inventory, classifier, or cleanup candidate audit
-- `??` `final_chain_registry` `tools/build_final_chain_control_dashboard.py`: protected-chain inventory, classifier, or cleanup candidate audit
+- `??` `final_chain_registry` `docs/reports/final_chain_cleanroom_import_audit_20260804.json`: protected-chain inventory, classifier, or cleanup candidate audit
+- `??` `final_chain_registry` `docs/reports/final_chain_cleanroom_import_audit_20260804.md`: protected-chain inventory, classifier, or cleanup candidate audit
+- `??` `final_chain_registry` `src/teachbase/final_chains/import_audit.py`: protected-chain inventory, classifier, or cleanup candidate audit
+- `??` `final_chain_registry` `tools/audit_final_chain_cleanroom_imports.py`: protected-chain inventory, classifier, or cleanup candidate audit

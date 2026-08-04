@@ -9,7 +9,7 @@
   ],
   "counts": {
     "mixed_control_file": 1,
-    "final_chain_registry": 7,
+    "final_chain_registry": 6,
     "worktree_compartment_report": 1
   },
   "records": [
@@ -50,8 +50,8 @@
       ]
     },
     {
-      "status": " M",
-      "path": "tools/final_chain_control.py",
+      "status": "??",
+      "path": "docs/reports/final_chain_cleanroom_import_audit_20260804.json",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -59,7 +59,7 @@
     },
     {
       "status": "??",
-      "path": "docs/reports/final_chain_control_dashboard_20260804.json",
+      "path": "docs/reports/final_chain_cleanroom_import_audit_20260804.md",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -67,7 +67,7 @@
     },
     {
       "status": "??",
-      "path": "docs/reports/final_chain_control_dashboard_20260804.md",
+      "path": "src/teachbase/final_chains/import_audit.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -75,15 +75,7 @@
     },
     {
       "status": "??",
-      "path": "src/teachbase/final_chains/dashboard.py",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
-      ]
-    },
-    {
-      "status": "??",
-      "path": "tools/build_final_chain_control_dashboard.py",
+      "path": "tools/audit_final_chain_cleanroom_imports.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"

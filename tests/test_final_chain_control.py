@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
@@ -13,6 +14,7 @@ from teachbase.final_chains import (
     build_final_chain_adapters,
     build_final_chain_control_dashboard,
     build_chain_run_plan,
+    build_cleanroom_import_audit,
     build_readiness_matrix,
     describe_adapters,
     inspect_adapter_contracts,
@@ -644,3 +646,74 @@ def test_final_chain_control_cli_dashboard_filters_one_chain(tmp_path: Path) -> 
     assert payload["chain_count"] == 1
     assert payload["lane_counts"] == {"adapter_dry_run_ready": 1}
     assert payload["rows"][0]["chain_id"] == "pdf_math"
+
+
+def test_cleanroom_import_audit_reports_candidates_without_absolute_paths(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    source = tmp_path / "source"
+    workspace.mkdir()
+    (workspace / "config").mkdir()
+    (source / "tools").mkdir(parents=True)
+    (source / "config").mkdir(parents=True)
+    entrypoint = source / "tools" / "run.py"
+    config_path = source / "config" / "pipeline.json"
+    entrypoint.write_text("print('not imported')\n", encoding="utf-8")
+    config_path.write_text('{"ok": true}\n', encoding="utf-8")
+    inventory_path = tmp_path / "inventory.json"
+    inventory_path.write_text(
+        json.dumps(
+            {
+                "files": [
+                    {
+                        "path": "tools/run.py",
+                        "sha256": hashlib.sha256(entrypoint.read_bytes()).hexdigest(),
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    registry_path = workspace / "final_chain_registry.yaml"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "final_chain_registry.v0.1",
+                "selection_policy": {},
+                "chains": [
+                    {
+                        "chain_id": "pdf_math",
+                        "display_name": "PDF Math",
+                        "input_format": "pdf",
+                        "subject": "math",
+                        "protection_status": "protected",
+                        "registry_readiness": "ready",
+                        "confidence": "high",
+                        "canonical_entrypoint": "tools/run.py",
+                        "canonical_config_paths": ["config/pipeline.json"],
+                        "smoke_status": {"status": "pass"},
+                        "runtime_import_policy": {"default_enabled": False},
+                        "database_write_policy": {"default_enabled": False},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    registry = load_final_chain_registry(registry_path)
+
+    report = build_cleanroom_import_audit(
+        registry,
+        workspace_root=workspace,
+        source_roots={"old_local": source},
+        handoff_inventories={"pdf_math": inventory_path},
+    )
+
+    assert report["schema_version"] == "final_chain_cleanroom_import_audit.v0.1"
+    assert report["absolute_paths_as_inputs"] is False
+    assert report["missing_in_cleanroom_count"] == 2
+    assert report["importable_candidate_count"] == 2
+    by_role = {row["role"]: row for row in report["rows"]}
+    assert by_role["canonical_entrypoint"]["relative_path"] == "tools/run.py"
+    assert by_role["canonical_entrypoint"]["source_candidates"][0]["source_label"] == "old_local"
+    assert by_role["canonical_entrypoint"]["source_candidates"][0]["matches_handoff_inventory"] is True
+    assert str(source) not in json.dumps(report)
