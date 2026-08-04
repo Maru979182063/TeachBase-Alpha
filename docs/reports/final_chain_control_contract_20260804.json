@@ -43,6 +43,7 @@
     "job_inspect": "tools/final_chain_control.py job-inspect --record <relative_record_path> --json",
     "job_validate": "tools/final_chain_control.py job-validate --record <relative_record_path> --json",
     "job_recovery_plan": "tools/final_chain_control.py job-recovery-plan --record <relative_record_path> --max-attempts <n> --json",
+    "job_schedule_replacement": "tools/final_chain_control.py job-schedule-replacement --record <relative_record_path> --max-attempts <n> --json",
     "job_transition": "tools/final_chain_control.py job-transition --record <relative_record_path> --status <status> --reason <reason> --expect-status <current_status> --expect-state-version <version> --json"
   },
   "job_lifecycle_policy": {
@@ -80,6 +81,8 @@
       "schema_version": "final_chain_job_recovery_plan.v0.1",
       "non_executing": true,
       "replacement_job_required_for_retry": true,
+      "replacement_inherits_request_snapshot": true,
+      "replacement_records_parent_job": true,
       "retry_budget_default_max_attempts": 3,
       "retryable_failure_checkpoint_key": "retryable"
     }

@@ -31,6 +31,7 @@ REQUIRED_COMMANDS = {
     "job_inspect",
     "job_validate",
     "job_recovery_plan",
+    "job_schedule_replacement",
     "job_transition",
 }
 REQUIRED_HANDSHAKE_STEPS = ["env-contract", "contract", "plan", "schedule", "queue", "job-validate", "adapter-dry-run"]

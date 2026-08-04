@@ -33,6 +33,7 @@ Chains: `doc_math, doc_english, pdf_math, pdf_english`
 - `job_inspect`: `tools/final_chain_control.py job-inspect --record <relative_record_path> --json`
 - `job_validate`: `tools/final_chain_control.py job-validate --record <relative_record_path> --json`
 - `job_recovery_plan`: `tools/final_chain_control.py job-recovery-plan --record <relative_record_path> --max-attempts <n> --json`
+- `job_schedule_replacement`: `tools/final_chain_control.py job-schedule-replacement --record <relative_record_path> --max-attempts <n> --json`
 - `job_transition`: `tools/final_chain_control.py job-transition --record <relative_record_path> --status <status> --reason <reason> --expect-status <current_status> --expect-state-version <version> --json`
 
 All paths are relative git paths; no local absolute path is part of the reproducible input contract.

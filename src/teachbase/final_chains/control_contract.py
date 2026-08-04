@@ -50,6 +50,10 @@ def build_final_chain_control_contract(registry: FinalChainRegistry) -> dict[str
                 "tools/final_chain_control.py job-recovery-plan --record <relative_record_path> "
                 "--max-attempts <n> --json"
             ),
+            "job_schedule_replacement": (
+                "tools/final_chain_control.py job-schedule-replacement --record <relative_record_path> "
+                "--max-attempts <n> --json"
+            ),
             "job_transition": (
                 "tools/final_chain_control.py job-transition --record <relative_record_path> "
                 "--status <status> --reason <reason> "
@@ -70,6 +74,8 @@ def build_final_chain_control_contract(registry: FinalChainRegistry) -> dict[str
                 "schema_version": "final_chain_job_recovery_plan.v0.1",
                 "non_executing": True,
                 "replacement_job_required_for_retry": True,
+                "replacement_inherits_request_snapshot": True,
+                "replacement_records_parent_job": True,
                 "retry_budget_default_max_attempts": 3,
                 "retryable_failure_checkpoint_key": "retryable",
             },

@@ -279,10 +279,14 @@ def _control_contract_declares_recovery_plan(control_contract: dict[str, Any]) -
     return (
         isinstance(commands.get("job_recovery_plan"), str)
         and commands["job_recovery_plan"].startswith("tools/final_chain_control.py job-recovery-plan ")
+        and isinstance(commands.get("job_schedule_replacement"), str)
+        and commands["job_schedule_replacement"].startswith("tools/final_chain_control.py job-schedule-replacement ")
         and isinstance(recovery, dict)
         and recovery.get("schema_version") == "final_chain_job_recovery_plan.v0.1"
         and recovery.get("non_executing") is True
         and recovery.get("replacement_job_required_for_retry") is True
+        and recovery.get("replacement_inherits_request_snapshot") is True
+        and recovery.get("replacement_records_parent_job") is True
         and recovery.get("retry_budget_default_max_attempts") == 3
     )
 

@@ -18,9 +18,11 @@ from teachbase.final_chains import (
     describe_adapters,
     inspect_adapter_contracts,
     inspect_job_record_path,
+    load_job_record,
     inspect_registry_environments,
     load_final_chain_registry,
     schedule_chain_run,
+    schedule_replacement_chain_run,
     schedule_registry_batch,
     transition_job_record_path,
     validate_job_record_path,
@@ -210,6 +212,16 @@ def recover_job(args: argparse.Namespace) -> dict:
     return build_job_recovery_plan_path(ROOT / args.record, max_attempts=args.max_attempts)
 
 
+def schedule_replacement_job(args: argparse.Namespace) -> dict:
+    registry = load_final_chain_registry(Path(args.registry))
+    return schedule_replacement_chain_run(
+        registry,
+        load_job_record(ROOT / args.record),
+        workspace_root=ROOT,
+        max_attempts=args.max_attempts,
+    )
+
+
 def transition_job(args: argparse.Namespace) -> dict:
     checkpoint = {"source": "final_chain_control_cli"} if args.with_checkpoint else None
     return transition_job_record_path(
@@ -313,6 +325,15 @@ def main() -> int:
     job_recovery_parser.add_argument("--record", required=True)
     job_recovery_parser.add_argument("--max-attempts", type=int, default=3)
 
+    job_replacement_parser = add_json_flag(
+        subparsers.add_parser(
+            "job-schedule-replacement",
+            help="Schedule a non-executing replacement job from a retryable failed job.",
+        )
+    )
+    job_replacement_parser.add_argument("--record", required=True)
+    job_replacement_parser.add_argument("--max-attempts", type=int, default=3)
+
     job_transition_parser = add_json_flag(
         subparsers.add_parser(
             "job-transition", help="Apply a guarded lifecycle transition to a recorded final-chain job."
@@ -359,6 +380,8 @@ def main() -> int:
             result = validate_job(args)
         elif args.command == "job-recovery-plan":
             result = recover_job(args)
+        elif args.command == "job-schedule-replacement":
+            result = schedule_replacement_job(args)
         elif args.command == "job-transition":
             result = transition_job(args)
         elif args.command == "dashboard":
@@ -399,6 +422,8 @@ def main() -> int:
         return 0
     if args.command == "job-validate":
         return 0 if result.get("ok") is True else 2
+    if args.command == "job-schedule-replacement":
+        return 0 if result.get("status") in {"scheduled_ready", "scheduled_blocked"} else 2
     if args.command == "adapter-dry-run":
         return 0 if result.get("status") == "dry_run_ready" else 2
     if args.command == "env-check":

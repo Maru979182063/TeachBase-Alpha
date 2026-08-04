@@ -9,12 +9,22 @@
   ],
   "counts": {
     "final_chain_registry": 15,
-    "foundation_hardening": 1
+    "foundation_hardening": 1,
+    "precleanup_safety_gate": 1,
+    "worktree_compartment_report": 2
   },
   "records": [
     {
       "status": " M",
       "path": "docs/reports/cleanroom_hardening_manifest_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/cleanroom_hardening_status_20260804.json",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -46,14 +56,6 @@
     },
     {
       "status": " M",
-      "path": "docs/reports/final_chain_ops_gate_20260804.md",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
-      ]
-    },
-    {
-      "status": " M",
       "path": "docs/reports/final_chain_orchestrator_handshake_20260804.json",
       "bucket": "final_chain_registry",
       "reasons": [
@@ -78,6 +80,30 @@
     },
     {
       "status": " M",
+      "path": "docs/reports/precleanup_safety_gate_20260804.json",
+      "bucket": "precleanup_safety_gate",
+      "reasons": [
+        "combined guard for protected-chain cleanup work"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/worktree_compartments_20260804.json",
+      "bucket": "worktree_compartment_report",
+      "reasons": [
+        "review compartment documentation and report generator"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/worktree_compartments_20260804.md",
+      "bucket": "worktree_compartment_report",
+      "reasons": [
+        "review compartment documentation and report generator"
+      ]
+    },
+    {
+      "status": " M",
       "path": "src/teachbase/final_chains/__init__.py",
       "bucket": "final_chain_registry",
       "reasons": [
@@ -86,7 +112,7 @@
     },
     {
       "status": " M",
-      "path": "src/teachbase/final_chains/control_contract.py",
+      "path": "src/teachbase/final_chains/control.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -94,7 +120,7 @@
     },
     {
       "status": " M",
-      "path": "src/teachbase/final_chains/jobs.py",
+      "path": "src/teachbase/final_chains/control_contract.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"

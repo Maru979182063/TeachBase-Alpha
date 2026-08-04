@@ -27,6 +27,7 @@ from teachbase.final_chains import (
     inspect_registry_environments,
     load_final_chain_registry,
     schedule_chain_run,
+    schedule_replacement_chain_run,
     schedule_registry_batch,
     transition_job_record,
     transition_job_record_path,
@@ -915,6 +916,141 @@ def test_job_recovery_plan_path_redacts_invalid_absolute_checkpoint(tmp_path: Pa
     assert str(tmp_path) not in serialized
 
 
+def test_schedule_replacement_chain_run_inherits_request_and_records_parent(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "tools").mkdir()
+    (workspace / "tools" / "run.py").write_text("print('not imported')\n", encoding="utf-8")
+    input_path = workspace / "input.pdf"
+    input_path.write_text("pdf placeholder\n", encoding="utf-8")
+    registry_path = workspace / "final_chain_registry.yaml"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "final_chain_registry.v0.1",
+                "selection_policy": {},
+                "chains": [
+                    {
+                        "chain_id": "pdf_math",
+                        "display_name": "PDF Math",
+                        "input_format": "pdf",
+                        "subject": "math",
+                        "protection_status": "protected",
+                        "registry_readiness": "ready",
+                        "confidence": "high",
+                        "canonical_entrypoint": "tools/run.py",
+                        "smoke_status": {"status": "pass"},
+                        "runtime_import_policy": {"default_enabled": False},
+                        "database_write_policy": {"default_enabled": False},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    registry = load_final_chain_registry(registry_path)
+    original = schedule_chain_run(
+        registry,
+        ChainRunRequest(chain_id="pdf_math", input_path="input.pdf", output_root="outputs/final_chain_runs"),
+        workspace_root=workspace,
+    )
+    started = transition_job_record(original, "dry_run_started", reason="worker accepted")
+    failed = transition_job_record(
+        started,
+        "dry_run_failed",
+        reason="transient EOF",
+        checkpoint={"retryable": True, "artifact_ref": "outputs/final_chain_runs/job/error.json"},
+    )
+
+    replacement = schedule_replacement_chain_run(registry, failed, workspace_root=workspace, max_attempts=3)
+
+    assert replacement["status"] == "scheduled_ready"
+    assert replacement["job_id"] != original["job_id"]
+    assert replacement["request_snapshot"]["input"]["path"] == "input.pdf"
+    assert replacement["plan"]["input_path"] == "input.pdf"
+    assert replacement["plan"]["output_root"] == "outputs/final_chain_runs"
+    assert replacement["replacement"] == {
+        "schema_version": "final_chain_replacement_job.v0.1",
+        "parent_job_id": original["job_id"],
+        "parent_chain_id": "pdf_math",
+        "parent_state_version": 3,
+        "attempt_number": 2,
+        "max_attempts": 3,
+        "recovery_reason": "latest_failure_is_retryable_and_attempt_budget_remains",
+        "recovery_plan_schema": "final_chain_job_recovery_plan.v0.1",
+    }
+    assert replacement["record_validation"]["ok"] is True
+    assert validate_job_record(replacement)["ok"] is True
+    assert json.loads((workspace / replacement["record_path"]).read_text(encoding="utf-8"))["replacement"][
+        "parent_job_id"
+    ] == original["job_id"]
+    assert str(workspace) not in json.dumps(replacement)
+
+
+def test_schedule_replacement_chain_run_rejects_when_recovery_plan_disallows_retry(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    registry_path = workspace / "final_chain_registry.yaml"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "final_chain_registry.v0.1",
+                "selection_policy": {},
+                "chains": [
+                    {
+                        "chain_id": "pdf_math",
+                        "display_name": "PDF Math",
+                        "input_format": "pdf",
+                        "subject": "math",
+                        "protection_status": "protected",
+                        "registry_readiness": "ready",
+                        "confidence": "high",
+                        "canonical_entrypoint": "tools/run.py",
+                        "smoke_status": {"status": "pass"},
+                        "runtime_import_policy": {"default_enabled": False},
+                        "database_write_policy": {"default_enabled": False},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    registry = load_final_chain_registry(registry_path)
+    failed = _valid_job_record_with_history(
+        "dry_run_failed",
+        [
+            {
+                "version": 1,
+                "status": "scheduled_ready",
+                "at": "2026-08-04T00:00:00+00:00",
+                "reason": "scheduled",
+                "checkpoint": None,
+            },
+            {
+                "version": 2,
+                "status": "dry_run_started",
+                "at": "2026-08-04T00:00:01+00:00",
+                "reason": "worker accepted",
+                "checkpoint": None,
+            },
+            {
+                "version": 3,
+                "status": "dry_run_failed",
+                "at": "2026-08-04T00:00:02+00:00",
+                "reason": "schema failure",
+                "checkpoint": {"retryable": False},
+            },
+        ],
+    )
+
+    with pytest.raises(ConfigurationError) as error:
+        schedule_replacement_chain_run(registry, failed, workspace_root=workspace, max_attempts=3)
+
+    assert error.value.error_code == "final_chain_replacement_not_allowed"
+    assert error.value.evidence["action"] == "manual_review_required"
+    assert error.value.evidence["reason"] == "latest_failure_is_not_retryable"
+
+
 def test_final_chain_control_cli_validates_job_record_contract(tmp_path: Path) -> None:
     record = {
         "schema_version": "final_chain_job_record.v0.1",
@@ -1096,6 +1232,68 @@ def test_final_chain_control_cli_builds_job_recovery_plan(tmp_path: Path) -> Non
     assert payload["action"] == "schedule_replacement_job"
     assert payload["can_schedule_replacement_job"] is True
     assert payload["execution_contract"]["runtime_imported"] is False
+
+
+def test_final_chain_control_cli_schedules_replacement_job(tmp_path: Path) -> None:
+    record = _valid_job_record_with_history(
+        "dry_run_failed",
+        [
+            {
+                "version": 1,
+                "status": "scheduled_ready",
+                "at": "2026-08-04T00:00:00+00:00",
+                "reason": "scheduled",
+                "checkpoint": None,
+            },
+            {
+                "version": 2,
+                "status": "dry_run_started",
+                "at": "2026-08-04T00:00:01+00:00",
+                "reason": "adapter dry-run accepted",
+                "checkpoint": None,
+            },
+            {
+                "version": 3,
+                "status": "dry_run_failed",
+                "at": "2026-08-04T00:00:02+00:00",
+                "reason": "EOF from external worker",
+                "checkpoint": {"retryable": True},
+            },
+        ],
+    )
+    record["plan"]["input_path"] = "tests/fixtures/final_chain_samples/pdf_math_sample.pdf"
+    record["plan"]["output_root"] = "outputs/final_chain_cli_replacements"
+    record_path = tmp_path / "failed_job_record.json"
+    record_path.write_text(json.dumps(record), encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/final_chain_control.py",
+            "job-schedule-replacement",
+            "--record",
+            str(record_path),
+            "--max-attempts",
+            "3",
+            "--json",
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    assert payload["status"] == "scheduled_ready"
+    assert payload["replacement"]["parent_job_id"] == "job"
+    assert payload["replacement"]["attempt_number"] == 2
+    assert payload["request_snapshot"]["input"]["path"] == "tests/fixtures/final_chain_samples/pdf_math_sample.pdf"
+    assert payload["execution_contract"]["model_invoked"] is False
+    assert str(tmp_path) not in serialized
+    assert (ROOT / payload["record_path"]).is_file()
 
 
 def test_final_chain_control_cli_reports_missing_job_record_as_json(tmp_path: Path) -> None:

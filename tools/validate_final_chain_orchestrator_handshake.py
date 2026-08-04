@@ -143,6 +143,7 @@ def _command_map_ok(command_map: dict[str, Any]) -> bool:
         "job_inspect",
         "job_validate",
         "job_recovery_plan",
+        "job_schedule_replacement",
         "job_transition",
     }
     return required.issubset(command_map.keys()) and all(
@@ -197,6 +198,8 @@ def _lifecycle_ok(value: Any) -> bool:
         and recovery.get("schema_version") == "final_chain_job_recovery_plan.v0.1"
         and recovery.get("non_executing") is True
         and recovery.get("replacement_job_required_for_retry") is True
+        and recovery.get("replacement_inherits_request_snapshot") is True
+        and recovery.get("replacement_records_parent_job") is True
         and recovery.get("retry_budget_default_max_attempts") == 3
         and recovery.get("retryable_failure_checkpoint_key") == "retryable"
     )

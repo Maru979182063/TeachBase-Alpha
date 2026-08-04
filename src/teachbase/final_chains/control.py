@@ -9,7 +9,7 @@ from typing import Any, Literal
 from teachbase.core.errors import ConfigurationError
 from teachbase.core.run_context import generate_run_id, utc_now_iso
 from teachbase.infrastructure.artifact_store import write_json
-from .jobs import attach_job_record_validation, build_job_lifecycle, validate_job_record
+from .jobs import attach_job_record_validation, build_job_lifecycle, build_job_recovery_plan, validate_job_record
 
 PlanStatus = Literal["ready", "blocked"]
 
@@ -366,6 +366,42 @@ def schedule_chain_run(
     return record
 
 
+def schedule_replacement_chain_run(
+    registry: FinalChainRegistry,
+    failed_record: dict[str, Any],
+    *,
+    workspace_root: Path,
+    max_attempts: int = 3,
+) -> dict[str, Any]:
+    recovery_plan = build_job_recovery_plan(failed_record, max_attempts=max_attempts)
+    if recovery_plan["action"] != "schedule_replacement_job":
+        raise ConfigurationError(
+            "final_chain_replacement_not_allowed",
+            "Final-chain replacement job is allowed only for retryable failed jobs within recovery budget",
+            evidence={
+                "action": recovery_plan["action"],
+                "reason": recovery_plan["reason"],
+                "status": recovery_plan["status"],
+            },
+        )
+    request = _replacement_request_from_record(failed_record)
+    replacement = schedule_chain_run(registry, request, workspace_root=workspace_root)
+    replacement["replacement"] = {
+        "schema_version": "final_chain_replacement_job.v0.1",
+        "parent_job_id": str(failed_record.get("job_id") or ""),
+        "parent_chain_id": str(failed_record.get("chain_id") or ""),
+        "parent_state_version": recovery_plan["state_version"],
+        "attempt_number": recovery_plan["started_attempt_count"] + 1,
+        "max_attempts": max_attempts,
+        "recovery_reason": recovery_plan["reason"],
+        "recovery_plan_schema": recovery_plan["schema_version"],
+    }
+    replacement = attach_job_record_validation(replacement)
+    record_path = workspace_root / str(replacement.get("record_path") or "")
+    write_json(record_path, replacement)
+    return replacement
+
+
 def schedule_registry_batch(
     registry: FinalChainRegistry,
     sample_inputs: dict[str, str],
@@ -425,6 +461,38 @@ def schedule_registry_batch(
 def _default_missing_sample_path(chain: FinalChainDefinition) -> str:
     suffix = chain.input_format.lower().lstrip(".") or "input"
     return f"tests/fixtures/final_chain_samples/{chain.chain_id}_sample.{suffix}"
+
+
+def _replacement_request_from_record(record: dict[str, Any]) -> ChainRunRequest:
+    plan = record.get("plan")
+    environment_snapshot = record.get("environment_snapshot")
+    if not isinstance(plan, dict):
+        raise ConfigurationError("final_chain_replacement_source_plan_missing", "Replacement source job is missing plan")
+    if not isinstance(environment_snapshot, dict):
+        raise ConfigurationError(
+            "final_chain_replacement_source_environment_missing",
+            "Replacement source job is missing environment snapshot",
+        )
+    chain_id = str(record.get("chain_id") or plan.get("chain_id") or "")
+    input_path = str(plan.get("input_path") or "")
+    output_root = str(plan.get("output_root") or "")
+    if not chain_id or not input_path or not output_root:
+        raise ConfigurationError(
+            "final_chain_replacement_source_request_incomplete",
+            "Replacement source job does not contain a portable chain_id, input_path, and output_root",
+        )
+    return ChainRunRequest(
+        chain_id=chain_id,
+        input_path=input_path,
+        output_root=output_root,
+        dry_run=True,
+        environment=EnvironmentPolicy(
+            name=str(environment_snapshot.get("profile_name") or "local_dry_run"),
+            allow_model_calls=environment_snapshot.get("allow_model_calls") is True,
+            allow_database_writes=environment_snapshot.get("allow_database_writes") is True,
+            allow_runtime_import=environment_snapshot.get("allow_runtime_import") is True,
+        ),
+    )
 
 
 def _no_side_effect_contract() -> dict[str, bool]:

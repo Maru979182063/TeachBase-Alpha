@@ -140,6 +140,8 @@
         "schema_version": "final_chain_job_recovery_plan.v0.1",
         "non_executing": true,
         "replacement_job_required_for_retry": true,
+        "replacement_inherits_request_snapshot": true,
+        "replacement_records_parent_job": true,
         "retry_budget_default_max_attempts": 3,
         "retryable_failure_checkpoint_key": "retryable"
       }
