@@ -10,6 +10,7 @@ from teachbase.final_chains import (
     EnvironmentPolicy,
     build_final_chain_adapters,
     build_final_chain_control_dashboard,
+    build_final_chain_control_contract,
     build_chain_run_plan,
     build_readiness_matrix,
     describe_adapters,
@@ -170,6 +171,11 @@ def build_dashboard(args: argparse.Namespace) -> dict:
     return report
 
 
+def build_control_contract(args: argparse.Namespace) -> dict:
+    registry = load_final_chain_registry(Path(args.registry))
+    return build_final_chain_control_contract(registry)
+
+
 def inspect_job(args: argparse.Namespace) -> dict:
     return inspect_job_record_path(ROOT / args.record)
 
@@ -269,6 +275,8 @@ def main() -> int:
     dashboard_parser.add_argument("--chain-id", default="")
     dashboard_parser.add_argument("--sample-input", action="append")
 
+    add_json_flag(subparsers.add_parser("contract", help="Print the external orchestrator control contract."))
+
     args = parser.parse_args()
     try:
         if args.command == "list":
@@ -291,6 +299,8 @@ def main() -> int:
             result = transition_job(args)
         elif args.command == "dashboard":
             result = build_dashboard(args)
+        elif args.command == "contract":
+            result = build_control_contract(args)
         else:
             result = build_plan(args)
     except TeachBaseError as exc:
@@ -318,6 +328,7 @@ def main() -> int:
         "readiness-matrix",
         "job-inspect",
         "dashboard",
+        "contract",
     }:
         return 0
     if args.command == "adapter-dry-run":

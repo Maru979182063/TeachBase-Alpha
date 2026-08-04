@@ -37,6 +37,7 @@ def build_final_chain_control_contract(registry: FinalChainRegistry) -> dict[str
             "execution_contract",
         ],
         "commands": {
+            "contract": "tools/final_chain_control.py contract --json",
             "list": "tools/final_chain_control.py list --json",
             "plan": "tools/final_chain_control.py plan --chain-id <chain_id> --input <path> --json",
             "schedule": "tools/final_chain_control.py schedule --chain-id <chain_id> --input <path>",

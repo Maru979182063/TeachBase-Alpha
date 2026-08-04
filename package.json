@@ -36,6 +36,7 @@
     "final-chain:adapter-dry-run": "python tools/final_chain_control.py adapter-dry-run",
     "final-chain:readiness-matrix": "python tools/final_chain_control.py readiness-matrix",
     "final-chain:dashboard": "python tools/final_chain_control.py dashboard",
+    "final-chain:contract": "python tools/final_chain_control.py contract",
     "audit:final-chain-dashboard": "python tools/build_final_chain_control_dashboard.py",
     "audit:final-chain-imports": "python tools/audit_final_chain_cleanroom_imports.py",
     "audit:final-chain-ready-samples": "python tools/build_final_chain_ready_sample_report.py",

@@ -848,6 +848,7 @@ def test_final_chain_control_contract_is_external_orchestrator_safe() -> None:
     assert report["control_plane_contract"]["execute_intent_blocked"] is True
     assert report["control_plane_contract"]["scheduler_writes_only_under"] == "outputs/"
     assert all(report["forbidden_side_effects"].values())
+    assert report["commands"]["contract"] == "tools/final_chain_control.py contract --json"
     assert report["execution_contract"] == {
         "model_invoked": False,
         "database_written": False,
@@ -870,6 +871,27 @@ def test_final_chain_control_contract_report_has_no_absolute_paths() -> None:
     payload = json.loads(completed.stdout)
     serialized = json.dumps(payload, ensure_ascii=False)
     assert payload["schema_version"] == "final_chain_control_contract.v0.1"
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
+def test_final_chain_control_cli_contract_is_portable() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/final_chain_control.py", "contract", "--json"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    assert payload["schema_version"] == "final_chain_control_contract.v0.1"
+    assert payload["control_plane_contract"]["dry_run_only"] is True
+    assert payload["chain_ids"] == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
     assert "D:\\" not in serialized
     assert "C:\\" not in serialized
     assert "/Users/" not in serialized
