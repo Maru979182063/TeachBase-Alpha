@@ -179,14 +179,19 @@ def transition_job(args: argparse.Namespace) -> dict:
     return transition_job_record_path(ROOT / args.record, args.status, reason=args.reason, checkpoint=checkpoint)
 
 
+def add_json_flag(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    parser.add_argument("--json", action="store_true", help="Emit JSON output; this is the default and stable contract.")
+    return parser
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Inspect and plan protected TeachBase final-chain runs.")
     parser.add_argument("--registry", default=str(DEFAULT_REGISTRY.relative_to(ROOT)))
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    subparsers.add_parser("list", help="List registered protected final chains.")
+    add_json_flag(subparsers.add_parser("list", help="List registered protected final chains."))
 
-    plan_parser = subparsers.add_parser("plan", help="Build a dry-run execution plan for one final chain.")
+    plan_parser = add_json_flag(subparsers.add_parser("plan", help="Build a dry-run execution plan for one final chain."))
     plan_parser.add_argument("--chain-id", required=True)
     plan_parser.add_argument("--input", required=True)
     plan_parser.add_argument("--output-root", default="outputs/final_chain_runs")
@@ -196,28 +201,40 @@ def main() -> int:
     plan_parser.add_argument("--allow-database-writes", action="store_true")
     plan_parser.add_argument("--allow-runtime-import", action="store_true")
 
-    schedule_parser = subparsers.add_parser("schedule", help="Record a non-executing final-chain job plan.")
+    schedule_parser = add_json_flag(
+        subparsers.add_parser("schedule", help="Record a non-executing final-chain job plan.")
+    )
     schedule_parser.add_argument("--chain-id", required=True)
     schedule_parser.add_argument("--input", required=True)
     schedule_parser.add_argument("--output-root", default="outputs/final_chain_runs")
     schedule_parser.add_argument("--environment", default="local_dry_run")
 
-    env_parser = subparsers.add_parser("env-check", help="Inspect cleanroom environment readiness for final chains.")
+    env_parser = add_json_flag(
+        subparsers.add_parser("env-check", help="Inspect cleanroom environment readiness for final chains.")
+    )
     env_parser.add_argument("--chain-id", default="")
 
-    adapter_parser = subparsers.add_parser("adapter-contracts", help="Print adapter contracts for protected final chains.")
+    adapter_parser = add_json_flag(
+        subparsers.add_parser("adapter-contracts", help="Print adapter contracts for protected final chains.")
+    )
     adapter_parser.add_argument("--chain-id", default="")
 
-    adapter_describe_parser = subparsers.add_parser("adapter-describe", help="Describe protected final-chain adapters.")
+    adapter_describe_parser = add_json_flag(
+        subparsers.add_parser("adapter-describe", help="Describe protected final-chain adapters.")
+    )
     adapter_describe_parser.add_argument("--chain-id", default="")
 
-    adapter_dry_run_parser = subparsers.add_parser("adapter-dry-run", help="Run adapter dry-run checks without executing chains.")
+    adapter_dry_run_parser = add_json_flag(
+        subparsers.add_parser("adapter-dry-run", help="Run adapter dry-run checks without executing chains.")
+    )
     adapter_dry_run_parser.add_argument("--chain-id", required=True)
     adapter_dry_run_parser.add_argument("--input", required=True)
     adapter_dry_run_parser.add_argument("--output-root", default="outputs/final_chain_runs")
     adapter_dry_run_parser.add_argument("--environment", default="local_dry_run")
 
-    readiness_parser = subparsers.add_parser("readiness-matrix", help="Summarize final-chain adapter readiness.")
+    readiness_parser = add_json_flag(
+        subparsers.add_parser("readiness-matrix", help="Summarize final-chain adapter readiness.")
+    )
     readiness_parser.add_argument("--chain-id", default="")
     readiness_parser.add_argument(
         "--sample-input",
@@ -225,18 +242,24 @@ def main() -> int:
         help="Optional chain_id=path sample input used for adapter dry-run readiness.",
     )
 
-    job_inspect_parser = subparsers.add_parser("job-inspect", help="Inspect a recorded final-chain job lifecycle.")
+    job_inspect_parser = add_json_flag(
+        subparsers.add_parser("job-inspect", help="Inspect a recorded final-chain job lifecycle.")
+    )
     job_inspect_parser.add_argument("--record", required=True)
 
-    job_transition_parser = subparsers.add_parser(
-        "job-transition", help="Apply a guarded lifecycle transition to a recorded final-chain job."
+    job_transition_parser = add_json_flag(
+        subparsers.add_parser(
+            "job-transition", help="Apply a guarded lifecycle transition to a recorded final-chain job."
+        )
     )
     job_transition_parser.add_argument("--record", required=True)
     job_transition_parser.add_argument("--status", required=True)
     job_transition_parser.add_argument("--reason", required=True)
     job_transition_parser.add_argument("--with-checkpoint", action="store_true")
 
-    dashboard_parser = subparsers.add_parser("dashboard", help="Summarize final-chain scheduling readiness.")
+    dashboard_parser = add_json_flag(
+        subparsers.add_parser("dashboard", help="Summarize final-chain scheduling readiness.")
+    )
     dashboard_parser.add_argument("--chain-id", default="")
     dashboard_parser.add_argument("--sample-input", action="append")
 

@@ -421,7 +421,7 @@ def test_adapter_contracts_forbid_runtime_side_effects_in_dry_run() -> None:
 
 def test_final_chain_control_cli_env_check_and_adapter_contracts() -> None:
     env_completed = subprocess.run(
-        [sys.executable, "tools/final_chain_control.py", "env-check", "--chain-id", "pdf_english"],
+        [sys.executable, "tools/final_chain_control.py", "env-check", "--chain-id", "pdf_english", "--json"],
         cwd=ROOT,
         text=True,
         stdout=subprocess.PIPE,
@@ -436,7 +436,7 @@ def test_final_chain_control_cli_env_check_and_adapter_contracts() -> None:
     assert env_payload["chains"][0]["status"] == "blocked"
 
     adapter_completed = subprocess.run(
-        [sys.executable, "tools/final_chain_control.py", "adapter-contracts", "--chain-id", "pdf_math"],
+        [sys.executable, "tools/final_chain_control.py", "adapter-contracts", "--chain-id", "pdf_math", "--json"],
         cwd=ROOT,
         text=True,
         stdout=subprocess.PIPE,
@@ -595,6 +595,7 @@ def test_final_chain_control_cli_readiness_matrix(tmp_path: Path) -> None:
             "pdf_math",
             "--sample-input",
             f"pdf_math={sample}",
+            "--json",
         ],
         cwd=ROOT,
         text=True,
@@ -650,6 +651,7 @@ def test_final_chain_control_cli_dashboard_filters_one_chain(tmp_path: Path) -> 
             "pdf_math",
             "--sample-input",
             f"pdf_math={sample}",
+            "--json",
         ],
         cwd=ROOT,
         text=True,
