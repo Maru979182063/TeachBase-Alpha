@@ -697,6 +697,48 @@ def test_ready_sample_report_runs_three_control_adapters_without_side_effects() 
         }
 
 
+def test_pdf_english_recovery_validator_fails_closed_without_manifest() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/validate_pdf_english_recovery.py", "--require-ready"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    payload = json.loads(completed.stdout)
+    assert payload["schema_version"] == "pdf_english_recovery_validation.v0.1"
+    assert payload["status"] == "blocked_missing_or_invalid_manifest"
+    assert "four_branch_runs_declared" in payload["required_manifest_check_failures"]
+    assert payload["execution_contract"] == {
+        "model_invoked": False,
+        "database_written": False,
+        "runtime_imported": False,
+        "business_secrets_read": False,
+    }
+
+
+def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/run_final_chain_ops_gate.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    checks = {item["name"]: item for item in payload["checks"]}
+    assert payload["status"] == "pass"
+    assert payload["pdf_english_recovery_validation_status"] == "blocked_missing_or_invalid_manifest"
+    assert checks["pdf_english_recovery_validator_fails_closed"]["ok"] is True
+    assert checks["pdf_english_recovery_requires_four_branch_manifest"]["ok"] is True
+
+
 def test_cleanroom_import_audit_reports_candidates_without_absolute_paths(tmp_path: Path) -> None:
     workspace = tmp_path / "workspace"
     source = tmp_path / "source"

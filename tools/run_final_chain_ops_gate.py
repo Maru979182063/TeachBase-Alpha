@@ -13,6 +13,7 @@ from teachbase.final_chains import build_final_chain_control_dashboard, load_fin
 from teachbase.infrastructure.artifact_store import write_json, write_text
 
 from tools.build_final_chain_ready_sample_report import build_report as build_ready_sample_report
+from tools.validate_pdf_english_recovery import build_report as build_pdf_english_recovery_report
 
 REGISTRY = ROOT / "config" / "final_chain_registry.yaml"
 PDF_ENGLISH_BLOCKER = ROOT / "docs" / "reports" / "pdf_english_manifest_recovery_audit_20260804.json"
@@ -25,6 +26,7 @@ def build_gate_report() -> dict[str, Any]:
     dashboard = build_final_chain_control_dashboard(registry, workspace_root=ROOT)
     ready_samples = build_ready_sample_report()
     pdf_english_blocker = json.loads(PDF_ENGLISH_BLOCKER.read_text(encoding="utf-8-sig"))
+    pdf_english_recovery = build_pdf_english_recovery_report()
     checks = [
         {
             "name": "dashboard_contract_ok",
@@ -62,8 +64,18 @@ def build_gate_report() -> dict[str, Any]:
             "value": pdf_english_blocker["recovery_status"],
         },
         {
+            "name": "pdf_english_recovery_validator_fails_closed",
+            "ok": pdf_english_recovery["status"] == "blocked_missing_or_invalid_manifest",
+            "value": pdf_english_recovery["status"],
+        },
+        {
+            "name": "pdf_english_recovery_requires_four_branch_manifest",
+            "ok": "four_branch_runs_declared" in pdf_english_recovery["required_manifest_check_failures"],
+            "value": pdf_english_recovery["required_manifest_check_failures"],
+        },
+        {
             "name": "no_runtime_side_effects_reported",
-            "ok": all_no_side_effects(dashboard, ready_samples, pdf_english_blocker),
+            "ok": all_no_side_effects(dashboard, ready_samples, pdf_english_blocker, pdf_english_recovery),
             "value": "model/database/runtime/secrets all false",
         },
     ]
@@ -77,6 +89,7 @@ def build_gate_report() -> dict[str, Any]:
         "dashboard_lane_counts": dashboard["lane_counts"],
         "ready_sample_count": ready_samples["ready_for_adapter_dry_run_count"],
         "pdf_english_recovery_status": pdf_english_blocker["recovery_status"],
+        "pdf_english_recovery_validation_status": pdf_english_recovery["status"],
         "execution_contract": {
             "model_invoked": False,
             "database_written": False,

@@ -48,6 +48,23 @@
       "value": "blocked_missing_manifest_and_smoke_artifacts"
     },
     {
+      "name": "pdf_english_recovery_validator_fails_closed",
+      "ok": true,
+      "value": "blocked_missing_or_invalid_manifest"
+    },
+    {
+      "name": "pdf_english_recovery_requires_four_branch_manifest",
+      "ok": true,
+      "value": [
+        "active_manifest_exists",
+        "active_manifest_json_object",
+        "pipeline_name_matches",
+        "allow_only_manifest_runs_enabled",
+        "timestamp_latest_selection_forbidden",
+        "four_branch_runs_declared"
+      ]
+    },
+    {
       "name": "no_runtime_side_effects_reported",
       "ok": true,
       "value": "model/database/runtime/secrets all false"
@@ -59,6 +76,7 @@
   },
   "ready_sample_count": 3,
   "pdf_english_recovery_status": "blocked_missing_manifest_and_smoke_artifacts",
+  "pdf_english_recovery_validation_status": "blocked_missing_or_invalid_manifest",
   "execution_contract": {
     "model_invoked": false,
     "database_written": false,

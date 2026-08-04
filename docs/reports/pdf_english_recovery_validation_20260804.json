@@ -1,0 +1,74 @@
+{
+  "schema_version": "pdf_english_recovery_validation.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "chain_id": "pdf_english",
+  "status": "blocked_missing_or_invalid_manifest",
+  "checks": [
+    {
+      "name": "active_manifest_exists",
+      "ok": false,
+      "path": "config/english_text_first_graph_first/active_manifest.json"
+    },
+    {
+      "name": "active_manifest_json_object",
+      "ok": false,
+      "error": "manifest_missing"
+    },
+    {
+      "name": "pipeline_name_matches",
+      "ok": false,
+      "expected": "english_text_first_graph_first",
+      "actual": null
+    },
+    {
+      "name": "allow_only_manifest_runs_enabled",
+      "ok": false
+    },
+    {
+      "name": "timestamp_latest_selection_forbidden",
+      "ok": false
+    },
+    {
+      "name": "four_branch_runs_declared",
+      "ok": false,
+      "required": [
+        "reading",
+        "grammar",
+        "writing",
+        "cloze"
+      ]
+    },
+    {
+      "name": "prior_smoke_zip_present",
+      "ok": false,
+      "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip"
+    },
+    {
+      "name": "prior_smoke_dir_present",
+      "ok": false,
+      "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728"
+    }
+  ],
+  "required_manifest_check_failures": [
+    "active_manifest_exists",
+    "active_manifest_json_object",
+    "pipeline_name_matches",
+    "allow_only_manifest_runs_enabled",
+    "timestamp_latest_selection_forbidden",
+    "four_branch_runs_declared"
+  ],
+  "manifest_gate": "python tools/english_text_first_graph_first_manifest_check.py",
+  "manifest_success_marker": "english_text_first_graph_first_manifest_valid",
+  "safe_next_actions": [
+    "restore_active_manifest_from_original_machine_or_backup",
+    "restore_or_rerun_small_smoke_artifacts",
+    "do_not_create_synthetic_active_manifest"
+  ],
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}
