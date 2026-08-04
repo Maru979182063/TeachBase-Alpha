@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from pathlib import Path
+import re
 from typing import Any
 
 from teachbase.core.errors import ConfigurationError
@@ -57,13 +58,88 @@ def inspect_job_record(record: dict[str, Any]) -> dict[str, Any]:
     lifecycle_status = lifecycle.get("status") if isinstance(lifecycle, dict) else ""
     return {
         "schema_version": "final_chain_job_inspection.v0.1",
-        "job_id": str(record.get("job_id") or ""),
-        "chain_id": str(record.get("chain_id") or ""),
-        "status": status,
+        "job_id": _redact_absolute_path_evidence(str(record.get("job_id") or "")),
+        "chain_id": _redact_absolute_path_evidence(str(record.get("chain_id") or "")),
+        "status": _redact_absolute_path_evidence(status),
         "lifecycle_status": lifecycle_status,
         "status_consistent": lifecycle_status in {"", status},
         "terminal": status in TERMINAL_STATUSES,
         "allowed_next_statuses": list(ALLOWED_TRANSITIONS[status]),
+        "model_invoked": False,
+        "database_written": False,
+        "runtime_imported": False,
+        "business_secrets_read": False,
+    }
+
+
+def validate_job_record(record: dict[str, Any]) -> dict[str, Any]:
+    errors: list[dict[str, Any]] = []
+
+    def add_error(code: str, **extra: Any) -> None:
+        errors.append({"code": code, **{key: _redact_absolute_path_evidence(value) for key, value in extra.items()}})
+
+    status = str(record.get("status") or "")
+    if record.get("schema_version") != "final_chain_job_record.v0.1":
+        add_error("schema_version_mismatch", value=record.get("schema_version"))
+    if status not in ALLOWED_TRANSITIONS:
+        add_error("unknown_status", value=status)
+
+    for key in ("plan", "request_snapshot", "environment_snapshot", "lifecycle", "execution_contract"):
+        if not isinstance(record.get(key), dict):
+            add_error("missing_required_section", section=key)
+
+    execution_contract = record.get("execution_contract")
+    if execution_contract != _no_side_effect_contract():
+        add_error("execution_contract_not_no_side_effects", value=execution_contract)
+
+    lifecycle = record.get("lifecycle")
+    if isinstance(lifecycle, dict) and status in ALLOWED_TRANSITIONS:
+        expected_next = list(ALLOWED_TRANSITIONS[status])
+        history = lifecycle.get("history")
+        latest = history[-1] if isinstance(history, list) and history else {}
+        if lifecycle.get("schema_version") != "final_chain_job_lifecycle.v0.1":
+            add_error("lifecycle_schema_version_mismatch", value=lifecycle.get("schema_version"))
+        if lifecycle.get("status") != status:
+            add_error("lifecycle_status_mismatch", status=status, lifecycle_status=lifecycle.get("status"))
+        if lifecycle.get("terminal") is not (status in TERMINAL_STATUSES):
+            add_error("lifecycle_terminal_mismatch", value=lifecycle.get("terminal"))
+        if lifecycle.get("allowed_next_statuses") != expected_next:
+            add_error("lifecycle_allowed_next_statuses_mismatch", value=lifecycle.get("allowed_next_statuses"))
+        if not isinstance(history, list) or not history:
+            add_error("lifecycle_history_missing")
+        elif latest.get("status") != status:
+            add_error("lifecycle_latest_history_status_mismatch", value=latest.get("status"))
+
+    request_snapshot = record.get("request_snapshot")
+    if isinstance(request_snapshot, dict):
+        if request_snapshot.get("workspace_contract") != "relative_git_paths_only":
+            add_error("request_snapshot_workspace_contract_mismatch")
+        if request_snapshot.get("absolute_paths_as_inputs") is not False:
+            add_error("request_snapshot_allows_absolute_paths")
+
+    plan = record.get("plan")
+    if isinstance(plan, dict):
+        if plan.get("workspace_contract") != "relative_git_paths_only":
+            add_error("plan_workspace_contract_mismatch")
+        if plan.get("absolute_paths_as_inputs") is not False:
+            add_error("plan_allows_absolute_paths")
+
+    record_path = str(record.get("record_path") or "")
+    if record_path and _looks_absolute_path(record_path):
+        add_error("record_path_not_portable")
+
+    leak_paths = sorted(set(_find_absolute_path_strings(record)))
+    if leak_paths:
+        add_error("absolute_path_leak", count=len(leak_paths))
+
+    return {
+        "schema_version": "final_chain_job_validation.v0.1",
+        "ok": not errors,
+        "job_id": str(record.get("job_id") or ""),
+        "chain_id": str(record.get("chain_id") or ""),
+        "status": status,
+        "error_count": len(errors),
+        "errors": errors,
         "model_invoked": False,
         "database_written": False,
         "runtime_imported": False,
@@ -142,6 +218,10 @@ def inspect_job_record_path(path: Path) -> dict[str, Any]:
     return inspect_job_record(load_job_record(path))
 
 
+def validate_job_record_path(path: Path) -> dict[str, Any]:
+    return validate_job_record(load_job_record(path))
+
+
 def transition_job_record_path(
     path: Path,
     target_status: str,
@@ -164,6 +244,51 @@ def transition_job_record_path(
 def _require_known_status(status: str) -> None:
     if status not in ALLOWED_TRANSITIONS:
         raise ConfigurationError("final_chain_job_unknown_status", f"Unknown final-chain job status: {status}")
+
+
+def _no_side_effect_contract() -> dict[str, bool]:
+    return {
+        "model_invoked": False,
+        "database_written": False,
+        "runtime_imported": False,
+        "business_secrets_read": False,
+    }
+
+
+def _find_absolute_path_strings(value: Any) -> list[str]:
+    if isinstance(value, dict):
+        found: list[str] = []
+        for item in value.values():
+            found.extend(_find_absolute_path_strings(item))
+        return found
+    if isinstance(value, list):
+        found = []
+        for item in value:
+            found.extend(_find_absolute_path_strings(item))
+        return found
+    if isinstance(value, str) and _looks_absolute_path(value):
+        return [value]
+    return []
+
+
+def _redact_absolute_path_evidence(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: _redact_absolute_path_evidence(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_redact_absolute_path_evidence(item) for item in value]
+    if isinstance(value, str) and _looks_absolute_path(value):
+        return "<absolute-path>"
+    return value
+
+
+def _looks_absolute_path(value: str) -> bool:
+    return bool(
+        Path(value).is_absolute()
+        or re.match(r"^[A-Za-z]:[\\/]", value)
+        or value.startswith("/Users/")
+        or value.startswith("/home/")
+        or value.startswith("/tmp/")
+    )
 
 
 def _portable_checkpoint(checkpoint: dict[str, Any] | None, *, workspace_root: Path | None = None) -> dict[str, Any] | None:

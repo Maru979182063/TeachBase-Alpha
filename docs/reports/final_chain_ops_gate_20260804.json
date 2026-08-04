@@ -34,6 +34,15 @@
       ]
     },
     {
+      "name": "ready_sample_job_records_validate",
+      "ok": true,
+      "value": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
       "name": "ready_sample_adapters_do_not_invoke_entrypoints",
       "ok": true,
       "value": [

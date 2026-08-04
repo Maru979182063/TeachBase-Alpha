@@ -24,6 +24,7 @@ from teachbase.final_chains import (
     load_final_chain_registry,
     schedule_chain_run,
     transition_job_record,
+    validate_job_record,
 )
 from teachbase.core.errors import ConfigurationError
 
@@ -394,6 +395,24 @@ def test_scheduler_snapshots_absolute_input_as_portable_metadata(tmp_path: Path)
         "database_writes_disabled": True,
         "runtime_import_disabled": True,
     }
+    assert validate_job_record(record)["ok"] is True
+
+    bad_record = json.loads(json.dumps(record))
+    bad_record["lifecycle"]["status"] = "dry_run_started"
+    bad_record["record_path"] = "D:\\unsafe\\job_record.json"
+    validation = validate_job_record(bad_record)
+    error_codes = {error["code"] for error in validation["errors"]}
+    assert validation["ok"] is False
+    assert "lifecycle_status_mismatch" in error_codes
+    assert "record_path_not_portable" in error_codes
+    assert "absolute_path_leak" in error_codes
+    assert "D:\\unsafe" not in json.dumps(validation)
+
+    leaking_record = json.loads(json.dumps(record))
+    leaking_record["status"] = "D:\\unsafe\\status"
+    leaking_validation = validate_job_record(leaking_record)
+    assert "unknown_status" in {error["code"] for error in leaking_validation["errors"]}
+    assert "D:\\unsafe" not in json.dumps(leaking_validation)
 
 
 def test_job_lifecycle_allows_only_guarded_dry_run_transitions(tmp_path: Path) -> None:
@@ -493,6 +512,75 @@ def test_job_lifecycle_rejects_illegal_transition() -> None:
 
     with pytest.raises(ConfigurationError):
         transition_job_record(record, "dry_run_started", reason="blocked jobs cannot start")
+
+
+def test_final_chain_control_cli_validates_job_record_contract(tmp_path: Path) -> None:
+    record = {
+        "schema_version": "final_chain_job_record.v0.1",
+        "job_id": "job",
+        "created_at": "2026-08-04T00:00:00+00:00",
+        "status": "scheduled_ready",
+        "chain_id": "pdf_math",
+        "record_path": "outputs/final_chain_runs/_control/jobs/job/job_record.json",
+        "plan": {"workspace_contract": "relative_git_paths_only", "absolute_paths_as_inputs": False},
+        "request_snapshot": {"workspace_contract": "relative_git_paths_only", "absolute_paths_as_inputs": False},
+        "environment_snapshot": {},
+        "lifecycle": {
+            "schema_version": "final_chain_job_lifecycle.v0.1",
+            "status": "scheduled_ready",
+            "state_version": 1,
+            "terminal": False,
+            "allowed_next_statuses": ["dry_run_started", "cancelled"],
+            "updated_at": "2026-08-04T00:00:00+00:00",
+            "history": [
+                {
+                    "version": 1,
+                    "status": "scheduled_ready",
+                    "at": "2026-08-04T00:00:00+00:00",
+                    "reason": "scheduled",
+                    "checkpoint": None,
+                }
+            ],
+        },
+        "execution_contract": {
+            "model_invoked": False,
+            "database_written": False,
+            "runtime_imported": False,
+            "business_secrets_read": False,
+        },
+        "errors": [],
+    }
+    record_path = tmp_path / "job_record.json"
+    record_path.write_text(json.dumps(record), encoding="utf-8")
+
+    valid_completed = subprocess.run(
+        [sys.executable, "tools/final_chain_control.py", "job-validate", "--record", str(record_path), "--json"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert valid_completed.returncode == 0
+    assert json.loads(valid_completed.stdout)["ok"] is True
+
+    record["record_path"] = "D:\\unsafe\\job_record.json"
+    record_path.write_text(json.dumps(record), encoding="utf-8")
+    invalid_completed = subprocess.run(
+        [sys.executable, "tools/final_chain_control.py", "job-validate", "--record", str(record_path), "--json"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert invalid_completed.returncode == 2
+    payload = json.loads(invalid_completed.stdout)
+    assert payload["ok"] is False
+    assert "record_path_not_portable" in {error["code"] for error in payload["errors"]}
+    assert "D:\\unsafe" not in json.dumps(payload)
 
 
 def test_final_chain_control_cli_inspects_and_transitions_job_record(tmp_path: Path) -> None:
@@ -849,6 +937,9 @@ def test_final_chain_control_contract_is_external_orchestrator_safe() -> None:
     assert report["control_plane_contract"]["scheduler_writes_only_under"] == "outputs/"
     assert all(report["forbidden_side_effects"].values())
     assert report["commands"]["contract"] == "tools/final_chain_control.py contract --json"
+    assert report["commands"]["job_validate"] == (
+        "tools/final_chain_control.py job-validate --record <relative_record_path> --json"
+    )
     assert report["execution_contract"] == {
         "model_invoked": False,
         "database_written": False,
@@ -949,6 +1040,8 @@ def test_ready_sample_report_runs_three_control_adapters_without_side_effects() 
         assert row["sample_input"].startswith("tests/fixtures/final_chain_samples/")
         assert row["adapter_dry_run_status"] == "dry_run_ready"
         assert row["schedule_status"] == "scheduled_ready"
+        assert row["job_record_validation_ok"] is True
+        assert row["job_record_validation_error_count"] == 0
         assert row["adapter_invoked_entrypoint"] is False
         assert row["execution_contract"] == {
             "model_invoked": False,
@@ -1029,6 +1122,7 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     assert checks["pdf_english_recovery_validator_fails_closed"]["ok"] is True
     assert checks["pdf_english_recovery_requires_four_branch_manifest"]["ok"] is True
     assert checks["pdf_english_recovery_source_audit_has_no_importable_source"]["ok"] is True
+    assert checks["ready_sample_job_records_validate"]["ok"] is True
     assert checks["control_contract_is_dry_run_only"]["ok"] is True
     assert checks["control_contract_covers_four_chains"]["ok"] is True
 

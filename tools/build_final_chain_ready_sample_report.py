@@ -9,6 +9,7 @@ from teachbase.final_chains import (
     build_readiness_matrix,
     load_final_chain_registry,
     schedule_chain_run,
+    validate_job_record,
 )
 from teachbase.infrastructure.artifact_store import write_json, write_text
 
@@ -34,6 +35,7 @@ def build_report() -> dict:
         request = ChainRunRequest(chain_id=chain_id, input_path=sample_path, output_root=OUTPUT_ROOT)
         dry_run = adapters[chain_id].dry_run(request)
         job_record = schedule_chain_run(registry, request, workspace_root=ROOT)
+        job_validation = validate_job_record(job_record)
         rows.append(
             {
                 "chain_id": chain_id,
@@ -41,6 +43,8 @@ def build_report() -> dict:
                 "adapter_dry_run_status": dry_run["status"],
                 "plan_status": dry_run["plan"]["status"],
                 "schedule_status": job_record["status"],
+                "job_record_validation_ok": job_validation["ok"],
+                "job_record_validation_error_count": job_validation["error_count"],
                 "job_record_written": bool(job_record.get("record_path")),
                 "job_record_path_contract": "outputs/final_chain_sample_dry_runs/_control/jobs/<generated>/job_record.json",
                 "adapter_invoked_entrypoint": dry_run["adapter_invoked_entrypoint"],

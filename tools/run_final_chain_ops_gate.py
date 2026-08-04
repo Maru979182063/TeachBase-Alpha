@@ -55,6 +55,11 @@ def build_gate_report() -> dict[str, Any]:
             "value": [row["schedule_status"] for row in ready_samples["rows"]],
         },
         {
+            "name": "ready_sample_job_records_validate",
+            "ok": all(row["job_record_validation_ok"] is True for row in ready_samples["rows"]),
+            "value": [row["job_record_validation_error_count"] for row in ready_samples["rows"]],
+        },
+        {
             "name": "ready_sample_adapters_do_not_invoke_entrypoints",
             "ok": all(row["adapter_invoked_entrypoint"] is False for row in ready_samples["rows"]),
             "value": [row["adapter_invoked_entrypoint"] for row in ready_samples["rows"]],

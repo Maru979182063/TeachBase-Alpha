@@ -23,8 +23,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.582,
-      "output_tail": "....                                                                     [100%]\n4 passed in 0.15s\n"
+      "duration_seconds": 6.207,
+      "output_tail": "....                                                                     [100%]\n4 passed in 1.55s\n"
     },
     {
       "name": "model_call_retry_checkpoint",
@@ -36,8 +36,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.571,
-      "output_tail": ".........                                                                [100%]\n9 passed in 0.11s\n"
+      "duration_seconds": 6.471,
+      "output_tail": ".........                                                                [100%]\n9 passed in 1.40s\n"
     },
     {
       "name": "docx_model_checkpoint_integration",
@@ -49,8 +49,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.576,
-      "output_tail": ".....                                                                    [100%]\n5 passed in 0.14s\n"
+      "duration_seconds": 6.713,
+      "output_tail": ".....                                                                    [100%]\n5 passed in 1.66s\n"
     },
     {
       "name": "visual_model_checkpoint_integration",
@@ -62,8 +62,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.57,
-      "output_tail": "...                                                                      [100%]\n3 passed in 0.13s\n"
+      "duration_seconds": 6.062,
+      "output_tail": "...                                                                      [100%]\n3 passed in 1.50s\n"
     },
     {
       "name": "architecture_boundaries",
@@ -75,8 +75,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.548,
-      "output_tail": ".......                                                                  [100%]\n7 passed in 0.12s\n"
+      "duration_seconds": 6.445,
+      "output_tail": ".......                                                                  [100%]\n7 passed in 2.46s\n"
     }
   ]
 }

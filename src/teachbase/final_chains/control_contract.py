@@ -43,6 +43,7 @@ def build_final_chain_control_contract(registry: FinalChainRegistry) -> dict[str
             "schedule": "tools/final_chain_control.py schedule --chain-id <chain_id> --input <path>",
             "adapter_dry_run": "tools/final_chain_control.py adapter-dry-run --chain-id <chain_id> --input <path> --json",
             "job_inspect": "tools/final_chain_control.py job-inspect --record <relative_record_path> --json",
+            "job_validate": "tools/final_chain_control.py job-validate --record <relative_record_path> --json",
             "job_transition": (
                 "tools/final_chain_control.py job-transition --record <relative_record_path> "
                 "--status <status> --reason <reason> --json"

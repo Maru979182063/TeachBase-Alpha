@@ -9,6 +9,7 @@ Status: `pass`
 - `pass` `one_chain_requires_artifact_restore_or_smoke`
 - `pass` `ready_sample_dry_runs_cover_three_chains`
 - `pass` `ready_sample_schedules_are_ready`
+- `pass` `ready_sample_job_records_validate`
 - `pass` `ready_sample_adapters_do_not_invoke_entrypoints`
 - `pass` `control_contract_is_dry_run_only`
 - `pass` `control_contract_covers_four_chains`

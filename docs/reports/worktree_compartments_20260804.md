@@ -5,9 +5,11 @@ All paths are relative git paths; no local absolute path is part of the reproduc
 
 ## Counts
 
-- `final_chain_registry`: 5
+- `final_chain_registry`: 13
 - `foundation_hardening`: 1
 - `mixed_control_file`: 1
+- `precleanup_safety_gate`: 1
+- `worktree_compartment_report`: 2
 
 ## Commit Handling
 
@@ -17,10 +19,21 @@ All paths are relative git paths; no local absolute path is part of the reproduc
 
 ## Records
 
+- ` M` `final_chain_registry` `docs/reports/cleanroom_hardening_status_20260804.json`: protected-chain inventory, classifier, or cleanup candidate audit
 - ` M` `final_chain_registry` `docs/reports/final_chain_control_contract_20260804.json`: protected-chain inventory, classifier, or cleanup candidate audit
 - ` M` `final_chain_registry` `docs/reports/final_chain_control_contract_20260804.md`: protected-chain inventory, classifier, or cleanup candidate audit
+- ` M` `final_chain_registry` `docs/reports/final_chain_ops_gate_20260804.json`: protected-chain inventory, classifier, or cleanup candidate audit
+- ` M` `final_chain_registry` `docs/reports/final_chain_ops_gate_20260804.md`: protected-chain inventory, classifier, or cleanup candidate audit
+- ` M` `final_chain_registry` `docs/reports/final_chain_ready_sample_dry_run_20260804.json`: protected-chain inventory, classifier, or cleanup candidate audit
 - ` M` `foundation_hardening` `docs/reports/foundation_hardening_test_report_20260803.json`: artifact atomicity or model retry/checkpoint hardening
+- ` M` `precleanup_safety_gate` `docs/reports/precleanup_safety_gate_20260804.json`: combined guard for protected-chain cleanup work
+- ` M` `worktree_compartment_report` `docs/reports/worktree_compartments_20260804.json`: review compartment documentation and report generator
+- ` M` `worktree_compartment_report` `docs/reports/worktree_compartments_20260804.md`: review compartment documentation and report generator
 - ` M` `mixed_control_file` `package.json`: foundation_hardening npm script; final_chain_registry npm scripts; precleanup_archive npm scripts; precleanup_deep_audit npm script; precleanup_safety npm script
+- ` M` `final_chain_registry` `src/teachbase/final_chains/__init__.py`: protected-chain inventory, classifier, or cleanup candidate audit
 - ` M` `final_chain_registry` `src/teachbase/final_chains/control_contract.py`: protected-chain inventory, classifier, or cleanup candidate audit
+- ` M` `final_chain_registry` `src/teachbase/final_chains/jobs.py`: protected-chain inventory, classifier, or cleanup candidate audit
 - ` M` `final_chain_registry` `tests/test_final_chain_control.py`: protected-chain inventory, classifier, or cleanup candidate audit
+- ` M` `final_chain_registry` `tools/build_final_chain_ready_sample_report.py`: protected-chain inventory, classifier, or cleanup candidate audit
 - ` M` `final_chain_registry` `tools/final_chain_control.py`: protected-chain inventory, classifier, or cleanup candidate audit
+- ` M` `final_chain_registry` `tools/run_final_chain_ops_gate.py`: protected-chain inventory, classifier, or cleanup candidate audit

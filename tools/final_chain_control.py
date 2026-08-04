@@ -20,6 +20,7 @@ from teachbase.final_chains import (
     load_final_chain_registry,
     schedule_chain_run,
     transition_job_record_path,
+    validate_job_record_path,
 )
 
 
@@ -180,6 +181,10 @@ def inspect_job(args: argparse.Namespace) -> dict:
     return inspect_job_record_path(ROOT / args.record)
 
 
+def validate_job(args: argparse.Namespace) -> dict:
+    return validate_job_record_path(ROOT / args.record)
+
+
 def transition_job(args: argparse.Namespace) -> dict:
     checkpoint = {"source": "final_chain_control_cli"} if args.with_checkpoint else None
     return transition_job_record_path(
@@ -259,6 +264,11 @@ def main() -> int:
     )
     job_inspect_parser.add_argument("--record", required=True)
 
+    job_validate_parser = add_json_flag(
+        subparsers.add_parser("job-validate", help="Validate a recorded final-chain job contract.")
+    )
+    job_validate_parser.add_argument("--record", required=True)
+
     job_transition_parser = add_json_flag(
         subparsers.add_parser(
             "job-transition", help="Apply a guarded lifecycle transition to a recorded final-chain job."
@@ -295,6 +305,8 @@ def main() -> int:
             result = build_readiness(args)
         elif args.command == "job-inspect":
             result = inspect_job(args)
+        elif args.command == "job-validate":
+            result = validate_job(args)
         elif args.command == "job-transition":
             result = transition_job(args)
         elif args.command == "dashboard":
@@ -331,6 +343,8 @@ def main() -> int:
         "contract",
     }:
         return 0
+    if args.command == "job-validate":
+        return 0 if result.get("ok") is True else 2
     if args.command == "adapter-dry-run":
         return 0 if result.get("status") == "dry_run_ready" else 2
     if args.command == "env-check":
