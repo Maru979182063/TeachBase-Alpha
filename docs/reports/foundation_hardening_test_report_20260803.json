@@ -23,8 +23,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.412,
-      "output_tail": "....                                                                     [100%]\n4 passed in 0.08s\n"
+      "duration_seconds": 0.369,
+      "output_tail": "....                                                                     [100%]\n4 passed in 0.10s\n"
     },
     {
       "name": "model_call_retry_checkpoint",
@@ -36,8 +36,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.384,
-      "output_tail": ".........                                                                [100%]\n9 passed in 0.07s\n"
+      "duration_seconds": 0.402,
+      "output_tail": ".........                                                                [100%]\n9 passed in 0.10s\n"
     },
     {
       "name": "docx_model_checkpoint_integration",
@@ -49,8 +49,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.354,
-      "output_tail": ".....                                                                    [100%]\n5 passed in 0.06s\n"
+      "duration_seconds": 0.363,
+      "output_tail": ".....                                                                    [100%]\n5 passed in 0.08s\n"
     },
     {
       "name": "visual_model_checkpoint_integration",
@@ -62,7 +62,7 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.356,
+      "duration_seconds": 0.375,
       "output_tail": "...                                                                      [100%]\n3 passed in 0.08s\n"
     },
     {
@@ -75,7 +75,7 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.387,
+      "duration_seconds": 0.38,
       "output_tail": ".......                                                                  [100%]\n7 passed in 0.10s\n"
     }
   ]

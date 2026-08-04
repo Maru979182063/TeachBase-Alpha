@@ -12,6 +12,8 @@ Terror index estimate: `3.0_to_3.2`
 - `pass` `three_ready_chains_sample_scheduled`
 - `pass` `cleanroom_hardening_manifest_passes`
 - `pass` `cleanroom_hardening_manifest_tracks_known_blocker`
+- `pass` `cleanroom_hardening_manifest_validation_passes`
+- `pass` `cleanroom_hardening_manifest_validation_is_portable`
 
 ## Remaining Known Blockers
 

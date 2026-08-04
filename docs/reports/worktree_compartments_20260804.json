@@ -8,18 +8,59 @@
     "review mixed_control_file changes line-by-line before staging"
   ],
   "counts": {
+    "final_chain_registry": 7,
     "foundation_hardening": 1,
-    "mixed_control_file": 1,
-    "final_chain_registry": 5,
-    "worktree_compartment_report": 1
+    "precleanup_safety_gate": 1,
+    "worktree_compartment_report": 3,
+    "mixed_control_file": 1
   },
   "records": [
+    {
+      "status": " M",
+      "path": "docs/reports/cleanroom_hardening_status_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/cleanroom_hardening_status_20260804.md",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
     {
       "status": " M",
       "path": "docs/reports/foundation_hardening_test_report_20260803.json",
       "bucket": "foundation_hardening",
       "reasons": [
         "artifact atomicity or model retry/checkpoint hardening"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/precleanup_safety_gate_20260804.json",
+      "bucket": "precleanup_safety_gate",
+      "reasons": [
+        "combined guard for protected-chain cleanup work"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/worktree_compartments_20260804.json",
+      "bucket": "worktree_compartment_report",
+      "reasons": [
+        "review compartment documentation and report generator"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/worktree_compartments_20260804.md",
+      "bucket": "worktree_compartment_report",
+      "reasons": [
+        "review compartment documentation and report generator"
       ]
     },
     {
@@ -60,7 +101,7 @@
     },
     {
       "status": "??",
-      "path": "docs/reports/cleanroom_hardening_manifest_20260804.json",
+      "path": "docs/reports/cleanroom_hardening_manifest_validation_20260804.json",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -68,7 +109,7 @@
     },
     {
       "status": "??",
-      "path": "docs/reports/cleanroom_hardening_manifest_20260804.md",
+      "path": "docs/reports/cleanroom_hardening_manifest_validation_20260804.md",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -76,7 +117,7 @@
     },
     {
       "status": "??",
-      "path": "tools/build_cleanroom_hardening_manifest.py",
+      "path": "tools/validate_cleanroom_hardening_manifest.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"

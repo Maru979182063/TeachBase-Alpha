@@ -33,6 +33,11 @@ GATES = [
         "report": "docs/reports/cleanroom_hardening_manifest_20260804.json",
     },
     {
+        "name": "cleanroom_hardening_manifest_validation",
+        "command": [sys.executable, "tools/validate_cleanroom_hardening_manifest.py"],
+        "report": "docs/reports/cleanroom_hardening_manifest_validation_20260804.json",
+    },
+    {
         "name": "final_chain_contract_tests",
         "command": [
             sys.executable,
@@ -218,6 +223,29 @@ def _build_checks(gate_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     for item in payload.get("known_blockers", [])
                 ),
                 "value": payload.get("known_blockers", []),
+            }
+        )
+    manifest_validation_gate = next(
+        (gate for gate in gate_results if gate["name"] == "cleanroom_hardening_manifest_validation"), None
+    )
+    if manifest_validation_gate:
+        payload = _read_report(manifest_validation_gate["report_path"])
+        checks.append(
+            {
+                "name": "cleanroom_hardening_manifest_validation_passes",
+                "ok": payload.get("status") == "pass",
+                "value": payload.get("status"),
+            }
+        )
+        checks.append(
+            {
+                "name": "cleanroom_hardening_manifest_validation_is_portable",
+                "ok": payload.get("workspace_contract") == "relative_git_paths_only"
+                and payload.get("absolute_paths_as_inputs") is False,
+                "value": {
+                    "workspace_contract": payload.get("workspace_contract"),
+                    "absolute_paths_as_inputs": payload.get("absolute_paths_as_inputs"),
+                },
             }
         )
     return checks

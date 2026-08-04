@@ -1,0 +1,120 @@
+{
+  "schema_version": "cleanroom_hardening_manifest_validation.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "status": "pass",
+  "manifest_path": "docs/reports/cleanroom_hardening_manifest_20260804.json",
+  "checks": [
+    {
+      "name": "manifest_file_is_present_object",
+      "ok": true,
+      "value": "present"
+    },
+    {
+      "name": "manifest_schema_contract_matches",
+      "ok": true,
+      "value": {
+        "schema_version": "cleanroom_hardening_manifest.v0.1",
+        "workspace_contract": "relative_git_paths_only",
+        "absolute_paths_as_inputs": false
+      }
+    },
+    {
+      "name": "manifest_status_passes",
+      "ok": true,
+      "value": "pass"
+    },
+    {
+      "name": "sealed_scopes_complete",
+      "ok": true,
+      "value": [
+        "foundation_artifact_atomicity_and_model_checkpoint_guard",
+        "final_chain_registry_control_contract_environment_contract_and_scheduler",
+        "precleanup_archive_safety_and_worktree_compartment_guard"
+      ]
+    },
+    {
+      "name": "replay_commands_complete",
+      "ok": true,
+      "value": [
+        "npm run test:foundation-hardening",
+        "npm run test:precleanup-safety",
+        "npm run test:final-chain-ops",
+        "npm run test:cleanroom-hardening-status"
+      ]
+    },
+    {
+      "name": "required_report_records_present",
+      "ok": true,
+      "value": [
+        "final_chain_control_contract",
+        "final_chain_environment_contract",
+        "final_chain_ops",
+        "final_chain_ready_samples",
+        "foundation_hardening",
+        "pdf_english_recovery_source_audit",
+        "pdf_english_recovery_validation",
+        "precleanup_safety"
+      ]
+    },
+    {
+      "name": "report_paths_are_relative_and_existing",
+      "ok": true,
+      "value": {
+        "foundation_hardening": "docs/reports/foundation_hardening_test_report_20260803.json",
+        "precleanup_safety": "docs/reports/precleanup_safety_gate_20260804.json",
+        "final_chain_ops": "docs/reports/final_chain_ops_gate_20260804.json",
+        "final_chain_control_contract": "docs/reports/final_chain_control_contract_20260804.json",
+        "final_chain_environment_contract": "docs/reports/final_chain_environment_contract_20260804.json",
+        "final_chain_ready_samples": "docs/reports/final_chain_ready_sample_dry_run_20260804.json",
+        "pdf_english_recovery_validation": "docs/reports/pdf_english_recovery_validation_20260804.json",
+        "pdf_english_recovery_source_audit": "docs/reports/pdf_english_manifest_recovery_audit_20260804.json"
+      }
+    },
+    {
+      "name": "required_manifest_checks_pass",
+      "ok": true,
+      "value": {
+        "required_reports_present": true,
+        "all_status_reports_pass_or_expected_blocked": true,
+        "final_chain_ops_covers_four_chains": true,
+        "final_chain_job_records_self_and_external_validated": true,
+        "pdf_english_is_explicit_fail_closed_blocker": true,
+        "no_report_declares_runtime_side_effects": true
+      }
+    },
+    {
+      "name": "known_pdf_english_blocker_is_fail_closed",
+      "ok": true,
+      "value": [
+        {
+          "chain_id": "pdf_english",
+          "status": "blocked_missing_manifest_and_smoke_artifacts",
+          "guard": "pdf_english_recovery_requires_four_branch_manifest",
+          "allowed_behavior": "fail_closed"
+        }
+      ]
+    },
+    {
+      "name": "execution_contract_has_no_runtime_side_effects",
+      "ok": true,
+      "value": {
+        "model_invoked": false,
+        "database_written": false,
+        "runtime_imported": false,
+        "business_secrets_read": false
+      }
+    },
+    {
+      "name": "manifest_contains_no_absolute_paths",
+      "ok": true,
+      "value": "relative_only"
+    }
+  ],
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}

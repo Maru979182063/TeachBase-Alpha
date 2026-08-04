@@ -1259,6 +1259,102 @@ def test_cleanroom_hardening_manifest_seals_current_gate_outputs() -> None:
     assert "/Users/" not in serialized
 
 
+def test_cleanroom_hardening_manifest_validator_accepts_sealed_manifest() -> None:
+    manifest = subprocess.run(
+        [sys.executable, "tools/build_cleanroom_hardening_manifest.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert manifest.returncode == 0
+
+    completed = subprocess.run(
+        [sys.executable, "tools/validate_cleanroom_hardening_manifest.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    checks = {item["name"]: item for item in payload["checks"]}
+    assert payload["schema_version"] == "cleanroom_hardening_manifest_validation.v0.1"
+    assert payload["status"] == "pass"
+    assert payload["manifest_path"] == "docs/reports/cleanroom_hardening_manifest_20260804.json"
+    assert checks["manifest_schema_contract_matches"]["ok"] is True
+    assert checks["required_report_records_present"]["ok"] is True
+    assert checks["report_paths_are_relative_and_existing"]["ok"] is True
+    assert checks["required_manifest_checks_pass"]["ok"] is True
+    assert checks["known_pdf_english_blocker_is_fail_closed"]["ok"] is True
+    assert checks["execution_contract_has_no_runtime_side_effects"]["ok"] is True
+    assert checks["manifest_contains_no_absolute_paths"]["ok"] is True
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
+def test_cleanroom_hardening_manifest_validator_rejects_tampered_contract() -> None:
+    from tools.validate_cleanroom_hardening_manifest import _build_checks
+
+    tampered = {
+        "schema_version": "cleanroom_hardening_manifest.v0.1",
+        "workspace_contract": "relative_git_paths_only",
+        "absolute_paths_as_inputs": False,
+        "status": "pass",
+        "sealed_scopes": [
+            "foundation_artifact_atomicity_and_model_checkpoint_guard",
+            "final_chain_registry_control_contract_environment_contract_and_scheduler",
+            "precleanup_archive_safety_and_worktree_compartment_guard",
+        ],
+        "replay_commands": [
+            "npm run test:foundation-hardening",
+            "npm run test:precleanup-safety",
+            "npm run test:final-chain-ops",
+            "npm run test:cleanroom-hardening-status",
+        ],
+        "known_blockers": [
+            {
+                "chain_id": "pdf_english",
+                "status": "blocked_missing_manifest_and_smoke_artifacts",
+                "guard": "pdf_english_recovery_requires_four_branch_manifest",
+                "allowed_behavior": "fail_closed",
+            }
+        ],
+        "checks": [
+            {"name": "required_reports_present", "ok": True},
+            {"name": "all_status_reports_pass_or_expected_blocked", "ok": True},
+            {"name": "final_chain_ops_covers_four_chains", "ok": True},
+            {"name": "final_chain_job_records_self_and_external_validated", "ok": True},
+            {"name": "pdf_english_is_explicit_fail_closed_blocker", "ok": True},
+            {"name": "no_report_declares_runtime_side_effects", "ok": True},
+        ],
+        "reports": {
+            "foundation_hardening": {
+                "path": "C:\\not-portable\\foundation.json",
+                "exists": True,
+                "status": "pass",
+            }
+        },
+        "execution_contract": {
+            "model_invoked": False,
+            "database_written": False,
+            "runtime_imported": True,
+            "business_secrets_read": False,
+        },
+    }
+
+    checks = {item["name"]: item for item in _build_checks(tampered)}
+    assert checks["required_report_records_present"]["ok"] is False
+    assert checks["report_paths_are_relative_and_existing"]["ok"] is False
+    assert checks["execution_contract_has_no_runtime_side_effects"]["ok"] is False
+    assert checks["manifest_contains_no_absolute_paths"]["ok"] is False
+
+
 def test_cleanroom_import_audit_reports_candidates_without_absolute_paths(tmp_path: Path) -> None:
     workspace = tmp_path / "workspace"
     source = tmp_path / "source"
