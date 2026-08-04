@@ -42,7 +42,7 @@
     "adapter_dry_run": "tools/final_chain_control.py adapter-dry-run --chain-id <chain_id> --input <path> --json",
     "job_inspect": "tools/final_chain_control.py job-inspect --record <relative_record_path> --json",
     "job_validate": "tools/final_chain_control.py job-validate --record <relative_record_path> --json",
-    "job_transition": "tools/final_chain_control.py job-transition --record <relative_record_path> --status <status> --reason <reason> --json"
+    "job_transition": "tools/final_chain_control.py job-transition --record <relative_record_path> --status <status> --reason <reason> --expect-status <current_status> --expect-state-version <version> --json"
   },
   "job_lifecycle_policy": {
     "schema_version": "final_chain_job_lifecycle.v0.1",
@@ -68,6 +68,12 @@
         "dry_run_started",
         "cancelled"
       ]
+    },
+    "transition_guard": {
+      "same_directory_lock": true,
+      "expected_status_supported": true,
+      "expected_state_version_supported": true,
+      "stale_transition_error": "final_chain_job_stale_transition"
     }
   },
   "chain_contracts": [

@@ -87,6 +87,7 @@ def _build_checks(
     commands = control_contract.get("commands") if isinstance(control_contract.get("commands"), dict) else {}
     lifecycle = control_contract.get("job_lifecycle_policy") if isinstance(control_contract.get("job_lifecycle_policy"), dict) else {}
     allowed_transitions = lifecycle.get("allowed_transitions") if isinstance(lifecycle.get("allowed_transitions"), dict) else {}
+    transition_guard = lifecycle.get("transition_guard") if isinstance(lifecycle.get("transition_guard"), dict) else {}
     filesystem_contract = (
         environment_contract.get("filesystem_contract")
         if isinstance(environment_contract.get("filesystem_contract"), dict)
@@ -162,6 +163,14 @@ def _build_checks(
                 "scheduled_ready": allowed_transitions.get("scheduled_ready"),
                 "scheduled_blocked": allowed_transitions.get("scheduled_blocked"),
             },
+        },
+        {
+            "name": "job_transition_guard_is_versioned_and_locked",
+            "ok": transition_guard.get("same_directory_lock") is True
+            and transition_guard.get("expected_status_supported") is True
+            and transition_guard.get("expected_state_version_supported") is True
+            and transition_guard.get("stale_transition_error") == "final_chain_job_stale_transition",
+            "value": transition_guard,
         },
         {
             "name": "required_job_record_sections_declared",

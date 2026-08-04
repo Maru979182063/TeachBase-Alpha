@@ -48,13 +48,20 @@ def build_final_chain_control_contract(registry: FinalChainRegistry) -> dict[str
             "job_validate": "tools/final_chain_control.py job-validate --record <relative_record_path> --json",
             "job_transition": (
                 "tools/final_chain_control.py job-transition --record <relative_record_path> "
-                "--status <status> --reason <reason> --json"
+                "--status <status> --reason <reason> "
+                "--expect-status <current_status> --expect-state-version <version> --json"
             ),
         },
         "job_lifecycle_policy": {
             "schema_version": "final_chain_job_lifecycle.v0.1",
             "terminal_statuses": sorted(TERMINAL_STATUSES),
             "allowed_transitions": {key: list(value) for key, value in sorted(ALLOWED_TRANSITIONS.items())},
+            "transition_guard": {
+                "same_directory_lock": True,
+                "expected_status_supported": True,
+                "expected_state_version_supported": True,
+                "stale_transition_error": "final_chain_job_stale_transition",
+            },
         },
         "chain_contracts": [_chain_contract(chain.raw) for chain in registry.chains],
         "execution_contract": _no_side_effect_contract(),

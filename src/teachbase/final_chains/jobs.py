@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from pathlib import Path
 import re
+import time
 from typing import Any
 
 from teachbase.core.errors import ConfigurationError
@@ -166,10 +167,27 @@ def transition_job_record(
     reason: str,
     checkpoint: dict[str, Any] | None = None,
     workspace_root: Path | None = None,
+    expected_status: str | None = None,
+    expected_state_version: int | None = None,
 ) -> dict[str, Any]:
     _require_known_status(target_status)
     current_status = str(record.get("status") or "")
     _require_known_status(current_status)
+    if expected_status is not None:
+        _require_known_status(expected_status)
+        if current_status != expected_status:
+            raise ConfigurationError(
+                "final_chain_job_stale_transition",
+                f"Expected final-chain job status {expected_status}, found {current_status}",
+                evidence={"expected_status": expected_status, "actual_status": current_status},
+            )
+    current_state_version = _record_state_version(record)
+    if expected_state_version is not None and current_state_version != expected_state_version:
+        raise ConfigurationError(
+            "final_chain_job_stale_transition",
+            f"Expected final-chain job state version {expected_state_version}, found {current_state_version}",
+            evidence={"expected_state_version": expected_state_version, "actual_state_version": current_state_version},
+        )
     allowed = ALLOWED_TRANSITIONS[current_status]
     if target_status not in allowed:
         raise ConfigurationError(
@@ -241,21 +259,75 @@ def transition_job_record_path(
     reason: str,
     checkpoint: dict[str, Any] | None = None,
     workspace_root: Path | None = None,
+    expected_status: str | None = None,
+    expected_state_version: int | None = None,
+    lock_timeout_seconds: float = 5.0,
 ) -> dict[str, Any]:
-    updated = transition_job_record(
-        load_job_record(path),
-        target_status,
-        reason=reason,
-        checkpoint=checkpoint,
-        workspace_root=workspace_root,
-    )
-    write_json(path, updated)
-    return updated
+    with _job_record_lock(path, timeout_seconds=lock_timeout_seconds):
+        updated = transition_job_record(
+            load_job_record(path),
+            target_status,
+            reason=reason,
+            checkpoint=checkpoint,
+            workspace_root=workspace_root,
+            expected_status=expected_status,
+            expected_state_version=expected_state_version,
+        )
+        write_json(path, updated)
+        return updated
+
+
+class _JobRecordLock:
+    def __init__(self, record_path: Path, *, timeout_seconds: float, delay_seconds: float = 0.01) -> None:
+        self._lock_dir = record_path.with_name(f".{record_path.name}.lock")
+        self._timeout_seconds = timeout_seconds
+        self._delay_seconds = delay_seconds
+        self._acquired = False
+
+    def __enter__(self) -> "_JobRecordLock":
+        deadline = time.monotonic() + self._timeout_seconds
+        while True:
+            try:
+                self._lock_dir.mkdir()
+                self._acquired = True
+                return self
+            except FileExistsError as exc:
+                if time.monotonic() >= deadline:
+                    raise ConfigurationError(
+                        "final_chain_job_transition_lock_timeout",
+                        "Timed out waiting for final-chain job transition lock",
+                        evidence={"lock_name": self._lock_dir.name},
+                    ) from exc
+                time.sleep(self._delay_seconds)
+
+    def __exit__(self, exc_type: object, exc: object, traceback: object) -> None:
+        if self._acquired:
+            try:
+                self._lock_dir.rmdir()
+            except FileNotFoundError:
+                pass
+
+
+def _job_record_lock(path: Path, *, timeout_seconds: float) -> _JobRecordLock:
+    if timeout_seconds < 0:
+        raise ValueError("lock_timeout_seconds must be >= 0")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return _JobRecordLock(path, timeout_seconds=timeout_seconds)
 
 
 def _require_known_status(status: str) -> None:
     if status not in ALLOWED_TRANSITIONS:
         raise ConfigurationError("final_chain_job_unknown_status", f"Unknown final-chain job status: {status}")
+
+
+def _record_state_version(record: dict[str, Any]) -> int:
+    lifecycle = record.get("lifecycle")
+    if isinstance(lifecycle, dict):
+        try:
+            return int(lifecycle.get("state_version") or 1)
+        except (TypeError, ValueError):
+            return 1
+    return 1
 
 
 def _no_side_effect_contract() -> dict[str, bool]:

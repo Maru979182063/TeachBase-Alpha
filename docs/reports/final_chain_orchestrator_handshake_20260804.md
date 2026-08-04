@@ -24,5 +24,6 @@ Consumer: `external_orchestrator_or_java_backbone`
 - `pass` `forbidden_side_effects_are_closed`
 - `pass` `filesystem_contract_is_outputs_only`
 - `pass` `job_lifecycle_blocks_scheduled_blocked_start`
+- `pass` `job_transition_guard_is_versioned_and_locked`
 - `pass` `required_job_record_sections_declared`
 - `pass` `batch_queue_validation_passes`

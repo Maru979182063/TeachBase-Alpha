@@ -213,6 +213,8 @@ def transition_job(args: argparse.Namespace) -> dict:
         reason=args.reason,
         checkpoint=checkpoint,
         workspace_root=ROOT,
+        expected_status=args.expect_status or None,
+        expected_state_version=args.expect_state_version,
     )
 
 
@@ -309,6 +311,8 @@ def main() -> int:
     job_transition_parser.add_argument("--status", required=True)
     job_transition_parser.add_argument("--reason", required=True)
     job_transition_parser.add_argument("--with-checkpoint", action="store_true")
+    job_transition_parser.add_argument("--expect-status", default="")
+    job_transition_parser.add_argument("--expect-state-version", type=int)
 
     dashboard_parser = add_json_flag(
         subparsers.add_parser("dashboard", help="Summarize final-chain scheduling readiness.")

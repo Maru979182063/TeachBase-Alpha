@@ -32,7 +32,7 @@
     "contract": "tools/final_chain_control.py contract --json",
     "env_contract": "tools/final_chain_control.py env-contract --json",
     "job_inspect": "tools/final_chain_control.py job-inspect --record <relative_record_path> --json",
-    "job_transition": "tools/final_chain_control.py job-transition --record <relative_record_path> --status <status> --reason <reason> --json",
+    "job_transition": "tools/final_chain_control.py job-transition --record <relative_record_path> --status <status> --reason <reason> --expect-status <current_status> --expect-state-version <version> --json",
     "job_validate": "tools/final_chain_control.py job-validate --record <relative_record_path> --json",
     "plan": "tools/final_chain_control.py plan --chain-id <chain_id> --input <path> --json",
     "queue": "tools/final_chain_control.py queue --sample-input <chain_id=path> --json",
@@ -77,6 +77,12 @@
         "dry_run_started",
         "cancelled"
       ]
+    },
+    "transition_guard": {
+      "same_directory_lock": true,
+      "expected_status_supported": true,
+      "expected_state_version_supported": true,
+      "stale_transition_error": "final_chain_job_stale_transition"
     }
   },
   "required_job_record_sections": [
@@ -215,6 +221,16 @@
           "cancelled"
         ],
         "scheduled_blocked": []
+      }
+    },
+    {
+      "name": "job_transition_guard_is_versioned_and_locked",
+      "ok": true,
+      "value": {
+        "same_directory_lock": true,
+        "expected_status_supported": true,
+        "expected_state_version_supported": true,
+        "stale_transition_error": "final_chain_job_stale_transition"
       }
     },
     {

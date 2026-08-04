@@ -4,6 +4,7 @@ import hashlib
 import json
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -26,6 +27,7 @@ from teachbase.final_chains import (
     schedule_chain_run,
     schedule_registry_batch,
     transition_job_record,
+    transition_job_record_path,
     validate_job_record,
 )
 from teachbase.core.errors import ConfigurationError
@@ -576,6 +578,195 @@ def test_job_lifecycle_rejects_illegal_transition() -> None:
         transition_job_record(record, "dry_run_started", reason="blocked jobs cannot start")
 
 
+def test_job_lifecycle_rejects_stale_expected_status_and_version() -> None:
+    record = {
+        "schema_version": "final_chain_job_record.v0.1",
+        "job_id": "job",
+        "created_at": "2026-08-04T00:00:00+00:00",
+        "status": "scheduled_ready",
+        "chain_id": "pdf_math",
+        "lifecycle": {
+            "schema_version": "final_chain_job_lifecycle.v0.1",
+            "status": "scheduled_ready",
+            "state_version": 2,
+            "terminal": False,
+            "allowed_next_statuses": ["dry_run_started", "cancelled"],
+            "updated_at": "2026-08-04T00:00:00+00:00",
+            "history": [
+                {
+                    "version": 1,
+                    "status": "scheduled_ready",
+                    "at": "2026-08-04T00:00:00+00:00",
+                    "reason": "scheduled",
+                    "checkpoint": None,
+                }
+            ],
+        },
+    }
+
+    with pytest.raises(ConfigurationError) as status_error:
+        transition_job_record(
+            record,
+            "dry_run_started",
+            reason="stale worker",
+            expected_status="scheduled_blocked",
+        )
+    with pytest.raises(ConfigurationError) as version_error:
+        transition_job_record(
+            record,
+            "dry_run_started",
+            reason="stale worker",
+            expected_status="scheduled_ready",
+            expected_state_version=1,
+        )
+
+    assert status_error.value.error_code == "final_chain_job_stale_transition"
+    assert status_error.value.evidence == {"expected_status": "scheduled_blocked", "actual_status": "scheduled_ready"}
+    assert version_error.value.error_code == "final_chain_job_stale_transition"
+    assert version_error.value.evidence == {"expected_state_version": 1, "actual_state_version": 2}
+
+
+def test_job_record_path_transition_cleans_lock_and_rejects_stale_version(tmp_path: Path) -> None:
+    record_path = tmp_path / "job_record.json"
+    record_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "final_chain_job_record.v0.1",
+                "job_id": "job",
+                "created_at": "2026-08-04T00:00:00+00:00",
+                "status": "scheduled_ready",
+                "chain_id": "pdf_math",
+                "record_path": "outputs/final_chain_runs/_control/jobs/job/job_record.json",
+                "plan": {"workspace_contract": "relative_git_paths_only", "absolute_paths_as_inputs": False},
+                "request_snapshot": {
+                    "workspace_contract": "relative_git_paths_only",
+                    "absolute_paths_as_inputs": False,
+                },
+                "environment_snapshot": {},
+                "lifecycle": {
+                    "schema_version": "final_chain_job_lifecycle.v0.1",
+                    "status": "scheduled_ready",
+                    "state_version": 1,
+                    "terminal": False,
+                    "allowed_next_statuses": ["dry_run_started", "cancelled"],
+                    "updated_at": "2026-08-04T00:00:00+00:00",
+                    "history": [
+                        {
+                            "version": 1,
+                            "status": "scheduled_ready",
+                            "at": "2026-08-04T00:00:00+00:00",
+                            "reason": "scheduled",
+                            "checkpoint": None,
+                        }
+                    ],
+                },
+                "execution_contract": {
+                    "model_invoked": False,
+                    "database_written": False,
+                    "runtime_imported": False,
+                    "business_secrets_read": False,
+                },
+                "errors": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    updated = transition_job_record_path(
+        record_path,
+        "dry_run_started",
+        reason="first worker",
+        expected_status="scheduled_ready",
+        expected_state_version=1,
+    )
+    with pytest.raises(ConfigurationError) as stale_error:
+        transition_job_record_path(
+            record_path,
+            "dry_run_passed",
+            reason="stale worker",
+            expected_status="scheduled_ready",
+            expected_state_version=1,
+        )
+
+    final_record = json.loads(record_path.read_text(encoding="utf-8"))
+    assert updated["status"] == "dry_run_started"
+    assert updated["lifecycle"]["state_version"] == 2
+    assert final_record["status"] == "dry_run_started"
+    assert stale_error.value.error_code == "final_chain_job_stale_transition"
+    assert not record_path.with_name(f".{record_path.name}.lock").exists()
+
+
+def test_concurrent_job_record_path_transitions_allow_only_one_stale_checked_worker(tmp_path: Path) -> None:
+    record_path = tmp_path / "job_record.json"
+    record_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "final_chain_job_record.v0.1",
+                "job_id": "job",
+                "created_at": "2026-08-04T00:00:00+00:00",
+                "status": "scheduled_ready",
+                "chain_id": "pdf_math",
+                "record_path": "outputs/final_chain_runs/_control/jobs/job/job_record.json",
+                "plan": {"workspace_contract": "relative_git_paths_only", "absolute_paths_as_inputs": False},
+                "request_snapshot": {
+                    "workspace_contract": "relative_git_paths_only",
+                    "absolute_paths_as_inputs": False,
+                },
+                "environment_snapshot": {},
+                "lifecycle": {
+                    "schema_version": "final_chain_job_lifecycle.v0.1",
+                    "status": "scheduled_ready",
+                    "state_version": 1,
+                    "terminal": False,
+                    "allowed_next_statuses": ["dry_run_started", "cancelled"],
+                    "updated_at": "2026-08-04T00:00:00+00:00",
+                    "history": [
+                        {
+                            "version": 1,
+                            "status": "scheduled_ready",
+                            "at": "2026-08-04T00:00:00+00:00",
+                            "reason": "scheduled",
+                            "checkpoint": None,
+                        }
+                    ],
+                },
+                "execution_contract": {
+                    "model_invoked": False,
+                    "database_written": False,
+                    "runtime_imported": False,
+                    "business_secrets_read": False,
+                },
+                "errors": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    def worker(target_status: str) -> str:
+        try:
+            transition_job_record_path(
+                record_path,
+                target_status,
+                reason=f"worker requested {target_status}",
+                expected_status="scheduled_ready",
+                expected_state_version=1,
+            )
+            return "ok"
+        except ConfigurationError as exc:
+            return exc.error_code
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results = list(executor.map(worker, ["dry_run_started", "cancelled"]))
+
+    final_record = json.loads(record_path.read_text(encoding="utf-8"))
+    assert results.count("ok") == 1
+    assert results.count("final_chain_job_stale_transition") == 1
+    assert final_record["status"] in {"dry_run_started", "cancelled"}
+    assert final_record["lifecycle"]["state_version"] == 2
+    assert validate_job_record(final_record)["ok"] is True
+    assert not record_path.with_name(f".{record_path.name}.lock").exists()
+
+
 def test_final_chain_control_cli_validates_job_record_contract(tmp_path: Path) -> None:
     record = {
         "schema_version": "final_chain_job_record.v0.1",
@@ -679,6 +870,10 @@ def test_final_chain_control_cli_inspects_and_transitions_job_record(tmp_path: P
             "dry_run_started",
             "--reason",
             "cli smoke",
+            "--expect-status",
+            "scheduled_ready",
+            "--expect-state-version",
+            "1",
             "--with-checkpoint",
         ],
         cwd=ROOT,

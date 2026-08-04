@@ -70,7 +70,7 @@
         "contract": "tools/final_chain_control.py contract --json",
         "env_contract": "tools/final_chain_control.py env-contract --json",
         "job_inspect": "tools/final_chain_control.py job-inspect --record <relative_record_path> --json",
-        "job_transition": "tools/final_chain_control.py job-transition --record <relative_record_path> --status <status> --reason <reason> --json",
+        "job_transition": "tools/final_chain_control.py job-transition --record <relative_record_path> --status <status> --reason <reason> --expect-status <current_status> --expect-state-version <version> --json",
         "job_validate": "tools/final_chain_control.py job-validate --record <relative_record_path> --json",
         "plan": "tools/final_chain_control.py plan --chain-id <chain_id> --input <path> --json",
         "queue": "tools/final_chain_control.py queue --sample-input <chain_id=path> --json",
@@ -135,6 +135,12 @@
             "dry_run_started",
             "cancelled"
           ]
+        },
+        "transition_guard": {
+          "same_directory_lock": true,
+          "expected_status_supported": true,
+          "expected_state_version_supported": true,
+          "stale_transition_error": "final_chain_job_stale_transition"
         }
       }
     },
@@ -160,6 +166,7 @@
         "forbidden_side_effects_are_closed": true,
         "filesystem_contract_is_outputs_only": true,
         "job_lifecycle_blocks_scheduled_blocked_start": true,
+        "job_transition_guard_is_versioned_and_locked": true,
         "required_job_record_sections_declared": true,
         "batch_queue_validation_passes": true
       }

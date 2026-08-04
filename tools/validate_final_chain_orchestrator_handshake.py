@@ -180,7 +180,17 @@ def _lifecycle_ok(value: Any) -> bool:
     transitions = value.get("allowed_transitions")
     if not isinstance(transitions, dict):
         return False
-    return transitions.get("scheduled_ready") == ["dry_run_started", "cancelled"] and transitions.get("scheduled_blocked") == []
+    guard = value.get("transition_guard")
+    if not isinstance(guard, dict):
+        return False
+    return (
+        transitions.get("scheduled_ready") == ["dry_run_started", "cancelled"]
+        and transitions.get("scheduled_blocked") == []
+        and guard.get("same_directory_lock") is True
+        and guard.get("expected_status_supported") is True
+        and guard.get("expected_state_version_supported") is True
+        and guard.get("stale_transition_error") == "final_chain_job_stale_transition"
+    )
 
 
 def _source_reports_present(source_reports: dict[str, Any]) -> bool:
