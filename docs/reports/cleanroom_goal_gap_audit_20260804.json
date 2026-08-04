@@ -175,7 +175,7 @@
       "ok": true,
       "value": {
         "exit_code": 0,
-        "output_tail": "........................................................................ [ 80%]\n.................                                                        [100%]\n89 passed in 6.15s\n"
+        "output_tail": "........................................................................ [ 80%]\n.................                                                        [100%]\n89 passed in 5.94s\n"
       }
     },
     {
@@ -195,7 +195,6 @@
           "allow_only_manifest_runs_enabled",
           "timestamp_latest_selection_forbidden",
           "four_branch_runs_declared",
-          "manifest_checker_present",
           "prior_smoke_zip_present",
           "prior_smoke_zip_valid",
           "prior_smoke_dir_present",

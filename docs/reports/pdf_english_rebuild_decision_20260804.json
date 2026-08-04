@@ -139,7 +139,7 @@
           "tests/test_english_text_first_sidecar_graph_v01.py",
           "-q"
         ],
-        "output_tail": ".......                                                                  [100%]\n7 passed in 0.24s\n",
+        "output_tail": ".......                                                                  [100%]\n7 passed in 0.23s\n",
         "execution_contract": {
           "model_invoked": false,
           "database_written": false,
