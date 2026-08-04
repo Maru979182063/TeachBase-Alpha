@@ -1,0 +1,324 @@
+{
+  "schema_version": "cleanroom_hardening_manifest.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "status": "pass",
+  "terror_index_estimate": "3.0_to_3.2",
+  "sealed_scopes": [
+    "foundation_artifact_atomicity_and_model_checkpoint_guard",
+    "final_chain_registry_control_contract_environment_contract_and_scheduler",
+    "precleanup_archive_safety_and_worktree_compartment_guard"
+  ],
+  "replay_commands": [
+    "npm run test:foundation-hardening",
+    "npm run test:precleanup-safety",
+    "npm run test:final-chain-ops",
+    "npm run test:cleanroom-hardening-status"
+  ],
+  "known_blockers": [
+    {
+      "chain_id": "pdf_english",
+      "status": "blocked_missing_manifest_and_smoke_artifacts",
+      "guard": "pdf_english_recovery_requires_four_branch_manifest",
+      "allowed_behavior": "fail_closed"
+    }
+  ],
+  "checks": [
+    {
+      "name": "required_reports_present",
+      "ok": true,
+      "value": {
+        "foundation_hardening": true,
+        "precleanup_safety": true,
+        "final_chain_ops": true,
+        "final_chain_control_contract": true,
+        "final_chain_environment_contract": true,
+        "final_chain_ready_samples": true,
+        "pdf_english_recovery_validation": true,
+        "pdf_english_recovery_source_audit": true
+      }
+    },
+    {
+      "name": "all_status_reports_pass_or_expected_blocked",
+      "ok": true,
+      "value": {
+        "foundation_hardening": "pass",
+        "precleanup_safety": "pass",
+        "final_chain_ops": "pass",
+        "final_chain_control_contract": "pass",
+        "final_chain_environment_contract": "pass",
+        "final_chain_ready_samples": "pass",
+        "pdf_english_recovery_validation": "blocked_missing_or_invalid_manifest",
+        "pdf_english_recovery_source_audit": "no_importable_source_found"
+      }
+    },
+    {
+      "name": "final_chain_ops_covers_four_chains",
+      "ok": true,
+      "value": {
+        "ready": [
+          "doc_math",
+          "doc_english",
+          "pdf_math"
+        ],
+        "blocked": [
+          "pdf_english"
+        ]
+      }
+    },
+    {
+      "name": "final_chain_job_records_self_and_external_validated",
+      "ok": true,
+      "value": [
+        {
+          "name": "dashboard_contract_ok",
+          "ok": true,
+          "value": true
+        },
+        {
+          "name": "three_chains_need_only_sample_inputs",
+          "ok": true,
+          "value": 3
+        },
+        {
+          "name": "one_chain_requires_artifact_restore_or_smoke",
+          "ok": true,
+          "value": 1
+        },
+        {
+          "name": "ready_sample_dry_runs_cover_three_chains",
+          "ok": true,
+          "value": 3
+        },
+        {
+          "name": "ready_sample_schedules_are_ready",
+          "ok": true,
+          "value": [
+            "scheduled_ready",
+            "scheduled_ready",
+            "scheduled_ready"
+          ]
+        },
+        {
+          "name": "ready_sample_job_records_validate",
+          "ok": true,
+          "value": {
+            "self_validation_error_counts": [
+              0,
+              0,
+              0
+            ],
+            "external_validation_error_counts": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "name": "ready_sample_adapters_do_not_invoke_entrypoints",
+          "ok": true,
+          "value": [
+            false,
+            false,
+            false
+          ]
+        },
+        {
+          "name": "control_contract_is_dry_run_only",
+          "ok": true,
+          "value": {
+            "dry_run_only": true,
+            "execute_intent_blocked": true,
+            "scheduler_writes_only_under": "outputs/",
+            "adapter_dry_run_invokes_entrypoint": false,
+            "requires_existing_input_file": true,
+            "requires_protected_chain_registry": true,
+            "portable_record_snapshots_required": true
+          }
+        },
+        {
+          "name": "control_contract_covers_four_chains",
+          "ok": true,
+          "value": [
+            "doc_math",
+            "doc_english",
+            "pdf_math",
+            "pdf_english"
+          ]
+        },
+        {
+          "name": "environment_contract_passes",
+          "ok": true,
+          "value": "pass"
+        },
+        {
+          "name": "environment_contract_covers_four_profiles",
+          "ok": true,
+          "value": [
+            "doc_math",
+            "doc_english",
+            "pdf_math",
+            "pdf_english"
+          ]
+        },
+        {
+          "name": "environment_contract_keeps_pdf_english_fail_closed",
+          "ok": true,
+          "value": [
+            "pdf_english"
+          ]
+        },
+        {
+          "name": "environment_contract_limits_writes_to_outputs",
+          "ok": true,
+          "value": [
+            "outputs/"
+          ]
+        },
+        {
+          "name": "pdf_english_recovery_blocker_is_explicit",
+          "ok": true,
+          "value": "blocked_missing_manifest_and_smoke_artifacts"
+        },
+        {
+          "name": "pdf_english_recovery_source_audit_has_no_importable_source",
+          "ok": true,
+          "value": "no_importable_source_found"
+        },
+        {
+          "name": "pdf_english_recovery_validator_fails_closed",
+          "ok": true,
+          "value": "blocked_missing_or_invalid_manifest"
+        },
+        {
+          "name": "pdf_english_recovery_requires_four_branch_manifest",
+          "ok": true,
+          "value": [
+            "active_manifest_exists",
+            "active_manifest_json_object",
+            "pipeline_name_matches",
+            "allow_only_manifest_runs_enabled",
+            "timestamp_latest_selection_forbidden",
+            "four_branch_runs_declared"
+          ]
+        },
+        {
+          "name": "no_runtime_side_effects_reported",
+          "ok": true,
+          "value": "model/database/runtime/secrets all false"
+        }
+      ]
+    },
+    {
+      "name": "pdf_english_is_explicit_fail_closed_blocker",
+      "ok": true,
+      "value": {
+        "validation": "blocked_missing_or_invalid_manifest",
+        "source_audit": "no_importable_source_found"
+      }
+    },
+    {
+      "name": "no_report_declares_runtime_side_effects",
+      "ok": true,
+      "value": {
+        "foundation_hardening": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
+        },
+        "precleanup_safety": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
+        },
+        "final_chain_ops": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
+        },
+        "final_chain_control_contract": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
+        },
+        "final_chain_environment_contract": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
+        },
+        "final_chain_ready_samples": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
+        },
+        "pdf_english_recovery_validation": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
+        },
+        "pdf_english_recovery_source_audit": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
+        }
+      }
+    }
+  ],
+  "reports": {
+    "foundation_hardening": {
+      "path": "docs/reports/foundation_hardening_test_report_20260803.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "precleanup_safety": {
+      "path": "docs/reports/precleanup_safety_gate_20260804.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "final_chain_ops": {
+      "path": "docs/reports/final_chain_ops_gate_20260804.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "final_chain_control_contract": {
+      "path": "docs/reports/final_chain_control_contract_20260804.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "final_chain_environment_contract": {
+      "path": "docs/reports/final_chain_environment_contract_20260804.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "final_chain_ready_samples": {
+      "path": "docs/reports/final_chain_ready_sample_dry_run_20260804.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "pdf_english_recovery_validation": {
+      "path": "docs/reports/pdf_english_recovery_validation_20260804.json",
+      "exists": true,
+      "status": "blocked_missing_or_invalid_manifest"
+    },
+    "pdf_english_recovery_source_audit": {
+      "path": "docs/reports/pdf_english_manifest_recovery_audit_20260804.json",
+      "exists": true,
+      "status": "no_importable_source_found"
+    }
+  },
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}

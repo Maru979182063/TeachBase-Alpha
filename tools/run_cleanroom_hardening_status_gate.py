@@ -28,6 +28,11 @@ GATES = [
         "report": "docs/reports/final_chain_ops_gate_20260804.json",
     },
     {
+        "name": "cleanroom_hardening_manifest",
+        "command": [sys.executable, "tools/build_cleanroom_hardening_manifest.py"],
+        "report": "docs/reports/cleanroom_hardening_manifest_20260804.json",
+    },
+    {
         "name": "final_chain_contract_tests",
         "command": [
             sys.executable,
@@ -191,6 +196,28 @@ def _build_checks(gate_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "name": "three_ready_chains_sample_scheduled",
                 "ok": payload.get("ready_sample_count") == 3,
                 "value": payload.get("ready_sample_count"),
+            }
+        )
+    manifest_gate = next((gate for gate in gate_results if gate["name"] == "cleanroom_hardening_manifest"), None)
+    if manifest_gate:
+        payload = _read_report(manifest_gate["report_path"])
+        checks.append(
+            {
+                "name": "cleanroom_hardening_manifest_passes",
+                "ok": payload.get("status") == "pass",
+                "value": payload.get("status"),
+            }
+        )
+        checks.append(
+            {
+                "name": "cleanroom_hardening_manifest_tracks_known_blocker",
+                "ok": any(
+                    isinstance(item, dict)
+                    and item.get("chain_id") == "pdf_english"
+                    and item.get("allowed_behavior") == "fail_closed"
+                    for item in payload.get("known_blockers", [])
+                ),
+                "value": payload.get("known_blockers", []),
             }
         )
     return checks

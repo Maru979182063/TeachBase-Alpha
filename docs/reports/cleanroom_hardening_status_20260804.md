@@ -10,6 +10,8 @@ Terror index estimate: `3.0_to_3.2`
 - `pass` `no_gate_reports_runtime_side_effects`
 - `pass` `final_chain_ops_keeps_pdf_english_fail_closed`
 - `pass` `three_ready_chains_sample_scheduled`
+- `pass` `cleanroom_hardening_manifest_passes`
+- `pass` `cleanroom_hardening_manifest_tracks_known_blocker`
 
 ## Remaining Known Blockers
 

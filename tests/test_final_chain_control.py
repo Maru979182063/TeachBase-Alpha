@@ -1223,6 +1223,42 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     assert checks["control_contract_covers_four_chains"]["ok"] is True
 
 
+def test_cleanroom_hardening_manifest_seals_current_gate_outputs() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/build_cleanroom_hardening_manifest.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    checks = {item["name"]: item for item in payload["checks"]}
+    assert payload["schema_version"] == "cleanroom_hardening_manifest.v0.1"
+    assert payload["status"] == "pass"
+    assert "foundation_artifact_atomicity_and_model_checkpoint_guard" in payload["sealed_scopes"]
+    assert "final_chain_registry_control_contract_environment_contract_and_scheduler" in payload["sealed_scopes"]
+    assert "precleanup_archive_safety_and_worktree_compartment_guard" in payload["sealed_scopes"]
+    assert checks["required_reports_present"]["ok"] is True
+    assert checks["final_chain_ops_covers_four_chains"]["ok"] is True
+    assert checks["final_chain_job_records_self_and_external_validated"]["ok"] is True
+    assert checks["pdf_english_is_explicit_fail_closed_blocker"]["ok"] is True
+    assert payload["known_blockers"] == [
+        {
+            "chain_id": "pdf_english",
+            "status": "blocked_missing_manifest_and_smoke_artifacts",
+            "guard": "pdf_english_recovery_requires_four_branch_manifest",
+            "allowed_behavior": "fail_closed",
+        }
+    ]
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
 def test_cleanroom_import_audit_reports_candidates_without_absolute_paths(tmp_path: Path) -> None:
     workspace = tmp_path / "workspace"
     source = tmp_path / "source"

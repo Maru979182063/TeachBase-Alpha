@@ -23,7 +23,7 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.37,
+      "duration_seconds": 0.412,
       "output_tail": "....                                                                     [100%]\n4 passed in 0.08s\n"
     },
     {
@@ -37,7 +37,7 @@
       ],
       "exit_code": 0,
       "duration_seconds": 0.384,
-      "output_tail": ".........                                                                [100%]\n9 passed in 0.09s\n"
+      "output_tail": ".........                                                                [100%]\n9 passed in 0.07s\n"
     },
     {
       "name": "docx_model_checkpoint_integration",
@@ -49,7 +49,7 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.333,
+      "duration_seconds": 0.354,
       "output_tail": ".....                                                                    [100%]\n5 passed in 0.06s\n"
     },
     {
@@ -62,8 +62,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.376,
-      "output_tail": "...                                                                      [100%]\n3 passed in 0.09s\n"
+      "duration_seconds": 0.356,
+      "output_tail": "...                                                                      [100%]\n3 passed in 0.08s\n"
     },
     {
       "name": "architecture_boundaries",
@@ -75,7 +75,7 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.399,
+      "duration_seconds": 0.387,
       "output_tail": ".......                                                                  [100%]\n7 passed in 0.10s\n"
     }
   ]
