@@ -15,10 +15,11 @@
     "absolute_paths_as_inputs": false,
     "unclassified": 0,
     "counts": {
-      "final_chain_registry": 15,
+      "final_chain_registry": 5,
       "foundation_hardening": 1,
       "precleanup_safety_gate": 1,
-      "worktree_compartment_report": 2
+      "worktree_compartment_report": 3,
+      "mixed_control_file": 1
     }
   },
   "gates": [
@@ -29,8 +30,8 @@
         "tools/run_foundation_hardening_gate.py"
       ],
       "exit_code": 0,
-      "duration_seconds": 1.929,
-      "output_tail": "{\n  \"schema_version\": \"foundation_hardening_gate_report.v0.1\",\n  \"scope\": [\n    \"artifact_store_atomic_writes\",\n    \"model_call_retry_checkpoint_guard\",\n    \"docx_model_checkpoint_integration\",\n    \"visual_model_checkpoint_integration\",\n    \"architecture_boundaries\"\n  ],\n  \"business_secrets_read\": false,\n  \"model_invoked\": false,\n  \"database_written\": false,\n  \"runtime_imported\": false,\n  \"all_exit_codes_zero\": true,\n  \"gates\": [\n    {\n      \"name\": \"artifact_store_atomicity\",\n      \"command\": [\n        \"python\",\n        \"-m\",\n        \"pytest\",\n        \"tests/test_artifact_store.py\",\n        \"-q\"\n      ],\n      \"exit_code\": 0,\n      \"duration_seconds\": 0.374,\n      \"output_tail\": \"....                                                                     [100%]\\n4 passed in 0.10s\\n\"\n    },\n    {\n      \"name\": \"model_call_retry_checkpoint\",\n      \"command\": [\n        \"python\",\n        \"-m\",\n        \"pytest\",\n        \"tests/test_model_call_guard.py\",\n        \"-q\"\n      ],\n      \"exit_code\": 0,\n      \"duration_seconds\": 0.37,\n      \"output_tail\": \".........                                                                [100%]\\n9 passed in 0.10s\\n\"\n    },\n    {\n      \"name\": \"docx_model_checkpoint_integration\",\n      \"command\": [\n        \"python\",\n        \"-m\",\n        \"pytest\",\n        \"tests/test_docx_native_text_repair_model_node_v01.py\",\n        \"-q\"\n      ],\n      \"exit_code\": 0,\n      \"duration_seconds\": 0.357,\n      \"output_tail\": \".....                                                                    [100%]\\n5 passed in 0.06s\\n\"\n    },\n    {\n      \"name\": \"visual_model_checkpoint_integration\",\n      \"command\": [\n        \"python\",\n        \"-m\",\n        \"pytest\",\n        \"tests/test_visual_model_checkpoint_integration.py\",\n        \"-q\"\n      ],\n      \"exit_code\": 0,\n      \"duration_seconds\": 0.354,\n      \"output_tail\": \"...                                                                      [100%]\\n3 passed in 0.08s\\n\"\n    },\n    {\n      \"name\": \"architecture_boundaries\",\n      \"command\": [\n        \"python\",\n        \"-m\",\n        \"pytest\",\n        \"tests/test_architecture_boundaries.py\",\n        \"-q\"\n      ],\n      \"exit_code\": 0,\n      \"duration_seconds\": 0.39,\n      \"output_tail\": \".......                                                                  [100%]\\n7 passed in 0.10s\\n\"\n    }\n  ]\n}\n"
+      "duration_seconds": 1.838,
+      "output_tail": "{\n  \"schema_version\": \"foundation_hardening_gate_report.v0.1\",\n  \"scope\": [\n    \"artifact_store_atomic_writes\",\n    \"model_call_retry_checkpoint_guard\",\n    \"docx_model_checkpoint_integration\",\n    \"visual_model_checkpoint_integration\",\n    \"architecture_boundaries\"\n  ],\n  \"business_secrets_read\": false,\n  \"model_invoked\": false,\n  \"database_written\": false,\n  \"runtime_imported\": false,\n  \"all_exit_codes_zero\": true,\n  \"gates\": [\n    {\n      \"name\": \"artifact_store_atomicity\",\n      \"command\": [\n        \"python\",\n        \"-m\",\n        \"pytest\",\n        \"tests/test_artifact_store.py\",\n        \"-q\"\n      ],\n      \"exit_code\": 0,\n      \"duration_seconds\": 0.35,\n      \"output_tail\": \"....                                                                     [100%]\\n4 passed in 0.07s\\n\"\n    },\n    {\n      \"name\": \"model_call_retry_checkpoint\",\n      \"command\": [\n        \"python\",\n        \"-m\",\n        \"pytest\",\n        \"tests/test_model_call_guard.py\",\n        \"-q\"\n      ],\n      \"exit_code\": 0,\n      \"duration_seconds\": 0.371,\n      \"output_tail\": \".........                                                                [100%]\\n9 passed in 0.09s\\n\"\n    },\n    {\n      \"name\": \"docx_model_checkpoint_integration\",\n      \"command\": [\n        \"python\",\n        \"-m\",\n        \"pytest\",\n        \"tests/test_docx_native_text_repair_model_node_v01.py\",\n        \"-q\"\n      ],\n      \"exit_code\": 0,\n      \"duration_seconds\": 0.325,\n      \"output_tail\": \".....                                                                    [100%]\\n5 passed in 0.06s\\n\"\n    },\n    {\n      \"name\": \"visual_model_checkpoint_integration\",\n      \"command\": [\n        \"python\",\n        \"-m\",\n        \"pytest\",\n        \"tests/test_visual_model_checkpoint_integration.py\",\n        \"-q\"\n      ],\n      \"exit_code\": 0,\n      \"duration_seconds\": 0.343,\n      \"output_tail\": \"...                                                                      [100%]\\n3 passed in 0.07s\\n\"\n    },\n    {\n      \"name\": \"architecture_boundaries\",\n      \"command\": [\n        \"python\",\n        \"-m\",\n        \"pytest\",\n        \"tests/test_architecture_boundaries.py\",\n        \"-q\"\n      ],\n      \"exit_code\": 0,\n      \"duration_seconds\": 0.365,\n      \"output_tail\": \".......                                                                  [100%]\\n7 passed in 0.10s\\n\"\n    }\n  ]\n}\n"
     },
     {
       "name": "final_chain_registry",
@@ -42,7 +43,7 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.346,
+      "duration_seconds": 0.339,
       "output_tail": ".......                                                                  [100%]\n7 passed in 0.07s\n"
     },
     {
@@ -53,7 +54,7 @@
         "--json"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.075,
+      "duration_seconds": 0.079,
       "output_tail": "{\n  \"schema_version\": \"final_chain_registry_validation_result.v0.1\",\n  \"registry_path\": \"config\\\\final_chain_registry.yaml\",\n  \"chain_count\": 4,\n  \"error_count\": 0,\n  \"warning_count\": 1,\n  \"errors\": [],\n  \"warnings\": [\n    {\n      \"code\": \"canonical_entrypoint_not_in_workspace\",\n      \"chain_id\": \"pdf_english\",\n      \"path\": \"config/english_text_first_graph_first/active_manifest.json\"\n    }\n  ],\n  \"ok\": true\n}\n"
     },
     {
@@ -66,8 +67,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.302,
-      "output_tail": "..                                                                       [100%]\n2 passed in 0.04s\n"
+      "duration_seconds": 0.299,
+      "output_tail": "..                                                                       [100%]\n2 passed in 0.03s\n"
     },
     {
       "name": "cleanup_candidate_report",
@@ -79,8 +80,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.485,
-      "output_tail": "..                                                                       [100%]\n2 passed in 0.21s\n"
+      "duration_seconds": 0.442,
+      "output_tail": "..                                                                       [100%]\n2 passed in 0.19s\n"
     },
     {
       "name": "precleanup_archive_safety",
@@ -92,8 +93,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.468,
-      "output_tail": ".....                                                                    [100%]\n5 passed in 0.20s\n"
+      "duration_seconds": 0.425,
+      "output_tail": ".....                                                                    [100%]\n5 passed in 0.17s\n"
     },
     {
       "name": "precleanup_post_archive_report",
@@ -105,7 +106,7 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.329,
+      "duration_seconds": 0.323,
       "output_tail": "...                                                                      [100%]\n3 passed in 0.05s\n"
     },
     {
@@ -125,8 +126,8 @@
         "tools/build_worktree_compartment_report.py"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.176,
-      "output_tail": " \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"docs/reports/final_chain_control_contract_20260804.md\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"docs/reports/final_chain_ops_gate_20260804.json\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"docs/reports/final_chain_orchestrator_handshake_20260804.json\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"docs/reports/final_chain_orchestrator_handshake_validation_20260804.json\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"docs/reports/foundation_hardening_test_report_20260803.json\",\n      \"bucket\": \"foundation_hardening\",\n      \"reasons\": [\n        \"artifact atomicity or model retry/checkpoint hardening\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"docs/reports/precleanup_safety_gate_20260804.json\",\n      \"bucket\": \"precleanup_safety_gate\",\n      \"reasons\": [\n        \"combined guard for protected-chain cleanup work\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"docs/reports/worktree_compartments_20260804.json\",\n      \"bucket\": \"worktree_compartment_report\",\n      \"reasons\": [\n        \"review compartment documentation and report generator\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"docs/reports/worktree_compartments_20260804.md\",\n      \"bucket\": \"worktree_compartment_report\",\n      \"reasons\": [\n        \"review compartment documentation and report generator\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"src/teachbase/final_chains/__init__.py\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"src/teachbase/final_chains/control.py\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"src/teachbase/final_chains/control_contract.py\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"tests/test_final_chain_control.py\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"tools/build_final_chain_orchestrator_handshake.py\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"tools/final_chain_control.py\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"tools/run_final_chain_ops_gate.py\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"tools/validate_final_chain_orchestrator_handshake.py\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    }\n  ]\n}\n"
+      "duration_seconds": 0.141,
+      "output_tail": "{\n  \"schema_version\": \"worktree_compartment_report.v0.1\",\n  \"workspace_contract\": \"relative_git_paths_only\",\n  \"absolute_paths_as_inputs\": false,\n  \"commit_recommendation\": [\n    \"commit final_chain_registry files separately from foundation_hardening files\",\n    \"do not include validation_report_refresh files unless intentionally updating generated reports\",\n    \"review mixed_control_file changes line-by-line before staging\"\n  ],\n  \"counts\": {\n    \"final_chain_registry\": 5,\n    \"foundation_hardening\": 1,\n    \"precleanup_safety_gate\": 1,\n    \"worktree_compartment_report\": 3,\n    \"mixed_control_file\": 1\n  },\n  \"records\": [\n    {\n      \"status\": \" M\",\n      \"path\": \"docs/reports/cleanroom_hardening_status_20260804.json\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"docs/reports/foundation_hardening_test_report_20260803.json\",\n      \"bucket\": \"foundation_hardening\",\n      \"reasons\": [\n        \"artifact atomicity or model retry/checkpoint hardening\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"docs/reports/precleanup_safety_gate_20260804.json\",\n      \"bucket\": \"precleanup_safety_gate\",\n      \"reasons\": [\n        \"combined guard for protected-chain cleanup work\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"docs/reports/worktree_compartments_20260804.json\",\n      \"bucket\": \"worktree_compartment_report\",\n      \"reasons\": [\n        \"review compartment documentation and report generator\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"docs/reports/worktree_compartments_20260804.md\",\n      \"bucket\": \"worktree_compartment_report\",\n      \"reasons\": [\n        \"review compartment documentation and report generator\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"package.json\",\n      \"bucket\": \"mixed_control_file\",\n      \"reasons\": [\n        \"foundation_hardening npm script\",\n        \"final_chain_registry npm scripts\",\n        \"precleanup_archive npm scripts\",\n        \"precleanup_deep_audit npm script\",\n        \"precleanup_safety npm script\",\n        \"cleanroom_goal_gap audit npm script\"\n      ]\n    },\n    {\n      \"status\": \" M\",\n      \"path\": \"tools/build_worktree_compartment_report.py\",\n      \"bucket\": \"worktree_compartment_report\",\n      \"reasons\": [\n        \"review compartment documentation and report generator\"\n      ]\n    },\n    {\n      \"status\": \"??\",\n      \"path\": \"docs/reports/cleanroom_goal_gap_audit_20260804.json\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \"??\",\n      \"path\": \"docs/reports/cleanroom_goal_gap_audit_20260804.md\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \"??\",\n      \"path\": \"tests/test_cleanroom_goal_gap_audit.py\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    },\n    {\n      \"status\": \"??\",\n      \"path\": \"tools/build_cleanroom_goal_gap_audit.py\",\n      \"bucket\": \"final_chain_registry\",\n      \"reasons\": [\n        \"protected-chain inventory, classifier, or cleanup candidate audit\"\n      ]\n    }\n  ]\n}\n"
     }
   ]
 }
