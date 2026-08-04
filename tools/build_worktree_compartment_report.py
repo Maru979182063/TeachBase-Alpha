@@ -43,6 +43,8 @@ FINAL_CHAIN_PATHS = {
     "docs/reports/doc_english_code_import_20260804.md",
     "docs/reports/pdf_english_manifest_recovery_audit_20260804.json",
     "docs/reports/pdf_english_manifest_recovery_audit_20260804.md",
+    "docs/reports/final_chain_ready_sample_dry_run_20260804.json",
+    "docs/reports/final_chain_ready_sample_dry_run_20260804.md",
     "docs/reports/final_chain_surface_classification_cleanroom_20260731.json",
     "docs/reports/final_chain_surface_classification_cleanroom_20260731.md",
     "docs/reports/final_chain_surface_classification_old_local_20260731.json",
@@ -58,6 +60,7 @@ FINAL_CHAIN_PATHS = {
     "tools/audit_final_chain_cleanroom_imports.py",
     "tools/build_docx_math_final_import_report.py",
     "tools/build_doc_english_code_import_report.py",
+    "tools/build_final_chain_ready_sample_report.py",
     "tools/validate_final_chain_registry.py",
     "src/teachbase/final_chains/__init__.py",
     "src/teachbase/final_chains/adapters.py",
@@ -67,6 +70,9 @@ FINAL_CHAIN_PATHS = {
     "src/teachbase/final_chains/import_audit.py",
     "src/teachbase/final_chains/jobs.py",
     "src/teachbase/final_chains/readiness.py",
+    "tests/fixtures/final_chain_samples/doc_math_sample.docx",
+    "tests/fixtures/final_chain_samples/doc_english_sample.docx",
+    "tests/fixtures/final_chain_samples/pdf_math_sample.pdf",
 }
 
 VALIDATION_NOISE_PATHS = {
@@ -141,6 +147,10 @@ def is_doc_english_code_import(path: str) -> bool:
     )
 
 
+def is_final_chain_sample_fixture(path: str) -> bool:
+    return path == "tests/fixtures/final_chain_samples/" or path.startswith("tests/fixtures/final_chain_samples/")
+
+
 def git_status_porcelain() -> list[dict[str, str]]:
     completed = subprocess.run(
         ["git", "status", "--porcelain=v1"],
@@ -181,6 +191,8 @@ def classify(path: str) -> tuple[str, list[str]]:
         return "docx_math_final_import", ["copied from verified DOCX math final-chain handoff inventory"]
     if is_doc_english_code_import(path):
         return "doc_english_code_import", ["copied from DOCX English protected code/config/prompt paths"]
+    if is_final_chain_sample_fixture(path):
+        return "final_chain_registry", ["repository-relative samples for protected final-chain control dry-runs"]
     return "unclassified", ["needs review before commit"]
 
 

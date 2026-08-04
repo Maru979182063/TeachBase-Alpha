@@ -666,6 +666,37 @@ def test_final_chain_control_cli_dashboard_filters_one_chain(tmp_path: Path) -> 
     assert payload["rows"][0]["chain_id"] == "pdf_math"
 
 
+def test_ready_sample_report_runs_three_control_adapters_without_side_effects() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/build_final_chain_ready_sample_report.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    assert payload["schema_version"] == "final_chain_ready_sample_dry_run_report.v0.1"
+    assert payload["workspace_contract"] == "relative_git_paths_only"
+    assert payload["absolute_paths_as_inputs"] is False
+    assert payload["ready_for_adapter_dry_run_count"] == 3
+    assert payload["pdf_english_recovery_status"] == "restore_or_rerun_required"
+    assert {row["chain_id"] for row in payload["rows"]} == {"doc_math", "doc_english", "pdf_math"}
+    for row in payload["rows"]:
+        assert row["sample_input"].startswith("tests/fixtures/final_chain_samples/")
+        assert row["adapter_dry_run_status"] == "dry_run_ready"
+        assert row["schedule_status"] == "scheduled_ready"
+        assert row["adapter_invoked_entrypoint"] is False
+        assert row["execution_contract"] == {
+            "model_invoked": False,
+            "database_written": False,
+            "runtime_imported": False,
+            "business_secrets_read": False,
+        }
+
+
 def test_cleanroom_import_audit_reports_candidates_without_absolute_paths(tmp_path: Path) -> None:
     workspace = tmp_path / "workspace"
     source = tmp_path / "source"
