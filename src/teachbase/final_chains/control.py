@@ -9,7 +9,7 @@ from typing import Any, Literal
 from teachbase.core.errors import ConfigurationError
 from teachbase.core.run_context import generate_run_id, utc_now_iso
 from teachbase.infrastructure.artifact_store import write_json
-from .jobs import attach_job_record_validation, build_job_lifecycle
+from .jobs import attach_job_record_validation, build_job_lifecycle, validate_job_record
 
 PlanStatus = Literal["ready", "blocked"]
 
@@ -364,3 +364,73 @@ def schedule_chain_run(
     record = attach_job_record_validation(record)
     write_json(record_path, record)
     return record
+
+
+def schedule_registry_batch(
+    registry: FinalChainRegistry,
+    sample_inputs: dict[str, str],
+    *,
+    output_root: str,
+    workspace_root: Path,
+    environment: EnvironmentPolicy | None = None,
+) -> dict[str, Any]:
+    environment = environment or EnvironmentPolicy()
+    rows: list[dict[str, Any]] = []
+    for chain in registry.chains:
+        input_path = sample_inputs.get(chain.chain_id) or _default_missing_sample_path(chain)
+        request = ChainRunRequest(
+            chain_id=chain.chain_id,
+            input_path=input_path,
+            output_root=output_root,
+            dry_run=True,
+            environment=environment,
+        )
+        record = schedule_chain_run(registry, request, workspace_root=workspace_root)
+        validation = validate_job_record(record)
+        rows.append(
+            {
+                "chain_id": chain.chain_id,
+                "input_path": input_path,
+                "schedule_status": record["status"],
+                "plan_status": record["plan"]["status"],
+                "record_path": record.get("record_path", ""),
+                "record_validation_ok": validation["ok"],
+                "record_validation_error_count": validation["error_count"],
+                "self_validation_ok": record["record_validation"]["ok"],
+                "self_validation_error_count": record["record_validation"]["error_count"],
+                "blocked_reasons": record["plan"]["blocked_reasons"],
+                "execution_contract": record["execution_contract"],
+            }
+        )
+    ready_count = sum(1 for row in rows if row["schedule_status"] == "scheduled_ready")
+    blocked_count = sum(1 for row in rows if row["schedule_status"] == "scheduled_blocked")
+    rejected_count = sum(1 for row in rows if row["schedule_status"] == "rejected")
+    all_valid = all(row["record_validation_ok"] and row["self_validation_ok"] for row in rows)
+    no_side_effects = all(row["execution_contract"] == _no_side_effect_contract() for row in rows)
+    return {
+        "schema_version": "final_chain_batch_queue_report.v0.1",
+        "workspace_contract": "relative_git_paths_only",
+        "absolute_paths_as_inputs": False,
+        "status": "pass" if all_valid and no_side_effects and rejected_count == 0 else "fail",
+        "chain_count": len(rows),
+        "scheduled_ready_count": ready_count,
+        "scheduled_blocked_count": blocked_count,
+        "rejected_count": rejected_count,
+        "output_root": _portable_path(workspace_root, _resolve_under_workspace(workspace_root, output_root)),
+        "rows": rows,
+        "execution_contract": _no_side_effect_contract(),
+    }
+
+
+def _default_missing_sample_path(chain: FinalChainDefinition) -> str:
+    suffix = chain.input_format.lower().lstrip(".") or "input"
+    return f"tests/fixtures/final_chain_samples/{chain.chain_id}_sample.{suffix}"
+
+
+def _no_side_effect_contract() -> dict[str, bool]:
+    return {
+        "model_invoked": False,
+        "database_written": False,
+        "runtime_imported": False,
+        "business_secrets_read": False,
+    }

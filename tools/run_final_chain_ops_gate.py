@@ -18,6 +18,7 @@ from teachbase.final_chains import (
 from teachbase.infrastructure.artifact_store import write_json, write_text
 
 from tools.build_final_chain_ready_sample_report import build_report as build_ready_sample_report
+from tools.build_final_chain_batch_queue_report import build_report as build_batch_queue_report
 from tools.build_pdf_english_recovery_source_audit import build_report as build_pdf_english_source_audit_report
 from tools.validate_pdf_english_recovery import build_report as build_pdf_english_recovery_report
 
@@ -32,6 +33,7 @@ def build_gate_report() -> dict[str, Any]:
     control_contract = build_final_chain_control_contract(registry)
     environment_contract = build_environment_interaction_contract(registry, workspace_root=ROOT)
     ready_samples = build_ready_sample_report()
+    batch_queue = build_batch_queue_report()
     pdf_english_blocker = build_pdf_english_source_audit_report()
     pdf_english_recovery = build_pdf_english_recovery_report()
     checks = [
@@ -71,6 +73,30 @@ def build_gate_report() -> dict[str, Any]:
                     row["job_record_self_validation_error_count"] for row in ready_samples["rows"]
                 ],
                 "external_validation_error_counts": [row["job_record_validation_error_count"] for row in ready_samples["rows"]],
+            },
+        },
+        {
+            "name": "batch_queue_covers_four_chains",
+            "ok": batch_queue["chain_count"] == 4,
+            "value": [row["chain_id"] for row in batch_queue["rows"]],
+        },
+        {
+            "name": "batch_queue_schedules_three_ready_one_blocked",
+            "ok": batch_queue["scheduled_ready_count"] == 3
+            and batch_queue["scheduled_blocked_count"] == 1
+            and batch_queue["rejected_count"] == 0,
+            "value": {
+                "ready": batch_queue["scheduled_ready_count"],
+                "blocked": batch_queue["scheduled_blocked_count"],
+                "rejected": batch_queue["rejected_count"],
+            },
+        },
+        {
+            "name": "batch_queue_job_records_validate",
+            "ok": all(row["record_validation_ok"] and row["self_validation_ok"] for row in batch_queue["rows"]),
+            "value": {
+                "external": [row["record_validation_error_count"] for row in batch_queue["rows"]],
+                "self": [row["self_validation_error_count"] for row in batch_queue["rows"]],
             },
         },
         {
@@ -136,6 +162,7 @@ def build_gate_report() -> dict[str, Any]:
                 control_contract,
                 environment_contract,
                 ready_samples,
+                batch_queue,
                 pdf_english_blocker,
                 pdf_english_recovery,
             ),
@@ -155,6 +182,9 @@ def build_gate_report() -> dict[str, Any]:
         "environment_ready_chain_ids": environment_contract["ready_chain_ids"],
         "environment_blocked_chain_ids": environment_contract["blocked_chain_ids"],
         "ready_sample_count": ready_samples["ready_for_adapter_dry_run_count"],
+        "batch_queue_schema": batch_queue["schema_version"],
+        "batch_queue_ready_count": batch_queue["scheduled_ready_count"],
+        "batch_queue_blocked_count": batch_queue["scheduled_blocked_count"],
         "pdf_english_recovery_status": pdf_english_blocker["recovery_status"],
         "pdf_english_recovery_source_audit_status": pdf_english_blocker["source_audit_status"],
         "pdf_english_recovery_validation_status": pdf_english_recovery["status"],

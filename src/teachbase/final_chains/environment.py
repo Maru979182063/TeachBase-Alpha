@@ -188,6 +188,7 @@ def build_environment_interaction_contract(registry: FinalChainRegistry, *, work
             "contract",
             "plan",
             "schedule",
+            "queue",
             "job-validate",
             "adapter-dry-run",
         ],

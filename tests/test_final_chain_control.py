@@ -24,6 +24,7 @@ from teachbase.final_chains import (
     inspect_registry_environments,
     load_final_chain_registry,
     schedule_chain_run,
+    schedule_registry_batch,
     transition_job_record,
     validate_job_record,
 )
@@ -426,6 +427,49 @@ def test_scheduler_snapshots_absolute_input_as_portable_metadata(tmp_path: Path)
     leaking_validation = validate_job_record(leaking_record)
     assert "unknown_status" in {error["code"] for error in leaking_validation["errors"]}
     assert "D:\\unsafe" not in json.dumps(leaking_validation)
+
+
+def test_batch_scheduler_queues_ready_chains_and_blocks_pdf_english() -> None:
+    registry = load_final_chain_registry(REGISTRY)
+    sample_inputs = {
+        "doc_math": "tests/fixtures/final_chain_samples/doc_math_sample.docx",
+        "doc_english": "tests/fixtures/final_chain_samples/doc_english_sample.docx",
+        "pdf_math": "tests/fixtures/final_chain_samples/pdf_math_sample.pdf",
+    }
+
+    report = schedule_registry_batch(
+        registry,
+        sample_inputs,
+        output_root="outputs/final_chain_batch_queue",
+        workspace_root=ROOT,
+    )
+
+    rows = {row["chain_id"]: row for row in report["rows"]}
+    serialized = json.dumps(report, ensure_ascii=False)
+    assert report["schema_version"] == "final_chain_batch_queue_report.v0.1"
+    assert report["status"] == "pass"
+    assert report["workspace_contract"] == "relative_git_paths_only"
+    assert report["absolute_paths_as_inputs"] is False
+    assert report["chain_count"] == 4
+    assert report["scheduled_ready_count"] == 3
+    assert report["scheduled_blocked_count"] == 1
+    assert report["rejected_count"] == 0
+    assert rows["doc_math"]["schedule_status"] == "scheduled_ready"
+    assert rows["doc_english"]["schedule_status"] == "scheduled_ready"
+    assert rows["pdf_math"]["schedule_status"] == "scheduled_ready"
+    assert rows["pdf_english"]["schedule_status"] == "scheduled_blocked"
+    assert "canonical_entrypoint_present" in rows["pdf_english"]["blocked_reasons"]
+    assert all(row["record_validation_ok"] and row["self_validation_ok"] for row in report["rows"])
+    assert all(row["record_path"].startswith("outputs/final_chain_batch_queue/_control/jobs/") for row in report["rows"])
+    assert report["execution_contract"] == {
+        "model_invoked": False,
+        "database_written": False,
+        "runtime_imported": False,
+        "business_secrets_read": False,
+    }
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
 
 
 def test_job_lifecycle_allows_only_guarded_dry_run_transitions(tmp_path: Path) -> None:
@@ -964,6 +1008,40 @@ def test_final_chain_control_cli_readiness_matrix(tmp_path: Path) -> None:
     assert payload["rows"][0]["readiness_tier"] == "ready_for_adapter_dry_run"
 
 
+def test_final_chain_control_cli_queues_four_chain_batch_without_execution() -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/final_chain_control.py",
+            "queue",
+            "--sample-input",
+            "doc_math=tests/fixtures/final_chain_samples/doc_math_sample.docx",
+            "--sample-input",
+            "doc_english=tests/fixtures/final_chain_samples/doc_english_sample.docx",
+            "--sample-input",
+            "pdf_math=tests/fixtures/final_chain_samples/pdf_math_sample.pdf",
+            "--json",
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    assert payload["schema_version"] == "final_chain_batch_queue_report.v0.1"
+    assert payload["status"] == "pass"
+    assert payload["scheduled_ready_count"] == 3
+    assert payload["scheduled_blocked_count"] == 1
+    assert payload["rejected_count"] == 0
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
 def test_final_chain_control_dashboard_groups_chains_by_scheduling_lane() -> None:
     registry = load_final_chain_registry(REGISTRY)
 
@@ -1004,6 +1082,7 @@ def test_final_chain_control_contract_is_external_orchestrator_safe() -> None:
     assert all(report["forbidden_side_effects"].values())
     assert report["commands"]["contract"] == "tools/final_chain_control.py contract --json"
     assert report["commands"]["env_contract"] == "tools/final_chain_control.py env-contract --json"
+    assert report["commands"]["queue"] == "tools/final_chain_control.py queue --sample-input <chain_id=path> --json"
     assert report["commands"]["job_validate"] == (
         "tools/final_chain_control.py job-validate --record <relative_record_path> --json"
     )
@@ -1140,6 +1219,35 @@ def test_ready_sample_report_runs_three_control_adapters_without_side_effects() 
         }
 
 
+def test_batch_queue_report_schedules_four_chain_control_records() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/build_final_chain_batch_queue_report.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    checks = {item["name"]: item for item in payload["checks"]}
+    assert payload["schema_version"] == "final_chain_batch_queue_report.v0.1"
+    assert payload["status"] == "pass"
+    assert payload["chain_count"] == 4
+    assert payload["scheduled_ready_count"] == 3
+    assert payload["scheduled_blocked_count"] == 1
+    assert checks["batch_covers_four_registered_chains"]["ok"] is True
+    assert checks["three_ready_jobs_scheduled"]["ok"] is True
+    assert checks["pdf_english_is_scheduled_blocked"]["ok"] is True
+    assert checks["all_job_records_validate"]["ok"] is True
+    assert checks["all_job_records_written_under_outputs"]["ok"] is True
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
 def test_pdf_english_recovery_validator_fails_closed_without_manifest() -> None:
     completed = subprocess.run(
         [sys.executable, "tools/validate_pdf_english_recovery.py", "--require-ready"],
@@ -1209,12 +1317,18 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     assert payload["environment_contract_schema"] == "final_chain_environment_interaction_contract.v0.1"
     assert payload["environment_ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math"]
     assert payload["environment_blocked_chain_ids"] == ["pdf_english"]
+    assert payload["batch_queue_schema"] == "final_chain_batch_queue_report.v0.1"
+    assert payload["batch_queue_ready_count"] == 3
+    assert payload["batch_queue_blocked_count"] == 1
     assert payload["pdf_english_recovery_validation_status"] == "blocked_missing_or_invalid_manifest"
     assert payload["pdf_english_recovery_source_audit_status"] == "no_importable_source_found"
     assert checks["pdf_english_recovery_validator_fails_closed"]["ok"] is True
     assert checks["pdf_english_recovery_requires_four_branch_manifest"]["ok"] is True
     assert checks["pdf_english_recovery_source_audit_has_no_importable_source"]["ok"] is True
     assert checks["ready_sample_job_records_validate"]["ok"] is True
+    assert checks["batch_queue_covers_four_chains"]["ok"] is True
+    assert checks["batch_queue_schedules_three_ready_one_blocked"]["ok"] is True
+    assert checks["batch_queue_job_records_validate"]["ok"] is True
     assert checks["environment_contract_passes"]["ok"] is True
     assert checks["environment_contract_covers_four_profiles"]["ok"] is True
     assert checks["environment_contract_keeps_pdf_english_fail_closed"]["ok"] is True
@@ -1243,6 +1357,7 @@ def test_cleanroom_hardening_manifest_seals_current_gate_outputs() -> None:
     assert "final_chain_registry_control_contract_environment_contract_and_scheduler" in payload["sealed_scopes"]
     assert "precleanup_archive_safety_and_worktree_compartment_guard" in payload["sealed_scopes"]
     assert checks["required_reports_present"]["ok"] is True
+    assert payload["reports"]["final_chain_batch_queue"]["status"] == "pass"
     assert checks["final_chain_ops_covers_four_chains"]["ok"] is True
     assert checks["final_chain_job_records_self_and_external_validated"]["ok"] is True
     assert checks["pdf_english_is_explicit_fail_closed_blocker"]["ok"] is True

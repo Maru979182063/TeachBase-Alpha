@@ -28,6 +28,7 @@ Chains: `doc_math, doc_english, pdf_math, pdf_english`
 - `list`: `tools/final_chain_control.py list --json`
 - `plan`: `tools/final_chain_control.py plan --chain-id <chain_id> --input <path> --json`
 - `schedule`: `tools/final_chain_control.py schedule --chain-id <chain_id> --input <path>`
+- `queue`: `tools/final_chain_control.py queue --sample-input <chain_id=path> --json`
 - `adapter_dry_run`: `tools/final_chain_control.py adapter-dry-run --chain-id <chain_id> --input <path> --json`
 - `job_inspect`: `tools/final_chain_control.py job-inspect --record <relative_record_path> --json`
 - `job_validate`: `tools/final_chain_control.py job-validate --record <relative_record_path> --json`

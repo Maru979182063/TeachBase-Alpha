@@ -10,6 +10,9 @@ Status: `pass`
 - `pass` `ready_sample_dry_runs_cover_three_chains`
 - `pass` `ready_sample_schedules_are_ready`
 - `pass` `ready_sample_job_records_validate`
+- `pass` `batch_queue_covers_four_chains`
+- `pass` `batch_queue_schedules_three_ready_one_blocked`
+- `pass` `batch_queue_job_records_validate`
 - `pass` `ready_sample_adapters_do_not_invoke_entrypoints`
 - `pass` `control_contract_is_dry_run_only`
 - `pass` `control_contract_covers_four_chains`

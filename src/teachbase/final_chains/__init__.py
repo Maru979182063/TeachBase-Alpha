@@ -11,6 +11,7 @@ from .control import (
     build_request_snapshot,
     load_final_chain_registry,
     schedule_chain_run,
+    schedule_registry_batch,
 )
 from .adapters import FinalChainAdapter, build_final_chain_adapters, describe_adapters
 from .environment import (
@@ -47,6 +48,7 @@ __all__ = [
     "build_request_snapshot",
     "load_final_chain_registry",
     "schedule_chain_run",
+    "schedule_registry_batch",
     "build_final_chain_adapters",
     "describe_adapters",
     "build_adapter_contract",

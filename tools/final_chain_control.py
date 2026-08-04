@@ -20,6 +20,7 @@ from teachbase.final_chains import (
     inspect_registry_environments,
     load_final_chain_registry,
     schedule_chain_run,
+    schedule_registry_batch,
     transition_job_record_path,
     validate_job_record_path,
 )
@@ -76,6 +77,18 @@ def build_schedule(args: argparse.Namespace) -> dict:
         environment=EnvironmentPolicy(name=args.environment),
     )
     return schedule_chain_run(registry, request, workspace_root=ROOT)
+
+
+def build_queue(args: argparse.Namespace) -> dict:
+    registry = load_final_chain_registry(Path(args.registry))
+    sample_inputs = parse_sample_inputs(args.sample_input)
+    return schedule_registry_batch(
+        registry,
+        sample_inputs,
+        output_root=args.output_root,
+        workspace_root=ROOT,
+        environment=EnvironmentPolicy(name=args.environment),
+    )
 
 
 def build_env_check(args: argparse.Namespace) -> dict:
@@ -137,11 +150,7 @@ def build_adapter_dry_run(args: argparse.Namespace) -> dict:
 
 def build_readiness(args: argparse.Namespace) -> dict:
     registry = load_final_chain_registry(Path(args.registry))
-    sample_inputs = {}
-    for item in args.sample_input or []:
-        chain_id, sep, value = item.partition("=")
-        if sep:
-            sample_inputs[chain_id] = value
+    sample_inputs = parse_sample_inputs(args.sample_input)
     report = build_readiness_matrix(registry, workspace_root=ROOT, sample_inputs=sample_inputs)
     if args.chain_id:
         report = {
@@ -159,11 +168,7 @@ def build_readiness(args: argparse.Namespace) -> dict:
 
 def build_dashboard(args: argparse.Namespace) -> dict:
     registry = load_final_chain_registry(Path(args.registry))
-    sample_inputs = {}
-    for item in args.sample_input or []:
-        chain_id, sep, value = item.partition("=")
-        if sep:
-            sample_inputs[chain_id] = value
+    sample_inputs = parse_sample_inputs(args.sample_input)
     report = build_final_chain_control_dashboard(registry, workspace_root=ROOT, sample_inputs=sample_inputs)
     if args.chain_id:
         report = {
@@ -181,6 +186,15 @@ def build_dashboard(args: argparse.Namespace) -> dict:
 def build_control_contract(args: argparse.Namespace) -> dict:
     registry = load_final_chain_registry(Path(args.registry))
     return build_final_chain_control_contract(registry)
+
+
+def parse_sample_inputs(values: list[str] | None) -> dict[str, str]:
+    sample_inputs = {}
+    for item in values or []:
+        chain_id, sep, value = item.partition("=")
+        if sep:
+            sample_inputs[chain_id] = value
+    return sample_inputs
 
 
 def inspect_job(args: argparse.Namespace) -> dict:
@@ -231,6 +245,13 @@ def main() -> int:
     schedule_parser.add_argument("--input", required=True)
     schedule_parser.add_argument("--output-root", default="outputs/final_chain_runs")
     schedule_parser.add_argument("--environment", default="local_dry_run")
+
+    queue_parser = add_json_flag(
+        subparsers.add_parser("queue", help="Record a non-executing batch queue plan for all final chains.")
+    )
+    queue_parser.add_argument("--sample-input", action="append")
+    queue_parser.add_argument("--output-root", default="outputs/final_chain_batch_queue")
+    queue_parser.add_argument("--environment", default="local_dry_run")
 
     env_parser = add_json_flag(
         subparsers.add_parser("env-check", help="Inspect cleanroom environment readiness for final chains.")
@@ -303,6 +324,8 @@ def main() -> int:
             result = list_chains(Path(args.registry))
         elif args.command == "schedule":
             result = build_schedule(args)
+        elif args.command == "queue":
+            result = build_queue(args)
         elif args.command == "env-check":
             result = build_env_check(args)
         elif args.command == "env-contract":
@@ -362,6 +385,8 @@ def main() -> int:
         return 0 if result.get("status") == "dry_run_ready" else 2
     if args.command == "env-check":
         return 0 if result.get("blocked_count") == 0 else 2
+    if args.command == "queue":
+        return 0 if result.get("status") == "pass" else 2
     status = result.get("status")
     if status in {"blocked", "rejected", "scheduled_blocked"}:
         return 2

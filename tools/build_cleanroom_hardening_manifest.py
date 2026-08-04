@@ -20,6 +20,7 @@ REQUIRED_REPORTS = {
     "final_chain_control_contract": "docs/reports/final_chain_control_contract_20260804.json",
     "final_chain_environment_contract": "docs/reports/final_chain_environment_contract_20260804.json",
     "final_chain_ready_samples": "docs/reports/final_chain_ready_sample_dry_run_20260804.json",
+    "final_chain_batch_queue": "docs/reports/final_chain_batch_queue_20260804.json",
     "pdf_english_recovery_validation": "docs/reports/pdf_english_recovery_validation_20260804.json",
     "pdf_english_recovery_source_audit": "docs/reports/pdf_english_manifest_recovery_audit_20260804.json",
 }

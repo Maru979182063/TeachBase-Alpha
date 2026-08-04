@@ -34,6 +34,7 @@
         "final_chain_control_contract": true,
         "final_chain_environment_contract": true,
         "final_chain_ready_samples": true,
+        "final_chain_batch_queue": true,
         "pdf_english_recovery_validation": true,
         "pdf_english_recovery_source_audit": true
       }
@@ -48,6 +49,7 @@
         "final_chain_control_contract": "pass",
         "final_chain_environment_contract": "pass",
         "final_chain_ready_samples": "pass",
+        "final_chain_batch_queue": "pass",
         "pdf_english_recovery_validation": "blocked_missing_or_invalid_manifest",
         "pdf_english_recovery_source_audit": "no_importable_source_found"
       }
@@ -109,6 +111,43 @@
               0
             ],
             "external_validation_error_counts": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "name": "batch_queue_covers_four_chains",
+          "ok": true,
+          "value": [
+            "doc_math",
+            "doc_english",
+            "pdf_math",
+            "pdf_english"
+          ]
+        },
+        {
+          "name": "batch_queue_schedules_three_ready_one_blocked",
+          "ok": true,
+          "value": {
+            "ready": 3,
+            "blocked": 1,
+            "rejected": 0
+          }
+        },
+        {
+          "name": "batch_queue_job_records_validate",
+          "ok": true,
+          "value": {
+            "external": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "self": [
+              0,
               0,
               0,
               0
@@ -258,6 +297,12 @@
           "runtime_imported": false,
           "business_secrets_read": false
         },
+        "final_chain_batch_queue": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
+        },
         "pdf_english_recovery_validation": {
           "model_invoked": false,
           "database_written": false,
@@ -301,6 +346,11 @@
     },
     "final_chain_ready_samples": {
       "path": "docs/reports/final_chain_ready_sample_dry_run_20260804.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "final_chain_batch_queue": {
+      "path": "docs/reports/final_chain_batch_queue_20260804.json",
       "exists": true,
       "status": "pass"
     },

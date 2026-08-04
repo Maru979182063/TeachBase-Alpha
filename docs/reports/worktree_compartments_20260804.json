@@ -8,16 +8,15 @@
     "review mixed_control_file changes line-by-line before staging"
   ],
   "counts": {
-    "final_chain_registry": 7,
+    "final_chain_registry": 19,
     "foundation_hardening": 1,
-    "precleanup_safety_gate": 1,
-    "worktree_compartment_report": 3,
-    "mixed_control_file": 1
+    "mixed_control_file": 1,
+    "worktree_compartment_report": 1
   },
   "records": [
     {
       "status": " M",
-      "path": "docs/reports/cleanroom_hardening_status_20260804.json",
+      "path": "docs/reports/cleanroom_hardening_manifest_20260804.json",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -25,7 +24,47 @@
     },
     {
       "status": " M",
-      "path": "docs/reports/cleanroom_hardening_status_20260804.md",
+      "path": "docs/reports/cleanroom_hardening_manifest_validation_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/final_chain_control_contract_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/final_chain_control_contract_20260804.md",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/final_chain_environment_contract_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/final_chain_ops_gate_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/final_chain_ops_gate_20260804.md",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -37,30 +76,6 @@
       "bucket": "foundation_hardening",
       "reasons": [
         "artifact atomicity or model retry/checkpoint hardening"
-      ]
-    },
-    {
-      "status": " M",
-      "path": "docs/reports/precleanup_safety_gate_20260804.json",
-      "bucket": "precleanup_safety_gate",
-      "reasons": [
-        "combined guard for protected-chain cleanup work"
-      ]
-    },
-    {
-      "status": " M",
-      "path": "docs/reports/worktree_compartments_20260804.json",
-      "bucket": "worktree_compartment_report",
-      "reasons": [
-        "review compartment documentation and report generator"
-      ]
-    },
-    {
-      "status": " M",
-      "path": "docs/reports/worktree_compartments_20260804.md",
-      "bucket": "worktree_compartment_report",
-      "reasons": [
-        "review compartment documentation and report generator"
       ]
     },
     {
@@ -77,7 +92,47 @@
     },
     {
       "status": " M",
+      "path": "src/teachbase/final_chains/__init__.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "src/teachbase/final_chains/control.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "src/teachbase/final_chains/control_contract.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "src/teachbase/final_chains/environment.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
       "path": "tests/test_final_chain_control.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "tools/build_cleanroom_hardening_manifest.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -93,31 +148,47 @@
     },
     {
       "status": " M",
-      "path": "tools/run_cleanroom_hardening_status_gate.py",
+      "path": "tools/final_chain_control.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
       ]
     },
     {
-      "status": "??",
-      "path": "docs/reports/cleanroom_hardening_manifest_validation_20260804.json",
+      "status": " M",
+      "path": "tools/run_final_chain_ops_gate.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
       ]
     },
     {
-      "status": "??",
-      "path": "docs/reports/cleanroom_hardening_manifest_validation_20260804.md",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
-      ]
-    },
-    {
-      "status": "??",
+      "status": " M",
       "path": "tools/validate_cleanroom_hardening_manifest.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "docs/reports/final_chain_batch_queue_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "docs/reports/final_chain_batch_queue_20260804.md",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/build_final_chain_batch_queue_report.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"

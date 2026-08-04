@@ -35,6 +35,7 @@ REQUIRED_REPORTS = {
     "final_chain_control_contract",
     "final_chain_environment_contract",
     "final_chain_ready_samples",
+    "final_chain_batch_queue",
     "pdf_english_recovery_validation",
     "pdf_english_recovery_source_audit",
 }

@@ -33,6 +33,7 @@
     "contract",
     "plan",
     "schedule",
+    "queue",
     "job-validate",
     "adapter-dry-run"
   ],
