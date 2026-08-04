@@ -8,10 +8,28 @@
     "review mixed_control_file changes line-by-line before staging"
   ],
   "counts": {
+    "final_chain_registry": 7,
     "foundation_hardening": 1,
-    "final_chain_registry": 2
+    "mixed_control_file": 1,
+    "worktree_compartment_report": 1
   },
   "records": [
+    {
+      "status": " M",
+      "path": "docs/reports/final_chain_ops_gate_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/final_chain_ops_gate_20260804.md",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
     {
       "status": " M",
       "path": "docs/reports/foundation_hardening_test_report_20260803.json",
@@ -22,7 +40,7 @@
     },
     {
       "status": " M",
-      "path": "src/teachbase/final_chains/control.py",
+      "path": "docs/reports/pdf_english_manifest_recovery_audit_20260804.json",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -30,7 +48,51 @@
     },
     {
       "status": " M",
+      "path": "docs/reports/pdf_english_manifest_recovery_audit_20260804.md",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "package.json",
+      "bucket": "mixed_control_file",
+      "reasons": [
+        "foundation_hardening npm script",
+        "final_chain_registry npm scripts",
+        "precleanup_archive npm scripts",
+        "precleanup_deep_audit npm script",
+        "precleanup_safety npm script"
+      ]
+    },
+    {
+      "status": " M",
       "path": "tests/test_final_chain_control.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "tools/build_worktree_compartment_report.py",
+      "bucket": "worktree_compartment_report",
+      "reasons": [
+        "review compartment documentation and report generator"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "tools/run_final_chain_ops_gate.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/build_pdf_english_recovery_source_audit.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"

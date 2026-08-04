@@ -11,6 +11,7 @@ Status: `pass`
 - `pass` `ready_sample_schedules_are_ready`
 - `pass` `ready_sample_adapters_do_not_invoke_entrypoints`
 - `pass` `pdf_english_recovery_blocker_is_explicit`
+- `pass` `pdf_english_recovery_source_audit_has_no_importable_source`
 - `pass` `pdf_english_recovery_validator_fails_closed`
 - `pass` `pdf_english_recovery_requires_four_branch_manifest`
 - `pass` `no_runtime_side_effects_reported`

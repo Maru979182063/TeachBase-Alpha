@@ -1,18 +1,21 @@
 # PDF English Manifest Recovery Audit 2026-08-04
 
-The protected PDF English chain requires `config/english_text_first_graph_first/active_manifest.json`.
+Status: `blocked_missing_manifest_and_smoke_artifacts`
+Source audit status: `no_importable_source_found`
 
-Searches were performed by location label only: `projects_root`, `user_documents`, `user_home`, and `cleanroom_git_history`. The active manifest and `final_chain_smoke_20260728` artifacts were not found.
+## Sources
 
-Status: `blocked_missing_manifest_and_smoke_artifacts`.
+- `cleanroom_current`: `0/3` required artifacts
+- `old_local_d_projects_jiaoyan`: `0/3` required artifacts
+- `handoff_package_user_documents`: `0/3` required artifacts
 
-Safe next actions:
+## Safe Next Actions
 
 - `restore_active_manifest_from_original_machine_or_backup`
 - `restore_final_chain_smoke_20260728_artifacts_if_available`
 - `otherwise_rerun_manifest_check_and_small_smoke_before_claiming_ready`
 
-Unsafe actions:
+## Unsafe Actions
 
 - `do_not_create_synthetic_active_manifest`
 - `do_not_select_latest_directory_by_timestamp`

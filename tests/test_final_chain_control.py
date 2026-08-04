@@ -919,6 +919,34 @@ def test_pdf_english_recovery_validator_fails_closed_without_manifest() -> None:
     }
 
 
+def test_pdf_english_recovery_source_audit_uses_labels_without_absolute_paths() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/build_pdf_english_recovery_source_audit.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    assert payload["schema_version"] == "pdf_english_manifest_recovery_audit.v0.1"
+    assert payload["source_audit_status"] == "no_importable_source_found"
+    assert payload["recovery_status"] == "blocked_missing_manifest_and_smoke_artifacts"
+    assert "old_local_d_projects_jiaoyan" in payload["searched_location_labels"]
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+    assert payload["execution_contract"] == {
+        "model_invoked": False,
+        "database_written": False,
+        "runtime_imported": False,
+        "business_secrets_read": False,
+    }
+
+
 def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None:
     completed = subprocess.run(
         [sys.executable, "tools/run_final_chain_ops_gate.py"],
@@ -934,8 +962,10 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     checks = {item["name"]: item for item in payload["checks"]}
     assert payload["status"] == "pass"
     assert payload["pdf_english_recovery_validation_status"] == "blocked_missing_or_invalid_manifest"
+    assert payload["pdf_english_recovery_source_audit_status"] == "no_importable_source_found"
     assert checks["pdf_english_recovery_validator_fails_closed"]["ok"] is True
     assert checks["pdf_english_recovery_requires_four_branch_manifest"]["ok"] is True
+    assert checks["pdf_english_recovery_source_audit_has_no_importable_source"]["ok"] is True
 
 
 def test_cleanroom_import_audit_reports_candidates_without_absolute_paths(tmp_path: Path) -> None:

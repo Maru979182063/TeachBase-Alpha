@@ -67,6 +67,7 @@ FINAL_CHAIN_PATHS = {
     "tools/build_docx_math_final_import_report.py",
     "tools/build_doc_english_code_import_report.py",
     "tools/build_final_chain_ready_sample_report.py",
+    "tools/build_pdf_english_recovery_source_audit.py",
     "tools/run_final_chain_ops_gate.py",
     "tools/validate_pdf_english_recovery.py",
     "tools/run_cleanroom_hardening_status_gate.py",

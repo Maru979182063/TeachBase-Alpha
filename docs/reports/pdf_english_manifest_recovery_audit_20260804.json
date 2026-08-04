@@ -4,17 +4,108 @@
   "absolute_paths_as_inputs": false,
   "chain_id": "pdf_english",
   "canonical_entrypoint": "config/english_text_first_graph_first/active_manifest.json",
+  "search_method": "targeted_known_source_roots_by_label",
   "searched_location_labels": [
-    "projects_root",
-    "user_documents",
-    "user_home",
-    "cleanroom_git_history"
+    "cleanroom_current",
+    "old_local_d_projects_jiaoyan",
+    "handoff_package_user_documents"
   ],
   "searched_artifacts": [
     "config/english_text_first_graph_first/active_manifest.json",
     "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
     "outputs/english_text_first_graph_first/final_chain_smoke_20260728"
   ],
+  "source_candidates": [
+    {
+      "source_label": "cleanroom_current",
+      "source_root_present": true,
+      "required_artifacts_present": 0,
+      "required_artifacts_total": 3,
+      "required_artifacts": [
+        {
+          "key": "active_manifest",
+          "relative_path": "config/english_text_first_graph_first/active_manifest.json",
+          "required_for_import": true,
+          "exists": false,
+          "kind": "missing"
+        },
+        {
+          "key": "prior_smoke_zip",
+          "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
+          "required_for_import": true,
+          "exists": false,
+          "kind": "missing"
+        },
+        {
+          "key": "prior_smoke_dir",
+          "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728",
+          "required_for_import": true,
+          "exists": false,
+          "kind": "missing"
+        }
+      ]
+    },
+    {
+      "source_label": "old_local_d_projects_jiaoyan",
+      "source_root_present": true,
+      "required_artifacts_present": 0,
+      "required_artifacts_total": 3,
+      "required_artifacts": [
+        {
+          "key": "active_manifest",
+          "relative_path": "config/english_text_first_graph_first/active_manifest.json",
+          "required_for_import": true,
+          "exists": false,
+          "kind": "missing"
+        },
+        {
+          "key": "prior_smoke_zip",
+          "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
+          "required_for_import": true,
+          "exists": false,
+          "kind": "missing"
+        },
+        {
+          "key": "prior_smoke_dir",
+          "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728",
+          "required_for_import": true,
+          "exists": false,
+          "kind": "missing"
+        }
+      ]
+    },
+    {
+      "source_label": "handoff_package_user_documents",
+      "source_root_present": true,
+      "required_artifacts_present": 0,
+      "required_artifacts_total": 3,
+      "required_artifacts": [
+        {
+          "key": "active_manifest",
+          "relative_path": "config/english_text_first_graph_first/active_manifest.json",
+          "required_for_import": true,
+          "exists": false,
+          "kind": "missing"
+        },
+        {
+          "key": "prior_smoke_zip",
+          "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
+          "required_for_import": true,
+          "exists": false,
+          "kind": "missing"
+        },
+        {
+          "key": "prior_smoke_dir",
+          "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728",
+          "required_for_import": true,
+          "exists": false,
+          "kind": "missing"
+        }
+      ]
+    }
+  ],
+  "importable_source_labels": [],
+  "source_audit_status": "no_importable_source_found",
   "recovery_status": "blocked_missing_manifest_and_smoke_artifacts",
   "safe_next_actions": [
     "restore_active_manifest_from_original_machine_or_backup",

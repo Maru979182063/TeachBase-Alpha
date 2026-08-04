@@ -40,6 +40,7 @@
     "audit:final-chain-imports": "python tools/audit_final_chain_cleanroom_imports.py",
     "audit:final-chain-ready-samples": "python tools/build_final_chain_ready_sample_report.py",
     "audit:pdf-english-recovery": "python tools/validate_pdf_english_recovery.py",
+    "audit:pdf-english-recovery-sources": "python tools/build_pdf_english_recovery_source_audit.py",
     "final-chain:job-inspect": "python tools/final_chain_control.py job-inspect",
     "final-chain:job-transition": "python tools/final_chain_control.py job-transition",
     "test:cleanup-candidates": "python -m pytest tests/test_cleanup_candidate_report.py -q",
