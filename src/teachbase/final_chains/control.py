@@ -239,6 +239,7 @@ def build_chain_run_plan(
         checks.append({"name": name, "ok": ok, **extra})
 
     add_check("chain_is_protected", chain.protection_status == "protected", value=chain.protection_status)
+    add_check("control_plane_dry_run_only", request.dry_run is True, dry_run=request.dry_run)
     add_check(
         "input_format_matches_chain",
         _input_matches_format(request.input_path, chain.input_format),

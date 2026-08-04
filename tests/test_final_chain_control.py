@@ -88,6 +88,22 @@ def test_environment_flags_are_not_a_backdoor_for_dry_run_control() -> None:
     assert "environment_blocks_runtime_import" in plan["blocked_reasons"]
 
 
+def test_execute_intent_is_not_a_backdoor_for_control_plane() -> None:
+    registry = load_final_chain_registry(REGISTRY)
+    request = ChainRunRequest(
+        chain_id="pdf_math",
+        input_path="tests/fixtures/final_chain_samples/pdf_math_sample.pdf",
+        output_root="outputs/final_chain_runs",
+        dry_run=False,
+    )
+
+    plan = build_chain_run_plan(registry, request, workspace_root=ROOT)
+
+    assert plan["status"] == "blocked"
+    assert "control_plane_dry_run_only" in plan["blocked_reasons"]
+    assert plan["execution_contract"]["model_invoked"] is False
+
+
 def test_plan_requires_existing_input_file_and_workspace_output(tmp_path: Path) -> None:
     registry = load_final_chain_registry(REGISTRY)
     sample = tmp_path / "sample.pdf"
@@ -149,6 +165,32 @@ def test_final_chain_control_cli_outputs_machine_readable_plan() -> None:
     assert payload["chain_id"] == "doc_math"
     assert payload["status"] == "blocked"
     assert "input_path_present" in payload["blocked_reasons"]
+
+
+def test_final_chain_control_cli_execute_intent_is_blocked() -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/final_chain_control.py",
+            "plan",
+            "--chain-id",
+            "pdf_math",
+            "--input",
+            "tests/fixtures/final_chain_samples/pdf_math_sample.pdf",
+            "--execute",
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    payload = json.loads(completed.stdout)
+    assert payload["status"] == "blocked"
+    assert payload["dry_run"] is False
+    assert "control_plane_dry_run_only" in payload["blocked_reasons"]
 
 
 def test_scheduler_records_blocked_job_inside_workspace(tmp_path: Path) -> None:
