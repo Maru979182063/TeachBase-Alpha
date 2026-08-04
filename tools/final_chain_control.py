@@ -7,7 +7,9 @@ from pathlib import Path
 from teachbase.final_chains import (
     ChainRunRequest,
     EnvironmentPolicy,
+    build_final_chain_adapters,
     build_chain_run_plan,
+    describe_adapters,
     inspect_adapter_contracts,
     inspect_registry_environments,
     load_final_chain_registry,
@@ -94,6 +96,32 @@ def build_adapter_contracts(args: argparse.Namespace) -> dict:
     return report
 
 
+def build_adapter_descriptions(args: argparse.Namespace) -> dict:
+    registry = load_final_chain_registry(Path(args.registry))
+    report = describe_adapters(registry, workspace_root=ROOT)
+    if args.chain_id:
+        report = {
+            **report,
+            "descriptions": [item for item in report["descriptions"] if item["chain_id"] == args.chain_id],
+        }
+        report["chain_count"] = len(report["descriptions"])
+    return report
+
+
+def build_adapter_dry_run(args: argparse.Namespace) -> dict:
+    registry = load_final_chain_registry(Path(args.registry))
+    adapters = build_final_chain_adapters(registry, workspace_root=ROOT)
+    adapter = adapters[args.chain_id]
+    request = ChainRunRequest(
+        chain_id=args.chain_id,
+        input_path=args.input,
+        output_root=args.output_root,
+        dry_run=True,
+        environment=EnvironmentPolicy(name=args.environment),
+    )
+    return adapter.dry_run(request)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Inspect and plan protected TeachBase final-chain runs.")
     parser.add_argument("--registry", default=str(DEFAULT_REGISTRY.relative_to(ROOT)))
@@ -123,6 +151,15 @@ def main() -> int:
     adapter_parser = subparsers.add_parser("adapter-contracts", help="Print adapter contracts for protected final chains.")
     adapter_parser.add_argument("--chain-id", default="")
 
+    adapter_describe_parser = subparsers.add_parser("adapter-describe", help="Describe protected final-chain adapters.")
+    adapter_describe_parser.add_argument("--chain-id", default="")
+
+    adapter_dry_run_parser = subparsers.add_parser("adapter-dry-run", help="Run adapter dry-run checks without executing chains.")
+    adapter_dry_run_parser.add_argument("--chain-id", required=True)
+    adapter_dry_run_parser.add_argument("--input", required=True)
+    adapter_dry_run_parser.add_argument("--output-root", default="outputs/final_chain_runs")
+    adapter_dry_run_parser.add_argument("--environment", default="local_dry_run")
+
     args = parser.parse_args()
     if args.command == "list":
         result = list_chains(Path(args.registry))
@@ -132,11 +169,17 @@ def main() -> int:
         result = build_env_check(args)
     elif args.command == "adapter-contracts":
         result = build_adapter_contracts(args)
+    elif args.command == "adapter-describe":
+        result = build_adapter_descriptions(args)
+    elif args.command == "adapter-dry-run":
+        result = build_adapter_dry_run(args)
     else:
         result = build_plan(args)
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    if args.command in {"list", "adapter-contracts"}:
+    if args.command in {"list", "adapter-contracts", "adapter-describe"}:
         return 0
+    if args.command == "adapter-dry-run":
+        return 0 if result.get("status") == "dry_run_ready" else 2
     if args.command == "env-check":
         return 0 if result.get("blocked_count") == 0 else 2
     status = result.get("status")

@@ -9,6 +9,7 @@ from .control import (
     load_final_chain_registry,
     schedule_chain_run,
 )
+from .adapters import FinalChainAdapter, build_final_chain_adapters, describe_adapters
 from .environment import (
     build_adapter_contract,
     build_environment_profile,
@@ -22,9 +23,12 @@ __all__ = [
     "EnvironmentPolicy",
     "FinalChainDefinition",
     "FinalChainRegistry",
+    "FinalChainAdapter",
     "build_chain_run_plan",
     "load_final_chain_registry",
     "schedule_chain_run",
+    "build_final_chain_adapters",
+    "describe_adapters",
     "build_adapter_contract",
     "build_environment_profile",
     "inspect_adapter_contracts",

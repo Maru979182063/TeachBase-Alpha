@@ -10,7 +10,9 @@ import pytest
 from teachbase.final_chains import (
     ChainRunRequest,
     EnvironmentPolicy,
+    build_final_chain_adapters,
     build_chain_run_plan,
+    describe_adapters,
     inspect_adapter_contracts,
     inspect_registry_environments,
     load_final_chain_registry,
@@ -285,3 +287,87 @@ def test_final_chain_control_cli_env_check_and_adapter_contracts() -> None:
     adapter_payload = json.loads(adapter_completed.stdout)
     assert adapter_payload["ok"] is True
     assert adapter_payload["contracts"][0]["chain_id"] == "pdf_math"
+
+
+def test_adapter_registry_covers_all_four_final_chains() -> None:
+    registry = load_final_chain_registry(REGISTRY)
+
+    adapters = build_final_chain_adapters(registry, workspace_root=ROOT)
+    report = describe_adapters(registry, workspace_root=ROOT)
+
+    assert set(adapters) == {"doc_math", "doc_english", "pdf_math", "pdf_english"}
+    assert report["chain_count"] == 4
+    assert report["model_invoked"] is False
+    assert report["database_written"] is False
+    assert report["runtime_imported"] is False
+    by_id = {item["chain_id"]: item for item in report["descriptions"]}
+    assert by_id["pdf_math"]["contract"]["required_methods"] == ["describe", "plan", "dry_run"]
+    assert by_id["pdf_english"]["environment"]["status"] == "blocked"
+
+
+def test_adapter_dry_run_never_invokes_entrypoint_or_runtime(tmp_path: Path) -> None:
+    registry = load_final_chain_registry(REGISTRY)
+    adapter = build_final_chain_adapters(registry, workspace_root=ROOT)["pdf_math"]
+    sample = tmp_path / "sample.pdf"
+    sample.write_text("pdf placeholder", encoding="utf-8")
+    request = ChainRunRequest(chain_id="pdf_math", input_path=str(sample), output_root="outputs/final_chain_runs")
+
+    result = adapter.dry_run(request)
+
+    assert result["schema_version"] == "final_chain_adapter_dry_run.v0.1"
+    assert result["status"] == "dry_run_ready"
+    assert result["adapter_invoked_entrypoint"] is False
+    assert result["model_invoked"] is False
+    assert result["database_written"] is False
+    assert result["runtime_imported"] is False
+    assert result["business_secrets_read"] is False
+
+
+def test_adapter_dry_run_blocks_missing_input() -> None:
+    registry = load_final_chain_registry(REGISTRY)
+    adapter = build_final_chain_adapters(registry, workspace_root=ROOT)["pdf_math"]
+    request = ChainRunRequest(chain_id="pdf_math", input_path="missing.pdf", output_root="outputs/final_chain_runs")
+
+    result = adapter.dry_run(request)
+
+    assert result["status"] == "dry_run_blocked"
+    assert "input_path_present" in result["plan"]["blocked_reasons"]
+
+
+def test_final_chain_control_cli_adapter_describe_and_dry_run(tmp_path: Path) -> None:
+    sample = tmp_path / "sample.pdf"
+    sample.write_text("pdf placeholder", encoding="utf-8")
+
+    describe_completed = subprocess.run(
+        [sys.executable, "tools/final_chain_control.py", "adapter-describe", "--chain-id", "pdf_math"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert describe_completed.returncode == 0
+    describe_payload = json.loads(describe_completed.stdout)
+    assert describe_payload["chain_count"] == 1
+    assert describe_payload["descriptions"][0]["chain_id"] == "pdf_math"
+
+    dry_run_completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/final_chain_control.py",
+            "adapter-dry-run",
+            "--chain-id",
+            "pdf_math",
+            "--input",
+            str(sample),
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert dry_run_completed.returncode == 0
+    dry_run_payload = json.loads(dry_run_completed.stdout)
+    assert dry_run_payload["status"] == "dry_run_ready"
+    assert dry_run_payload["adapter_invoked_entrypoint"] is False

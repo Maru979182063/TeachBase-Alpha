@@ -46,6 +46,7 @@ FINAL_CHAIN_PATHS = {
     "tools/final_chain_control.py",
     "tools/validate_final_chain_registry.py",
     "src/teachbase/final_chains/__init__.py",
+    "src/teachbase/final_chains/adapters.py",
     "src/teachbase/final_chains/control.py",
     "src/teachbase/final_chains/environment.py",
 }
