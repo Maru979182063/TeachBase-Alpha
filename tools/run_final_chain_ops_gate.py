@@ -62,8 +62,16 @@ def build_gate_report() -> dict[str, Any]:
         },
         {
             "name": "ready_sample_job_records_validate",
-            "ok": all(row["job_record_validation_ok"] is True for row in ready_samples["rows"]),
-            "value": [row["job_record_validation_error_count"] for row in ready_samples["rows"]],
+            "ok": all(
+                row["job_record_self_validation_ok"] is True and row["job_record_validation_ok"] is True
+                for row in ready_samples["rows"]
+            ),
+            "value": {
+                "self_validation_error_counts": [
+                    row["job_record_self_validation_error_count"] for row in ready_samples["rows"]
+                ],
+                "external_validation_error_counts": [row["job_record_validation_error_count"] for row in ready_samples["rows"]],
+            },
         },
         {
             "name": "ready_sample_adapters_do_not_invoke_entrypoints",

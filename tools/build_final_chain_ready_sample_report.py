@@ -43,6 +43,8 @@ def build_report() -> dict:
                 "adapter_dry_run_status": dry_run["status"],
                 "plan_status": dry_run["plan"]["status"],
                 "schedule_status": job_record["status"],
+                "job_record_self_validation_ok": job_record["record_validation"]["ok"],
+                "job_record_self_validation_error_count": job_record["record_validation"]["error_count"],
                 "job_record_validation_ok": job_validation["ok"],
                 "job_record_validation_error_count": job_validation["error_count"],
                 "job_record_written": bool(job_record.get("record_path")),

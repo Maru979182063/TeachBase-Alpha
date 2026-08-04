@@ -135,9 +135,9 @@ def validate_job_record(record: dict[str, Any]) -> dict[str, Any]:
     return {
         "schema_version": "final_chain_job_validation.v0.1",
         "ok": not errors,
-        "job_id": str(record.get("job_id") or ""),
-        "chain_id": str(record.get("chain_id") or ""),
-        "status": status,
+        "job_id": _redact_absolute_path_evidence(str(record.get("job_id") or "")),
+        "chain_id": _redact_absolute_path_evidence(str(record.get("chain_id") or "")),
+        "status": _redact_absolute_path_evidence(status),
         "error_count": len(errors),
         "errors": errors,
         "model_invoked": False,
@@ -145,6 +145,18 @@ def validate_job_record(record: dict[str, Any]) -> dict[str, Any]:
         "runtime_imported": False,
         "business_secrets_read": False,
     }
+
+
+def attach_job_record_validation(record: dict[str, Any]) -> dict[str, Any]:
+    updated = deepcopy(record)
+    updated.pop("record_validation", None)
+    validation = validate_job_record(updated)
+    updated["record_validation"] = {
+        "schema_version": validation["schema_version"],
+        "ok": validation["ok"],
+        "error_count": validation["error_count"],
+    }
+    return updated
 
 
 def transition_job_record(
@@ -201,7 +213,7 @@ def transition_job_record(
         "runtime_imported": False,
         "business_secrets_read": False,
     }
-    return updated
+    return attach_job_record_validation(updated)
 
 
 def load_job_record(path: Path) -> dict[str, Any]:

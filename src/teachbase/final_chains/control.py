@@ -9,7 +9,7 @@ from typing import Any, Literal
 from teachbase.core.errors import ConfigurationError
 from teachbase.core.run_context import generate_run_id, utc_now_iso
 from teachbase.infrastructure.artifact_store import write_json
-from .jobs import build_job_lifecycle
+from .jobs import attach_job_record_validation, build_job_lifecycle
 
 PlanStatus = Literal["ready", "blocked"]
 
@@ -309,34 +309,38 @@ def schedule_chain_run(
     portable_plan = build_portable_plan_snapshot(plan, workspace_root=workspace_root)
     output_check = next((check for check in plan["checks"] if check["name"] == "output_root_inside_workspace"), None)
     if output_check is None or not output_check["ok"]:
-        return {
+        created_at = utc_now_iso()
+        return attach_job_record_validation({
             "schema_version": "final_chain_job_record.v0.1",
             "job_id": "",
-            "created_at": utc_now_iso(),
+            "created_at": created_at,
             "status": "rejected",
             "chain_id": request.chain_id,
             "record_path": "",
             "plan": portable_plan,
             "request_snapshot": build_request_snapshot(request, workspace_root=workspace_root),
             "environment_snapshot": build_environment_snapshot(request),
+            "lifecycle": build_job_lifecycle("rejected", created_at=created_at, reason="output_root_outside_workspace"),
             "execution_contract": plan["execution_contract"],
             "errors": [{"code": "output_root_outside_workspace"}],
-        }
+        })
     output_root_check = next((check for check in plan["checks"] if check["name"] == "output_root_under_outputs"), None)
     if output_root_check is None or not output_root_check["ok"]:
-        return {
+        created_at = utc_now_iso()
+        return attach_job_record_validation({
             "schema_version": "final_chain_job_record.v0.1",
             "job_id": "",
-            "created_at": utc_now_iso(),
+            "created_at": created_at,
             "status": "rejected",
             "chain_id": request.chain_id,
             "record_path": "",
             "plan": portable_plan,
             "request_snapshot": build_request_snapshot(request, workspace_root=workspace_root),
             "environment_snapshot": build_environment_snapshot(request),
+            "lifecycle": build_job_lifecycle("rejected", created_at=created_at, reason="output_root_not_under_outputs"),
             "execution_contract": plan["execution_contract"],
             "errors": [{"code": "output_root_not_under_outputs"}],
-        }
+        })
 
     job_id = generate_run_id(f"final_chain_{request.chain_id}")
     record_root = _resolve_under_workspace(workspace_root, request.output_root) / "_control" / "jobs" / job_id
@@ -357,5 +361,6 @@ def schedule_chain_run(
         "execution_contract": plan["execution_contract"],
         "errors": [],
     }
+    record = attach_job_record_validation(record)
     write_json(record_path, record)
     return record

@@ -253,6 +253,8 @@ def test_scheduler_records_blocked_job_inside_workspace(tmp_path: Path) -> None:
     assert record["lifecycle"]["status"] == "scheduled_blocked"
     assert record["lifecycle"]["terminal"] is True
     assert record["lifecycle"]["allowed_next_statuses"] == []
+    assert record["record_validation"]["ok"] is True
+    assert validate_job_record(record)["ok"] is True
 
 
 def test_scheduler_rejects_output_root_outside_workspace(tmp_path: Path) -> None:
@@ -293,6 +295,11 @@ def test_scheduler_rejects_output_root_outside_workspace(tmp_path: Path) -> None
     assert record["plan"]["output_root"] == "<outside-workspace>"
     assert record["request_snapshot"]["output_root"]["path"] == "<outside-workspace>"
     assert record["request_snapshot"]["output_root"]["inside_workspace"] is False
+    assert record["errors"] == [{"code": "output_root_outside_workspace"}]
+    assert record["lifecycle"]["status"] == "rejected"
+    assert record["lifecycle"]["terminal"] is True
+    assert record["record_validation"]["ok"] is True
+    assert validate_job_record(record)["ok"] is True
     assert not (tmp_path / "outside").exists()
 
 
@@ -342,6 +349,10 @@ def test_scheduler_rejects_output_root_inside_workspace_but_outside_outputs(tmp_
     assert record["errors"] == [{"code": "output_root_not_under_outputs"}]
     assert record["request_snapshot"]["output_root"]["path"] == "config/final_chain_runs"
     assert record["request_snapshot"]["output_root"]["inside_workspace"] is True
+    assert record["lifecycle"]["status"] == "rejected"
+    assert record["lifecycle"]["terminal"] is True
+    assert record["record_validation"]["ok"] is True
+    assert validate_job_record(record)["ok"] is True
     assert not (workspace / "config" / "final_chain_runs").exists()
 
 
@@ -396,6 +407,7 @@ def test_scheduler_snapshots_absolute_input_as_portable_metadata(tmp_path: Path)
         "database_writes_disabled": True,
         "runtime_import_disabled": True,
     }
+    assert record["record_validation"]["ok"] is True
     assert validate_job_record(record)["ok"] is True
 
     bad_record = json.loads(json.dumps(record))
@@ -471,6 +483,9 @@ def test_job_lifecycle_allows_only_guarded_dry_run_transitions(tmp_path: Path) -
     assert passed["status"] == "dry_run_passed"
     assert passed["lifecycle"]["terminal"] is True
     assert passed["lifecycle"]["history"][-1]["checkpoint"]["record_path"] == checkpoint_path
+    assert started["record_validation"]["ok"] is True
+    assert passed["record_validation"]["ok"] is True
+    assert validate_job_record(passed)["ok"] is True
     assert inspection["terminal"] is True
     assert inspection["model_invoked"] is False
 
@@ -499,6 +514,8 @@ def test_job_lifecycle_portabilizes_string_checkpoint_paths(tmp_path: Path) -> N
     checkpoint = passed["lifecycle"]["history"][-1]["checkpoint"]
     assert checkpoint["report_path"] == "outputs/final_chain_runs/report.json"
     assert checkpoint["outside_path"] == "<outside-workspace>"
+    assert passed["record_validation"]["ok"] is False
+    assert passed["record_validation"]["error_count"] > 0
     assert str(tmp_path) not in json.dumps(checkpoint)
 
 
@@ -1110,6 +1127,8 @@ def test_ready_sample_report_runs_three_control_adapters_without_side_effects() 
         assert row["sample_input"].startswith("tests/fixtures/final_chain_samples/")
         assert row["adapter_dry_run_status"] == "dry_run_ready"
         assert row["schedule_status"] == "scheduled_ready"
+        assert row["job_record_self_validation_ok"] is True
+        assert row["job_record_self_validation_error_count"] == 0
         assert row["job_record_validation_ok"] is True
         assert row["job_record_validation_error_count"] == 0
         assert row["adapter_invoked_entrypoint"] is False
