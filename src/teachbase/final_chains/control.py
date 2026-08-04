@@ -8,6 +8,7 @@ from typing import Any, Literal
 from teachbase.core.errors import ConfigurationError
 from teachbase.core.run_context import generate_run_id, utc_now_iso
 from teachbase.infrastructure.artifact_store import write_json
+from .jobs import build_job_lifecycle
 
 PlanStatus = Literal["ready", "blocked"]
 
@@ -226,14 +227,16 @@ def schedule_chain_run(
     record_root = _resolve_under_workspace(workspace_root, request.output_root) / "_control" / "jobs" / job_id
     record_path = record_root / "job_record.json"
     status = "scheduled_ready" if plan["status"] == "ready" else "scheduled_blocked"
+    created_at = utc_now_iso()
     record = {
         "schema_version": "final_chain_job_record.v0.1",
         "job_id": job_id,
-        "created_at": utc_now_iso(),
+        "created_at": created_at,
         "status": status,
         "chain_id": request.chain_id,
         "record_path": str(record_path.relative_to(workspace_root)).replace("\\", "/"),
         "plan": plan,
+        "lifecycle": build_job_lifecycle(status, created_at=created_at),
         "execution_contract": plan["execution_contract"],
         "errors": [],
     }

@@ -15,9 +15,11 @@ from teachbase.final_chains import (
     build_readiness_matrix,
     describe_adapters,
     inspect_adapter_contracts,
+    inspect_job_record,
     inspect_registry_environments,
     load_final_chain_registry,
     schedule_chain_run,
+    transition_job_record,
 )
 from teachbase.core.errors import ConfigurationError
 
@@ -181,6 +183,9 @@ def test_scheduler_records_blocked_job_inside_workspace(tmp_path: Path) -> None:
     record_path = workspace / record["record_path"]
     assert record_path.exists()
     assert json.loads(record_path.read_text(encoding="utf-8"))["job_id"] == record["job_id"]
+    assert record["lifecycle"]["status"] == "scheduled_blocked"
+    assert record["lifecycle"]["terminal"] is True
+    assert record["lifecycle"]["allowed_next_statuses"] == []
 
 
 def test_scheduler_rejects_output_root_outside_workspace(tmp_path: Path) -> None:
@@ -219,6 +224,156 @@ def test_scheduler_rejects_output_root_outside_workspace(tmp_path: Path) -> None
     assert record["status"] == "rejected"
     assert record["record_path"] == ""
     assert not (tmp_path / "outside").exists()
+
+
+def test_job_lifecycle_allows_only_guarded_dry_run_transitions(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "tools").mkdir()
+    (workspace / "tools" / "run.py").write_text("print('not imported')\n", encoding="utf-8")
+    input_path = workspace / "input.pdf"
+    input_path.write_text("pdf placeholder\n", encoding="utf-8")
+    registry_path = workspace / "final_chain_registry.yaml"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "final_chain_registry.v0.1",
+                "selection_policy": {},
+                "chains": [
+                    {
+                        "chain_id": "pdf_math",
+                        "display_name": "PDF Math",
+                        "input_format": "pdf",
+                        "subject": "math",
+                        "protection_status": "protected",
+                        "registry_readiness": "ready",
+                        "confidence": "high",
+                        "canonical_entrypoint": "tools/run.py",
+                        "smoke_status": {"status": "pass"},
+                        "runtime_import_policy": {"default_enabled": False},
+                        "database_write_policy": {"default_enabled": False},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    registry = load_final_chain_registry(registry_path)
+    request = ChainRunRequest(
+        chain_id="pdf_math",
+        input_path=str(input_path.relative_to(workspace)),
+        output_root="outputs/final_chain_runs",
+    )
+    record = schedule_chain_run(registry, request, workspace_root=workspace)
+
+    started = transition_job_record(record, "dry_run_started", reason="adapter dry-run accepted")
+    checkpoint_path = "outputs/final_chain_runs/report.json"
+    passed = transition_job_record(
+        started,
+        "dry_run_passed",
+        reason="adapter dry-run completed",
+        checkpoint={"record_path": Path(checkpoint_path)},
+    )
+    inspection = inspect_job_record(passed)
+
+    assert started["status"] == "dry_run_started"
+    assert started["lifecycle"]["allowed_next_statuses"] == ["dry_run_passed", "dry_run_failed", "cancelled"]
+    assert passed["status"] == "dry_run_passed"
+    assert passed["lifecycle"]["terminal"] is True
+    assert passed["lifecycle"]["history"][-1]["checkpoint"]["record_path"] == checkpoint_path
+    assert inspection["terminal"] is True
+    assert inspection["model_invoked"] is False
+
+
+def test_job_lifecycle_rejects_illegal_transition() -> None:
+    record = {
+        "schema_version": "final_chain_job_record.v0.1",
+        "job_id": "job",
+        "created_at": "2026-08-04T00:00:00+00:00",
+        "status": "scheduled_blocked",
+        "chain_id": "pdf_math",
+    }
+
+    with pytest.raises(ConfigurationError):
+        transition_job_record(record, "dry_run_started", reason="blocked jobs cannot start")
+
+
+def test_final_chain_control_cli_inspects_and_transitions_job_record(tmp_path: Path) -> None:
+    record_path = tmp_path / "job_record.json"
+    record_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "final_chain_job_record.v0.1",
+                "job_id": "job",
+                "created_at": "2026-08-04T00:00:00+00:00",
+                "status": "scheduled_ready",
+                "chain_id": "pdf_math",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    inspect_completed = subprocess.run(
+        [sys.executable, "tools/final_chain_control.py", "job-inspect", "--record", str(record_path)],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    transition_completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/final_chain_control.py",
+            "job-transition",
+            "--record",
+            str(record_path),
+            "--status",
+            "dry_run_started",
+            "--reason",
+            "cli smoke",
+            "--with-checkpoint",
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert inspect_completed.returncode == 0
+    inspect_payload = json.loads(inspect_completed.stdout)
+    assert inspect_payload["status"] == "scheduled_ready"
+    assert inspect_payload["allowed_next_statuses"] == ["dry_run_started", "cancelled"]
+    assert transition_completed.returncode == 0
+    transition_payload = json.loads(transition_completed.stdout)
+    assert transition_payload["status"] == "dry_run_started"
+    assert transition_payload["lifecycle"]["history"][-1]["checkpoint"] == {"source": "final_chain_control_cli"}
+    assert json.loads(record_path.read_text(encoding="utf-8"))["status"] == "dry_run_started"
+
+
+def test_final_chain_control_cli_reports_missing_job_record_as_json(tmp_path: Path) -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/final_chain_control.py",
+            "job-inspect",
+            "--record",
+            str(tmp_path / "missing_job_record.json"),
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    assert completed.stderr == ""
+    payload = json.loads(completed.stdout)
+    assert payload["schema_version"] == "final_chain_control_error.v0.1"
+    assert payload["error"]["code"] == "final_chain_job_record_missing"
+    assert payload["model_invoked"] is False
 
 
 def test_environment_report_is_machine_readable_and_side_effect_free() -> None:

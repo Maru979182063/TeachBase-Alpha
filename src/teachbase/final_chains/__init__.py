@@ -18,6 +18,7 @@ from .environment import (
     inspect_registry_environments,
 )
 from .readiness import build_readiness_matrix
+from .jobs import inspect_job_record, inspect_job_record_path, transition_job_record, transition_job_record_path
 
 __all__ = [
     "ChainRunRequest",
@@ -36,4 +37,8 @@ __all__ = [
     "inspect_chain_environment",
     "inspect_registry_environments",
     "build_readiness_matrix",
+    "inspect_job_record",
+    "inspect_job_record_path",
+    "transition_job_record",
+    "transition_job_record_path",
 ]

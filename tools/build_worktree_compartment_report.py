@@ -49,6 +49,7 @@ FINAL_CHAIN_PATHS = {
     "src/teachbase/final_chains/adapters.py",
     "src/teachbase/final_chains/control.py",
     "src/teachbase/final_chains/environment.py",
+    "src/teachbase/final_chains/jobs.py",
     "src/teachbase/final_chains/readiness.py",
 }
 

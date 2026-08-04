@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
+from teachbase.core.errors import TeachBaseError
 from teachbase.final_chains import (
     ChainRunRequest,
     EnvironmentPolicy,
@@ -12,9 +13,11 @@ from teachbase.final_chains import (
     build_readiness_matrix,
     describe_adapters,
     inspect_adapter_contracts,
+    inspect_job_record_path,
     inspect_registry_environments,
     load_final_chain_registry,
     schedule_chain_run,
+    transition_job_record_path,
 )
 
 
@@ -145,6 +148,15 @@ def build_readiness(args: argparse.Namespace) -> dict:
     return report
 
 
+def inspect_job(args: argparse.Namespace) -> dict:
+    return inspect_job_record_path(ROOT / args.record)
+
+
+def transition_job(args: argparse.Namespace) -> dict:
+    checkpoint = {"source": "final_chain_control_cli"} if args.with_checkpoint else None
+    return transition_job_record_path(ROOT / args.record, args.status, reason=args.reason, checkpoint=checkpoint)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Inspect and plan protected TeachBase final-chain runs.")
     parser.add_argument("--registry", default=str(DEFAULT_REGISTRY.relative_to(ROOT)))
@@ -191,25 +203,58 @@ def main() -> int:
         help="Optional chain_id=path sample input used for adapter dry-run readiness.",
     )
 
+    job_inspect_parser = subparsers.add_parser("job-inspect", help="Inspect a recorded final-chain job lifecycle.")
+    job_inspect_parser.add_argument("--record", required=True)
+
+    job_transition_parser = subparsers.add_parser(
+        "job-transition", help="Apply a guarded lifecycle transition to a recorded final-chain job."
+    )
+    job_transition_parser.add_argument("--record", required=True)
+    job_transition_parser.add_argument("--status", required=True)
+    job_transition_parser.add_argument("--reason", required=True)
+    job_transition_parser.add_argument("--with-checkpoint", action="store_true")
+
     args = parser.parse_args()
-    if args.command == "list":
-        result = list_chains(Path(args.registry))
-    elif args.command == "schedule":
-        result = build_schedule(args)
-    elif args.command == "env-check":
-        result = build_env_check(args)
-    elif args.command == "adapter-contracts":
-        result = build_adapter_contracts(args)
-    elif args.command == "adapter-describe":
-        result = build_adapter_descriptions(args)
-    elif args.command == "adapter-dry-run":
-        result = build_adapter_dry_run(args)
-    elif args.command == "readiness-matrix":
-        result = build_readiness(args)
-    else:
-        result = build_plan(args)
+    try:
+        if args.command == "list":
+            result = list_chains(Path(args.registry))
+        elif args.command == "schedule":
+            result = build_schedule(args)
+        elif args.command == "env-check":
+            result = build_env_check(args)
+        elif args.command == "adapter-contracts":
+            result = build_adapter_contracts(args)
+        elif args.command == "adapter-describe":
+            result = build_adapter_descriptions(args)
+        elif args.command == "adapter-dry-run":
+            result = build_adapter_dry_run(args)
+        elif args.command == "readiness-matrix":
+            result = build_readiness(args)
+        elif args.command == "job-inspect":
+            result = inspect_job(args)
+        elif args.command == "job-transition":
+            result = transition_job(args)
+        else:
+            result = build_plan(args)
+    except TeachBaseError as exc:
+        result = {
+            "schema_version": "final_chain_control_error.v0.1",
+            "status": "error",
+            "error": {
+                "code": exc.error_code,
+                "message": exc.message,
+                "retryable": exc.retryable,
+                "evidence": exc.evidence,
+            },
+            "model_invoked": False,
+            "database_written": False,
+            "runtime_imported": False,
+            "business_secrets_read": False,
+        }
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 2
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    if args.command in {"list", "adapter-contracts", "adapter-describe", "readiness-matrix"}:
+    if args.command in {"list", "adapter-contracts", "adapter-describe", "readiness-matrix", "job-inspect"}:
         return 0
     if args.command == "adapter-dry-run":
         return 0 if result.get("status") == "dry_run_ready" else 2
