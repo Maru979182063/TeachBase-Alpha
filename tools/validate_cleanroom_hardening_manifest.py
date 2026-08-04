@@ -41,6 +41,7 @@ REQUIRED_REPORTS = {
     "final_chain_orchestrator_handshake_validation",
     "pdf_english_recovery_validation",
     "pdf_english_recovery_source_audit",
+    "pdf_english_recovery_intake_validation",
 }
 
 REQUIRED_MANIFEST_CHECKS = {
@@ -49,6 +50,7 @@ REQUIRED_MANIFEST_CHECKS = {
     "final_chain_ops_covers_four_chains",
     "final_chain_job_records_self_and_external_validated",
     "pdf_english_is_explicit_fail_closed_blocker",
+    "pdf_english_recovery_intake_gate_is_sealed",
     "no_report_declares_runtime_side_effects",
 }
 

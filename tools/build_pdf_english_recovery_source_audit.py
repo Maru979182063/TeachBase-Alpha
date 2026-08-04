@@ -20,6 +20,11 @@ ARTIFACTS = (
         "required_for_import": True,
     },
     {
+        "key": "manifest_checker",
+        "relative_path": "tools/english_text_first_graph_first_manifest_check.py",
+        "required_for_import": True,
+    },
+    {
         "key": "prior_smoke_zip",
         "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
         "required_for_import": True,

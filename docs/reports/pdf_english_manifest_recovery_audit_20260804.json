@@ -12,6 +12,7 @@
   ],
   "searched_artifacts": [
     "config/english_text_first_graph_first/active_manifest.json",
+    "tools/english_text_first_graph_first_manifest_check.py",
     "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
     "outputs/english_text_first_graph_first/final_chain_smoke_20260728"
   ],
@@ -20,11 +21,18 @@
       "source_label": "cleanroom_current",
       "source_root_present": true,
       "required_artifacts_present": 0,
-      "required_artifacts_total": 3,
+      "required_artifacts_total": 4,
       "required_artifacts": [
         {
           "key": "active_manifest",
           "relative_path": "config/english_text_first_graph_first/active_manifest.json",
+          "required_for_import": true,
+          "exists": false,
+          "kind": "missing"
+        },
+        {
+          "key": "manifest_checker",
+          "relative_path": "tools/english_text_first_graph_first_manifest_check.py",
           "required_for_import": true,
           "exists": false,
           "kind": "missing"
@@ -48,8 +56,8 @@
     {
       "source_label": "old_local_d_projects_jiaoyan",
       "source_root_present": true,
-      "required_artifacts_present": 0,
-      "required_artifacts_total": 3,
+      "required_artifacts_present": 1,
+      "required_artifacts_total": 4,
       "required_artifacts": [
         {
           "key": "active_manifest",
@@ -57,6 +65,15 @@
           "required_for_import": true,
           "exists": false,
           "kind": "missing"
+        },
+        {
+          "key": "manifest_checker",
+          "relative_path": "tools/english_text_first_graph_first_manifest_check.py",
+          "required_for_import": true,
+          "exists": true,
+          "kind": "file",
+          "size_bytes": 9375,
+          "sha256": "aa14bec8eef296b932c617b64be81269f0123650cc04d78ba0d4a754bc1b393b"
         },
         {
           "key": "prior_smoke_zip",
@@ -78,11 +95,18 @@
       "source_label": "handoff_package_user_documents",
       "source_root_present": true,
       "required_artifacts_present": 0,
-      "required_artifacts_total": 3,
+      "required_artifacts_total": 4,
       "required_artifacts": [
         {
           "key": "active_manifest",
           "relative_path": "config/english_text_first_graph_first/active_manifest.json",
+          "required_for_import": true,
+          "exists": false,
+          "kind": "missing"
+        },
+        {
+          "key": "manifest_checker",
+          "relative_path": "tools/english_text_first_graph_first_manifest_check.py",
           "required_for_import": true,
           "exists": false,
           "kind": "missing"

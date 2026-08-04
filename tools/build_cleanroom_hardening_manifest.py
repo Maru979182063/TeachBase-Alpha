@@ -26,6 +26,7 @@ REQUIRED_REPORTS = {
     "final_chain_orchestrator_handshake_validation": "docs/reports/final_chain_orchestrator_handshake_validation_20260804.json",
     "pdf_english_recovery_validation": "docs/reports/pdf_english_recovery_validation_20260804.json",
     "pdf_english_recovery_source_audit": "docs/reports/pdf_english_manifest_recovery_audit_20260804.json",
+    "pdf_english_recovery_intake_validation": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
 }
 
 
@@ -65,10 +66,28 @@ def build_report() -> dict[str, Any]:
             "ok": _json_value(reports, "pdf_english_recovery_validation", ["status"])
             == "blocked_missing_or_invalid_manifest"
             and _json_value(reports, "pdf_english_recovery_source_audit", ["source_audit_status"])
-            == "no_importable_source_found",
+            == "no_importable_source_found"
+            and _json_value(reports, "pdf_english_recovery_intake_validation", ["status"])
+            == "blocked_missing_or_invalid_recovery_candidate",
             "value": {
                 "validation": _json_value(reports, "pdf_english_recovery_validation", ["status"]),
                 "source_audit": _json_value(reports, "pdf_english_recovery_source_audit", ["source_audit_status"]),
+                "intake": _json_value(reports, "pdf_english_recovery_intake_validation", ["status"]),
+            },
+        },
+        {
+            "name": "pdf_english_recovery_intake_gate_is_sealed",
+            "ok": _json_value(reports, "pdf_english_recovery_intake_validation", ["schema_version"])
+            == "pdf_english_recovery_intake_validation.v0.1"
+            and _json_value(reports, "pdf_english_recovery_intake_validation", ["candidate_root_contract", "path_recording"])
+            == "label_or_workspace_relative_only",
+            "value": {
+                "schema_version": _json_value(reports, "pdf_english_recovery_intake_validation", ["schema_version"]),
+                "path_recording": _json_value(
+                    reports,
+                    "pdf_english_recovery_intake_validation",
+                    ["candidate_root_contract", "path_recording"],
+                ),
             },
         },
         {
@@ -157,6 +176,7 @@ def _status_reports_ok(reports: dict[str, dict[str, Any]]) -> bool:
     expected_blocked = {
         "pdf_english_recovery_validation": "blocked_missing_or_invalid_manifest",
         "pdf_english_recovery_source_audit": "no_importable_source_found",
+        "pdf_english_recovery_intake_validation": "blocked_missing_or_invalid_recovery_candidate",
     }
     for name, record in reports.items():
         status = record["status"]

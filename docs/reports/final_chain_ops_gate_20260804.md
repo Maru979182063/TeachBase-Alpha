@@ -28,4 +28,6 @@ Status: `pass`
 - `pass` `pdf_english_recovery_source_audit_has_no_importable_source`
 - `pass` `pdf_english_recovery_validator_fails_closed`
 - `pass` `pdf_english_recovery_requires_four_branch_manifest`
+- `pass` `pdf_english_recovery_intake_fails_closed_without_candidate`
+- `pass` `pdf_english_recovery_intake_requires_manifest_checker_and_smoke`
 - `pass` `no_runtime_side_effects_reported`

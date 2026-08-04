@@ -128,6 +128,12 @@
           "database_written": false,
           "runtime_imported": false,
           "business_secrets_read": false
+        },
+        "pdf_english_recovery_intake_validation": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
         }
       }
     },
@@ -149,13 +155,33 @@
       "ok": true,
       "value": {
         "exit_code": 0,
-        "output_tail": "........................................................................ [ 88%]\n.........                                                                [100%]\n81 passed in 5.30s\n"
+        "output_tail": "........................................................................ [ 86%]\n...........                                                              [100%]\n83 passed in 5.29s\n"
       }
     },
     {
       "name": "pdf_english_remains_fail_closed_not_silent_ready",
       "ok": true,
       "value": "blocked_missing_or_invalid_manifest"
+    },
+    {
+      "name": "pdf_english_recovery_intake_gate_ready_for_restored_candidate",
+      "ok": true,
+      "value": {
+        "status": "blocked_missing_or_invalid_recovery_candidate",
+        "required_check_failures": [
+          "active_manifest_present",
+          "active_manifest_json_object",
+          "pipeline_name_matches",
+          "allow_only_manifest_runs_enabled",
+          "timestamp_latest_selection_forbidden",
+          "four_branch_runs_declared",
+          "manifest_checker_present",
+          "prior_smoke_zip_present",
+          "prior_smoke_zip_valid",
+          "prior_smoke_dir_present",
+          "prior_smoke_dir_nonempty"
+        ]
+      }
     }
   ],
   "evidence_sources": {
@@ -193,6 +219,10 @@
     },
     "handshake_validation": {
       "path": "docs/reports/final_chain_orchestrator_handshake_validation_20260804.json",
+      "exists": true
+    },
+    "pdf_english_recovery_intake_validation": {
+      "path": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
       "exists": true
     }
   },

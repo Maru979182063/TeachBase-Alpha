@@ -23,6 +23,7 @@ SOURCES = {
     "control_contract": "docs/reports/final_chain_control_contract_20260804.json",
     "environment_contract": "docs/reports/final_chain_environment_contract_20260804.json",
     "handshake_validation": "docs/reports/final_chain_orchestrator_handshake_validation_20260804.json",
+    "pdf_english_recovery_intake_validation": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
 }
 
 NO_SIDE_EFFECTS = {
@@ -146,6 +147,25 @@ def _build_checks(sources: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
             and _value(sources, "final_chain_ops", ["pdf_english_recovery_validation_status"])
             == "blocked_missing_or_invalid_manifest",
             "value": _value(sources, "final_chain_ops", ["pdf_english_recovery_validation_status"]),
+        },
+        {
+            "name": "pdf_english_recovery_intake_gate_ready_for_restored_candidate",
+            "ok": _source_status(sources, "pdf_english_recovery_intake_validation")
+            == "blocked_missing_or_invalid_recovery_candidate"
+            and _value(
+                sources,
+                "pdf_english_recovery_intake_validation",
+                ["candidate_root_contract", "path_recording"],
+            )
+            == "label_or_workspace_relative_only",
+            "value": {
+                "status": _source_status(sources, "pdf_english_recovery_intake_validation"),
+                "required_check_failures": _value(
+                    sources,
+                    "pdf_english_recovery_intake_validation",
+                    ["required_check_failures"],
+                ),
+            },
         },
     ]
 

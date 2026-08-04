@@ -5,9 +5,9 @@ Source audit status: `no_importable_source_found`
 
 ## Sources
 
-- `cleanroom_current`: `0/3` required artifacts
-- `old_local_d_projects_jiaoyan`: `0/3` required artifacts
-- `handoff_package_user_documents`: `0/3` required artifacts
+- `cleanroom_current`: `0/4` required artifacts
+- `old_local_d_projects_jiaoyan`: `1/4` required artifacts
+- `handoff_package_user_documents`: `0/4` required artifacts
 
 ## Safe Next Actions
 

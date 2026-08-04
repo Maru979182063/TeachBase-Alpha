@@ -25,6 +25,12 @@ from tools.build_final_chain_batch_queue_report import (
     render_markdown as render_batch_queue_markdown,
 )
 from tools.build_pdf_english_recovery_source_audit import build_report as build_pdf_english_source_audit_report
+from tools.validate_pdf_english_recovery_intake import (
+    REPORT_JSON as PDF_ENGLISH_INTAKE_JSON,
+    REPORT_MD as PDF_ENGLISH_INTAKE_MD,
+    build_report as build_pdf_english_recovery_intake_report,
+    render_markdown as render_pdf_english_recovery_intake_markdown,
+)
 from tools.validate_final_chain_batch_queue_report import (
     REPORT_JSON as BATCH_QUEUE_VALIDATION_JSON,
     REPORT_MD as BATCH_QUEUE_VALIDATION_MD,
@@ -70,6 +76,9 @@ def build_gate_report() -> dict[str, Any]:
     write_text(ORCHESTRATOR_HANDSHAKE_VALIDATION_MD, render_orchestrator_handshake_validation_markdown(orchestrator_handshake_validation))
     pdf_english_blocker = build_pdf_english_source_audit_report()
     pdf_english_recovery = build_pdf_english_recovery_report()
+    pdf_english_recovery_intake = build_pdf_english_recovery_intake_report()
+    write_json(PDF_ENGLISH_INTAKE_JSON, pdf_english_recovery_intake)
+    write_text(PDF_ENGLISH_INTAKE_MD, render_pdf_english_recovery_intake_markdown(pdf_english_recovery_intake))
     checks = [
         {
             "name": "dashboard_contract_ok",
@@ -210,6 +219,21 @@ def build_gate_report() -> dict[str, Any]:
             "value": pdf_english_recovery["required_manifest_check_failures"],
         },
         {
+            "name": "pdf_english_recovery_intake_fails_closed_without_candidate",
+            "ok": pdf_english_recovery_intake["status"] == "blocked_missing_or_invalid_recovery_candidate",
+            "value": pdf_english_recovery_intake["status"],
+        },
+        {
+            "name": "pdf_english_recovery_intake_requires_manifest_checker_and_smoke",
+            "ok": {
+                "active_manifest_present",
+                "manifest_checker_present",
+                "prior_smoke_zip_present",
+                "prior_smoke_dir_present",
+            }.issubset(set(pdf_english_recovery_intake["required_check_failures"])),
+            "value": pdf_english_recovery_intake["required_check_failures"],
+        },
+        {
             "name": "no_runtime_side_effects_reported",
             "ok": all_no_side_effects(
                 dashboard,
@@ -222,6 +246,7 @@ def build_gate_report() -> dict[str, Any]:
                 orchestrator_handshake_validation,
                 pdf_english_blocker,
                 pdf_english_recovery,
+                pdf_english_recovery_intake,
             ),
             "value": "model/database/runtime/secrets all false",
         },
@@ -248,6 +273,7 @@ def build_gate_report() -> dict[str, Any]:
         "pdf_english_recovery_status": pdf_english_blocker["recovery_status"],
         "pdf_english_recovery_source_audit_status": pdf_english_blocker["source_audit_status"],
         "pdf_english_recovery_validation_status": pdf_english_recovery["status"],
+        "pdf_english_recovery_intake_status": pdf_english_recovery_intake["status"],
         "execution_contract": {
             "model_invoked": False,
             "database_written": False,

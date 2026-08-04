@@ -4,6 +4,7 @@ import hashlib
 import json
 import subprocess
 import sys
+import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -2164,6 +2165,90 @@ def test_pdf_english_recovery_validator_fails_closed_without_manifest() -> None:
     }
 
 
+def test_pdf_english_recovery_intake_fails_closed_without_candidate() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/validate_pdf_english_recovery_intake.py", "--require-ready"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 2
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    checks = {item["name"]: item for item in payload["checks"]}
+    assert payload["schema_version"] == "pdf_english_recovery_intake_validation.v0.1"
+    assert payload["status"] == "blocked_missing_or_invalid_recovery_candidate"
+    assert payload["candidate_root_contract"]["candidate_label"] == "current_cleanroom_workspace"
+    assert checks["active_manifest_present"]["ok"] is False
+    assert checks["manifest_checker_present"]["ok"] is False
+    assert checks["prior_smoke_zip_present"]["ok"] is False
+    assert checks["prior_smoke_dir_present"]["ok"] is False
+    assert payload["execution_contract"] == {
+        "model_invoked": False,
+        "database_written": False,
+        "runtime_imported": False,
+        "business_secrets_read": False,
+    }
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
+def test_pdf_english_recovery_intake_accepts_isolated_candidate_without_path_leak(tmp_path: Path) -> None:
+    candidate = tmp_path / "candidate"
+    manifest = candidate / "config" / "english_text_first_graph_first" / "active_manifest.json"
+    checker = candidate / "tools" / "english_text_first_graph_first_manifest_check.py"
+    smoke_root = candidate / "outputs" / "english_text_first_graph_first"
+    smoke_dir = smoke_root / "final_chain_smoke_20260728"
+    smoke_zip = smoke_root / "final_chain_smoke_20260728.zip"
+    manifest.parent.mkdir(parents=True)
+    checker.parent.mkdir(parents=True)
+    smoke_dir.mkdir(parents=True)
+    manifest.write_text(
+        json.dumps(
+            {
+                "pipeline_name": "english_text_first_graph_first",
+                "allow_only_manifest_runs": True,
+                "forbid_timestamp_latest_selection": True,
+                "runs": {
+                    "reading": "reading_run",
+                    "grammar": "grammar_run",
+                    "writing": "writing_run",
+                    "cloze": "cloze_run",
+                },
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    checker.write_text("print('english_text_first_graph_first_manifest_valid')\n", encoding="utf-8")
+    (smoke_dir / "summary.json").write_text('{"status": "pass"}\n', encoding="utf-8")
+    with zipfile.ZipFile(smoke_zip, "w") as archive:
+        archive.write(smoke_dir / "summary.json", "summary.json")
+
+    from tools.validate_pdf_english_recovery_intake import build_report
+
+    payload = build_report(candidate)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    checks = {item["name"]: item for item in payload["checks"]}
+    assert payload["status"] == "candidate_ready_for_quarantine_import"
+    assert payload["candidate_root_contract"]["candidate_label"] == "provided_candidate_root"
+    assert payload["candidate_root_contract"]["scope"] == "external_candidate_redacted"
+    assert checks["pipeline_name_matches"]["ok"] is True
+    assert checks["four_branch_runs_declared"]["ok"] is True
+    assert checks["manifest_checker_present"]["ok"] is True
+    assert checks["prior_smoke_zip_valid"]["ok"] is True
+    assert checks["prior_smoke_dir_nonempty"]["ok"] is True
+    assert str(tmp_path) not in serialized
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
 def test_pdf_english_recovery_source_audit_uses_labels_without_absolute_paths() -> None:
     completed = subprocess.run(
         [sys.executable, "tools/build_pdf_english_recovery_source_audit.py"],
@@ -2218,9 +2303,12 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     assert payload["batch_queue_blocked_count"] == 1
     assert payload["pdf_english_recovery_validation_status"] == "blocked_missing_or_invalid_manifest"
     assert payload["pdf_english_recovery_source_audit_status"] == "no_importable_source_found"
+    assert payload["pdf_english_recovery_intake_status"] == "blocked_missing_or_invalid_recovery_candidate"
     assert checks["pdf_english_recovery_validator_fails_closed"]["ok"] is True
     assert checks["pdf_english_recovery_requires_four_branch_manifest"]["ok"] is True
     assert checks["pdf_english_recovery_source_audit_has_no_importable_source"]["ok"] is True
+    assert checks["pdf_english_recovery_intake_fails_closed_without_candidate"]["ok"] is True
+    assert checks["pdf_english_recovery_intake_requires_manifest_checker_and_smoke"]["ok"] is True
     assert checks["ready_sample_job_records_validate"]["ok"] is True
     assert checks["batch_queue_covers_four_chains"]["ok"] is True
     assert checks["batch_queue_schedules_three_ready_one_blocked"]["ok"] is True
@@ -2261,9 +2349,11 @@ def test_cleanroom_hardening_manifest_seals_current_gate_outputs() -> None:
     assert payload["reports"]["final_chain_batch_queue_validation"]["status"] == "pass"
     assert payload["reports"]["final_chain_orchestrator_handshake"]["status"] == "pass"
     assert payload["reports"]["final_chain_orchestrator_handshake_validation"]["status"] == "pass"
+    assert payload["reports"]["pdf_english_recovery_intake_validation"]["status"] == "blocked_missing_or_invalid_recovery_candidate"
     assert checks["final_chain_ops_covers_four_chains"]["ok"] is True
     assert checks["final_chain_job_records_self_and_external_validated"]["ok"] is True
     assert checks["pdf_english_is_explicit_fail_closed_blocker"]["ok"] is True
+    assert checks["pdf_english_recovery_intake_gate_is_sealed"]["ok"] is True
     assert payload["known_blockers"] == [
         {
             "chain_id": "pdf_english",

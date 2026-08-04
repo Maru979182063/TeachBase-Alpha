@@ -203,6 +203,28 @@
       ]
     },
     {
+      "name": "pdf_english_recovery_intake_fails_closed_without_candidate",
+      "ok": true,
+      "value": "blocked_missing_or_invalid_recovery_candidate"
+    },
+    {
+      "name": "pdf_english_recovery_intake_requires_manifest_checker_and_smoke",
+      "ok": true,
+      "value": [
+        "active_manifest_present",
+        "active_manifest_json_object",
+        "pipeline_name_matches",
+        "allow_only_manifest_runs_enabled",
+        "timestamp_latest_selection_forbidden",
+        "four_branch_runs_declared",
+        "manifest_checker_present",
+        "prior_smoke_zip_present",
+        "prior_smoke_zip_valid",
+        "prior_smoke_dir_present",
+        "prior_smoke_dir_nonempty"
+      ]
+    },
+    {
       "name": "no_runtime_side_effects_reported",
       "ok": true,
       "value": "model/database/runtime/secrets all false"
@@ -232,6 +254,7 @@
   "pdf_english_recovery_status": "blocked_missing_manifest_and_smoke_artifacts",
   "pdf_english_recovery_source_audit_status": "no_importable_source_found",
   "pdf_english_recovery_validation_status": "blocked_missing_or_invalid_manifest",
+  "pdf_english_recovery_intake_status": "blocked_missing_or_invalid_recovery_candidate",
   "execution_contract": {
     "model_invoked": false,
     "database_written": false,

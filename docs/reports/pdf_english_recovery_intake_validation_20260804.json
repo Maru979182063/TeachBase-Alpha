@@ -1,0 +1,153 @@
+{
+  "schema_version": "pdf_english_recovery_intake_validation.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "chain_id": "pdf_english",
+  "status": "blocked_missing_or_invalid_recovery_candidate",
+  "candidate_root_contract": {
+    "path_recording": "label_or_workspace_relative_only",
+    "candidate_label": "current_cleanroom_workspace",
+    "scope": "inside_workspace",
+    "exists": true,
+    "kind": "directory"
+  },
+  "required_relative_artifacts": [
+    "config/english_text_first_graph_first/active_manifest.json",
+    "tools/english_text_first_graph_first_manifest_check.py",
+    "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
+    "outputs/english_text_first_graph_first/final_chain_smoke_20260728"
+  ],
+  "artifact_states": [
+    {
+      "key": "active_manifest",
+      "relative_path": "config/english_text_first_graph_first/active_manifest.json",
+      "expected_kind": "file",
+      "exists": false,
+      "kind": "missing"
+    },
+    {
+      "key": "manifest_checker",
+      "relative_path": "tools/english_text_first_graph_first_manifest_check.py",
+      "expected_kind": "file",
+      "exists": false,
+      "kind": "missing"
+    },
+    {
+      "key": "prior_smoke_zip",
+      "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
+      "expected_kind": "file",
+      "exists": false,
+      "kind": "missing",
+      "zip_error": "zip_missing",
+      "zip_testzip": ""
+    },
+    {
+      "key": "prior_smoke_dir",
+      "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728",
+      "expected_kind": "directory",
+      "exists": false,
+      "kind": "missing"
+    }
+  ],
+  "checks": [
+    {
+      "name": "candidate_root_exists",
+      "ok": true,
+      "required": true
+    },
+    {
+      "name": "active_manifest_present",
+      "ok": false,
+      "required": true
+    },
+    {
+      "name": "active_manifest_json_object",
+      "ok": false,
+      "required": true,
+      "error": "manifest_missing"
+    },
+    {
+      "name": "pipeline_name_matches",
+      "ok": false,
+      "required": true,
+      "expected": "english_text_first_graph_first",
+      "actual": null
+    },
+    {
+      "name": "allow_only_manifest_runs_enabled",
+      "ok": false,
+      "required": true
+    },
+    {
+      "name": "timestamp_latest_selection_forbidden",
+      "ok": false,
+      "required": true
+    },
+    {
+      "name": "four_branch_runs_declared",
+      "ok": false,
+      "required": true,
+      "required_run_keys": [
+        "reading",
+        "grammar",
+        "writing",
+        "cloze"
+      ]
+    },
+    {
+      "name": "manifest_checker_present",
+      "ok": false,
+      "required": true
+    },
+    {
+      "name": "prior_smoke_zip_present",
+      "ok": false,
+      "required": true
+    },
+    {
+      "name": "prior_smoke_zip_valid",
+      "ok": false,
+      "required": true
+    },
+    {
+      "name": "prior_smoke_dir_present",
+      "ok": false,
+      "required": true
+    },
+    {
+      "name": "prior_smoke_dir_nonempty",
+      "ok": false,
+      "required": true
+    }
+  ],
+  "required_check_failures": [
+    "active_manifest_present",
+    "active_manifest_json_object",
+    "pipeline_name_matches",
+    "allow_only_manifest_runs_enabled",
+    "timestamp_latest_selection_forbidden",
+    "four_branch_runs_declared",
+    "manifest_checker_present",
+    "prior_smoke_zip_present",
+    "prior_smoke_zip_valid",
+    "prior_smoke_dir_present",
+    "prior_smoke_dir_nonempty"
+  ],
+  "safe_next_actions": [
+    "stage_recovered_artifacts_under_a_candidate_root",
+    "preserve_relative_paths_from_config_tools_outputs",
+    "rerun_this_intake_gate_before_copying_into_protected_paths"
+  ],
+  "unsafe_actions": [
+    "do_not_copy_candidate_into_config_until_this_report_is_ready",
+    "do_not_create_synthetic_active_manifest",
+    "do_not_select_latest_directory_by_timestamp",
+    "do_not_mark_pdf_english_adapter_ready_without_manifest_check_and_smoke"
+  ],
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}
