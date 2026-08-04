@@ -1,0 +1,68 @@
+{
+  "schema_version": "final_chain_ops_gate.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "status": "pass",
+  "checks": [
+    {
+      "name": "dashboard_contract_ok",
+      "ok": true,
+      "value": true
+    },
+    {
+      "name": "three_chains_need_only_sample_inputs",
+      "ok": true,
+      "value": 3
+    },
+    {
+      "name": "one_chain_requires_artifact_restore_or_smoke",
+      "ok": true,
+      "value": 1
+    },
+    {
+      "name": "ready_sample_dry_runs_cover_three_chains",
+      "ok": true,
+      "value": 3
+    },
+    {
+      "name": "ready_sample_schedules_are_ready",
+      "ok": true,
+      "value": [
+        "scheduled_ready",
+        "scheduled_ready",
+        "scheduled_ready"
+      ]
+    },
+    {
+      "name": "ready_sample_adapters_do_not_invoke_entrypoints",
+      "ok": true,
+      "value": [
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "name": "pdf_english_recovery_blocker_is_explicit",
+      "ok": true,
+      "value": "blocked_missing_manifest_and_smoke_artifacts"
+    },
+    {
+      "name": "no_runtime_side_effects_reported",
+      "ok": true,
+      "value": "model/database/runtime/secrets all false"
+    }
+  ],
+  "dashboard_lane_counts": {
+    "needs_sample_input": 3,
+    "needs_artifact_restore_or_smoke": 1
+  },
+  "ready_sample_count": 3,
+  "pdf_english_recovery_status": "blocked_missing_manifest_and_smoke_artifacts",
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}

@@ -8,27 +8,11 @@
     "review mixed_control_file changes line-by-line before staging"
   ],
   "counts": {
-    "worktree_compartment_report": 3,
     "mixed_control_file": 1,
-    "final_chain_registry": 5
+    "worktree_compartment_report": 1,
+    "final_chain_registry": 3
   },
   "records": [
-    {
-      "status": " M",
-      "path": "docs/reports/worktree_compartments_20260804.json",
-      "bucket": "worktree_compartment_report",
-      "reasons": [
-        "review compartment documentation and report generator"
-      ]
-    },
-    {
-      "status": " M",
-      "path": "docs/reports/worktree_compartments_20260804.md",
-      "bucket": "worktree_compartment_report",
-      "reasons": [
-        "review compartment documentation and report generator"
-      ]
-    },
     {
       "status": " M",
       "path": "package.json",
@@ -43,14 +27,6 @@
     },
     {
       "status": " M",
-      "path": "tests/test_final_chain_control.py",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
-      ]
-    },
-    {
-      "status": " M",
       "path": "tools/build_worktree_compartment_report.py",
       "bucket": "worktree_compartment_report",
       "reasons": [
@@ -59,7 +35,7 @@
     },
     {
       "status": "??",
-      "path": "docs/reports/final_chain_ready_sample_dry_run_20260804.json",
+      "path": "docs/reports/final_chain_ops_gate_20260804.json",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -67,7 +43,7 @@
     },
     {
       "status": "??",
-      "path": "docs/reports/final_chain_ready_sample_dry_run_20260804.md",
+      "path": "docs/reports/final_chain_ops_gate_20260804.md",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -75,15 +51,7 @@
     },
     {
       "status": "??",
-      "path": "tests/fixtures/final_chain_samples/",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "repository-relative samples for protected final-chain control dry-runs"
-      ]
-    },
-    {
-      "status": "??",
-      "path": "tools/build_final_chain_ready_sample_report.py",
+      "path": "tools/run_final_chain_ops_gate.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"

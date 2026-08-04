@@ -5,9 +5,9 @@ All paths are relative git paths; no local absolute path is part of the reproduc
 
 ## Counts
 
-- `final_chain_registry`: 5
+- `final_chain_registry`: 3
 - `mixed_control_file`: 1
-- `worktree_compartment_report`: 3
+- `worktree_compartment_report`: 1
 
 ## Commit Handling
 
@@ -17,12 +17,8 @@ All paths are relative git paths; no local absolute path is part of the reproduc
 
 ## Records
 
-- ` M` `worktree_compartment_report` `docs/reports/worktree_compartments_20260804.json`: review compartment documentation and report generator
-- ` M` `worktree_compartment_report` `docs/reports/worktree_compartments_20260804.md`: review compartment documentation and report generator
 - ` M` `mixed_control_file` `package.json`: foundation_hardening npm script; final_chain_registry npm scripts; precleanup_archive npm scripts; precleanup_deep_audit npm script; precleanup_safety npm script
-- ` M` `final_chain_registry` `tests/test_final_chain_control.py`: protected-chain inventory, classifier, or cleanup candidate audit
 - ` M` `worktree_compartment_report` `tools/build_worktree_compartment_report.py`: review compartment documentation and report generator
-- `??` `final_chain_registry` `docs/reports/final_chain_ready_sample_dry_run_20260804.json`: protected-chain inventory, classifier, or cleanup candidate audit
-- `??` `final_chain_registry` `docs/reports/final_chain_ready_sample_dry_run_20260804.md`: protected-chain inventory, classifier, or cleanup candidate audit
-- `??` `final_chain_registry` `tests/fixtures/final_chain_samples/`: repository-relative samples for protected final-chain control dry-runs
-- `??` `final_chain_registry` `tools/build_final_chain_ready_sample_report.py`: protected-chain inventory, classifier, or cleanup candidate audit
+- `??` `final_chain_registry` `docs/reports/final_chain_ops_gate_20260804.json`: protected-chain inventory, classifier, or cleanup candidate audit
+- `??` `final_chain_registry` `docs/reports/final_chain_ops_gate_20260804.md`: protected-chain inventory, classifier, or cleanup candidate audit
+- `??` `final_chain_registry` `tools/run_final_chain_ops_gate.py`: protected-chain inventory, classifier, or cleanup candidate audit

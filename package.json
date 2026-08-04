@@ -26,6 +26,7 @@
     "test:final-chain-registry": "python tools/validate_final_chain_registry.py --json && python -m pytest tests/test_final_chain_registry.py -q",
     "test:final-chain-surface": "python -m pytest tests/test_final_chain_surface_classifier.py -q",
     "test:final-chain-control": "python -m pytest tests/test_final_chain_control.py -q",
+    "test:final-chain-ops": "python tools/run_final_chain_ops_gate.py && python -m pytest tests/test_final_chain_control.py tests/test_final_chain_registry.py tests/test_final_chain_surface_classifier.py tests/test_cleanup_candidate_report.py tests/test_architecture_boundaries.py -q",
     "final-chain:list": "python tools/final_chain_control.py list",
     "final-chain:plan": "python tools/final_chain_control.py plan",
     "final-chain:env-check": "python tools/final_chain_control.py env-check",
