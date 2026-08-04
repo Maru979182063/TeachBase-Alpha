@@ -25,6 +25,8 @@ from .environment import (
 from .readiness import build_readiness_matrix
 from .jobs import (
     attach_job_record_validation,
+    build_job_recovery_plan,
+    build_job_recovery_plan_path,
     inspect_job_record,
     inspect_job_record_path,
     transition_job_record,
@@ -60,6 +62,8 @@ __all__ = [
     "build_readiness_matrix",
     "inspect_job_record",
     "attach_job_record_validation",
+    "build_job_recovery_plan",
+    "build_job_recovery_plan_path",
     "inspect_job_record_path",
     "transition_job_record",
     "transition_job_record_path",

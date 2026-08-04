@@ -142,6 +142,7 @@ def _command_map_ok(command_map: dict[str, Any]) -> bool:
         "adapter_dry_run",
         "job_inspect",
         "job_validate",
+        "job_recovery_plan",
         "job_transition",
     }
     return required.issubset(command_map.keys()) and all(
@@ -183,6 +184,9 @@ def _lifecycle_ok(value: Any) -> bool:
     guard = value.get("transition_guard")
     if not isinstance(guard, dict):
         return False
+    recovery = value.get("recovery_plan")
+    if not isinstance(recovery, dict):
+        return False
     return (
         transitions.get("scheduled_ready") == ["dry_run_started", "cancelled"]
         and transitions.get("scheduled_blocked") == []
@@ -190,6 +194,11 @@ def _lifecycle_ok(value: Any) -> bool:
         and guard.get("expected_status_supported") is True
         and guard.get("expected_state_version_supported") is True
         and guard.get("stale_transition_error") == "final_chain_job_stale_transition"
+        and recovery.get("schema_version") == "final_chain_job_recovery_plan.v0.1"
+        and recovery.get("non_executing") is True
+        and recovery.get("replacement_job_required_for_retry") is True
+        and recovery.get("retry_budget_default_max_attempts") == 3
+        and recovery.get("retryable_failure_checkpoint_key") == "retryable"
     )
 
 

@@ -32,6 +32,7 @@
     "contract": "tools/final_chain_control.py contract --json",
     "env_contract": "tools/final_chain_control.py env-contract --json",
     "job_inspect": "tools/final_chain_control.py job-inspect --record <relative_record_path> --json",
+    "job_recovery_plan": "tools/final_chain_control.py job-recovery-plan --record <relative_record_path> --max-attempts <n> --json",
     "job_transition": "tools/final_chain_control.py job-transition --record <relative_record_path> --status <status> --reason <reason> --expect-status <current_status> --expect-state-version <version> --json",
     "job_validate": "tools/final_chain_control.py job-validate --record <relative_record_path> --json",
     "plan": "tools/final_chain_control.py plan --chain-id <chain_id> --input <path> --json",
@@ -83,6 +84,13 @@
       "expected_status_supported": true,
       "expected_state_version_supported": true,
       "stale_transition_error": "final_chain_job_stale_transition"
+    },
+    "recovery_plan": {
+      "schema_version": "final_chain_job_recovery_plan.v0.1",
+      "non_executing": true,
+      "replacement_job_required_for_retry": true,
+      "retry_budget_default_max_attempts": 3,
+      "retryable_failure_checkpoint_key": "retryable"
     }
   },
   "required_job_record_sections": [
@@ -149,6 +157,7 @@
         "contract",
         "env_contract",
         "job_inspect",
+        "job_recovery_plan",
         "job_transition",
         "job_validate",
         "list",

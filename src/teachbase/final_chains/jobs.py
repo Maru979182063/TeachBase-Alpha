@@ -17,6 +17,7 @@ DRY_RUN_STARTED = "dry_run_started"
 DRY_RUN_PASSED = "dry_run_passed"
 DRY_RUN_FAILED = "dry_run_failed"
 CANCELLED = "cancelled"
+DEFAULT_MAX_RECOVERY_ATTEMPTS = 3
 
 TERMINAL_STATUSES = frozenset({SCHEDULED_BLOCKED, REJECTED, DRY_RUN_PASSED, DRY_RUN_FAILED, CANCELLED})
 
@@ -70,6 +71,75 @@ def inspect_job_record(record: dict[str, Any]) -> dict[str, Any]:
         "database_written": False,
         "runtime_imported": False,
         "business_secrets_read": False,
+    }
+
+
+def build_job_recovery_plan(record: dict[str, Any], *, max_attempts: int = DEFAULT_MAX_RECOVERY_ATTEMPTS) -> dict[str, Any]:
+    if max_attempts < 1:
+        raise ValueError("max_attempts must be >= 1")
+    status = str(record.get("status") or "")
+    _require_known_status(status)
+    lifecycle = record.get("lifecycle")
+    history = lifecycle.get("history") if isinstance(lifecycle, dict) else []
+    if not isinstance(history, list):
+        history = []
+    validation = validate_job_record(record)
+    latest = history[-1] if history and isinstance(history[-1], dict) else {}
+    latest_checkpoint = latest.get("checkpoint") if isinstance(latest.get("checkpoint"), dict) else None
+    started_count = sum(1 for event in history if isinstance(event, dict) and event.get("status") == DRY_RUN_STARTED)
+    failure_count = sum(1 for event in history if isinstance(event, dict) and event.get("status") == DRY_RUN_FAILED)
+    retryable_failure = bool(latest_checkpoint and latest_checkpoint.get("retryable") is True)
+
+    action = "no_action"
+    can_schedule_replacement = False
+    next_statuses: list[str] = []
+    reason = "job_has_no_recovery_action"
+    if not validation["ok"]:
+        action = "manual_review_required"
+        reason = "job_record_validation_failed"
+    elif status == SCHEDULED_READY:
+        action = "start_dry_run_allowed"
+        next_statuses = [DRY_RUN_STARTED, CANCELLED]
+        reason = "job_is_ready_to_start"
+    elif status == DRY_RUN_STARTED:
+        action = "inspect_running_job_or_mark_failed"
+        next_statuses = [DRY_RUN_PASSED, DRY_RUN_FAILED, CANCELLED]
+        reason = "job_started_without_terminal_result"
+    elif status == DRY_RUN_FAILED:
+        if retryable_failure and started_count < max_attempts:
+            action = "schedule_replacement_job"
+            can_schedule_replacement = True
+            reason = "latest_failure_is_retryable_and_attempt_budget_remains"
+        elif retryable_failure:
+            action = "manual_review_required"
+            reason = "retry_attempt_budget_exhausted"
+        else:
+            action = "manual_review_required"
+            reason = "latest_failure_is_not_retryable"
+    elif status in TERMINAL_STATUSES:
+        action = "no_action_terminal"
+        reason = f"{status}_is_terminal"
+
+    return {
+        "schema_version": "final_chain_job_recovery_plan.v0.1",
+        "job_id": _redact_absolute_path_evidence(str(record.get("job_id") or "")),
+        "chain_id": _redact_absolute_path_evidence(str(record.get("chain_id") or "")),
+        "status": status,
+        "state_version": _record_state_version(record),
+        "max_attempts": max_attempts,
+        "started_attempt_count": started_count,
+        "failure_count": failure_count,
+        "latest_failure_retryable": retryable_failure,
+        "action": action,
+        "reason": reason,
+        "can_schedule_replacement_job": can_schedule_replacement,
+        "recommended_next_statuses": next_statuses,
+        "latest_checkpoint": _redact_absolute_path_evidence(latest_checkpoint),
+        "record_validation": {
+            "ok": validation["ok"],
+            "error_count": validation["error_count"],
+        },
+        "execution_contract": _no_side_effect_contract(),
     }
 
 
@@ -250,6 +320,10 @@ def inspect_job_record_path(path: Path) -> dict[str, Any]:
 
 def validate_job_record_path(path: Path) -> dict[str, Any]:
     return validate_job_record(load_job_record(path))
+
+
+def build_job_recovery_plan_path(path: Path, *, max_attempts: int = DEFAULT_MAX_RECOVERY_ATTEMPTS) -> dict[str, Any]:
+    return build_job_recovery_plan(load_job_record(path), max_attempts=max_attempts)
 
 
 def transition_job_record_path(

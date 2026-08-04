@@ -13,6 +13,7 @@ from teachbase.final_chains import (
     build_final_chain_control_dashboard,
     build_final_chain_control_contract,
     build_chain_run_plan,
+    build_job_recovery_plan_path,
     build_readiness_matrix,
     describe_adapters,
     inspect_adapter_contracts,
@@ -205,6 +206,10 @@ def validate_job(args: argparse.Namespace) -> dict:
     return validate_job_record_path(ROOT / args.record)
 
 
+def recover_job(args: argparse.Namespace) -> dict:
+    return build_job_recovery_plan_path(ROOT / args.record, max_attempts=args.max_attempts)
+
+
 def transition_job(args: argparse.Namespace) -> dict:
     checkpoint = {"source": "final_chain_control_cli"} if args.with_checkpoint else None
     return transition_job_record_path(
@@ -302,6 +307,12 @@ def main() -> int:
     )
     job_validate_parser.add_argument("--record", required=True)
 
+    job_recovery_parser = add_json_flag(
+        subparsers.add_parser("job-recovery-plan", help="Plan a safe non-executing recovery action for a job.")
+    )
+    job_recovery_parser.add_argument("--record", required=True)
+    job_recovery_parser.add_argument("--max-attempts", type=int, default=3)
+
     job_transition_parser = add_json_flag(
         subparsers.add_parser(
             "job-transition", help="Apply a guarded lifecycle transition to a recorded final-chain job."
@@ -346,6 +357,8 @@ def main() -> int:
             result = inspect_job(args)
         elif args.command == "job-validate":
             result = validate_job(args)
+        elif args.command == "job-recovery-plan":
+            result = recover_job(args)
         elif args.command == "job-transition":
             result = transition_job(args)
         elif args.command == "dashboard":
@@ -379,6 +392,7 @@ def main() -> int:
         "env-contract",
         "readiness-matrix",
         "job-inspect",
+        "job-recovery-plan",
         "dashboard",
         "contract",
     }:

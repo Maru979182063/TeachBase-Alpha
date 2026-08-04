@@ -18,6 +18,8 @@ from teachbase.final_chains import (
     build_chain_run_plan,
     build_cleanroom_import_audit,
     build_final_chain_control_contract,
+    build_job_recovery_plan,
+    build_job_recovery_plan_path,
     build_readiness_matrix,
     describe_adapters,
     inspect_adapter_contracts,
@@ -35,6 +37,40 @@ from teachbase.core.errors import ConfigurationError
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "config" / "final_chain_registry.yaml"
+
+
+def _valid_job_record_with_history(status: str, history: list[dict]) -> dict:
+    latest_version = int(history[-1]["version"])
+    return {
+        "schema_version": "final_chain_job_record.v0.1",
+        "job_id": "job",
+        "created_at": "2026-08-04T00:00:00+00:00",
+        "status": status,
+        "chain_id": "pdf_math",
+        "record_path": "outputs/final_chain_runs/_control/jobs/job/job_record.json",
+        "plan": {"workspace_contract": "relative_git_paths_only", "absolute_paths_as_inputs": False},
+        "request_snapshot": {"workspace_contract": "relative_git_paths_only", "absolute_paths_as_inputs": False},
+        "environment_snapshot": {},
+        "lifecycle": {
+            "schema_version": "final_chain_job_lifecycle.v0.1",
+            "status": status,
+            "state_version": latest_version,
+            "terminal": status in {"scheduled_blocked", "rejected", "dry_run_passed", "dry_run_failed", "cancelled"},
+            "allowed_next_statuses": {
+                "scheduled_ready": ["dry_run_started", "cancelled"],
+                "dry_run_started": ["dry_run_passed", "dry_run_failed", "cancelled"],
+            }.get(status, []),
+            "updated_at": "2026-08-04T00:00:00+00:00",
+            "history": history,
+        },
+        "execution_contract": {
+            "model_invoked": False,
+            "database_written": False,
+            "runtime_imported": False,
+            "business_secrets_read": False,
+        },
+        "errors": [],
+    }
 
 
 def test_final_chain_control_lists_four_registered_chains_without_runtime_imports() -> None:
@@ -767,6 +803,118 @@ def test_concurrent_job_record_path_transitions_allow_only_one_stale_checked_wor
     assert not record_path.with_name(f".{record_path.name}.lock").exists()
 
 
+def test_job_recovery_plan_allows_replacement_for_retryable_failed_dry_run() -> None:
+    record = _valid_job_record_with_history(
+        "dry_run_failed",
+        [
+            {
+                "version": 1,
+                "status": "scheduled_ready",
+                "at": "2026-08-04T00:00:00+00:00",
+                "reason": "scheduled",
+                "checkpoint": None,
+            },
+            {
+                "version": 2,
+                "status": "dry_run_started",
+                "at": "2026-08-04T00:00:01+00:00",
+                "reason": "adapter dry-run accepted",
+                "checkpoint": None,
+            },
+            {
+                "version": 3,
+                "status": "dry_run_failed",
+                "at": "2026-08-04T00:00:02+00:00",
+                "reason": "transient worker EOF",
+                "checkpoint": {"retryable": True, "artifact_ref": "outputs/final_chain_runs/job/error.json"},
+            },
+        ],
+    )
+
+    plan = build_job_recovery_plan(record, max_attempts=3)
+
+    assert plan["schema_version"] == "final_chain_job_recovery_plan.v0.1"
+    assert plan["action"] == "schedule_replacement_job"
+    assert plan["reason"] == "latest_failure_is_retryable_and_attempt_budget_remains"
+    assert plan["can_schedule_replacement_job"] is True
+    assert plan["started_attempt_count"] == 1
+    assert plan["latest_failure_retryable"] is True
+    assert plan["execution_contract"] == {
+        "model_invoked": False,
+        "database_written": False,
+        "runtime_imported": False,
+        "business_secrets_read": False,
+    }
+
+
+def test_job_recovery_plan_stops_when_retry_budget_is_exhausted() -> None:
+    record = _valid_job_record_with_history(
+        "dry_run_failed",
+        [
+            {
+                "version": 1,
+                "status": "scheduled_ready",
+                "at": "2026-08-04T00:00:00+00:00",
+                "reason": "scheduled",
+                "checkpoint": None,
+            },
+            {"version": 2, "status": "dry_run_started", "at": "2026-08-04T00:00:01+00:00", "reason": "try 1", "checkpoint": None},
+            {"version": 3, "status": "dry_run_failed", "at": "2026-08-04T00:00:02+00:00", "reason": "try 1 failed", "checkpoint": {"retryable": True}},
+            {"version": 4, "status": "dry_run_started", "at": "2026-08-04T00:00:03+00:00", "reason": "try 2", "checkpoint": None},
+            {"version": 5, "status": "dry_run_failed", "at": "2026-08-04T00:00:04+00:00", "reason": "try 2 failed", "checkpoint": {"retryable": True}},
+            {"version": 6, "status": "dry_run_started", "at": "2026-08-04T00:00:05+00:00", "reason": "try 3", "checkpoint": None},
+            {"version": 7, "status": "dry_run_failed", "at": "2026-08-04T00:00:06+00:00", "reason": "try 3 failed", "checkpoint": {"retryable": True}},
+        ],
+    )
+
+    plan = build_job_recovery_plan(record, max_attempts=3)
+
+    assert plan["action"] == "manual_review_required"
+    assert plan["reason"] == "retry_attempt_budget_exhausted"
+    assert plan["can_schedule_replacement_job"] is False
+    assert plan["started_attempt_count"] == 3
+
+
+def test_job_recovery_plan_path_redacts_invalid_absolute_checkpoint(tmp_path: Path) -> None:
+    record = _valid_job_record_with_history(
+        "dry_run_failed",
+        [
+            {
+                "version": 1,
+                "status": "scheduled_ready",
+                "at": "2026-08-04T00:00:00+00:00",
+                "reason": "scheduled",
+                "checkpoint": None,
+            },
+            {
+                "version": 2,
+                "status": "dry_run_started",
+                "at": "2026-08-04T00:00:01+00:00",
+                "reason": "adapter dry-run accepted",
+                "checkpoint": None,
+            },
+            {
+                "version": 3,
+                "status": "dry_run_failed",
+                "at": "2026-08-04T00:00:02+00:00",
+                "reason": "bad checkpoint",
+                "checkpoint": {"retryable": True, "artifact_ref": str(tmp_path / "absolute.json")},
+            },
+        ],
+    )
+    record_path = tmp_path / "job_record.json"
+    record_path.write_text(json.dumps(record), encoding="utf-8")
+
+    plan = build_job_recovery_plan_path(record_path)
+
+    serialized = json.dumps(plan, ensure_ascii=False)
+    assert plan["action"] == "manual_review_required"
+    assert plan["reason"] == "job_record_validation_failed"
+    assert plan["record_validation"]["ok"] is False
+    assert "<absolute-path>" in serialized
+    assert str(tmp_path) not in serialized
+
+
 def test_final_chain_control_cli_validates_job_record_contract(tmp_path: Path) -> None:
     record = {
         "schema_version": "final_chain_job_record.v0.1",
@@ -892,6 +1040,62 @@ def test_final_chain_control_cli_inspects_and_transitions_job_record(tmp_path: P
     assert transition_payload["status"] == "dry_run_started"
     assert transition_payload["lifecycle"]["history"][-1]["checkpoint"] == {"source": "final_chain_control_cli"}
     assert json.loads(record_path.read_text(encoding="utf-8"))["status"] == "dry_run_started"
+
+
+def test_final_chain_control_cli_builds_job_recovery_plan(tmp_path: Path) -> None:
+    record = _valid_job_record_with_history(
+        "dry_run_failed",
+        [
+            {
+                "version": 1,
+                "status": "scheduled_ready",
+                "at": "2026-08-04T00:00:00+00:00",
+                "reason": "scheduled",
+                "checkpoint": None,
+            },
+            {
+                "version": 2,
+                "status": "dry_run_started",
+                "at": "2026-08-04T00:00:01+00:00",
+                "reason": "adapter dry-run accepted",
+                "checkpoint": None,
+            },
+            {
+                "version": 3,
+                "status": "dry_run_failed",
+                "at": "2026-08-04T00:00:02+00:00",
+                "reason": "EOF from external worker",
+                "checkpoint": {"retryable": True},
+            },
+        ],
+    )
+    record_path = tmp_path / "job_record.json"
+    record_path.write_text(json.dumps(record), encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/final_chain_control.py",
+            "job-recovery-plan",
+            "--record",
+            str(record_path),
+            "--max-attempts",
+            "3",
+            "--json",
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    assert payload["schema_version"] == "final_chain_job_recovery_plan.v0.1"
+    assert payload["action"] == "schedule_replacement_job"
+    assert payload["can_schedule_replacement_job"] is True
+    assert payload["execution_contract"]["runtime_imported"] is False
 
 
 def test_final_chain_control_cli_reports_missing_job_record_as_json(tmp_path: Path) -> None:
@@ -1832,6 +2036,7 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     assert checks["environment_contract_limits_writes_to_outputs"]["ok"] is True
     assert checks["control_contract_is_dry_run_only"]["ok"] is True
     assert checks["control_contract_covers_four_chains"]["ok"] is True
+    assert checks["control_contract_declares_non_executing_recovery_plan"]["ok"] is True
 
 
 def test_cleanroom_hardening_manifest_seals_current_gate_outputs() -> None:

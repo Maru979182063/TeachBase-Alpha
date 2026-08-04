@@ -165,6 +165,11 @@ def build_gate_report() -> dict[str, Any]:
             "value": control_contract["chain_ids"],
         },
         {
+            "name": "control_contract_declares_non_executing_recovery_plan",
+            "ok": _control_contract_declares_recovery_plan(control_contract),
+            "value": control_contract["job_lifecycle_policy"].get("recovery_plan"),
+        },
+        {
             "name": "environment_contract_passes",
             "ok": environment_contract["status"] == "pass",
             "value": environment_contract["status"],
@@ -263,6 +268,23 @@ def all_no_side_effects(*reports: dict[str, Any]) -> bool:
         }:
             return False
     return True
+
+
+def _control_contract_declares_recovery_plan(control_contract: dict[str, Any]) -> bool:
+    commands = control_contract.get("commands")
+    lifecycle = control_contract.get("job_lifecycle_policy")
+    if not isinstance(commands, dict) or not isinstance(lifecycle, dict):
+        return False
+    recovery = lifecycle.get("recovery_plan")
+    return (
+        isinstance(commands.get("job_recovery_plan"), str)
+        and commands["job_recovery_plan"].startswith("tools/final_chain_control.py job-recovery-plan ")
+        and isinstance(recovery, dict)
+        and recovery.get("schema_version") == "final_chain_job_recovery_plan.v0.1"
+        and recovery.get("non_executing") is True
+        and recovery.get("replacement_job_required_for_retry") is True
+        and recovery.get("retry_budget_default_max_attempts") == 3
+    )
 
 
 def render_markdown(report: dict[str, Any]) -> str:
