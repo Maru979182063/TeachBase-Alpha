@@ -11,6 +11,8 @@ from teachbase.final_chains import (
     ChainRunRequest,
     EnvironmentPolicy,
     build_chain_run_plan,
+    inspect_adapter_contracts,
+    inspect_registry_environments,
     load_final_chain_registry,
     schedule_chain_run,
 )
@@ -214,3 +216,72 @@ def test_scheduler_rejects_output_root_outside_workspace(tmp_path: Path) -> None
     assert record["status"] == "rejected"
     assert record["record_path"] == ""
     assert not (tmp_path / "outside").exists()
+
+
+def test_environment_report_is_machine_readable_and_side_effect_free() -> None:
+    registry = load_final_chain_registry(REGISTRY)
+
+    report = inspect_registry_environments(registry, workspace_root=ROOT)
+
+    assert report["schema_version"] == "final_chain_environment_report.v0.1"
+    assert report["chain_count"] == 4
+    assert report["model_invoked"] is False
+    assert report["database_written"] is False
+    assert report["runtime_imported"] is False
+    assert report["business_secrets_read"] is False
+    by_id = {item["chain_id"]: item for item in report["chains"]}
+    assert by_id["pdf_math"]["checks"]["required_paths_present"] is True
+    assert by_id["doc_math"]["status"] == "blocked"
+    assert "required_paths_present" in by_id["doc_math"]["blocked_reasons"]
+    assert "smoke_status_partial_requires_restore_or_rerun" in by_id["pdf_english"]["notes"]
+
+
+def test_adapter_contracts_forbid_runtime_side_effects_in_dry_run() -> None:
+    registry = load_final_chain_registry(REGISTRY)
+
+    report = inspect_adapter_contracts(registry)
+
+    assert report["ok"] is True
+    assert report["chain_count"] == 4
+    for contract in report["contracts"]:
+        assert contract["schema_version"] == "final_chain_adapter.v0.1"
+        assert {"describe", "plan", "dry_run"}.issubset(contract["required_methods"])
+        assert {"model_call", "database_write", "runtime_import", "business_secret_read"}.issubset(
+            contract["forbidden_during_dry_run"]
+        )
+        assert contract["execution_contract"] == {
+            "model_invoked": False,
+            "database_written": False,
+            "runtime_imported": False,
+            "business_secrets_read": False,
+        }
+
+
+def test_final_chain_control_cli_env_check_and_adapter_contracts() -> None:
+    env_completed = subprocess.run(
+        [sys.executable, "tools/final_chain_control.py", "env-check", "--chain-id", "doc_math"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert env_completed.returncode == 2
+    env_payload = json.loads(env_completed.stdout)
+    assert env_payload["schema_version"] == "final_chain_environment_report.v0.1"
+    assert env_payload["chain_count"] == 1
+    assert env_payload["chains"][0]["chain_id"] == "doc_math"
+    assert env_payload["chains"][0]["status"] == "blocked"
+
+    adapter_completed = subprocess.run(
+        [sys.executable, "tools/final_chain_control.py", "adapter-contracts", "--chain-id", "pdf_math"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert adapter_completed.returncode == 0
+    adapter_payload = json.loads(adapter_completed.stdout)
+    assert adapter_payload["ok"] is True
+    assert adapter_payload["contracts"][0]["chain_id"] == "pdf_math"

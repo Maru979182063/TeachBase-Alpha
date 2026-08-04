@@ -8,6 +8,8 @@ from teachbase.final_chains import (
     ChainRunRequest,
     EnvironmentPolicy,
     build_chain_run_plan,
+    inspect_adapter_contracts,
+    inspect_registry_environments,
     load_final_chain_registry,
     schedule_chain_run,
 )
@@ -66,6 +68,32 @@ def build_schedule(args: argparse.Namespace) -> dict:
     return schedule_chain_run(registry, request, workspace_root=ROOT)
 
 
+def build_env_check(args: argparse.Namespace) -> dict:
+    registry = load_final_chain_registry(Path(args.registry))
+    report = inspect_registry_environments(registry, workspace_root=ROOT)
+    if args.chain_id:
+        report = {
+            **report,
+            "chains": [item for item in report["chains"] if item["chain_id"] == args.chain_id],
+        }
+        report["chain_count"] = len(report["chains"])
+        report["ready_count"] = sum(1 for item in report["chains"] if item["status"] == "ready")
+        report["blocked_count"] = sum(1 for item in report["chains"] if item["status"] == "blocked")
+    return report
+
+
+def build_adapter_contracts(args: argparse.Namespace) -> dict:
+    registry = load_final_chain_registry(Path(args.registry))
+    report = inspect_adapter_contracts(registry)
+    if args.chain_id:
+        report = {
+            **report,
+            "contracts": [item for item in report["contracts"] if item["chain_id"] == args.chain_id],
+        }
+        report["chain_count"] = len(report["contracts"])
+    return report
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Inspect and plan protected TeachBase final-chain runs.")
     parser.add_argument("--registry", default=str(DEFAULT_REGISTRY.relative_to(ROOT)))
@@ -89,16 +117,28 @@ def main() -> int:
     schedule_parser.add_argument("--output-root", default="outputs/final_chain_runs")
     schedule_parser.add_argument("--environment", default="local_dry_run")
 
+    env_parser = subparsers.add_parser("env-check", help="Inspect cleanroom environment readiness for final chains.")
+    env_parser.add_argument("--chain-id", default="")
+
+    adapter_parser = subparsers.add_parser("adapter-contracts", help="Print adapter contracts for protected final chains.")
+    adapter_parser.add_argument("--chain-id", default="")
+
     args = parser.parse_args()
     if args.command == "list":
         result = list_chains(Path(args.registry))
     elif args.command == "schedule":
         result = build_schedule(args)
+    elif args.command == "env-check":
+        result = build_env_check(args)
+    elif args.command == "adapter-contracts":
+        result = build_adapter_contracts(args)
     else:
         result = build_plan(args)
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    if args.command == "list":
+    if args.command in {"list", "adapter-contracts"}:
         return 0
+    if args.command == "env-check":
+        return 0 if result.get("blocked_count") == 0 else 2
     status = result.get("status")
     if status in {"blocked", "rejected", "scheduled_blocked"}:
         return 2
