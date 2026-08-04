@@ -37,6 +37,8 @@ REQUIRED_REPORTS = {
     "final_chain_ready_samples",
     "final_chain_batch_queue",
     "final_chain_batch_queue_validation",
+    "final_chain_orchestrator_handshake",
+    "final_chain_orchestrator_handshake_validation",
     "pdf_english_recovery_validation",
     "pdf_english_recovery_source_audit",
 }

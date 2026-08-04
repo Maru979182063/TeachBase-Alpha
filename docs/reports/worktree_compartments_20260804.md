@@ -5,7 +5,7 @@ All paths are relative git paths; no local absolute path is part of the reproduc
 
 ## Counts
 
-- `final_chain_registry`: 11
+- `final_chain_registry`: 14
 - `foundation_hardening`: 1
 - `mixed_control_file`: 1
 - `worktree_compartment_report`: 1
@@ -29,6 +29,9 @@ All paths are relative git paths; no local absolute path is part of the reproduc
 - ` M` `worktree_compartment_report` `tools/build_worktree_compartment_report.py`: review compartment documentation and report generator
 - ` M` `final_chain_registry` `tools/run_final_chain_ops_gate.py`: protected-chain inventory, classifier, or cleanup candidate audit
 - ` M` `final_chain_registry` `tools/validate_cleanroom_hardening_manifest.py`: protected-chain inventory, classifier, or cleanup candidate audit
-- `??` `final_chain_registry` `docs/reports/final_chain_batch_queue_validation_20260804.json`: protected-chain inventory, classifier, or cleanup candidate audit
-- `??` `final_chain_registry` `docs/reports/final_chain_batch_queue_validation_20260804.md`: protected-chain inventory, classifier, or cleanup candidate audit
-- `??` `final_chain_registry` `tools/validate_final_chain_batch_queue_report.py`: protected-chain inventory, classifier, or cleanup candidate audit
+- `??` `final_chain_registry` `docs/reports/final_chain_orchestrator_handshake_20260804.json`: protected-chain inventory, classifier, or cleanup candidate audit
+- `??` `final_chain_registry` `docs/reports/final_chain_orchestrator_handshake_20260804.md`: protected-chain inventory, classifier, or cleanup candidate audit
+- `??` `final_chain_registry` `docs/reports/final_chain_orchestrator_handshake_validation_20260804.json`: protected-chain inventory, classifier, or cleanup candidate audit
+- `??` `final_chain_registry` `docs/reports/final_chain_orchestrator_handshake_validation_20260804.md`: protected-chain inventory, classifier, or cleanup candidate audit
+- `??` `final_chain_registry` `tools/build_final_chain_orchestrator_handshake.py`: protected-chain inventory, classifier, or cleanup candidate audit
+- `??` `final_chain_registry` `tools/validate_final_chain_orchestrator_handshake.py`: protected-chain inventory, classifier, or cleanup candidate audit

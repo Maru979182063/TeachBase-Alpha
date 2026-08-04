@@ -8,7 +8,7 @@
     "review mixed_control_file changes line-by-line before staging"
   ],
   "counts": {
-    "final_chain_registry": 11,
+    "final_chain_registry": 14,
     "foundation_hardening": 1,
     "mixed_control_file": 1,
     "worktree_compartment_report": 1
@@ -108,7 +108,7 @@
     },
     {
       "status": "??",
-      "path": "docs/reports/final_chain_batch_queue_validation_20260804.json",
+      "path": "docs/reports/final_chain_orchestrator_handshake_20260804.json",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -116,7 +116,7 @@
     },
     {
       "status": "??",
-      "path": "docs/reports/final_chain_batch_queue_validation_20260804.md",
+      "path": "docs/reports/final_chain_orchestrator_handshake_20260804.md",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -124,7 +124,31 @@
     },
     {
       "status": "??",
-      "path": "tools/validate_final_chain_batch_queue_report.py",
+      "path": "docs/reports/final_chain_orchestrator_handshake_validation_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "docs/reports/final_chain_orchestrator_handshake_validation_20260804.md",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/build_final_chain_orchestrator_handshake.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/validate_final_chain_orchestrator_handshake.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"

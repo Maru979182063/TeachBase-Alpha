@@ -31,6 +31,18 @@ from tools.validate_final_chain_batch_queue_report import (
     build_validation_report as build_batch_queue_validation_report,
     render_markdown as render_batch_queue_validation_markdown,
 )
+from tools.build_final_chain_orchestrator_handshake import (
+    REPORT_JSON as ORCHESTRATOR_HANDSHAKE_JSON,
+    REPORT_MD as ORCHESTRATOR_HANDSHAKE_MD,
+    build_report as build_orchestrator_handshake_report,
+    render_markdown as render_orchestrator_handshake_markdown,
+)
+from tools.validate_final_chain_orchestrator_handshake import (
+    REPORT_JSON as ORCHESTRATOR_HANDSHAKE_VALIDATION_JSON,
+    REPORT_MD as ORCHESTRATOR_HANDSHAKE_VALIDATION_MD,
+    build_validation_report as build_orchestrator_handshake_validation_report,
+    render_markdown as render_orchestrator_handshake_validation_markdown,
+)
 from tools.validate_pdf_english_recovery import build_report as build_pdf_english_recovery_report
 
 REGISTRY = ROOT / "config" / "final_chain_registry.yaml"
@@ -50,6 +62,12 @@ def build_gate_report() -> dict[str, Any]:
     batch_queue_validation = build_batch_queue_validation_report()
     write_json(BATCH_QUEUE_VALIDATION_JSON, batch_queue_validation)
     write_text(BATCH_QUEUE_VALIDATION_MD, render_batch_queue_validation_markdown(batch_queue_validation))
+    orchestrator_handshake = build_orchestrator_handshake_report()
+    write_json(ORCHESTRATOR_HANDSHAKE_JSON, orchestrator_handshake)
+    write_text(ORCHESTRATOR_HANDSHAKE_MD, render_orchestrator_handshake_markdown(orchestrator_handshake))
+    orchestrator_handshake_validation = build_orchestrator_handshake_validation_report()
+    write_json(ORCHESTRATOR_HANDSHAKE_VALIDATION_JSON, orchestrator_handshake_validation)
+    write_text(ORCHESTRATOR_HANDSHAKE_VALIDATION_MD, render_orchestrator_handshake_validation_markdown(orchestrator_handshake_validation))
     pdf_english_blocker = build_pdf_english_source_audit_report()
     pdf_english_recovery = build_pdf_english_recovery_report()
     checks = [
@@ -121,6 +139,16 @@ def build_gate_report() -> dict[str, Any]:
             "value": batch_queue_validation["status"],
         },
         {
+            "name": "orchestrator_handshake_passes",
+            "ok": orchestrator_handshake["status"] == "pass",
+            "value": orchestrator_handshake["status"],
+        },
+        {
+            "name": "orchestrator_handshake_validation_passes",
+            "ok": orchestrator_handshake_validation["status"] == "pass",
+            "value": orchestrator_handshake_validation["status"],
+        },
+        {
             "name": "ready_sample_adapters_do_not_invoke_entrypoints",
             "ok": all(row["adapter_invoked_entrypoint"] is False for row in ready_samples["rows"]),
             "value": [row["adapter_invoked_entrypoint"] for row in ready_samples["rows"]],
@@ -185,6 +213,8 @@ def build_gate_report() -> dict[str, Any]:
                 ready_samples,
                 batch_queue,
                 batch_queue_validation,
+                orchestrator_handshake,
+                orchestrator_handshake_validation,
                 pdf_english_blocker,
                 pdf_english_recovery,
             ),
@@ -206,6 +236,8 @@ def build_gate_report() -> dict[str, Any]:
         "ready_sample_count": ready_samples["ready_for_adapter_dry_run_count"],
         "batch_queue_schema": batch_queue["schema_version"],
         "batch_queue_validation_schema": batch_queue_validation["schema_version"],
+        "orchestrator_handshake_schema": orchestrator_handshake["schema_version"],
+        "orchestrator_handshake_validation_schema": orchestrator_handshake_validation["schema_version"],
         "batch_queue_ready_count": batch_queue["scheduled_ready_count"],
         "batch_queue_blocked_count": batch_queue["scheduled_blocked_count"],
         "pdf_english_recovery_status": pdf_english_blocker["recovery_status"],

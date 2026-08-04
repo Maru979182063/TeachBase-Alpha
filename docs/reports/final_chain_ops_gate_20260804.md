@@ -14,6 +14,8 @@ Status: `pass`
 - `pass` `batch_queue_schedules_three_ready_one_blocked`
 - `pass` `batch_queue_job_records_validate`
 - `pass` `batch_queue_report_validation_passes`
+- `pass` `orchestrator_handshake_passes`
+- `pass` `orchestrator_handshake_validation_passes`
 - `pass` `ready_sample_adapters_do_not_invoke_entrypoints`
 - `pass` `control_contract_is_dry_run_only`
 - `pass` `control_contract_covers_four_chains`

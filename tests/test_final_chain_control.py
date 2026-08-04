@@ -1396,6 +1396,154 @@ def test_batch_queue_report_validator_rejects_tampered_queue_report() -> None:
     assert checks["batch_report_contains_no_absolute_paths"]["ok"] is False
 
 
+def test_orchestrator_handshake_report_summarizes_external_control_contract() -> None:
+    batch = subprocess.run(
+        [sys.executable, "tools/build_final_chain_batch_queue_report.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert batch.returncode == 0
+    batch_validation = subprocess.run(
+        [sys.executable, "tools/validate_final_chain_batch_queue_report.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert batch_validation.returncode == 0
+
+    completed = subprocess.run(
+        [sys.executable, "tools/build_final_chain_orchestrator_handshake.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    checks = {item["name"]: item for item in payload["checks"]}
+    assert payload["schema_version"] == "final_chain_orchestrator_handshake.v0.1"
+    assert payload["status"] == "pass"
+    assert payload["consumer_role"] == "external_orchestrator_or_java_backbone"
+    assert payload["chain_ids"] == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
+    assert payload["ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math"]
+    assert payload["blocked_chain_ids"] == ["pdf_english"]
+    assert payload["blocked_chain_policy"]["pdf_english"]["start_forbidden"] is True
+    assert payload["commands"]["queue"] == "tools/final_chain_control.py queue --sample-input <chain_id=path> --json"
+    assert checks["required_commands_are_declared"]["ok"] is True
+    assert checks["filesystem_contract_is_outputs_only"]["ok"] is True
+    assert checks["job_lifecycle_blocks_scheduled_blocked_start"]["ok"] is True
+    assert checks["batch_queue_validation_passes"]["ok"] is True
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
+def test_orchestrator_handshake_validator_accepts_sealed_handshake() -> None:
+    handshake = subprocess.run(
+        [sys.executable, "tools/build_final_chain_orchestrator_handshake.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert handshake.returncode == 0
+
+    completed = subprocess.run(
+        [sys.executable, "tools/validate_final_chain_orchestrator_handshake.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    checks = {item["name"]: item for item in payload["checks"]}
+    assert payload["schema_version"] == "final_chain_orchestrator_handshake_validation.v0.1"
+    assert payload["status"] == "pass"
+    assert checks["external_orchestrator_role_is_explicit"]["ok"] is True
+    assert checks["chain_split_matches_final_chain_contract"]["ok"] is True
+    assert checks["required_command_sequence_is_stable"]["ok"] is True
+    assert checks["blocked_chain_policy_keeps_pdf_english_fail_closed"]["ok"] is True
+    assert checks["source_reports_are_relative_and_present"]["ok"] is True
+    assert checks["handshake_contains_no_absolute_paths"]["ok"] is True
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
+def test_orchestrator_handshake_validator_rejects_tampered_handshake() -> None:
+    from tools.validate_final_chain_orchestrator_handshake import _build_checks
+
+    tampered = {
+        "schema_version": "final_chain_orchestrator_handshake.v0.1",
+        "workspace_contract": "relative_git_paths_only",
+        "absolute_paths_as_inputs": False,
+        "status": "pass",
+        "consumer_role": "external_orchestrator_or_java_backbone",
+        "chain_ids": ["doc_math", "doc_english", "pdf_math", "pdf_english"],
+        "ready_chain_ids": ["doc_math", "doc_english", "pdf_math", "pdf_english"],
+        "blocked_chain_ids": [],
+        "required_command_sequence": ["contract", "queue"],
+        "commands": {
+            "contract": "tools/final_chain_control.py contract --json",
+            "queue": "D:\\unsafe\\queue.exe",
+        },
+        "filesystem_contract": {
+            "read_scope": "registered_relative_paths_only",
+            "write_scope": ["config/"],
+            "absolute_paths_as_reproducible_inputs": False,
+        },
+        "job_lifecycle_policy": {
+            "allowed_transitions": {
+                "scheduled_ready": ["dry_run_started", "cancelled"],
+                "scheduled_blocked": ["dry_run_started"],
+            }
+        },
+        "blocked_chain_policy": {
+            "pdf_english": {
+                "expected_status": "scheduled_ready",
+                "environment_gate": "ready_for_control_plane",
+                "start_forbidden": False,
+                "ready_claim_forbidden_until_manifest_recovered": False,
+            }
+        },
+        "source_reports": {
+            "control_contract": "docs/reports/final_chain_control_contract_20260804.json",
+            "environment_contract": "docs/reports/final_chain_environment_contract_20260804.json",
+            "batch_queue_validation": "D:\\unsafe\\batch.json",
+        },
+        "checks": [{"name": "batch_queue_validation_passes", "ok": True}],
+        "execution_contract": {
+            "model_invoked": False,
+            "database_written": False,
+            "runtime_imported": False,
+            "business_secrets_read": False,
+        },
+    }
+
+    checks = {item["name"]: item for item in _build_checks(tampered)}
+    assert checks["chain_split_matches_final_chain_contract"]["ok"] is False
+    assert checks["required_command_sequence_is_stable"]["ok"] is False
+    assert checks["command_map_uses_legacy_cli_only"]["ok"] is False
+    assert checks["blocked_chain_policy_keeps_pdf_english_fail_closed"]["ok"] is False
+    assert checks["filesystem_contract_limits_writes_to_outputs"]["ok"] is False
+    assert checks["job_lifecycle_policy_blocks_scheduled_blocked_start"]["ok"] is False
+    assert checks["source_reports_are_relative_and_present"]["ok"] is False
+    assert checks["handshake_contains_no_absolute_paths"]["ok"] is False
+
+
 def test_pdf_english_recovery_validator_fails_closed_without_manifest() -> None:
     completed = subprocess.run(
         [sys.executable, "tools/validate_pdf_english_recovery.py", "--require-ready"],
@@ -1467,6 +1615,8 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     assert payload["environment_blocked_chain_ids"] == ["pdf_english"]
     assert payload["batch_queue_schema"] == "final_chain_batch_queue_report.v0.1"
     assert payload["batch_queue_validation_schema"] == "final_chain_batch_queue_validation.v0.1"
+    assert payload["orchestrator_handshake_schema"] == "final_chain_orchestrator_handshake.v0.1"
+    assert payload["orchestrator_handshake_validation_schema"] == "final_chain_orchestrator_handshake_validation.v0.1"
     assert payload["batch_queue_ready_count"] == 3
     assert payload["batch_queue_blocked_count"] == 1
     assert payload["pdf_english_recovery_validation_status"] == "blocked_missing_or_invalid_manifest"
@@ -1479,6 +1629,8 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     assert checks["batch_queue_schedules_three_ready_one_blocked"]["ok"] is True
     assert checks["batch_queue_job_records_validate"]["ok"] is True
     assert checks["batch_queue_report_validation_passes"]["ok"] is True
+    assert checks["orchestrator_handshake_passes"]["ok"] is True
+    assert checks["orchestrator_handshake_validation_passes"]["ok"] is True
     assert checks["environment_contract_passes"]["ok"] is True
     assert checks["environment_contract_covers_four_profiles"]["ok"] is True
     assert checks["environment_contract_keeps_pdf_english_fail_closed"]["ok"] is True
@@ -1509,6 +1661,8 @@ def test_cleanroom_hardening_manifest_seals_current_gate_outputs() -> None:
     assert checks["required_reports_present"]["ok"] is True
     assert payload["reports"]["final_chain_batch_queue"]["status"] == "pass"
     assert payload["reports"]["final_chain_batch_queue_validation"]["status"] == "pass"
+    assert payload["reports"]["final_chain_orchestrator_handshake"]["status"] == "pass"
+    assert payload["reports"]["final_chain_orchestrator_handshake_validation"]["status"] == "pass"
     assert checks["final_chain_ops_covers_four_chains"]["ok"] is True
     assert checks["final_chain_job_records_self_and_external_validated"]["ok"] is True
     assert checks["pdf_english_is_explicit_fail_closed_blocker"]["ok"] is True

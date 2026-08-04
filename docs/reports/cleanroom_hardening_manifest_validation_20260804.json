@@ -52,6 +52,8 @@
         "final_chain_control_contract",
         "final_chain_environment_contract",
         "final_chain_ops",
+        "final_chain_orchestrator_handshake",
+        "final_chain_orchestrator_handshake_validation",
         "final_chain_ready_samples",
         "foundation_hardening",
         "pdf_english_recovery_source_audit",
@@ -71,6 +73,8 @@
         "final_chain_ready_samples": "docs/reports/final_chain_ready_sample_dry_run_20260804.json",
         "final_chain_batch_queue": "docs/reports/final_chain_batch_queue_20260804.json",
         "final_chain_batch_queue_validation": "docs/reports/final_chain_batch_queue_validation_20260804.json",
+        "final_chain_orchestrator_handshake": "docs/reports/final_chain_orchestrator_handshake_20260804.json",
+        "final_chain_orchestrator_handshake_validation": "docs/reports/final_chain_orchestrator_handshake_validation_20260804.json",
         "pdf_english_recovery_validation": "docs/reports/pdf_english_recovery_validation_20260804.json",
         "pdf_english_recovery_source_audit": "docs/reports/pdf_english_manifest_recovery_audit_20260804.json"
       }

@@ -46,6 +46,8 @@
     "audit:final-chain-ready-samples": "python tools/build_final_chain_ready_sample_report.py",
     "audit:final-chain-batch-queue": "python tools/build_final_chain_batch_queue_report.py",
     "audit:final-chain-batch-queue-validate": "python tools/validate_final_chain_batch_queue_report.py",
+    "audit:final-chain-orchestrator-handshake": "python tools/build_final_chain_orchestrator_handshake.py",
+    "audit:final-chain-orchestrator-handshake-validate": "python tools/validate_final_chain_orchestrator_handshake.py",
     "audit:pdf-english-recovery": "python tools/validate_pdf_english_recovery.py",
     "audit:pdf-english-recovery-sources": "python tools/build_pdf_english_recovery_source_audit.py",
     "final-chain:job-inspect": "python tools/final_chain_control.py job-inspect",

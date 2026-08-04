@@ -36,6 +36,8 @@
         "final_chain_ready_samples": true,
         "final_chain_batch_queue": true,
         "final_chain_batch_queue_validation": true,
+        "final_chain_orchestrator_handshake": true,
+        "final_chain_orchestrator_handshake_validation": true,
         "pdf_english_recovery_validation": true,
         "pdf_english_recovery_source_audit": true
       }
@@ -52,6 +54,8 @@
         "final_chain_ready_samples": "pass",
         "final_chain_batch_queue": "pass",
         "final_chain_batch_queue_validation": "pass",
+        "final_chain_orchestrator_handshake": "pass",
+        "final_chain_orchestrator_handshake_validation": "pass",
         "pdf_english_recovery_validation": "blocked_missing_or_invalid_manifest",
         "pdf_english_recovery_source_audit": "no_importable_source_found"
       }
@@ -158,6 +162,16 @@
         },
         {
           "name": "batch_queue_report_validation_passes",
+          "ok": true,
+          "value": "pass"
+        },
+        {
+          "name": "orchestrator_handshake_passes",
+          "ok": true,
+          "value": "pass"
+        },
+        {
+          "name": "orchestrator_handshake_validation_passes",
           "ok": true,
           "value": "pass"
         },
@@ -316,6 +330,18 @@
           "runtime_imported": false,
           "business_secrets_read": false
         },
+        "final_chain_orchestrator_handshake": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
+        },
+        "final_chain_orchestrator_handshake_validation": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
+        },
         "pdf_english_recovery_validation": {
           "model_invoked": false,
           "database_written": false,
@@ -369,6 +395,16 @@
     },
     "final_chain_batch_queue_validation": {
       "path": "docs/reports/final_chain_batch_queue_validation_20260804.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "final_chain_orchestrator_handshake": {
+      "path": "docs/reports/final_chain_orchestrator_handshake_20260804.json",
+      "exists": true,
+      "status": "pass"
+    },
+    "final_chain_orchestrator_handshake_validation": {
+      "path": "docs/reports/final_chain_orchestrator_handshake_validation_20260804.json",
       "exists": true,
       "status": "pass"
     },
