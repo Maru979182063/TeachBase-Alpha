@@ -1,0 +1,123 @@
+{
+  "schema_version": "final_chain_batch_queue_validation.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "status": "pass",
+  "batch_report_path": "docs/reports/final_chain_batch_queue_20260804.json",
+  "checks": [
+    {
+      "name": "batch_report_file_is_present_object",
+      "ok": true,
+      "value": "present"
+    },
+    {
+      "name": "batch_report_schema_contract_matches",
+      "ok": true,
+      "value": {
+        "schema_version": "final_chain_batch_queue_report.v0.1",
+        "workspace_contract": "relative_git_paths_only",
+        "absolute_paths_as_inputs": false
+      }
+    },
+    {
+      "name": "batch_report_status_passes",
+      "ok": true,
+      "value": "pass"
+    },
+    {
+      "name": "batch_report_covers_exact_four_final_chains",
+      "ok": true,
+      "value": [
+        "doc_math",
+        "doc_english",
+        "pdf_math",
+        "pdf_english"
+      ]
+    },
+    {
+      "name": "batch_queue_status_split_is_expected",
+      "ok": true,
+      "value": {
+        "scheduled_ready_count": 3,
+        "scheduled_blocked_count": 1,
+        "rejected_count": 0,
+        "statuses": {
+          "doc_math": "scheduled_ready",
+          "doc_english": "scheduled_ready",
+          "pdf_math": "scheduled_ready",
+          "pdf_english": "scheduled_blocked"
+        }
+      }
+    },
+    {
+      "name": "pdf_english_fails_closed_with_blockers",
+      "ok": true,
+      "value": [
+        "input_path_present",
+        "canonical_entrypoint_present"
+      ]
+    },
+    {
+      "name": "job_record_contract_paths_are_stable_and_under_outputs",
+      "ok": true,
+      "value": [
+        "outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json",
+        "outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json",
+        "outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json",
+        "outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json"
+      ]
+    },
+    {
+      "name": "job_record_validations_are_clean",
+      "ok": true,
+      "value": {
+        "external": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "self": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "name": "batch_report_checks_pass",
+      "ok": true,
+      "value": {
+        "batch_covers_four_registered_chains": true,
+        "three_ready_jobs_scheduled": true,
+        "pdf_english_is_scheduled_blocked": true,
+        "no_rejected_jobs": true,
+        "all_job_records_validate": true,
+        "all_job_records_written_under_outputs": true,
+        "no_runtime_side_effects_reported": true
+      }
+    },
+    {
+      "name": "execution_contract_has_no_runtime_side_effects",
+      "ok": true,
+      "value": {
+        "model_invoked": false,
+        "database_written": false,
+        "runtime_imported": false,
+        "business_secrets_read": false
+      }
+    },
+    {
+      "name": "batch_report_contains_no_absolute_paths",
+      "ok": true,
+      "value": "relative_only"
+    }
+  ],
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}

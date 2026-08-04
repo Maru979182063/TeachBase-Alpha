@@ -87,6 +87,11 @@
       }
     },
     {
+      "name": "batch_queue_report_validation_passes",
+      "ok": true,
+      "value": "pass"
+    },
+    {
       "name": "ready_sample_adapters_do_not_invoke_entrypoints",
       "ok": true,
       "value": [
@@ -196,6 +201,7 @@
   ],
   "ready_sample_count": 3,
   "batch_queue_schema": "final_chain_batch_queue_report.v0.1",
+  "batch_queue_validation_schema": "final_chain_batch_queue_validation.v0.1",
   "batch_queue_ready_count": 3,
   "batch_queue_blocked_count": 1,
   "pdf_english_recovery_status": "blocked_missing_manifest_and_smoke_artifacts",

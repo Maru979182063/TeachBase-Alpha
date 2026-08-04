@@ -18,8 +18,19 @@ from teachbase.final_chains import (
 from teachbase.infrastructure.artifact_store import write_json, write_text
 
 from tools.build_final_chain_ready_sample_report import build_report as build_ready_sample_report
-from tools.build_final_chain_batch_queue_report import build_report as build_batch_queue_report
+from tools.build_final_chain_batch_queue_report import (
+    REPORT_JSON as BATCH_QUEUE_REPORT_JSON,
+    REPORT_MD as BATCH_QUEUE_REPORT_MD,
+    build_report as build_batch_queue_report,
+    render_markdown as render_batch_queue_markdown,
+)
 from tools.build_pdf_english_recovery_source_audit import build_report as build_pdf_english_source_audit_report
+from tools.validate_final_chain_batch_queue_report import (
+    REPORT_JSON as BATCH_QUEUE_VALIDATION_JSON,
+    REPORT_MD as BATCH_QUEUE_VALIDATION_MD,
+    build_validation_report as build_batch_queue_validation_report,
+    render_markdown as render_batch_queue_validation_markdown,
+)
 from tools.validate_pdf_english_recovery import build_report as build_pdf_english_recovery_report
 
 REGISTRY = ROOT / "config" / "final_chain_registry.yaml"
@@ -34,6 +45,11 @@ def build_gate_report() -> dict[str, Any]:
     environment_contract = build_environment_interaction_contract(registry, workspace_root=ROOT)
     ready_samples = build_ready_sample_report()
     batch_queue = build_batch_queue_report()
+    write_json(BATCH_QUEUE_REPORT_JSON, batch_queue)
+    write_text(BATCH_QUEUE_REPORT_MD, render_batch_queue_markdown(batch_queue))
+    batch_queue_validation = build_batch_queue_validation_report()
+    write_json(BATCH_QUEUE_VALIDATION_JSON, batch_queue_validation)
+    write_text(BATCH_QUEUE_VALIDATION_MD, render_batch_queue_validation_markdown(batch_queue_validation))
     pdf_english_blocker = build_pdf_english_source_audit_report()
     pdf_english_recovery = build_pdf_english_recovery_report()
     checks = [
@@ -100,6 +116,11 @@ def build_gate_report() -> dict[str, Any]:
             },
         },
         {
+            "name": "batch_queue_report_validation_passes",
+            "ok": batch_queue_validation["status"] == "pass",
+            "value": batch_queue_validation["status"],
+        },
+        {
             "name": "ready_sample_adapters_do_not_invoke_entrypoints",
             "ok": all(row["adapter_invoked_entrypoint"] is False for row in ready_samples["rows"]),
             "value": [row["adapter_invoked_entrypoint"] for row in ready_samples["rows"]],
@@ -163,6 +184,7 @@ def build_gate_report() -> dict[str, Any]:
                 environment_contract,
                 ready_samples,
                 batch_queue,
+                batch_queue_validation,
                 pdf_english_blocker,
                 pdf_english_recovery,
             ),
@@ -183,6 +205,7 @@ def build_gate_report() -> dict[str, Any]:
         "environment_blocked_chain_ids": environment_contract["blocked_chain_ids"],
         "ready_sample_count": ready_samples["ready_for_adapter_dry_run_count"],
         "batch_queue_schema": batch_queue["schema_version"],
+        "batch_queue_validation_schema": batch_queue_validation["schema_version"],
         "batch_queue_ready_count": batch_queue["scheduled_ready_count"],
         "batch_queue_blocked_count": batch_queue["scheduled_blocked_count"],
         "pdf_english_recovery_status": pdf_english_blocker["recovery_status"],

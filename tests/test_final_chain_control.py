@@ -1248,6 +1248,154 @@ def test_batch_queue_report_schedules_four_chain_control_records() -> None:
     assert "/Users/" not in serialized
 
 
+def test_batch_queue_report_validator_accepts_sealed_queue_report() -> None:
+    batch = subprocess.run(
+        [sys.executable, "tools/build_final_chain_batch_queue_report.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert batch.returncode == 0
+
+    completed = subprocess.run(
+        [sys.executable, "tools/validate_final_chain_batch_queue_report.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    checks = {item["name"]: item for item in payload["checks"]}
+    assert payload["schema_version"] == "final_chain_batch_queue_validation.v0.1"
+    assert payload["status"] == "pass"
+    assert payload["batch_report_path"] == "docs/reports/final_chain_batch_queue_20260804.json"
+    assert checks["batch_report_covers_exact_four_final_chains"]["ok"] is True
+    assert checks["batch_queue_status_split_is_expected"]["ok"] is True
+    assert checks["pdf_english_fails_closed_with_blockers"]["ok"] is True
+    assert checks["job_record_contract_paths_are_stable_and_under_outputs"]["ok"] is True
+    assert checks["job_record_validations_are_clean"]["ok"] is True
+    assert checks["batch_report_contains_no_absolute_paths"]["ok"] is True
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
+def test_batch_queue_report_validator_rejects_tampered_queue_report() -> None:
+    from tools.validate_final_chain_batch_queue_report import _build_checks
+
+    tampered = {
+        "schema_version": "final_chain_batch_queue_report.v0.1",
+        "workspace_contract": "relative_git_paths_only",
+        "absolute_paths_as_inputs": False,
+        "status": "pass",
+        "chain_count": 4,
+        "scheduled_ready_count": 4,
+        "scheduled_blocked_count": 0,
+        "rejected_count": 0,
+        "rows": [
+            {
+                "chain_id": "doc_math",
+                "schedule_status": "scheduled_ready",
+                "plan_status": "ready",
+                "record_path": "outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json",
+                "record_path_contract": "outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json",
+                "record_validation_ok": True,
+                "record_validation_error_count": 0,
+                "self_validation_ok": True,
+                "self_validation_error_count": 0,
+                "blocked_reasons": [],
+                "execution_contract": {
+                    "model_invoked": False,
+                    "database_written": False,
+                    "runtime_imported": False,
+                    "business_secrets_read": False,
+                },
+            },
+            {
+                "chain_id": "doc_english",
+                "schedule_status": "scheduled_ready",
+                "plan_status": "ready",
+                "record_path": "outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json",
+                "record_path_contract": "outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json",
+                "record_validation_ok": True,
+                "record_validation_error_count": 0,
+                "self_validation_ok": True,
+                "self_validation_error_count": 0,
+                "blocked_reasons": [],
+                "execution_contract": {
+                    "model_invoked": False,
+                    "database_written": False,
+                    "runtime_imported": False,
+                    "business_secrets_read": False,
+                },
+            },
+            {
+                "chain_id": "pdf_math",
+                "schedule_status": "scheduled_ready",
+                "plan_status": "ready",
+                "record_path": "outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json",
+                "record_path_contract": "outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json",
+                "record_validation_ok": True,
+                "record_validation_error_count": 0,
+                "self_validation_ok": True,
+                "self_validation_error_count": 0,
+                "blocked_reasons": [],
+                "execution_contract": {
+                    "model_invoked": False,
+                    "database_written": False,
+                    "runtime_imported": False,
+                    "business_secrets_read": False,
+                },
+            },
+            {
+                "chain_id": "pdf_english",
+                "schedule_status": "scheduled_ready",
+                "plan_status": "ready",
+                "record_path": "D:\\unsafe\\job_record.json",
+                "record_path_contract": "D:\\unsafe\\job_record.json",
+                "record_validation_ok": True,
+                "record_validation_error_count": 0,
+                "self_validation_ok": True,
+                "self_validation_error_count": 0,
+                "blocked_reasons": [],
+                "execution_contract": {
+                    "model_invoked": False,
+                    "database_written": False,
+                    "runtime_imported": False,
+                    "business_secrets_read": False,
+                },
+            },
+        ],
+        "checks": [
+            {"name": "batch_covers_four_registered_chains", "ok": True},
+            {"name": "three_ready_jobs_scheduled", "ok": True},
+            {"name": "pdf_english_is_scheduled_blocked", "ok": True},
+            {"name": "no_rejected_jobs", "ok": True},
+            {"name": "all_job_records_validate", "ok": True},
+            {"name": "all_job_records_written_under_outputs", "ok": True},
+            {"name": "no_runtime_side_effects_reported", "ok": True},
+        ],
+        "execution_contract": {
+            "model_invoked": False,
+            "database_written": False,
+            "runtime_imported": False,
+            "business_secrets_read": False,
+        },
+    }
+
+    checks = {item["name"]: item for item in _build_checks(tampered)}
+    assert checks["batch_queue_status_split_is_expected"]["ok"] is False
+    assert checks["pdf_english_fails_closed_with_blockers"]["ok"] is False
+    assert checks["job_record_contract_paths_are_stable_and_under_outputs"]["ok"] is False
+    assert checks["batch_report_contains_no_absolute_paths"]["ok"] is False
+
+
 def test_pdf_english_recovery_validator_fails_closed_without_manifest() -> None:
     completed = subprocess.run(
         [sys.executable, "tools/validate_pdf_english_recovery.py", "--require-ready"],
@@ -1318,6 +1466,7 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     assert payload["environment_ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math"]
     assert payload["environment_blocked_chain_ids"] == ["pdf_english"]
     assert payload["batch_queue_schema"] == "final_chain_batch_queue_report.v0.1"
+    assert payload["batch_queue_validation_schema"] == "final_chain_batch_queue_validation.v0.1"
     assert payload["batch_queue_ready_count"] == 3
     assert payload["batch_queue_blocked_count"] == 1
     assert payload["pdf_english_recovery_validation_status"] == "blocked_missing_or_invalid_manifest"
@@ -1329,6 +1478,7 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     assert checks["batch_queue_covers_four_chains"]["ok"] is True
     assert checks["batch_queue_schedules_three_ready_one_blocked"]["ok"] is True
     assert checks["batch_queue_job_records_validate"]["ok"] is True
+    assert checks["batch_queue_report_validation_passes"]["ok"] is True
     assert checks["environment_contract_passes"]["ok"] is True
     assert checks["environment_contract_covers_four_profiles"]["ok"] is True
     assert checks["environment_contract_keeps_pdf_english_fail_closed"]["ok"] is True
@@ -1358,6 +1508,7 @@ def test_cleanroom_hardening_manifest_seals_current_gate_outputs() -> None:
     assert "precleanup_archive_safety_and_worktree_compartment_guard" in payload["sealed_scopes"]
     assert checks["required_reports_present"]["ok"] is True
     assert payload["reports"]["final_chain_batch_queue"]["status"] == "pass"
+    assert payload["reports"]["final_chain_batch_queue_validation"]["status"] == "pass"
     assert checks["final_chain_ops_covers_four_chains"]["ok"] is True
     assert checks["final_chain_job_records_self_and_external_validated"]["ok"] is True
     assert checks["pdf_english_is_explicit_fail_closed_blocker"]["ok"] is True
