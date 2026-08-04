@@ -182,6 +182,12 @@ def test_scheduler_records_blocked_job_inside_workspace(tmp_path: Path) -> None:
     assert record["status"] == "scheduled_blocked"
     assert record["execution_contract"]["model_invoked"] is False
     assert "environment_blocks_model_calls" in record["plan"]["blocked_reasons"]
+    assert record["request_snapshot"]["workspace_contract"] == "relative_git_paths_only"
+    assert record["request_snapshot"]["input"]["path"] == "input.pdf"
+    assert record["request_snapshot"]["input"]["sha256"] == hashlib.sha256(input_path.read_bytes()).hexdigest()
+    assert record["plan"]["workspace_contract"] == "relative_git_paths_only"
+    assert record["environment_snapshot"]["isolation_checks"]["model_calls_disabled"] is False
+    assert record["environment_snapshot"]["execution_contract"]["model_invoked"] is False
     record_path = workspace / record["record_path"]
     assert record_path.exists()
     assert json.loads(record_path.read_text(encoding="utf-8"))["job_id"] == record["job_id"]
@@ -225,7 +231,63 @@ def test_scheduler_rejects_output_root_outside_workspace(tmp_path: Path) -> None
 
     assert record["status"] == "rejected"
     assert record["record_path"] == ""
+    assert record["plan"]["output_root"] == "<outside-workspace>"
+    assert record["request_snapshot"]["output_root"]["path"] == "<outside-workspace>"
+    assert record["request_snapshot"]["output_root"]["inside_workspace"] is False
     assert not (tmp_path / "outside").exists()
+
+
+def test_scheduler_snapshots_absolute_input_as_portable_metadata(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "tools").mkdir()
+    (workspace / "tools" / "run.py").write_text("print('not imported')\n", encoding="utf-8")
+    input_path = workspace / "input.pdf"
+    input_path.write_text("pdf placeholder\n", encoding="utf-8")
+    registry_path = workspace / "final_chain_registry.yaml"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "final_chain_registry.v0.1",
+                "selection_policy": {},
+                "chains": [
+                    {
+                        "chain_id": "pdf_math",
+                        "display_name": "PDF Math",
+                        "input_format": "pdf",
+                        "subject": "math",
+                        "protection_status": "protected",
+                        "registry_readiness": "ready",
+                        "confidence": "high",
+                        "canonical_entrypoint": "tools/run.py",
+                        "smoke_status": {"status": "pass"},
+                        "runtime_import_policy": {"default_enabled": False},
+                        "database_write_policy": {"default_enabled": False},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    registry = load_final_chain_registry(registry_path)
+    request = ChainRunRequest(
+        chain_id="pdf_math",
+        input_path=str(input_path),
+        output_root="outputs/final_chain_runs",
+    )
+
+    record = schedule_chain_run(registry, request, workspace_root=workspace)
+
+    assert record["status"] == "scheduled_ready"
+    assert record["request_snapshot"]["input"]["path"] == "input.pdf"
+    assert record["plan"]["input_path"] == "input.pdf"
+    assert record["request_snapshot"]["input"]["size_bytes"] == input_path.stat().st_size
+    assert str(workspace) not in json.dumps(record)
+    assert record["environment_snapshot"]["isolation_checks"] == {
+        "model_calls_disabled": True,
+        "database_writes_disabled": True,
+        "runtime_import_disabled": True,
+    }
 
 
 def test_job_lifecycle_allows_only_guarded_dry_run_transitions(tmp_path: Path) -> None:

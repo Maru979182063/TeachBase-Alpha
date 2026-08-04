@@ -9,7 +9,7 @@
   ],
   "counts": {
     "foundation_hardening": 1,
-    "final_chain_registry": 2
+    "final_chain_registry": 3
   },
   "records": [
     {
@@ -22,7 +22,7 @@
     },
     {
       "status": " M",
-      "path": "tests/test_final_chain_control.py",
+      "path": "src/teachbase/final_chains/__init__.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -30,7 +30,15 @@
     },
     {
       "status": " M",
-      "path": "tools/final_chain_control.py",
+      "path": "src/teachbase/final_chains/control.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "tests/test_final_chain_control.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -131,6 +132,96 @@ def _is_inside(path: Path, parent: Path) -> bool:
     return resolved == parent_resolved or parent_resolved in resolved.parents
 
 
+def _portable_path(workspace_root: Path, path: Path) -> str:
+    try:
+        if _is_inside(path, workspace_root):
+            return str(path.resolve().relative_to(workspace_root.resolve())).replace("\\", "/")
+    except OSError:
+        pass
+    return "<outside-workspace>"
+
+
+def _file_fingerprint(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        return {
+            "exists": False,
+            "kind": "missing",
+            "size_bytes": 0,
+            "sha256": "",
+        }
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return {
+        "exists": True,
+        "kind": "file",
+        "size_bytes": path.stat().st_size,
+        "sha256": digest.hexdigest(),
+    }
+
+
+def build_request_snapshot(request: ChainRunRequest, *, workspace_root: Path) -> dict[str, Any]:
+    input_path = _resolve_under_workspace(workspace_root, request.input_path)
+    output_root = _resolve_under_workspace(workspace_root, request.output_root)
+    return {
+        "schema_version": "final_chain_request_snapshot.v0.1",
+        "workspace_contract": "relative_git_paths_only",
+        "absolute_paths_as_inputs": False,
+        "chain_id": request.chain_id,
+        "dry_run": request.dry_run,
+        "input": {
+            "path": _portable_path(workspace_root, input_path),
+            **_file_fingerprint(input_path),
+        },
+        "output_root": {
+            "path": _portable_path(workspace_root, output_root),
+            "inside_workspace": _is_inside(output_root, workspace_root),
+        },
+    }
+
+
+def build_environment_snapshot(request: ChainRunRequest) -> dict[str, Any]:
+    return {
+        "schema_version": "final_chain_environment_snapshot.v0.1",
+        "profile_name": request.environment.name,
+        "allow_model_calls": request.environment.allow_model_calls,
+        "allow_database_writes": request.environment.allow_database_writes,
+        "allow_runtime_import": request.environment.allow_runtime_import,
+        "isolation_checks": {
+            "model_calls_disabled": request.environment.allow_model_calls is False,
+            "database_writes_disabled": request.environment.allow_database_writes is False,
+            "runtime_import_disabled": request.environment.allow_runtime_import is False,
+        },
+        "execution_contract": {
+            "model_invoked": False,
+            "database_written": False,
+            "runtime_imported": False,
+            "business_secrets_read": False,
+        },
+    }
+
+
+def _portable_record_value(value: Any, *, workspace_root: Path) -> Any:
+    if isinstance(value, dict):
+        return {key: _portable_record_value(item, workspace_root=workspace_root) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_portable_record_value(item, workspace_root=workspace_root) for item in value]
+    if isinstance(value, str):
+        path = Path(value)
+        if path.is_absolute():
+            return _portable_path(workspace_root, path)
+    return value
+
+
+def _portable_plan_snapshot(plan: dict[str, Any], *, workspace_root: Path) -> dict[str, Any]:
+    snapshot = _portable_record_value(plan, workspace_root=workspace_root)
+    if isinstance(snapshot, dict):
+        snapshot["workspace_contract"] = "relative_git_paths_only"
+        snapshot["absolute_paths_as_inputs"] = False
+    return snapshot
+
+
 def build_chain_run_plan(
     registry: FinalChainRegistry,
     request: ChainRunRequest,
@@ -209,6 +300,7 @@ def schedule_chain_run(
     workspace_root: Path,
 ) -> dict[str, Any]:
     plan = build_chain_run_plan(registry, request, workspace_root=workspace_root)
+    portable_plan = _portable_plan_snapshot(plan, workspace_root=workspace_root)
     output_check = next((check for check in plan["checks"] if check["name"] == "output_root_inside_workspace"), None)
     if output_check is None or not output_check["ok"]:
         return {
@@ -218,7 +310,9 @@ def schedule_chain_run(
             "status": "rejected",
             "chain_id": request.chain_id,
             "record_path": "",
-            "plan": plan,
+            "plan": portable_plan,
+            "request_snapshot": build_request_snapshot(request, workspace_root=workspace_root),
+            "environment_snapshot": build_environment_snapshot(request),
             "execution_contract": plan["execution_contract"],
             "errors": [{"code": "output_root_outside_workspace"}],
         }
@@ -235,7 +329,9 @@ def schedule_chain_run(
         "status": status,
         "chain_id": request.chain_id,
         "record_path": str(record_path.relative_to(workspace_root)).replace("\\", "/"),
-        "plan": plan,
+        "plan": portable_plan,
+        "request_snapshot": build_request_snapshot(request, workspace_root=workspace_root),
+        "environment_snapshot": build_environment_snapshot(request),
         "lifecycle": build_job_lifecycle(status, created_at=created_at),
         "execution_contract": plan["execution_contract"],
         "errors": [],

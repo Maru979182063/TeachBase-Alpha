@@ -5,7 +5,7 @@ All paths are relative git paths; no local absolute path is part of the reproduc
 
 ## Counts
 
-- `final_chain_registry`: 2
+- `final_chain_registry`: 3
 - `foundation_hardening`: 1
 
 ## Commit Handling
@@ -17,5 +17,6 @@ All paths are relative git paths; no local absolute path is part of the reproduc
 ## Records
 
 - ` M` `foundation_hardening` `docs/reports/foundation_hardening_test_report_20260803.json`: artifact atomicity or model retry/checkpoint hardening
+- ` M` `final_chain_registry` `src/teachbase/final_chains/__init__.py`: protected-chain inventory, classifier, or cleanup candidate audit
+- ` M` `final_chain_registry` `src/teachbase/final_chains/control.py`: protected-chain inventory, classifier, or cleanup candidate audit
 - ` M` `final_chain_registry` `tests/test_final_chain_control.py`: protected-chain inventory, classifier, or cleanup candidate audit
-- ` M` `final_chain_registry` `tools/final_chain_control.py`: protected-chain inventory, classifier, or cleanup candidate audit
