@@ -17,6 +17,7 @@ from .environment import (
     inspect_chain_environment,
     inspect_registry_environments,
 )
+from .readiness import build_readiness_matrix
 
 __all__ = [
     "ChainRunRequest",
@@ -34,4 +35,5 @@ __all__ = [
     "inspect_adapter_contracts",
     "inspect_chain_environment",
     "inspect_registry_environments",
+    "build_readiness_matrix",
 ]

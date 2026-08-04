@@ -32,6 +32,7 @@
     "final-chain:adapter-contracts": "python tools/final_chain_control.py adapter-contracts",
     "final-chain:adapter-describe": "python tools/final_chain_control.py adapter-describe",
     "final-chain:adapter-dry-run": "python tools/final_chain_control.py adapter-dry-run",
+    "final-chain:readiness-matrix": "python tools/final_chain_control.py readiness-matrix",
     "test:cleanup-candidates": "python -m pytest tests/test_cleanup_candidate_report.py -q",
     "test:repository-rescue-phase1": "python tools/run_repository_rescue_phase1_gate.py",
     "test:architecture-boundaries": "python -m pytest tests/test_architecture_boundaries.py -q",

@@ -9,6 +9,7 @@ from teachbase.final_chains import (
     EnvironmentPolicy,
     build_final_chain_adapters,
     build_chain_run_plan,
+    build_readiness_matrix,
     describe_adapters,
     inspect_adapter_contracts,
     inspect_registry_environments,
@@ -122,6 +123,28 @@ def build_adapter_dry_run(args: argparse.Namespace) -> dict:
     return adapter.dry_run(request)
 
 
+def build_readiness(args: argparse.Namespace) -> dict:
+    registry = load_final_chain_registry(Path(args.registry))
+    sample_inputs = {}
+    for item in args.sample_input or []:
+        chain_id, sep, value = item.partition("=")
+        if sep:
+            sample_inputs[chain_id] = value
+    report = build_readiness_matrix(registry, workspace_root=ROOT, sample_inputs=sample_inputs)
+    if args.chain_id:
+        report = {
+            **report,
+            "rows": [item for item in report["rows"] if item["chain_id"] == args.chain_id],
+        }
+        report["chain_count"] = len(report["rows"])
+        tier_counts: dict[str, int] = {}
+        for row in report["rows"]:
+            tier_counts[row["readiness_tier"]] = tier_counts.get(row["readiness_tier"], 0) + 1
+        report["tier_counts"] = tier_counts
+        report["ready_for_adapter_dry_run_count"] = tier_counts.get("ready_for_adapter_dry_run", 0)
+    return report
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Inspect and plan protected TeachBase final-chain runs.")
     parser.add_argument("--registry", default=str(DEFAULT_REGISTRY.relative_to(ROOT)))
@@ -160,6 +183,14 @@ def main() -> int:
     adapter_dry_run_parser.add_argument("--output-root", default="outputs/final_chain_runs")
     adapter_dry_run_parser.add_argument("--environment", default="local_dry_run")
 
+    readiness_parser = subparsers.add_parser("readiness-matrix", help="Summarize final-chain adapter readiness.")
+    readiness_parser.add_argument("--chain-id", default="")
+    readiness_parser.add_argument(
+        "--sample-input",
+        action="append",
+        help="Optional chain_id=path sample input used for adapter dry-run readiness.",
+    )
+
     args = parser.parse_args()
     if args.command == "list":
         result = list_chains(Path(args.registry))
@@ -173,10 +204,12 @@ def main() -> int:
         result = build_adapter_descriptions(args)
     elif args.command == "adapter-dry-run":
         result = build_adapter_dry_run(args)
+    elif args.command == "readiness-matrix":
+        result = build_readiness(args)
     else:
         result = build_plan(args)
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    if args.command in {"list", "adapter-contracts", "adapter-describe"}:
+    if args.command in {"list", "adapter-contracts", "adapter-describe", "readiness-matrix"}:
         return 0
     if args.command == "adapter-dry-run":
         return 0 if result.get("status") == "dry_run_ready" else 2

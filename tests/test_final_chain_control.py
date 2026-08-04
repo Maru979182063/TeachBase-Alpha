@@ -12,6 +12,7 @@ from teachbase.final_chains import (
     EnvironmentPolicy,
     build_final_chain_adapters,
     build_chain_run_plan,
+    build_readiness_matrix,
     describe_adapters,
     inspect_adapter_contracts,
     inspect_registry_environments,
@@ -371,3 +372,64 @@ def test_final_chain_control_cli_adapter_describe_and_dry_run(tmp_path: Path) ->
     dry_run_payload = json.loads(dry_run_completed.stdout)
     assert dry_run_payload["status"] == "dry_run_ready"
     assert dry_run_payload["adapter_invoked_entrypoint"] is False
+
+
+def test_readiness_matrix_summarizes_four_chain_import_and_dry_run_gaps() -> None:
+    registry = load_final_chain_registry(REGISTRY)
+
+    report = build_readiness_matrix(registry, workspace_root=ROOT)
+
+    assert report["schema_version"] == "final_chain_readiness_matrix.v0.1"
+    assert report["chain_count"] == 4
+    assert report["model_invoked"] is False
+    assert report["database_written"] is False
+    assert report["runtime_imported"] is False
+    by_id = {item["chain_id"]: item for item in report["rows"]}
+    assert by_id["pdf_math"]["readiness_tier"] == "environment_ready_input_needed"
+    assert by_id["doc_math"]["readiness_tier"] == "cleanroom_import_required"
+    assert by_id["pdf_english"]["readiness_tier"] == "restore_or_rerun_required"
+    assert "import_or_restore_canonical_entrypoint_and_configs" in by_id["doc_english"]["recommended_actions"]
+
+
+def test_readiness_matrix_uses_sample_input_to_mark_adapter_dry_run_ready(tmp_path: Path) -> None:
+    registry = load_final_chain_registry(REGISTRY)
+    sample = tmp_path / "sample.pdf"
+    sample.write_text("pdf placeholder", encoding="utf-8")
+
+    report = build_readiness_matrix(registry, workspace_root=ROOT, sample_inputs={"pdf_math": str(sample)})
+
+    by_id = {item["chain_id"]: item for item in report["rows"]}
+    assert by_id["pdf_math"]["readiness_tier"] == "ready_for_adapter_dry_run"
+    assert by_id["pdf_math"]["adapter_dry_run_status"] == "dry_run_ready"
+    assert by_id["pdf_math"]["recommended_actions"] == [
+        "wire_real_adapter_dry_run_without_model_or_database_side_effects"
+    ]
+
+
+def test_final_chain_control_cli_readiness_matrix(tmp_path: Path) -> None:
+    sample = tmp_path / "sample.pdf"
+    sample.write_text("pdf placeholder", encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/final_chain_control.py",
+            "readiness-matrix",
+            "--chain-id",
+            "pdf_math",
+            "--sample-input",
+            f"pdf_math={sample}",
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    assert payload["schema_version"] == "final_chain_readiness_matrix.v0.1"
+    assert payload["chain_count"] == 1
+    assert payload["rows"][0]["chain_id"] == "pdf_math"
+    assert payload["rows"][0]["readiness_tier"] == "ready_for_adapter_dry_run"
