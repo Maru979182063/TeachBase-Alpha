@@ -41,6 +41,8 @@ FINAL_CHAIN_PATHS = {
     "docs/reports/docx_math_final_import_20260804.md",
     "docs/reports/doc_english_code_import_20260804.json",
     "docs/reports/doc_english_code_import_20260804.md",
+    "docs/reports/pdf_english_manifest_recovery_audit_20260804.json",
+    "docs/reports/pdf_english_manifest_recovery_audit_20260804.md",
     "docs/reports/final_chain_surface_classification_cleanroom_20260731.json",
     "docs/reports/final_chain_surface_classification_cleanroom_20260731.md",
     "docs/reports/final_chain_surface_classification_old_local_20260731.json",
