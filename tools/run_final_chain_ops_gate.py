@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
-from teachbase.final_chains import build_final_chain_control_dashboard, load_final_chain_registry
+from teachbase.final_chains import build_final_chain_control_contract, build_final_chain_control_dashboard, load_final_chain_registry
 from teachbase.infrastructure.artifact_store import write_json, write_text
 
 from tools.build_final_chain_ready_sample_report import build_report as build_ready_sample_report
@@ -24,6 +24,7 @@ REPORT_MD = ROOT / "docs" / "reports" / "final_chain_ops_gate_20260804.md"
 def build_gate_report() -> dict[str, Any]:
     registry = load_final_chain_registry(REGISTRY)
     dashboard = build_final_chain_control_dashboard(registry, workspace_root=ROOT)
+    control_contract = build_final_chain_control_contract(registry)
     ready_samples = build_ready_sample_report()
     pdf_english_blocker = build_pdf_english_source_audit_report()
     pdf_english_recovery = build_pdf_english_recovery_report()
@@ -59,6 +60,17 @@ def build_gate_report() -> dict[str, Any]:
             "value": [row["adapter_invoked_entrypoint"] for row in ready_samples["rows"]],
         },
         {
+            "name": "control_contract_is_dry_run_only",
+            "ok": control_contract["control_plane_contract"]["dry_run_only"] is True
+            and control_contract["control_plane_contract"]["execute_intent_blocked"] is True,
+            "value": control_contract["control_plane_contract"],
+        },
+        {
+            "name": "control_contract_covers_four_chains",
+            "ok": control_contract["chain_ids"] == ["doc_math", "doc_english", "pdf_math", "pdf_english"],
+            "value": control_contract["chain_ids"],
+        },
+        {
             "name": "pdf_english_recovery_blocker_is_explicit",
             "ok": pdf_english_blocker["recovery_status"] == "blocked_missing_manifest_and_smoke_artifacts",
             "value": pdf_english_blocker["recovery_status"],
@@ -80,7 +92,7 @@ def build_gate_report() -> dict[str, Any]:
         },
         {
             "name": "no_runtime_side_effects_reported",
-            "ok": all_no_side_effects(dashboard, ready_samples, pdf_english_blocker, pdf_english_recovery),
+            "ok": all_no_side_effects(dashboard, control_contract, ready_samples, pdf_english_blocker, pdf_english_recovery),
             "value": "model/database/runtime/secrets all false",
         },
     ]
@@ -92,6 +104,7 @@ def build_gate_report() -> dict[str, Any]:
         "status": "pass" if not failed else "fail",
         "checks": checks,
         "dashboard_lane_counts": dashboard["lane_counts"],
+        "control_contract_schema": control_contract["schema_version"],
         "ready_sample_count": ready_samples["ready_for_adapter_dry_run_count"],
         "pdf_english_recovery_status": pdf_english_blocker["recovery_status"],
         "pdf_english_recovery_source_audit_status": pdf_english_blocker["source_audit_status"],

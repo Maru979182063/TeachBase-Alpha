@@ -1,0 +1,117 @@
+{
+  "schema_version": "final_chain_control_contract.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "consumer_role": "external_orchestrator_or_java_backbone",
+  "chain_count": 4,
+  "chain_ids": [
+    "doc_math",
+    "doc_english",
+    "pdf_math",
+    "pdf_english"
+  ],
+  "control_plane_contract": {
+    "dry_run_only": true,
+    "execute_intent_blocked": true,
+    "scheduler_writes_only_under": "outputs/",
+    "adapter_dry_run_invokes_entrypoint": false,
+    "requires_existing_input_file": true,
+    "requires_protected_chain_registry": true,
+    "portable_record_snapshots_required": true
+  },
+  "forbidden_side_effects": {
+    "model_calls": true,
+    "database_writes": true,
+    "runtime_imports": true,
+    "business_secret_reads": true
+  },
+  "required_job_record_sections": [
+    "plan",
+    "request_snapshot",
+    "environment_snapshot",
+    "lifecycle",
+    "execution_contract"
+  ],
+  "commands": {
+    "list": "tools/final_chain_control.py list --json",
+    "plan": "tools/final_chain_control.py plan --chain-id <chain_id> --input <path> --json",
+    "schedule": "tools/final_chain_control.py schedule --chain-id <chain_id> --input <path>",
+    "adapter_dry_run": "tools/final_chain_control.py adapter-dry-run --chain-id <chain_id> --input <path> --json",
+    "job_inspect": "tools/final_chain_control.py job-inspect --record <relative_record_path> --json",
+    "job_transition": "tools/final_chain_control.py job-transition --record <relative_record_path> --status <status> --reason <reason> --json"
+  },
+  "job_lifecycle_policy": {
+    "schema_version": "final_chain_job_lifecycle.v0.1",
+    "terminal_statuses": [
+      "cancelled",
+      "dry_run_failed",
+      "dry_run_passed",
+      "rejected",
+      "scheduled_blocked"
+    ],
+    "allowed_transitions": {
+      "cancelled": [],
+      "dry_run_failed": [],
+      "dry_run_passed": [],
+      "dry_run_started": [
+        "dry_run_passed",
+        "dry_run_failed",
+        "cancelled"
+      ],
+      "rejected": [],
+      "scheduled_blocked": [],
+      "scheduled_ready": [
+        "dry_run_started",
+        "cancelled"
+      ]
+    }
+  },
+  "chain_contracts": [
+    {
+      "chain_id": "doc_math",
+      "input_format": "docx",
+      "subject": "math",
+      "registry_readiness": "ready",
+      "protection_status": "protected",
+      "canonical_entrypoint": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+      "runtime_import_default_enabled": false,
+      "database_write_default_enabled": false
+    },
+    {
+      "chain_id": "doc_english",
+      "input_format": "docx",
+      "subject": "english",
+      "registry_readiness": "ready_for_protected_segment",
+      "protection_status": "protected",
+      "canonical_entrypoint": "tools/english_docx_native_md_v01.py",
+      "runtime_import_default_enabled": false,
+      "database_write_default_enabled": false
+    },
+    {
+      "chain_id": "pdf_math",
+      "input_format": "pdf",
+      "subject": "math",
+      "registry_readiness": "ready",
+      "protection_status": "protected",
+      "canonical_entrypoint": "tools/run_question_ingest_skill.py",
+      "runtime_import_default_enabled": false,
+      "database_write_default_enabled": false
+    },
+    {
+      "chain_id": "pdf_english",
+      "input_format": "pdf",
+      "subject": "english",
+      "registry_readiness": "protected_definition_ready_needs_artifact_restore_or_smoke_rerun",
+      "protection_status": "protected",
+      "canonical_entrypoint": "config/english_text_first_graph_first/active_manifest.json",
+      "runtime_import_default_enabled": false,
+      "database_write_default_enabled": false
+    }
+  ],
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}

@@ -23,6 +23,7 @@ from .environment import (
 from .readiness import build_readiness_matrix
 from .jobs import inspect_job_record, inspect_job_record_path, transition_job_record, transition_job_record_path
 from .dashboard import build_final_chain_control_dashboard
+from .control_contract import build_final_chain_control_contract
 from .import_audit import build_cleanroom_import_audit
 
 __all__ = [
@@ -50,5 +51,6 @@ __all__ = [
     "transition_job_record",
     "transition_job_record_path",
     "build_final_chain_control_dashboard",
+    "build_final_chain_control_contract",
     "build_cleanroom_import_audit",
 ]

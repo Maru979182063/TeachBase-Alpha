@@ -43,6 +43,29 @@
       ]
     },
     {
+      "name": "control_contract_is_dry_run_only",
+      "ok": true,
+      "value": {
+        "dry_run_only": true,
+        "execute_intent_blocked": true,
+        "scheduler_writes_only_under": "outputs/",
+        "adapter_dry_run_invokes_entrypoint": false,
+        "requires_existing_input_file": true,
+        "requires_protected_chain_registry": true,
+        "portable_record_snapshots_required": true
+      }
+    },
+    {
+      "name": "control_contract_covers_four_chains",
+      "ok": true,
+      "value": [
+        "doc_math",
+        "doc_english",
+        "pdf_math",
+        "pdf_english"
+      ]
+    },
+    {
       "name": "pdf_english_recovery_blocker_is_explicit",
       "ok": true,
       "value": "blocked_missing_manifest_and_smoke_artifacts"
@@ -79,6 +102,7 @@
     "needs_sample_input": 3,
     "needs_artifact_restore_or_smoke": 1
   },
+  "control_contract_schema": "final_chain_control_contract.v0.1",
   "ready_sample_count": 3,
   "pdf_english_recovery_status": "blocked_missing_manifest_and_smoke_artifacts",
   "pdf_english_recovery_source_audit_status": "no_importable_source_found",

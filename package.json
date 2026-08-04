@@ -43,6 +43,7 @@
     "audit:pdf-english-recovery-sources": "python tools/build_pdf_english_recovery_source_audit.py",
     "final-chain:job-inspect": "python tools/final_chain_control.py job-inspect",
     "final-chain:job-transition": "python tools/final_chain_control.py job-transition",
+    "audit:final-chain-control-contract": "python tools/build_final_chain_control_contract.py",
     "test:cleanup-candidates": "python -m pytest tests/test_cleanup_candidate_report.py -q",
     "test:repository-rescue-phase1": "python tools/run_repository_rescue_phase1_gate.py",
     "test:architecture-boundaries": "python -m pytest tests/test_architecture_boundaries.py -q",

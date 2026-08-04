@@ -15,6 +15,7 @@ from teachbase.final_chains import (
     build_final_chain_control_dashboard,
     build_chain_run_plan,
     build_cleanroom_import_audit,
+    build_final_chain_control_contract,
     build_readiness_matrix,
     describe_adapters,
     inspect_adapter_contracts,
@@ -835,6 +836,45 @@ def test_final_chain_control_dashboard_groups_chains_by_scheduling_lane() -> Non
     ]
 
 
+def test_final_chain_control_contract_is_external_orchestrator_safe() -> None:
+    registry = load_final_chain_registry(REGISTRY)
+
+    report = build_final_chain_control_contract(registry)
+
+    assert report["schema_version"] == "final_chain_control_contract.v0.1"
+    assert report["consumer_role"] == "external_orchestrator_or_java_backbone"
+    assert report["chain_ids"] == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
+    assert report["control_plane_contract"]["dry_run_only"] is True
+    assert report["control_plane_contract"]["execute_intent_blocked"] is True
+    assert report["control_plane_contract"]["scheduler_writes_only_under"] == "outputs/"
+    assert all(report["forbidden_side_effects"].values())
+    assert report["execution_contract"] == {
+        "model_invoked": False,
+        "database_written": False,
+        "runtime_imported": False,
+        "business_secrets_read": False,
+    }
+
+
+def test_final_chain_control_contract_report_has_no_absolute_paths() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/build_final_chain_control_contract.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    assert payload["schema_version"] == "final_chain_control_contract.v0.1"
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
 def test_final_chain_control_cli_dashboard_filters_one_chain(tmp_path: Path) -> None:
     sample = tmp_path / "sample.pdf"
     sample.write_text("pdf placeholder", encoding="utf-8")
@@ -961,11 +1001,14 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     payload = json.loads(completed.stdout)
     checks = {item["name"]: item for item in payload["checks"]}
     assert payload["status"] == "pass"
+    assert payload["control_contract_schema"] == "final_chain_control_contract.v0.1"
     assert payload["pdf_english_recovery_validation_status"] == "blocked_missing_or_invalid_manifest"
     assert payload["pdf_english_recovery_source_audit_status"] == "no_importable_source_found"
     assert checks["pdf_english_recovery_validator_fails_closed"]["ok"] is True
     assert checks["pdf_english_recovery_requires_four_branch_manifest"]["ok"] is True
     assert checks["pdf_english_recovery_source_audit_has_no_importable_source"]["ok"] is True
+    assert checks["control_contract_is_dry_run_only"]["ok"] is True
+    assert checks["control_contract_covers_four_chains"]["ok"] is True
 
 
 def test_cleanroom_import_audit_reports_candidates_without_absolute_paths(tmp_path: Path) -> None:

@@ -8,7 +8,7 @@
     "review mixed_control_file changes line-by-line before staging"
   ],
   "counts": {
-    "final_chain_registry": 7,
+    "final_chain_registry": 9,
     "foundation_hardening": 1,
     "mixed_control_file": 1,
     "worktree_compartment_report": 1
@@ -40,22 +40,6 @@
     },
     {
       "status": " M",
-      "path": "docs/reports/pdf_english_manifest_recovery_audit_20260804.json",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
-      ]
-    },
-    {
-      "status": " M",
-      "path": "docs/reports/pdf_english_manifest_recovery_audit_20260804.md",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
-      ]
-    },
-    {
-      "status": " M",
       "path": "package.json",
       "bucket": "mixed_control_file",
       "reasons": [
@@ -64,6 +48,14 @@
         "precleanup_archive npm scripts",
         "precleanup_deep_audit npm script",
         "precleanup_safety npm script"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "src/teachbase/final_chains/__init__.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
       ]
     },
     {
@@ -92,7 +84,31 @@
     },
     {
       "status": "??",
-      "path": "tools/build_pdf_english_recovery_source_audit.py",
+      "path": "docs/reports/final_chain_control_contract_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "docs/reports/final_chain_control_contract_20260804.md",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "src/teachbase/final_chains/control_contract.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/build_final_chain_control_contract.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
