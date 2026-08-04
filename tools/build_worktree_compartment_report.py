@@ -40,9 +40,13 @@ FINAL_CHAIN_PATHS = {
     "tests/test_cleanup_candidate_report.py",
     "tests/test_final_chain_registry.py",
     "tests/test_final_chain_surface_classifier.py",
+    "tests/test_final_chain_control.py",
     "tools/build_cleanup_candidate_report.py",
     "tools/classify_final_chain_surface.py",
+    "tools/final_chain_control.py",
     "tools/validate_final_chain_registry.py",
+    "src/teachbase/final_chains/__init__.py",
+    "src/teachbase/final_chains/control.py",
 }
 
 VALIDATION_NOISE_PATHS = {
