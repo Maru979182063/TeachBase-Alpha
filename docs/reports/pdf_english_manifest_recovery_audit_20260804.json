@@ -20,7 +20,7 @@
     {
       "source_label": "cleanroom_current",
       "source_root_present": true,
-      "required_artifacts_present": 0,
+      "required_artifacts_present": 1,
       "required_artifacts_total": 4,
       "required_artifacts": [
         {
@@ -34,8 +34,10 @@
           "key": "manifest_checker",
           "relative_path": "tools/english_text_first_graph_first_manifest_check.py",
           "required_for_import": true,
-          "exists": false,
-          "kind": "missing"
+          "exists": true,
+          "kind": "file",
+          "size_bytes": 9375,
+          "sha256": "aa14bec8eef296b932c617b64be81269f0123650cc04d78ba0d4a754bc1b393b"
         },
         {
           "key": "prior_smoke_zip",

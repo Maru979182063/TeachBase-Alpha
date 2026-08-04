@@ -43,6 +43,7 @@ def build_report(source_roots: tuple[SourceRoot, ...] | None = None, *, run_regr
     source_audit = _load_json("docs/reports/pdf_english_manifest_recovery_audit_20260804.json")
     intake_validation = _load_json("docs/reports/pdf_english_recovery_intake_validation_20260804.json")
     user_zip_intake = _load_json("docs/reports/pdf_english_user_zip_intake_20260804.json")
+    source_import = _load_json("docs/reports/pdf_english_rebuild_source_import_20260804.json")
     source_code_state = [_source_code_state(source_root) for source_root in source_roots]
     cleanroom_state = _cleanroom_rebuild_state()
     regression = _run_portable_regression() if run_regression else {"status": "not_run", "exit_code": None}
@@ -90,12 +91,25 @@ def build_report(source_roots: tuple[SourceRoot, ...] | None = None, *, run_regr
                 "ready_claim_allowed": user_zip_intake.get("ready_claim_allowed") if user_zip_intake else False,
             },
         },
+        {
+            "name": "cleanroom_graph_first_source_import_is_sealed",
+            "ok": source_import.get("status") == "pass"
+            and source_import.get("dry_run") is False
+            and int(source_import.get("imported_file_count") or 0) >= 23
+            and source_import.get("absolute_paths_as_inputs") is False,
+            "value": {
+                "status": source_import.get("status"),
+                "dry_run": source_import.get("dry_run"),
+                "imported_file_count": source_import.get("imported_file_count"),
+            },
+        },
     ]
     legacy_ready = checks[0]["ok"] is not True
     rebuild_allowed = (
         cleanroom_state["required_present"] is True
         and checks[2]["ok"] is True
         and checks[3]["ok"] is True
+        and checks[5]["ok"] is True
     )
     ready_claim_allowed = legacy_ready
     status = "rebuild_track_allowed" if rebuild_allowed and not ready_claim_allowed else "fail"
@@ -110,13 +124,18 @@ def build_report(source_roots: tuple[SourceRoot, ...] | None = None, *, run_regr
         "rebuild_track_allowed": rebuild_allowed,
         "ready_claim_allowed": ready_claim_allowed,
         "old_identity_claim_allowed": False,
+        "completed_rebuild_evidence": [
+            "cleanroom_import_of_required_graph_first_source_files",
+            "user_supplied_four_branch_downstream_review_evidence",
+        ]
+        if checks[4]["ok"] and checks[5]["ok"]
+        else [],
         "decision": (
             "If the 2026-07-28 graph-first smoke package is permanently unavailable, keep the old identity "
             "fail-closed and rebuild a new candidate from surviving source, fixtures, and fresh smoke evidence."
         ),
         "checks": checks,
         "required_promotion_evidence": [
-            "cleanroom_import_of_required_graph_first_source_files",
             "new_active_manifest_generated_from_fresh_rebuild_outputs",
             "english_text_first_graph_first_manifest_check_passes",
             "new_small_pdf_smoke_package_zip_testzip_is_none",
@@ -245,9 +264,18 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"Rebuild track allowed: `{str(report['rebuild_track_allowed']).lower()}`",
         f"Ready claim allowed: `{str(report['ready_claim_allowed']).lower()}`",
         "",
-        "## Checks",
+        "## Completed Rebuild Evidence",
         "",
     ]
+    for item in report["completed_rebuild_evidence"]:
+        lines.append(f"- `{item}`")
+    lines.extend(
+        [
+            "",
+            "## Checks",
+            "",
+        ]
+    )
     for check in report["checks"]:
         status = "pass" if check["ok"] else "fail"
         lines.append(f"- `{status}` `{check['name']}`")

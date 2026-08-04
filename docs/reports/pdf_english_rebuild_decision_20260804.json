@@ -9,6 +9,10 @@
   "rebuild_track_allowed": true,
   "ready_claim_allowed": false,
   "old_identity_claim_allowed": false,
+  "completed_rebuild_evidence": [
+    "cleanroom_import_of_required_graph_first_source_files",
+    "user_supplied_four_branch_downstream_review_evidence"
+  ],
   "decision": "If the 2026-07-28 graph-first smoke package is permanently unavailable, keep the old identity fail-closed and rebuild a new candidate from surviving source, fixtures, and fresh smoke evidence.",
   "checks": [
     {
@@ -68,18 +72,18 @@
         {
           "source_label": "cleanroom_current",
           "source_root_present": true,
-          "graph_first_source_code_present": false,
-          "graph_node_file_count": 0,
+          "graph_first_source_code_present": true,
+          "graph_node_file_count": 7,
           "required_graph_first_files": [
             {
               "relative_path": "tools/english_text_first_graph_first_manifest_check.py",
-              "exists": false,
-              "kind": "missing"
+              "exists": true,
+              "kind": "file"
             },
             {
               "relative_path": "docs/english_text_first_graph_first_environment.md",
-              "exists": false,
-              "kind": "missing"
+              "exists": true,
+              "kind": "file"
             }
           ]
         },
@@ -135,7 +139,7 @@
           "tests/test_english_text_first_sidecar_graph_v01.py",
           "-q"
         ],
-        "output_tail": ".......                                                                  [100%]\n7 passed in 0.21s\n",
+        "output_tail": ".......                                                                  [100%]\n7 passed in 0.24s\n",
         "execution_contract": {
           "model_invoked": false,
           "database_written": false,
@@ -157,10 +161,18 @@
         ],
         "ready_claim_allowed": false
       }
+    },
+    {
+      "name": "cleanroom_graph_first_source_import_is_sealed",
+      "ok": true,
+      "value": {
+        "status": "pass",
+        "dry_run": false,
+        "imported_file_count": 23
+      }
     }
   ],
   "required_promotion_evidence": [
-    "cleanroom_import_of_required_graph_first_source_files",
     "new_active_manifest_generated_from_fresh_rebuild_outputs",
     "english_text_first_graph_first_manifest_check_passes",
     "new_small_pdf_smoke_package_zip_testzip_is_none",

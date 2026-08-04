@@ -29,8 +29,10 @@
       "key": "manifest_checker",
       "relative_path": "tools/english_text_first_graph_first_manifest_check.py",
       "expected_kind": "file",
-      "exists": false,
-      "kind": "missing"
+      "exists": true,
+      "kind": "file",
+      "size_bytes": 9375,
+      "sha256": "aa14bec8eef296b932c617b64be81269f0123650cc04d78ba0d4a754bc1b393b"
     },
     {
       "key": "prior_smoke_zip",
@@ -96,7 +98,7 @@
     },
     {
       "name": "manifest_checker_present",
-      "ok": false,
+      "ok": true,
       "required": true
     },
     {
@@ -127,7 +129,6 @@
     "allow_only_manifest_runs_enabled",
     "timestamp_latest_selection_forbidden",
     "four_branch_runs_declared",
-    "manifest_checker_present",
     "prior_smoke_zip_present",
     "prior_smoke_zip_valid",
     "prior_smoke_dir_present",

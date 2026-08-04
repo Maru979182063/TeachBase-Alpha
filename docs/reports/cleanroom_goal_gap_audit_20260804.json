@@ -143,6 +143,12 @@
           "runtime_imported": false,
           "business_secrets_read": false
         },
+        "pdf_english_rebuild_source_import": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
+        },
         "final_chain_ops_health": {
           "model_invoked": false,
           "database_written": false,
@@ -207,6 +213,15 @@
       }
     },
     {
+      "name": "pdf_english_rebuild_source_import_sealed",
+      "ok": true,
+      "value": {
+        "status": "pass",
+        "dry_run": false,
+        "imported_file_count": 23
+      }
+    },
+    {
       "name": "final_chain_ops_health_seals_cli_and_recovery_surface",
       "ok": true,
       "value": {
@@ -258,6 +273,10 @@
     },
     "pdf_english_rebuild_decision": {
       "path": "docs/reports/pdf_english_rebuild_decision_20260804.json",
+      "exists": true
+    },
+    "pdf_english_rebuild_source_import": {
+      "path": "docs/reports/pdf_english_rebuild_source_import_20260804.json",
       "exists": true
     },
     "final_chain_ops_health": {

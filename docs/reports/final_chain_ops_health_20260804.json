@@ -152,7 +152,6 @@
           "allow_only_manifest_runs_enabled",
           "timestamp_latest_selection_forbidden",
           "four_branch_runs_declared",
-          "manifest_checker_present",
           "prior_smoke_zip_present",
           "prior_smoke_zip_valid",
           "prior_smoke_dir_present",

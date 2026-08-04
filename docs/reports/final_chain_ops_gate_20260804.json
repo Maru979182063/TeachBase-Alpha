@@ -208,7 +208,7 @@
       "value": "blocked_missing_or_invalid_recovery_candidate"
     },
     {
-      "name": "pdf_english_recovery_intake_requires_manifest_checker_and_smoke",
+      "name": "pdf_english_recovery_intake_requires_manifest_and_smoke_after_checker_import",
       "ok": true,
       "value": [
         "active_manifest_present",
@@ -217,7 +217,6 @@
         "allow_only_manifest_runs_enabled",
         "timestamp_latest_selection_forbidden",
         "four_branch_runs_declared",
-        "manifest_checker_present",
         "prior_smoke_zip_present",
         "prior_smoke_zip_valid",
         "prior_smoke_dir_present",

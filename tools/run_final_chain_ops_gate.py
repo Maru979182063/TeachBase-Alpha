@@ -233,10 +233,9 @@ def build_gate_report() -> dict[str, Any]:
             "value": pdf_english_recovery_intake["status"],
         },
         {
-            "name": "pdf_english_recovery_intake_requires_manifest_checker_and_smoke",
+            "name": "pdf_english_recovery_intake_requires_manifest_and_smoke_after_checker_import",
             "ok": {
                 "active_manifest_present",
-                "manifest_checker_present",
                 "prior_smoke_zip_present",
                 "prior_smoke_dir_present",
             }.issubset(set(pdf_english_recovery_intake["required_check_failures"])),

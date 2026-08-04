@@ -29,6 +29,7 @@ REQUIRED_REPORTS = {
     "pdf_english_recovery_source_audit": "docs/reports/pdf_english_manifest_recovery_audit_20260804.json",
     "pdf_english_recovery_intake_validation": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
     "pdf_english_rebuild_decision": "docs/reports/pdf_english_rebuild_decision_20260804.json",
+    "pdf_english_rebuild_source_import": "docs/reports/pdf_english_rebuild_source_import_20260804.json",
 }
 
 
@@ -107,6 +108,20 @@ def build_report() -> dict[str, Any]:
                     reports, "pdf_english_rebuild_decision", ["legacy_artifact_wait_required"]
                 ),
                 "ready_claim_allowed": _json_value(reports, "pdf_english_rebuild_decision", ["ready_claim_allowed"]),
+            },
+        },
+        {
+            "name": "pdf_english_rebuild_source_import_is_sealed",
+            "ok": _json_value(reports, "pdf_english_rebuild_source_import", ["status"]) == "pass"
+            and _json_value(reports, "pdf_english_rebuild_source_import", ["dry_run"]) is False
+            and int(_json_value(reports, "pdf_english_rebuild_source_import", ["imported_file_count"]) or 0) >= 23
+            and _json_value(reports, "pdf_english_rebuild_source_import", ["absolute_paths_as_inputs"]) is False,
+            "value": {
+                "status": _json_value(reports, "pdf_english_rebuild_source_import", ["status"]),
+                "dry_run": _json_value(reports, "pdf_english_rebuild_source_import", ["dry_run"]),
+                "imported_file_count": _json_value(
+                    reports, "pdf_english_rebuild_source_import", ["imported_file_count"]
+                ),
             },
         },
         {

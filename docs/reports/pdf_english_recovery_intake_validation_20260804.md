@@ -12,7 +12,7 @@ Candidate: `current_cleanroom_workspace`
 - `fail` `allow_only_manifest_runs_enabled`
 - `fail` `timestamp_latest_selection_forbidden`
 - `fail` `four_branch_runs_declared`
-- `fail` `manifest_checker_present`
+- `pass` `manifest_checker_present`
 - `fail` `prior_smoke_zip_present`
 - `fail` `prior_smoke_zip_valid`
 - `fail` `prior_smoke_dir_present`

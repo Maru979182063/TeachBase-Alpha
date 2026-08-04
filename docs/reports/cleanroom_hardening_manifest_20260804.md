@@ -18,6 +18,7 @@ Terror index estimate: `3.0_to_3.2`
 - `pass` `pdf_english_is_explicit_fail_closed_blocker`
 - `pass` `pdf_english_recovery_intake_gate_is_sealed`
 - `pass` `pdf_english_rebuild_track_is_explicit`
+- `pass` `pdf_english_rebuild_source_import_is_sealed`
 - `pass` `final_chain_ops_health_is_sealed`
 - `pass` `no_report_declares_runtime_side_effects`
 

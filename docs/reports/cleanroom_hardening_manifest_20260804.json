@@ -44,7 +44,8 @@
         "pdf_english_recovery_validation": true,
         "pdf_english_recovery_source_audit": true,
         "pdf_english_recovery_intake_validation": true,
-        "pdf_english_rebuild_decision": true
+        "pdf_english_rebuild_decision": true,
+        "pdf_english_rebuild_source_import": true
       }
     },
     {
@@ -65,7 +66,8 @@
         "pdf_english_recovery_validation": "blocked_missing_or_invalid_manifest",
         "pdf_english_recovery_source_audit": "no_importable_source_found",
         "pdf_english_recovery_intake_validation": "blocked_missing_or_invalid_recovery_candidate",
-        "pdf_english_rebuild_decision": "rebuild_track_allowed"
+        "pdf_english_rebuild_decision": "rebuild_track_allowed",
+        "pdf_english_rebuild_source_import": "pass"
       }
     },
     {
@@ -290,7 +292,7 @@
           "value": "blocked_missing_or_invalid_recovery_candidate"
         },
         {
-          "name": "pdf_english_recovery_intake_requires_manifest_checker_and_smoke",
+          "name": "pdf_english_recovery_intake_requires_manifest_and_smoke_after_checker_import",
           "ok": true,
           "value": [
             "active_manifest_present",
@@ -299,7 +301,6 @@
             "allow_only_manifest_runs_enabled",
             "timestamp_latest_selection_forbidden",
             "four_branch_runs_declared",
-            "manifest_checker_present",
             "prior_smoke_zip_present",
             "prior_smoke_zip_valid",
             "prior_smoke_dir_present",
@@ -343,6 +344,15 @@
         "rebuild_track_allowed": true,
         "legacy_artifact_wait_required": false,
         "ready_claim_allowed": false
+      }
+    },
+    {
+      "name": "pdf_english_rebuild_source_import_is_sealed",
+      "ok": true,
+      "value": {
+        "status": "pass",
+        "dry_run": false,
+        "imported_file_count": 23
       }
     },
     {
@@ -446,6 +456,12 @@
           "database_written": false,
           "runtime_imported": false,
           "business_secrets_read": false
+        },
+        "pdf_english_rebuild_source_import": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
         }
       }
     }
@@ -525,6 +541,11 @@
       "path": "docs/reports/pdf_english_rebuild_decision_20260804.json",
       "exists": true,
       "status": "rebuild_track_allowed"
+    },
+    "pdf_english_rebuild_source_import": {
+      "path": "docs/reports/pdf_english_rebuild_source_import_20260804.json",
+      "exists": true,
+      "status": "pass"
     }
   },
   "execution_contract": {

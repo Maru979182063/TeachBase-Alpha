@@ -2307,7 +2307,7 @@ def test_pdf_english_recovery_intake_fails_closed_without_candidate() -> None:
     assert payload["status"] == "blocked_missing_or_invalid_recovery_candidate"
     assert payload["candidate_root_contract"]["candidate_label"] == "current_cleanroom_workspace"
     assert checks["active_manifest_present"]["ok"] is False
-    assert checks["manifest_checker_present"]["ok"] is False
+    assert checks["manifest_checker_present"]["ok"] is True
     assert checks["prior_smoke_zip_present"]["ok"] is False
     assert checks["prior_smoke_dir_present"]["ok"] is False
     assert payload["execution_contract"] == {
@@ -2473,7 +2473,7 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     assert checks["pdf_english_recovery_requires_four_branch_manifest"]["ok"] is True
     assert checks["pdf_english_recovery_source_audit_has_no_importable_source"]["ok"] is True
     assert checks["pdf_english_recovery_intake_fails_closed_without_candidate"]["ok"] is True
-    assert checks["pdf_english_recovery_intake_requires_manifest_checker_and_smoke"]["ok"] is True
+    assert checks["pdf_english_recovery_intake_requires_manifest_and_smoke_after_checker_import"]["ok"] is True
     assert checks["final_chain_ops_health_passes"]["ok"] is True
     assert checks["ready_sample_job_records_validate"]["ok"] is True
     assert checks["batch_queue_covers_four_chains"]["ok"] is True
@@ -2518,11 +2518,13 @@ def test_cleanroom_hardening_manifest_seals_current_gate_outputs() -> None:
     assert payload["reports"]["final_chain_ops_health"]["status"] == "pass"
     assert payload["reports"]["pdf_english_recovery_intake_validation"]["status"] == "blocked_missing_or_invalid_recovery_candidate"
     assert payload["reports"]["pdf_english_rebuild_decision"]["status"] == "rebuild_track_allowed"
+    assert payload["reports"]["pdf_english_rebuild_source_import"]["status"] == "pass"
     assert checks["final_chain_ops_covers_four_chains"]["ok"] is True
     assert checks["final_chain_job_records_self_and_external_validated"]["ok"] is True
     assert checks["pdf_english_is_explicit_fail_closed_blocker"]["ok"] is True
     assert checks["pdf_english_recovery_intake_gate_is_sealed"]["ok"] is True
     assert checks["pdf_english_rebuild_track_is_explicit"]["ok"] is True
+    assert checks["pdf_english_rebuild_source_import_is_sealed"]["ok"] is True
     assert checks["final_chain_ops_health_is_sealed"]["ok"] is True
     assert payload["known_blockers"] == [
         {
@@ -2602,6 +2604,10 @@ def test_pdf_english_rebuild_decision_keeps_old_identity_closed_but_allows_rebui
     assert checks["cleanroom_v05_rebuild_scaffold_present"]["ok"] is True
     assert checks["old_local_graph_first_source_code_available_if_present"]["ok"] is True
     assert checks["portable_regression_passes_without_model_or_runtime"]["ok"] is True
+    assert checks["user_supplied_downstream_review_evidence_if_present"]["ok"] is True
+    assert checks["cleanroom_graph_first_source_import_is_sealed"]["ok"] is True
+    assert "cleanroom_import_of_required_graph_first_source_files" in payload["completed_rebuild_evidence"]
+    assert "cleanroom_import_of_required_graph_first_source_files" not in payload["required_promotion_evidence"]
     assert "new_active_manifest_generated_from_fresh_rebuild_outputs" in payload["required_promotion_evidence"]
     assert "do_not_synthesize_old_active_manifest" in payload["unsafe_actions"]
     assert payload["execution_contract"] == {
@@ -2655,6 +2661,7 @@ def test_pdf_english_rebuild_source_import_allowlist_is_unique_and_source_only()
     assert len(SOURCE_FILES) == len(set(SOURCE_FILES))
     assert all(not item.startswith("outputs/") for item in SOURCE_FILES)
     assert not any("active_manifest" in item for item in SOURCE_FILES)
+    assert "tools/english_text_first_display_projection_planner_v01.py" in SOURCE_FILES
 
 
 def test_cleanroom_hardening_manifest_validator_rejects_tampered_contract() -> None:

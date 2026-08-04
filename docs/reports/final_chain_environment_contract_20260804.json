@@ -289,8 +289,8 @@
       "required_path_present_count": 0,
       "optional_path_summary": {
         "count": 36,
-        "present": 8,
-        "missing": 28,
+        "present": 28,
+        "missing": 8,
         "missing_samples": [
           {
             "path": "config/english_text_first_graph_first/active_manifest.json",
@@ -298,47 +298,37 @@
             "kind": "missing"
           },
           {
-            "path": "config/english_text_first_v02.yaml",
+            "path": "prompts/english_question_packet_refiner_cloze_system_v0.1.md",
             "exists": false,
             "kind": "missing"
           },
           {
-            "path": "docs/english_text_first_graph_first_environment.md",
+            "path": "prompts/english_question_packet_refiner_cloze_user_v0.1.md",
             "exists": false,
             "kind": "missing"
           },
           {
-            "path": "tools/english_text_first_graph_first_manifest_check.py",
+            "path": "prompts/english_render_instruction_planner_cloze_system_v0.1.md",
             "exists": false,
             "kind": "missing"
           },
           {
-            "path": "tools/english_text_first_full_chain_runner_v01.py",
+            "path": "prompts/english_group_relation_resolver_cloze_user_v0.1.md",
             "exists": false,
             "kind": "missing"
           },
           {
-            "path": "tools/english_text_first_controlled_node1_vlm_transcriber.py",
+            "path": "prompts/english_group_relation_resolver_cloze_system_v0.1.md",
             "exists": false,
             "kind": "missing"
           },
           {
-            "path": "tools/english_text_first_controlled_node1b_attribute_tagger.py",
+            "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
             "exists": false,
             "kind": "missing"
           },
           {
-            "path": "tools/english_text_first_sliding_window_composer_v01.py",
-            "exists": false,
-            "kind": "missing"
-          },
-          {
-            "path": "tools/english_text_first_group_normalizer_v01.py",
-            "exists": false,
-            "kind": "missing"
-          },
-          {
-            "path": "tools/english_text_first_group_relation_resolver_v01.py",
+            "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728",
             "exists": false,
             "kind": "missing"
           }

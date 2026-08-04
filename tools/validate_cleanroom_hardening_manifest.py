@@ -44,6 +44,7 @@ REQUIRED_REPORTS = {
     "pdf_english_recovery_source_audit",
     "pdf_english_recovery_intake_validation",
     "pdf_english_rebuild_decision",
+    "pdf_english_rebuild_source_import",
 }
 
 REQUIRED_MANIFEST_CHECKS = {
@@ -54,6 +55,7 @@ REQUIRED_MANIFEST_CHECKS = {
     "pdf_english_is_explicit_fail_closed_blocker",
     "pdf_english_recovery_intake_gate_is_sealed",
     "pdf_english_rebuild_track_is_explicit",
+    "pdf_english_rebuild_source_import_is_sealed",
     "final_chain_ops_health_is_sealed",
     "no_report_declares_runtime_side_effects",
 }

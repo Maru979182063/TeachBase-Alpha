@@ -1,0 +1,285 @@
+{
+  "schema_version": "pdf_english_rebuild_source_import.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "chain_id": "pdf_english",
+  "source_label": "old_local_d_projects_jiaoyan",
+  "source_root_recording": "label_only",
+  "dry_run": false,
+  "overwrite": false,
+  "status": "pass",
+  "imported_file_count": 23,
+  "records": [
+    {
+      "relative_path": "tools/english_text_first_graph_first_manifest_check.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "aa14bec8eef296b932c617b64be81269f0123650cc04d78ba0d4a754bc1b393b",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "aa14bec8eef296b932c617b64be81269f0123650cc04d78ba0d4a754bc1b393b"
+    },
+    {
+      "relative_path": "docs/english_text_first_graph_first_environment.md",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "67dd41402d5945acbd3ed6b0373996ee14215b984a67ae1662da5345ee35b546",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "67dd41402d5945acbd3ed6b0373996ee14215b984a67ae1662da5345ee35b546"
+    },
+    {
+      "relative_path": "tools/english_text_first_full_chain_runner_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "ec6ecd4b4a34dad210c791e5a0476f6c1bdf7afe9981946c95e5df6c1e82f9d1",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "ec6ecd4b4a34dad210c791e5a0476f6c1bdf7afe9981946c95e5df6c1e82f9d1"
+    },
+    {
+      "relative_path": "tools/english_text_first_controlled_node1_vlm_transcriber.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "34679a3c49d88d60ac28a7db689fb7a7289221d099f06315feda4d20cf33c90e",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "34679a3c49d88d60ac28a7db689fb7a7289221d099f06315feda4d20cf33c90e"
+    },
+    {
+      "relative_path": "tools/english_text_first_controlled_node1b_attribute_tagger.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "00daec63e145d5ee4a4c74a9b0ea73847f5824deb6b0bd62bae043c5489768b1",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "00daec63e145d5ee4a4c74a9b0ea73847f5824deb6b0bd62bae043c5489768b1"
+    },
+    {
+      "relative_path": "tools/english_text_first_sliding_window_composer_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "3880d17e7adb8689388458c2ea6bc448ff4a43eb00505b339de5e9cf4c5826cf",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "3880d17e7adb8689388458c2ea6bc448ff4a43eb00505b339de5e9cf4c5826cf"
+    },
+    {
+      "relative_path": "tools/english_text_first_group_deduper_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "79ed2cb2be7dcec33f9cfee705b5706b80478c4be73f5426a9c83b2237e7b548",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "79ed2cb2be7dcec33f9cfee705b5706b80478c4be73f5426a9c83b2237e7b548"
+    },
+    {
+      "relative_path": "tools/english_text_first_group_normalizer_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "8755294e711f2f6939ebe826b61d909fe8a8a6271eae60af80be60461417fc5f",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "8755294e711f2f6939ebe826b61d909fe8a8a6271eae60af80be60461417fc5f"
+    },
+    {
+      "relative_path": "tools/english_text_first_group_relation_resolver_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "f36dd8af6e9663299506540cf0f99c3529ee6f282e049126b119b933b8780300",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "f36dd8af6e9663299506540cf0f99c3529ee6f282e049126b119b933b8780300"
+    },
+    {
+      "relative_path": "tools/english_text_first_group_ownership_reconciler_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "a184014a6e559c1b5f0fa66e7521b9841f84cdf627b7ff37d425f773f7f2b455",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "a184014a6e559c1b5f0fa66e7521b9841f84cdf627b7ff37d425f773f7f2b455"
+    },
+    {
+      "relative_path": "tools/english_text_first_source_backed_draft_builder_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "e5905efee48ed4963e60e48eb7aa6e5caec5c3d009f155459866a8b812e7e219",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "e5905efee48ed4963e60e48eb7aa6e5caec5c3d009f155459866a8b812e7e219"
+    },
+    {
+      "relative_path": "tools/english_text_first_node4b_field_role_resolver_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "7f62c5fb7baba743091754e6fe98eb6bf635a5d79817a2316526528ea0e38d7f",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "7f62c5fb7baba743091754e6fe98eb6bf635a5d79817a2316526528ea0e38d7f"
+    },
+    {
+      "relative_path": "tools/english_text_first_question_packet_builder_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "2ee500ad5ed682f4695ecdef747e7442cf017686b13ed96660b450c46192cf84",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "2ee500ad5ed682f4695ecdef747e7442cf017686b13ed96660b450c46192cf84"
+    },
+    {
+      "relative_path": "tools/english_text_first_candidate_continuation_repair_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "f3ed1c8cf3785d1b7f4753dbb5c25aa553511dd4e279363c5579d3e174d57ff4",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "f3ed1c8cf3785d1b7f4753dbb5c25aa553511dd4e279363c5579d3e174d57ff4"
+    },
+    {
+      "relative_path": "tools/english_text_first_question_packet_refiner_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "15cad1e8772ac1cf502c6a93dbd63fe90e67cd64abb8a98351f23890d1a4b72f",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "15cad1e8772ac1cf502c6a93dbd63fe90e67cd64abb8a98351f23890d1a4b72f"
+    },
+    {
+      "relative_path": "tools/english_text_first_runtime_projection_planner_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "08bae88a9fae43a2295b4b424c9aa4399d98192ec33a4ee54231e7971acc5fcd",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "08bae88a9fae43a2295b4b424c9aa4399d98192ec33a4ee54231e7971acc5fcd"
+    },
+    {
+      "relative_path": "tools/english_text_first_display_projection_planner_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "89670d6feb7988cd70276caead344b5ef74b4eb8f324acb5fbe5d3b73dcfad7f",
+      "target_exists_before": false,
+      "target_action": "copied",
+      "target_exists_after": true,
+      "target_sha256": "89670d6feb7988cd70276caead344b5ef74b4eb8f324acb5fbe5d3b73dcfad7f"
+    },
+    {
+      "relative_path": "tools/english_text_first_question_render_normalizer_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "94345627f0d185c72b2061dfc6f9c9fc279391b8d802f7771e9c624dfd820c63",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "94345627f0d185c72b2061dfc6f9c9fc279391b8d802f7771e9c624dfd820c63"
+    },
+    {
+      "relative_path": "tools/english_text_first_render_verifier_repair_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "6815292920634b0a24856c5b04cad62f96a3219e2b3b83f317a493cbc4fc4ff5",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "6815292920634b0a24856c5b04cad62f96a3219e2b3b83f317a493cbc4fc4ff5"
+    },
+    {
+      "relative_path": "tools/english_text_first_render_gate_point_repair_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "463bf7887afed3ae0cf7d68d6ba9d8a48fe7a324871a29f4868a95e5309f6ac3",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "463bf7887afed3ae0cf7d68d6ba9d8a48fe7a324871a29f4868a95e5309f6ac3"
+    },
+    {
+      "relative_path": "tools/english_text_first_question_candidate_auditor_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "b37178fbd40d313f5fb3dbc6997dabcd505f03fd5e34a497e4fef0ed6f457da4",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "b37178fbd40d313f5fb3dbc6997dabcd505f03fd5e34a497e4fef0ed6f457da4"
+    },
+    {
+      "relative_path": "tools/english_text_first_review_pack_renderer_v01.py",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "9fb3edcc5aa896429eeab2021b5c5a9c408ecc89674d0a0800fdbaf6a6b13fc8",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "9fb3edcc5aa896429eeab2021b5c5a9c408ecc89674d0a0800fdbaf6a6b13fc8"
+    },
+    {
+      "relative_path": "config/english_text_first_v02.yaml",
+      "allowlisted": true,
+      "source_exists": true,
+      "source_sha256": "cde5435e67d2badb95d8df5b508829b8879af3e620cedd252bcce3dce5cc045d",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
+      "target_exists_after": true,
+      "target_sha256": "cde5435e67d2badb95d8df5b508829b8879af3e620cedd252bcce3dce5cc045d"
+    }
+  ],
+  "checks": [
+    {
+      "name": "source_root_present",
+      "ok": true,
+      "value": {
+        "source_label": "old_local_d_projects_jiaoyan",
+        "present": true
+      }
+    },
+    {
+      "name": "all_paths_are_allowlisted",
+      "ok": true,
+      "value": []
+    },
+    {
+      "name": "all_source_files_present",
+      "ok": true,
+      "value": []
+    },
+    {
+      "name": "no_target_conflicts",
+      "ok": true,
+      "value": []
+    },
+    {
+      "name": "all_written_files_match_source",
+      "ok": true,
+      "value": []
+    }
+  ],
+  "unsafe_actions": [
+    "do_not_import_outputs_or_smoke_artifacts_as_source",
+    "do_not_import_active_manifest_without_fresh_rebuild_validation",
+    "do_not_import_backup_probe_or_bak_files"
+  ],
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}

@@ -20,6 +20,7 @@ Completion claim allowed: `false`
 - `pass` `pdf_english_remains_fail_closed_not_silent_ready`
 - `pass` `pdf_english_recovery_intake_gate_ready_for_restored_candidate`
 - `pass` `pdf_english_lost_artifacts_have_rebuild_track`
+- `pass` `pdf_english_rebuild_source_import_sealed`
 - `pass` `final_chain_ops_health_seals_cli_and_recovery_surface`
 
 ## Completion Blockers

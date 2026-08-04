@@ -4,6 +4,11 @@ Status: `rebuild_track_allowed`
 Rebuild track allowed: `true`
 Ready claim allowed: `false`
 
+## Completed Rebuild Evidence
+
+- `cleanroom_import_of_required_graph_first_source_files`
+- `user_supplied_four_branch_downstream_review_evidence`
+
 ## Checks
 
 - `pass` `legacy_artifact_recovery_is_not_ready`
@@ -11,10 +16,10 @@ Ready claim allowed: `false`
 - `pass` `old_local_graph_first_source_code_available_if_present`
 - `pass` `portable_regression_passes_without_model_or_runtime`
 - `pass` `user_supplied_downstream_review_evidence_if_present`
+- `pass` `cleanroom_graph_first_source_import_is_sealed`
 
 ## Required Promotion Evidence
 
-- `cleanroom_import_of_required_graph_first_source_files`
 - `new_active_manifest_generated_from_fresh_rebuild_outputs`
 - `english_text_first_graph_first_manifest_check_passes`
 - `new_small_pdf_smoke_package_zip_testzip_is_none`

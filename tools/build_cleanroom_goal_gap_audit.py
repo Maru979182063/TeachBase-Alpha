@@ -25,6 +25,7 @@ SOURCES = {
     "handshake_validation": "docs/reports/final_chain_orchestrator_handshake_validation_20260804.json",
     "pdf_english_recovery_intake_validation": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
     "pdf_english_rebuild_decision": "docs/reports/pdf_english_rebuild_decision_20260804.json",
+    "pdf_english_rebuild_source_import": "docs/reports/pdf_english_rebuild_source_import_20260804.json",
     "final_chain_ops_health": "docs/reports/final_chain_ops_health_20260804.json",
 }
 
@@ -180,6 +181,17 @@ def _build_checks(sources: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
                     sources, "pdf_english_rebuild_decision", ["legacy_artifact_wait_required"]
                 ),
                 "ready_claim_allowed": _value(sources, "pdf_english_rebuild_decision", ["ready_claim_allowed"]),
+            },
+        },
+        {
+            "name": "pdf_english_rebuild_source_import_sealed",
+            "ok": _source_status(sources, "pdf_english_rebuild_source_import") == "pass"
+            and _value(sources, "pdf_english_rebuild_source_import", ["dry_run"]) is False
+            and int(_value(sources, "pdf_english_rebuild_source_import", ["imported_file_count"]) or 0) >= 23,
+            "value": {
+                "status": _source_status(sources, "pdf_english_rebuild_source_import"),
+                "dry_run": _value(sources, "pdf_english_rebuild_source_import", ["dry_run"]),
+                "imported_file_count": _value(sources, "pdf_english_rebuild_source_import", ["imported_file_count"]),
             },
         },
         {
