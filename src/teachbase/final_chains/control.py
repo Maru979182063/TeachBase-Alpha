@@ -132,6 +132,10 @@ def _is_inside(path: Path, parent: Path) -> bool:
     return resolved == parent_resolved or parent_resolved in resolved.parents
 
 
+def _is_under_outputs(workspace_root: Path, path: Path) -> bool:
+    return _is_inside(path, workspace_root / "outputs")
+
+
 def _portable_path(workspace_root: Path, path: Path) -> str:
     try:
         if _is_inside(path, workspace_root):
@@ -245,6 +249,7 @@ def build_chain_run_plan(
     add_check("input_path_present", input_path.is_file(), input_path=request.input_path)
     output_root = _resolve_under_workspace(workspace_root, request.output_root)
     add_check("output_root_inside_workspace", _is_inside(output_root, workspace_root), output_root=request.output_root)
+    add_check("output_root_under_outputs", _is_under_outputs(workspace_root, output_root), output_root=request.output_root)
     add_check("runtime_import_disabled_by_default", chain.runtime_import_default_enabled is False)
     add_check("database_write_disabled_by_default", chain.database_write_default_enabled is False)
     add_check("environment_blocks_runtime_import", request.environment.allow_runtime_import is False)
@@ -315,6 +320,21 @@ def schedule_chain_run(
             "environment_snapshot": build_environment_snapshot(request),
             "execution_contract": plan["execution_contract"],
             "errors": [{"code": "output_root_outside_workspace"}],
+        }
+    output_root_check = next((check for check in plan["checks"] if check["name"] == "output_root_under_outputs"), None)
+    if output_root_check is None or not output_root_check["ok"]:
+        return {
+            "schema_version": "final_chain_job_record.v0.1",
+            "job_id": "",
+            "created_at": utc_now_iso(),
+            "status": "rejected",
+            "chain_id": request.chain_id,
+            "record_path": "",
+            "plan": portable_plan,
+            "request_snapshot": build_request_snapshot(request, workspace_root=workspace_root),
+            "environment_snapshot": build_environment_snapshot(request),
+            "execution_contract": plan["execution_contract"],
+            "errors": [{"code": "output_root_not_under_outputs"}],
         }
 
     job_id = generate_run_id(f"final_chain_{request.chain_id}")

@@ -104,6 +104,20 @@ def test_plan_requires_existing_input_file_and_workspace_output(tmp_path: Path) 
     assert "output_root_inside_workspace" in plan["blocked_reasons"]
 
 
+def test_plan_requires_output_root_under_outputs() -> None:
+    registry = load_final_chain_registry(REGISTRY)
+    request = ChainRunRequest(
+        chain_id="pdf_math",
+        input_path="sample.pdf",
+        output_root="config/final_chain_runs",
+    )
+
+    plan = build_chain_run_plan(registry, request, workspace_root=ROOT)
+
+    assert plan["status"] == "blocked"
+    assert "output_root_under_outputs" in plan["blocked_reasons"]
+
+
 def test_unknown_chain_id_fails_closed() -> None:
     registry = load_final_chain_registry(REGISTRY)
 
@@ -235,6 +249,55 @@ def test_scheduler_rejects_output_root_outside_workspace(tmp_path: Path) -> None
     assert record["request_snapshot"]["output_root"]["path"] == "<outside-workspace>"
     assert record["request_snapshot"]["output_root"]["inside_workspace"] is False
     assert not (tmp_path / "outside").exists()
+
+
+def test_scheduler_rejects_output_root_inside_workspace_but_outside_outputs(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "tools").mkdir()
+    (workspace / "tools" / "run.py").write_text("print('not imported')\n", encoding="utf-8")
+    input_path = workspace / "input.pdf"
+    input_path.write_text("pdf placeholder\n", encoding="utf-8")
+    registry_path = workspace / "final_chain_registry.yaml"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "final_chain_registry.v0.1",
+                "selection_policy": {},
+                "chains": [
+                    {
+                        "chain_id": "pdf_math",
+                        "display_name": "PDF Math",
+                        "input_format": "pdf",
+                        "subject": "math",
+                        "protection_status": "protected",
+                        "registry_readiness": "ready",
+                        "confidence": "high",
+                        "canonical_entrypoint": "tools/run.py",
+                        "smoke_status": {"status": "pass"},
+                        "runtime_import_policy": {"default_enabled": False},
+                        "database_write_policy": {"default_enabled": False},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    registry = load_final_chain_registry(registry_path)
+    request = ChainRunRequest(
+        chain_id="pdf_math",
+        input_path=str(input_path.relative_to(workspace)),
+        output_root="config/final_chain_runs",
+    )
+
+    record = schedule_chain_run(registry, request, workspace_root=workspace)
+
+    assert record["status"] == "rejected"
+    assert record["record_path"] == ""
+    assert record["errors"] == [{"code": "output_root_not_under_outputs"}]
+    assert record["request_snapshot"]["output_root"]["path"] == "config/final_chain_runs"
+    assert record["request_snapshot"]["output_root"]["inside_workspace"] is True
+    assert not (workspace / "config" / "final_chain_runs").exists()
 
 
 def test_scheduler_snapshots_absolute_input_as_portable_metadata(tmp_path: Path) -> None:
