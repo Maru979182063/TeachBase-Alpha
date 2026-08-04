@@ -2,6 +2,7 @@ from pathlib import Path
 
 import json
 import sys
+import urllib.error
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -61,3 +62,51 @@ def test_build_prompt_does_not_call_model_or_change_question_shape() -> None:
     assert "q1" in prompt
     assert "asset_ids" in prompt
     assert "Find $x$." in prompt
+
+
+def test_call_model_uses_retry_checkpoint_without_changing_payload(monkeypatch, tmp_path: Path) -> None:
+    calls = 0
+    sleeps: list[float] = []
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self) -> bytes:
+            return json.dumps(
+                {
+                    "choices": [{"message": {"content": "{\"question_id\":\"q1\"}"}}],
+                    "usage": {"total_tokens": 7},
+                }
+            ).encode("utf-8")
+
+    def fake_urlopen(request, timeout):
+        nonlocal calls
+        calls += 1
+        assert timeout == 180
+        if calls == 1:
+            raise urllib.error.URLError("timed out")
+        return FakeResponse()
+
+    monkeypatch.setattr(repair.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(repair.time, "sleep", sleeps.append)
+
+    checkpoint_path = tmp_path / "q1.model_call_checkpoint.json"
+    result = repair.call_model("test-key", "test-model", "prompt", checkpoint_path=checkpoint_path)
+
+    assert calls == 2
+    assert sleeps == [1.0]
+    assert result["raw_content"] == "{\"question_id\":\"q1\"}"
+    assert result["usage"] == {"total_tokens": 7}
+    checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+    assert checkpoint["status"] == "succeeded"
+    assert checkpoint["result"] == result
+
+    def unexpected_urlopen(request, timeout):
+        raise AssertionError("success checkpoint should skip network")
+
+    monkeypatch.setattr(repair.urllib.request, "urlopen", unexpected_urlopen)
+    assert repair.call_model("test-key", "test-model", "prompt", checkpoint_path=checkpoint_path) == result

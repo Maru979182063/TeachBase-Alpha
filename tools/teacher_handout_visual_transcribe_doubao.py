@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import http.client
 import json
 import os
@@ -17,6 +18,9 @@ import visual_transcription_core as vision_core
 import visual_transcription_pipeline as vision_pipeline
 import visual_transcription_strict_eval_adapter as strict_eval_adapter
 import vision_prompt_store
+
+from teachbase.infrastructure.artifact_store import write_json as atomic_write_json
+from teachbase.infrastructure.model_call_guard import ModelRetryPolicy, run_model_call_with_retry
 
 
 API_URL = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
@@ -42,7 +46,7 @@ def read_json(path: Path) -> dict | list:
 
 
 def write_json(path: Path, payload: object) -> None:
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    atomic_write_json(path, payload)
 
 
 def append_jsonl(path: Path, payload: object) -> None:
@@ -91,9 +95,7 @@ def write_live_progress(
         ],
         "extra": extra or {},
     }
-    tmp = out_dir / "live_progress.tmp.json"
-    write_json(tmp, payload)
-    tmp.replace(out_dir / "live_progress.json")
+    write_json(out_dir / "live_progress.json", payload)
     append_jsonl(out_dir / "live_progress_events.jsonl", payload)
 
 
@@ -695,7 +697,23 @@ def normalize_transcription_fields(parsed: dict) -> dict:
     return strict_eval_adapter.normalize_transcription_fields(parsed)
 
 
-def call_model_with_system(api_key: str, model: str, system_prompt: str, prompt: str, image_paths: list[Path]) -> dict:
+def model_operation_id(label: str, model: str, prompt: str, image_paths: list[Path]) -> str:
+    digest = hashlib.sha256()
+    digest.update(label.encode("utf-8"))
+    digest.update(model.encode("utf-8"))
+    digest.update(prompt.encode("utf-8"))
+    for image_path in image_paths:
+        digest.update(str(image_path).encode("utf-8"))
+    return f"{label}:{model}:{digest.hexdigest()[:16]}"
+
+
+def _call_model_with_system_once(
+    api_key: str,
+    model: str,
+    system_prompt: str,
+    prompt: str,
+    image_paths: list[Path],
+) -> dict:
     user_content: list[dict] = [{"type": "text", "text": prompt}]
     for image_path in image_paths:
         user_content.append({"type": "image_url", "image_url": {"url": image_to_data_url(image_path)}})
@@ -722,26 +740,14 @@ def call_model_with_system(api_key: str, model: str, system_prompt: str, prompt:
         },
         method="POST",
     )
-    last_error: Exception | None = None
-    for attempt in range(3):
-        try:
-            with urllib.request.urlopen(request, timeout=180) as response:
-                raw = response.read().decode("utf-8")
-            break
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="replace")
-            last_error = RuntimeError(f"http_{exc.code}: {detail}")
-            if exc.code not in {408, 409, 425, 429, 500, 502, 503, 504} or attempt >= 2:
-                raise last_error from exc
-            time.sleep(1.0 + attempt * 1.5)
-        except (urllib.error.URLError, http.client.RemoteDisconnected, ConnectionResetError) as exc:
-            last_error = exc
-            if attempt >= 2:
-                raise RuntimeError(f"network_error: {exc}") from exc
-            time.sleep(1.0 + attempt * 1.5)
-    else:
-        raise RuntimeError(f"network_error: {last_error}")
-
+    try:
+        with urllib.request.urlopen(request, timeout=180) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"http_{exc.code}: {detail}") from exc
+    except (urllib.error.URLError, http.client.RemoteDisconnected, ConnectionResetError) as exc:
+        raise RuntimeError(f"network_error: {exc}") from exc
     payload = json.loads(raw)
     content = payload["choices"][0]["message"]["content"]
     return {
@@ -751,43 +757,71 @@ def call_model_with_system(api_key: str, model: str, system_prompt: str, prompt:
     }
 
 
-def call_model(api_key: str, model: str, prompt: str, image_paths: list[Path]) -> dict:
+def call_model_with_system(
+    api_key: str,
+    model: str,
+    system_prompt: str,
+    prompt: str,
+    image_paths: list[Path],
+    *,
+    checkpoint_path: Path | None = None,
+    operation_label: str = "visual_transcription_model_node",
+) -> dict:
+    return run_model_call_with_retry(
+        lambda: _call_model_with_system_once(api_key, model, system_prompt, prompt, image_paths),
+        operation_id=model_operation_id(operation_label, model, prompt, image_paths),
+        checkpoint_path=checkpoint_path,
+        policy=ModelRetryPolicy(max_attempts=3, initial_delay_seconds=1.0, backoff_multiplier=2.5, max_delay_seconds=2.5),
+        sleep=time.sleep,
+        metadata={"node": operation_label, "model": model, "image_count": len(image_paths)},
+    )
+
+
+def call_model(api_key: str, model: str, prompt: str, image_paths: list[Path], *, checkpoint_path: Path | None = None) -> dict:
     return call_model_with_system(
         api_key,
         model,
         ACTIVE_TRANSCRIPTION_PROMPT["system_prompt"],
         prompt,
         image_paths,
+        checkpoint_path=checkpoint_path,
+        operation_label="legacy_visual_transcription_model_node",
     )
 
 
-def call_raw_blocks_model(api_key: str, model: str, prompt: str, image_paths: list[Path]) -> dict:
+def call_raw_blocks_model(api_key: str, model: str, prompt: str, image_paths: list[Path], *, checkpoint_path: Path | None = None) -> dict:
     return call_model_with_system(
         api_key,
         model,
         RAW_BLOCKS_PROMPT["system_prompt"],
         prompt,
         image_paths,
+        checkpoint_path=checkpoint_path,
+        operation_label="raw_blocks_model_node",
     )
 
 
-def call_field_mapping_model(api_key: str, model: str, prompt: str, image_paths: list[Path]) -> dict:
+def call_field_mapping_model(api_key: str, model: str, prompt: str, image_paths: list[Path], *, checkpoint_path: Path | None = None) -> dict:
     return call_model_with_system(
         api_key,
         model,
         FIELD_MAPPING_PROMPT["system_prompt"],
         prompt,
         image_paths,
+        checkpoint_path=checkpoint_path,
+        operation_label="field_mapping_model_node",
     )
 
 
-def call_format_normalize_model(api_key: str, model: str, prompt: str, image_paths: list[Path]) -> dict:
+def call_format_normalize_model(api_key: str, model: str, prompt: str, image_paths: list[Path], *, checkpoint_path: Path | None = None) -> dict:
     return call_model_with_system(
         api_key,
         model,
         FORMAT_NORMALIZE_PROMPT["system_prompt"],
         prompt,
         image_paths,
+        checkpoint_path=checkpoint_path,
+        operation_label="format_normalize_model_node",
     )
 
 
@@ -1053,6 +1087,7 @@ def main() -> None:
             format_normalize_prompt_builder=build_format_normalize_prompt,
             format_normalize_call_model_fn=call_format_normalize_model,
             extract_json_fn=extract_json_block,
+            checkpoint_root=raw_dir / "model_call_checkpoints",
         )
 
         prepared_payload = pipeline_result.get("prepared_payload", {}) or {}

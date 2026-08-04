@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+import inspect
 from pathlib import Path
 from typing import Any, Callable
 
@@ -161,9 +162,25 @@ def run_raw_transcription_node(
     prompt: str,
     image_paths: list[str],
     call_model_fn: PipelineFn,
+    checkpoint_path: Path | None = None,
 ) -> dict[str, Any]:
     path_objects = [Path(path) for path in image_paths]
+    if checkpoint_path is not None and accepts_keyword(call_model_fn, "checkpoint_path"):
+        return call_model_fn(api_key, model_name, prompt, path_objects, checkpoint_path=checkpoint_path)
     return call_model_fn(api_key, model_name, prompt, path_objects)
+
+
+def accepts_keyword(fn: PipelineFn, keyword: str) -> bool:
+    signature = inspect.signature(fn)
+    return keyword in signature.parameters or any(
+        parameter.kind == inspect.Parameter.VAR_KEYWORD for parameter in signature.parameters.values()
+    )
+
+
+def model_checkpoint_path(checkpoint_root: Path | None, record_id: str, node_name: str) -> Path | None:
+    if checkpoint_root is None:
+        return None
+    return checkpoint_root / f"{record_id}.{node_name}.model_call_checkpoint.json"
 
 
 def run_json_parse_node(raw_content: str, extract_json_fn: PipelineFn) -> dict[str, Any]:
@@ -300,6 +317,7 @@ def run_question_pipeline(
     format_normalize_prompt_builder: PipelineFn,
     format_normalize_call_model_fn: PipelineFn,
     extract_json_fn: PipelineFn,
+    checkpoint_root: Path | None = None,
 ) -> dict[str, Any]:
     pipeline_trace: dict[str, Any] = {
         "pipeline_version": PIPELINE_VERSION,
@@ -376,6 +394,7 @@ def run_question_pipeline(
             prompt=str(packet_result["prompt"]),
             image_paths=list(structure_result["image_paths"]),
             call_model_fn=raw_blocks_call_model_fn,
+            checkpoint_path=model_checkpoint_path(checkpoint_root, record_id, "raw_blocks"),
         )
         pipeline_trace["nodes"].append(model_node)
         raw_blocks_model_result = model_node["result"]
@@ -409,6 +428,7 @@ def run_question_pipeline(
             prompt=str(mapping_prompt_node["result"]["prompt"]),
             image_paths=list(structure_result["image_paths"]),
             call_model_fn=field_mapping_call_model_fn,
+            checkpoint_path=model_checkpoint_path(checkpoint_root, record_id, "field_mapping"),
         )
         pipeline_trace["nodes"].append(field_model_node)
         field_mapping_model_result = field_model_node["result"]
@@ -442,6 +462,7 @@ def run_question_pipeline(
             prompt=str(format_prompt_node["result"]["prompt"]),
             image_paths=list(structure_result["image_paths"]),
             call_model_fn=format_normalize_call_model_fn,
+            checkpoint_path=model_checkpoint_path(checkpoint_root, record_id, "format_normalize"),
         )
         pipeline_trace["nodes"].append(format_model_node)
         format_normalize_model_result = format_model_node["result"]
