@@ -1,0 +1,45 @@
+{
+  "schema_version": "english_docx_group_field_normalizer_v01.config",
+  "pipeline_id": "english_docx_group_field_normalizer_v01",
+  "status": "stage2_isolated_candidate",
+  "model_provider": "volcengine_ark",
+  "default_model_alias": "doubao2.0mini",
+  "default_model_endpoint_id": "doubao-seed-2-0-mini-260428",
+  "api_key_env": "ARK_API_KEY",
+  "owned_output_root": "outputs/english_docx_group_field_normalizer_v0_1",
+  "prompt_version": "english_docx_group_field_normalizer_v0.2_kind_contract_20260731",
+  "system_prompt_path": "prompts/english_docx_group_field_normalizer_v01.system.md",
+  "user_prompt_path": "prompts/english_docx_group_field_normalizer_v01.user.md",
+  "runner": {
+    "max_group_attempts": 3,
+    "max_workers": 4,
+    "per_group_timeout_seconds": 240
+  },
+  "max_block_preview_chars": 2200,
+  "max_section_context_blocks": 4,
+  "allowed_kinds": [
+    "grammar_cloze",
+    "cloze",
+    "reading",
+    "seven_choices_five",
+    "writing_letter",
+    "continuation_writing",
+    "mixed_or_unknown"
+  ],
+  "allowed_part_types": [
+    "source_label",
+    "instruction",
+    "passage",
+    "question_items",
+    "options",
+    "response_area",
+    "answer",
+    "guide",
+    "explanation",
+    "sample_answer",
+    "teaching_note",
+    "unknown"
+  ],
+  "runtime_import_enabled": false,
+  "database_write_enabled": false
+}

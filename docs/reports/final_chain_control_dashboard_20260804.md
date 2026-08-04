@@ -6,8 +6,7 @@ All paths are relative git paths; no local absolute path is part of the reproduc
 ## Counts
 
 - `needs_artifact_restore_or_smoke`: 1
-- `needs_cleanroom_import`: 1
-- `needs_sample_input`: 2
+- `needs_sample_input`: 3
 
 ## Lifecycle Policy
 
@@ -22,6 +21,6 @@ All paths are relative git paths; no local absolute path is part of the reproduc
 ## Chains
 
 - `doc_math` `needs_sample_input` `environment_ready_input_needed`; blockers: `input_path_present`; actions: `provide_existing_input_file_for_adapter_dry_run`
-- `doc_english` `needs_cleanroom_import` `cleanroom_import_required`; blockers: `canonical_configs_present`, `canonical_entrypoint_present`, `input_path_present`, `required_paths_present`; actions: `import_or_restore_canonical_entrypoint_and_configs`
+- `doc_english` `needs_sample_input` `environment_ready_input_needed`; blockers: `input_path_present`; actions: `provide_existing_input_file_for_adapter_dry_run`
 - `pdf_math` `needs_sample_input` `environment_ready_input_needed`; blockers: `input_path_present`; actions: `provide_existing_input_file_for_adapter_dry_run`
 - `pdf_english` `needs_artifact_restore_or_smoke` `restore_or_rerun_required`; blockers: `canonical_entrypoint_present`, `input_path_present`, `required_paths_present`; actions: `import_or_restore_canonical_entrypoint_and_configs`, `restore_active_manifest_or_rerun_smoke_artifacts`

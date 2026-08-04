@@ -1,0 +1,39 @@
+{
+  "schema_version": "english_docx_group_repair_gate_v01.config",
+  "pipeline_id": "english_docx_group_repair_gate_v01",
+  "status": "experimental_between_boundary_and_field_normalizer",
+  "model_provider": "volcengine_ark",
+  "default_model_alias": "doubao2.0mini",
+  "default_model_endpoint_id": "doubao-seed-2-0-mini-260428",
+  "api_key_env": "ARK_API_KEY",
+  "owned_output_root": "outputs/english_docx_group_repair_gate_v0_1",
+  "prompt_version": "english_docx_group_repair_gate_v0.5_verdict_driven_actions_20260731",
+  "system_prompt_path": "prompts/english_docx_group_repair_gate_v01.system.md",
+  "user_prompt_path": "prompts/english_docx_group_repair_gate_v01.user.md",
+  "runner": {
+    "max_attempts": 3,
+    "timeout_seconds": 240
+  },
+  "max_block_preview_chars": 700,
+  "max_group_edge_blocks": 4,
+  "max_uncovered_context_each_side": 3,
+  "apply_confidence_levels": [
+    "high",
+    "medium"
+  ],
+  "safety_policy": {
+    "fallback_on_model_failure": true,
+    "fallback_on_needs_retry": true,
+    "fallback_on_blocking_validation_issue": true,
+    "fallback_on_integrity_error": true
+  },
+  "allowed_actions": [
+    "no_op",
+    "attach_uncovered_blocks",
+    "merge_group",
+    "mark_group_waste",
+    "needs_boundary_retry"
+  ],
+  "runtime_import_enabled": false,
+  "database_write_enabled": false
+}

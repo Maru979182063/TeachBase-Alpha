@@ -1,0 +1,292 @@
+{
+  "schema_version": "doc_english_code_import_report.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "import_scope": "code_config_prompt_only",
+  "protected_code_config_prompt_count": 34,
+  "protected_output_path_count": 45,
+  "output_paths_imported": false,
+  "counts": {
+    "cleanroom_matches_source": 34
+  },
+  "rows": [
+    {
+      "relative_path": "tools/english_docx_native_md_v01.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "1ce2008b5daae86347199d9afa5b5acbac2a8c94cea405800c6ba7b1be95eb06",
+      "cleanroom_sha256": "1ce2008b5daae86347199d9afa5b5acbac2a8c94cea405800c6ba7b1be95eb06"
+    },
+    {
+      "relative_path": "tools/english_docx_group_boundary_cutter_v01.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "38d17384a400531bc2d7b337bb0eb3cb1853bd66d7e886a23cdb0cb7cfcaea4d",
+      "cleanroom_sha256": "38d17384a400531bc2d7b337bb0eb3cb1853bd66d7e886a23cdb0cb7cfcaea4d"
+    },
+    {
+      "relative_path": "tools/english_docx_group_itemizer_v01.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "683806d97dde0d77d685ee396cf99249fc66a97391a8f9a2cf4d7944b63f2850",
+      "cleanroom_sha256": "683806d97dde0d77d685ee396cf99249fc66a97391a8f9a2cf4d7944b63f2850"
+    },
+    {
+      "relative_path": "tools/english_docx_child_skill_tagger_v01.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "1d5a49c634b03a340fa7209472315c46f8837cb5344f5fdd48452a6525612817",
+      "cleanroom_sha256": "1d5a49c634b03a340fa7209472315c46f8837cb5344f5fdd48452a6525612817"
+    },
+    {
+      "relative_path": "tools/english_docx_group_repair_gate_v01.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "a5ae05a7ab2c88f398debebbd5ca098888c9890abdf8cbddd48ec2632edac7be",
+      "cleanroom_sha256": "a5ae05a7ab2c88f398debebbd5ca098888c9890abdf8cbddd48ec2632edac7be"
+    },
+    {
+      "relative_path": "tools/english_docx_group_field_normalizer_v01.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "f3295aaf9d42b0b3bc3759cae87d42149ece28a27e5c6b0a0e875cea3fa9eccd",
+      "cleanroom_sha256": "f3295aaf9d42b0b3bc3759cae87d42149ece28a27e5c6b0a0e875cea3fa9eccd"
+    },
+    {
+      "relative_path": "tools/english_docx_parent_child_projection_v02.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "0b7dc4dd232e6525fe4046bb830743913ec1e5d3d6fcdaaaf3199d3493c6f89f",
+      "cleanroom_sha256": "0b7dc4dd232e6525fe4046bb830743913ec1e5d3d6fcdaaaf3199d3493c6f89f"
+    },
+    {
+      "relative_path": "tools/english_docx_reading_child_enhancer_v01.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "df25583131e1de8009dcbf84bcbc4c57a26dae55f47ada13cb17eadbaae5fceb",
+      "cleanroom_sha256": "df25583131e1de8009dcbf84bcbc4c57a26dae55f47ada13cb17eadbaae5fceb"
+    },
+    {
+      "relative_path": "tools/english_docx_cloze_child_skill_tagger_v01.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "5ec6ae45420b13bbd98095a8e0efdc7530d27f49ca7a9f5bfa8acd18dd4b397c",
+      "cleanroom_sha256": "5ec6ae45420b13bbd98095a8e0efdc7530d27f49ca7a9f5bfa8acd18dd4b397c"
+    },
+    {
+      "relative_path": "tools/english_docx_grammar_child_formatter_v01.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "f1ccb4297e446aaa1f263695301f4dd881dcc847708a989551c0844841a1dbe9",
+      "cleanroom_sha256": "f1ccb4297e446aaa1f263695301f4dd881dcc847708a989551c0844841a1dbe9"
+    },
+    {
+      "relative_path": "tools/english_docx_seven_choice_child_formatter_v01.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "bfd6199857e24dab154b29057ed15bdf177762e6b7806b3bb7f619e715b3d71b",
+      "cleanroom_sha256": "bfd6199857e24dab154b29057ed15bdf177762e6b7806b3bb7f619e715b3d71b"
+    },
+    {
+      "relative_path": "tools/english_docx_parent_only_review_pack_v01.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "fb7fb68e683f736118e10c6094439fe97b464df11f5e3e4d447aaa5cb55ff1f1",
+      "cleanroom_sha256": "fb7fb68e683f736118e10c6094439fe97b464df11f5e3e4d447aaa5cb55ff1f1"
+    },
+    {
+      "relative_path": "tools/english_docx_optimized_review_renderer_v01.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "08629e7dea51d4d8d4324b645b3b4b8ff80b41e1f45e6f719984dd9d00092832",
+      "cleanroom_sha256": "08629e7dea51d4d8d4324b645b3b4b8ff80b41e1f45e6f719984dd9d00092832"
+    },
+    {
+      "relative_path": "tools/english_docx_integrated_chain_runner_v01.py",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "99fee9f15a93194a3a1866b85185c9f046581113636c637d96155a6702324984",
+      "cleanroom_sha256": "99fee9f15a93194a3a1866b85185c9f046581113636c637d96155a6702324984"
+    },
+    {
+      "relative_path": "config/english_docx_native_md/active_manifest.json",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "8878920e58ce16f97c17847968a3ce81eaa2ced1976b22ba1a1d9fde22d983f5",
+      "cleanroom_sha256": "8878920e58ce16f97c17847968a3ce81eaa2ced1976b22ba1a1d9fde22d983f5"
+    },
+    {
+      "relative_path": "config/english_docx_native_md/group_repair_gate_v01.json",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "3d0065643fa32eacedba8e123b6afac97181dbe3c732292d157b6903091f2f30",
+      "cleanroom_sha256": "3d0065643fa32eacedba8e123b6afac97181dbe3c732292d157b6903091f2f30"
+    },
+    {
+      "relative_path": "config/english_docx_native_md/asset_role_visual_tagger_v01.json",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "30f0ffc16e6e37fbbbd90f197466cab5335f853ca9fe3d3a0e54b6bc0c2bbc84",
+      "cleanroom_sha256": "30f0ffc16e6e37fbbbd90f197466cab5335f853ca9fe3d3a0e54b6bc0c2bbc84"
+    },
+    {
+      "relative_path": "config/english_docx_native_md/child_skill_tagger_v01.json",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "6257cab13be6c4b888572ddb82b8d442f36d5048a7cb7c6b5618c201f6137eed",
+      "cleanroom_sha256": "6257cab13be6c4b888572ddb82b8d442f36d5048a7cb7c6b5618c201f6137eed"
+    },
+    {
+      "relative_path": "config/english_docx_native_md/group_boundary_cutter_v01.json",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "061bb906ea6449295d651ca61003fc567c8c8f2c64798adb40dc24c655c56bc0",
+      "cleanroom_sha256": "061bb906ea6449295d651ca61003fc567c8c8f2c64798adb40dc24c655c56bc0"
+    },
+    {
+      "relative_path": "config/english_docx_native_md/group_field_normalizer_v01.json",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "58164ab7a1e18a106d81cc5d60f0abd4bd15e8b5f15f16f8409c9d2894966d5f",
+      "cleanroom_sha256": "58164ab7a1e18a106d81cc5d60f0abd4bd15e8b5f15f16f8409c9d2894966d5f"
+    },
+    {
+      "relative_path": "config/english_docx_native_md/group_itemizer_v01.json",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "bb8e096537d4c40b5988c156bbda10315b7c013e7f9559fb0062afdeb8cbb0a9",
+      "cleanroom_sha256": "bb8e096537d4c40b5988c156bbda10315b7c013e7f9559fb0062afdeb8cbb0a9"
+    },
+    {
+      "relative_path": "config/english_docx_native_md/group_local_number_normalizer_v01.json",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "80b9133675826f640f5ef8cc74613c68f477cc48a0ec2d4777b85de8c06d7138",
+      "cleanroom_sha256": "80b9133675826f640f5ef8cc74613c68f477cc48a0ec2d4777b85de8c06d7138"
+    },
+    {
+      "relative_path": "config/english_docx_native_md/reading_child_enhancer_v01.yaml",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "1791f11cee134bc02bf08efa819f3e9e16b0a23a58f6e59e2573ddbe0bc71a5d",
+      "cleanroom_sha256": "1791f11cee134bc02bf08efa819f3e9e16b0a23a58f6e59e2573ddbe0bc71a5d"
+    },
+    {
+      "relative_path": "config/english_docx_native_md/grammar_child_formatter_v01.yaml",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "cf840ae321a5fcf53cf8ccd5cd6860238123bc9b14f7407050e2d4d0a3e8eec0",
+      "cleanroom_sha256": "cf840ae321a5fcf53cf8ccd5cd6860238123bc9b14f7407050e2d4d0a3e8eec0"
+    },
+    {
+      "relative_path": "config/english_docx_native_md/seven_choice_child_formatter_v01.yaml",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "945df9943a8670843dd75977b10da93b1fca943b4079a14b834e86e770ce72f2",
+      "cleanroom_sha256": "945df9943a8670843dd75977b10da93b1fca943b4079a14b834e86e770ce72f2"
+    },
+    {
+      "relative_path": "config/english_docx_native_md/cloze_child_skill_tagger_v01.json",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "d26aeb1d1e47a192c95f1aff0487513b6ad70524d107155303e1836aafa75538",
+      "cleanroom_sha256": "d26aeb1d1e47a192c95f1aff0487513b6ad70524d107155303e1836aafa75538"
+    },
+    {
+      "relative_path": "prompts/english_docx_reading_child_enhancer_v01.system.md",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "ceb9996eb64a1d1cab4ba29c70b7f837296f085780e8e5ceee2a71494e5ca3e3",
+      "cleanroom_sha256": "ceb9996eb64a1d1cab4ba29c70b7f837296f085780e8e5ceee2a71494e5ca3e3"
+    },
+    {
+      "relative_path": "prompts/english_docx_reading_child_enhancer_v01.user.md",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "3ebb0dba96e36191ced29875fc4e21248a24d0cff43ff5fbe52eeaaef9ad5742",
+      "cleanroom_sha256": "3ebb0dba96e36191ced29875fc4e21248a24d0cff43ff5fbe52eeaaef9ad5742"
+    },
+    {
+      "relative_path": "prompts/english_docx_grammar_child_formatter_v01.system.md",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "c96205456af83a0e2edbf3267ba7de3c3a52e05a54b15ca2a761942888b5d924",
+      "cleanroom_sha256": "c96205456af83a0e2edbf3267ba7de3c3a52e05a54b15ca2a761942888b5d924"
+    },
+    {
+      "relative_path": "prompts/english_docx_grammar_child_formatter_v01.user.md",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "14ed67e2e84479fe2aaa1895dc59a5b36b38aeef8bee163307ec5477058134e3",
+      "cleanroom_sha256": "14ed67e2e84479fe2aaa1895dc59a5b36b38aeef8bee163307ec5477058134e3"
+    },
+    {
+      "relative_path": "prompts/english_docx_seven_choice_child_formatter_v01.system.md",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "7154bc1e181f6fa2cf22b242b1606e7444d5a4995a61381f1a8d63447f3e1824",
+      "cleanroom_sha256": "7154bc1e181f6fa2cf22b242b1606e7444d5a4995a61381f1a8d63447f3e1824"
+    },
+    {
+      "relative_path": "prompts/english_docx_seven_choice_child_formatter_v01.user.md",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "912e76d6506a22c7e409a63e13c5dfabd4e8aa13016b5980cdf67636814f0f41",
+      "cleanroom_sha256": "912e76d6506a22c7e409a63e13c5dfabd4e8aa13016b5980cdf67636814f0f41"
+    },
+    {
+      "relative_path": "prompts/english_docx_cloze_child_skill_tagger_v01.system.md",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "122ac32a62534eccd56690893e635d183e2d05bfa0c1c49d3c72223156ef8c61",
+      "cleanroom_sha256": "122ac32a62534eccd56690893e635d183e2d05bfa0c1c49d3c72223156ef8c61"
+    },
+    {
+      "relative_path": "prompts/english_docx_cloze_child_skill_tagger_v01.user.md",
+      "status": "cleanroom_matches_source",
+      "source_exists": true,
+      "cleanroom_exists": true,
+      "source_sha256": "48f51a64397907c8b16b29a7265a32383cdb79db8447b74a36b02e94cfe78830",
+      "cleanroom_sha256": "48f51a64397907c8b16b29a7265a32383cdb79db8447b74a36b02e94cfe78830"
+    }
+  ],
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}

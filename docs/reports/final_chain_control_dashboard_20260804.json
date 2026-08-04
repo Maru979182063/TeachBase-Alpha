@@ -4,14 +4,12 @@
   "absolute_paths_as_inputs": false,
   "chain_count": 4,
   "lane_counts": {
-    "needs_sample_input": 2,
-    "needs_cleanroom_import": 1,
+    "needs_sample_input": 3,
     "needs_artifact_restore_or_smoke": 1
   },
   "contract_ok": true,
   "readiness_tier_counts": {
-    "environment_ready_input_needed": 2,
-    "cleanroom_import_required": 1,
+    "environment_ready_input_needed": 3,
     "restore_or_rerun_required": 1
   },
   "job_lifecycle_policy": {
@@ -71,18 +69,15 @@
       "display_name": "DOCX English Native Markdown Protected Chain",
       "input_format": "docx",
       "subject": "english",
-      "lane": "needs_cleanroom_import",
-      "readiness_tier": "cleanroom_import_required",
-      "environment_status": "blocked",
+      "lane": "needs_sample_input",
+      "readiness_tier": "environment_ready_input_needed",
+      "environment_status": "ready",
       "adapter_dry_run_status": "dry_run_blocked",
       "blocked_reasons": [
-        "canonical_configs_present",
-        "canonical_entrypoint_present",
-        "input_path_present",
-        "required_paths_present"
+        "input_path_present"
       ],
       "recommended_actions": [
-        "import_or_restore_canonical_entrypoint_and_configs"
+        "provide_existing_input_file_for_adapter_dry_run"
       ],
       "scheduler_entrypoint": "tools/final_chain_control.py schedule",
       "adapter_dry_run_entrypoint": "tools/final_chain_control.py adapter-dry-run",
