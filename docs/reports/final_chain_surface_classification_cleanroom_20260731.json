@@ -1,0 +1,3284 @@
+{
+  "schema_version": "final_chain_surface_classification.v0.1",
+  "target_root_label": "cleanroom_partial_project",
+  "target_root_observed": "",
+  "registry_path": "config\\final_chain_registry.yaml",
+  "file_roots": [
+    "tools",
+    "config",
+    "prompts",
+    "schemas",
+    "docs",
+    "tests"
+  ],
+  "directory_roots": [
+    "outputs"
+  ],
+  "directory_depth": 2,
+  "protected_path_count_by_chain": {
+    "doc_english": 79,
+    "doc_math": 3,
+    "pdf_english": 36,
+    "pdf_math": 15
+  },
+  "do_not_use_path_count": 8,
+  "records": [
+    {
+      "path": "config/docx_native_text_repair_system_prompt.md",
+      "kind": "file",
+      "category": "chain_adjacent_needs_review",
+      "chain_id": "doc_math",
+      "reason": "matches chain naming hints but is not protected by registry"
+    },
+    {
+      "path": "config/docx_native_text_repair_user_template.md",
+      "kind": "file",
+      "category": "chain_adjacent_needs_review",
+      "chain_id": "doc_math",
+      "reason": "matches chain naming hints but is not protected by registry"
+    },
+    {
+      "path": "docs/reports/math_formula_and_image_ownership_output_audit_v0.1_20260624.md",
+      "kind": "file",
+      "category": "chain_adjacent_needs_review",
+      "chain_id": "doc_math",
+      "reason": "matches chain naming hints but is not protected by registry"
+    },
+    {
+      "path": "tests/fixtures/docx_native_repair_v01/question_packets_formula_tokens.json",
+      "kind": "file",
+      "category": "chain_adjacent_needs_review",
+      "chain_id": "doc_math",
+      "reason": "matches chain naming hints but is not protected by registry"
+    },
+    {
+      "path": "tests/fixtures/docx_native_repair_v01/recorded_text_repair_response.json",
+      "kind": "file",
+      "category": "chain_adjacent_needs_review",
+      "chain_id": "doc_math",
+      "reason": "matches chain naming hints but is not protected by registry"
+    },
+    {
+      "path": "tools/docx_native_formula_providers.py",
+      "kind": "file",
+      "category": "chain_adjacent_needs_review",
+      "chain_id": "doc_math",
+      "reason": "matches chain naming hints but is not protected by registry"
+    },
+    {
+      "path": "tools/docx_native_formula_token_stream_v01.py",
+      "kind": "file",
+      "category": "chain_adjacent_needs_review",
+      "chain_id": "doc_math",
+      "reason": "matches chain naming hints but is not protected by registry"
+    },
+    {
+      "path": "tools/docx_native_text_repair_model_node_v01.py",
+      "kind": "file",
+      "category": "chain_adjacent_needs_review",
+      "chain_id": "doc_math",
+      "reason": "matches chain naming hints but is not protected by registry"
+    },
+    {
+      "path": "tools/english_text_first_model_graph_regression_v01.py",
+      "kind": "file",
+      "category": "chain_adjacent_needs_review",
+      "chain_id": "pdf_english",
+      "reason": "matches chain naming hints but is not protected by registry"
+    },
+    {
+      "path": "config/teacher_handout_visual_prompts.yaml",
+      "kind": "file",
+      "category": "chain_adjacent_needs_review",
+      "chain_id": "pdf_math",
+      "reason": "matches chain naming hints but is not protected by registry"
+    },
+    {
+      "path": "docs/reports/run_question_ingest_modularization_v02_plan.md",
+      "kind": "file",
+      "category": "chain_adjacent_needs_review",
+      "chain_id": "pdf_math",
+      "reason": "matches chain naming hints but is not protected by registry"
+    },
+    {
+      "path": "tests/fixtures/teacher_handout_visual_transcription_testset_10q.json",
+      "kind": "file",
+      "category": "chain_adjacent_needs_review",
+      "chain_id": "pdf_math",
+      "reason": "matches chain naming hints but is not protected by registry"
+    },
+    {
+      "path": "config/final_chain_registry.yaml",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "config/migrations/20260624_three_track_final_review_hardening.sql",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "docs/production_readiness_final_report.md",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "docs/reports/final_chain_inventory_20260731.json",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "docs/reports/final_chain_inventory_20260731.md",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "docs/reports/final_chain_surface_classification_cleanroom_20260731.json",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "docs/reports/final_chain_surface_classification_cleanroom_20260731.md",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "docs/reports/final_chain_surface_classification_old_local_20260731.json",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "docs/reports/final_chain_surface_classification_old_local_20260731.md",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "docs/reports/modularization_phase2a_final_20260715.md",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "docs/reports/repository_rescue_phase1_final_20260715.md",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "tests/postgres-sole-source/runtime_postgres_sole_source_full.mjs",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): full"
+    },
+    {
+      "path": "tests/test_final_chain_registry.py",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "tests/test_final_chain_surface_classifier.py",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "tools/classify_final_chain_surface.py",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "tools/run_split_v03_full_doc.py",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): full"
+    },
+    {
+      "path": "tools/run_teacher_handout_full_flow.ps1",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): full"
+    },
+    {
+      "path": "tools/run_teacher_handout_full_flow.py",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): full"
+    },
+    {
+      "path": "tools/runtime_baseline_final_review.mjs",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "tools/validate_final_chain_registry.py",
+      "kind": "file",
+      "category": "finalish_name_needs_review",
+      "chain_id": "",
+      "reason": "name contains final-like marker(s): final"
+    },
+    {
+      "path": "config/ngrok.demo.yml",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): demo"
+    },
+    {
+      "path": "docs/backup_restore_runbook.md",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): backup"
+    },
+    {
+      "path": "docs/reports/visual_pipeline_and_manual_transcription_demo_v0.1_20260624.md",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): demo"
+    },
+    {
+      "path": "tests/backup-restore/runtime_backup_restore.mjs",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): backup"
+    },
+    {
+      "path": "tests/performance/runtime_smoke_load.mjs",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): smoke"
+    },
+    {
+      "path": "tests/release_gate/02_backup_restore.test.mjs",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): backup"
+    },
+    {
+      "path": "tests/release_gate/15_legacy_regression.test.mjs",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): legacy"
+    },
+    {
+      "path": "tests/release_gate/16_performance_smoke.test.mjs",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): smoke"
+    },
+    {
+      "path": "tools/compose_legacy_stem_md.py",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): legacy"
+    },
+    {
+      "path": "tools/package_leader_demo.mjs",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): demo"
+    },
+    {
+      "path": "tools/probe_ark_auth.ps1",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): probe"
+    },
+    {
+      "path": "tools/runtime_backbone_backup_restore.mjs",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): backup"
+    },
+    {
+      "path": "tools/runtime_backbone_load_smoke.mjs",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): smoke"
+    },
+    {
+      "path": "tools/semantic_role_eval_legacy_predictor.py",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): legacy"
+    },
+    {
+      "path": "tools/split_v03_recovery_smoke.py",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): smoke"
+    },
+    {
+      "path": "tools/start_demo_stack.ps1",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): demo"
+    },
+    {
+      "path": "tools/start_runtime_backbone_demo.ps1",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): demo"
+    },
+    {
+      "path": "tools/stop_demo_stack.ps1",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): demo"
+    },
+    {
+      "path": "tools/stop_runtime_backbone_demo.ps1",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): demo"
+    },
+    {
+      "path": "tools/visual_unit_planner_probe.py",
+      "kind": "file",
+      "category": "historical_or_probe_surface",
+      "chain_id": "",
+      "reason": "name contains historical marker(s): probe"
+    },
+    {
+      "path": "config/english_text_first_v05.yaml",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path config/english_text_first_v05.yaml"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/english_text_first_v05.fixture_config.json",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/human_acceptance_review/human_acceptance_review.json",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/page_images/reading_portable_p001.png",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/page_images/writing_portable_p001.png",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/semantic_reference_v03b/reading_portable/question_packets.json",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/semantic_reference_v03b/writing_portable/question_packets.json",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/unit_and_v04c/reading_portable/evidence_bundle.json",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/unit_and_v04c/reading_portable/question_packets.json",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/unit_and_v04c/reading_portable/unit_bundle.json",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/unit_and_v04c/writing_portable/evidence_bundle.json",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/unit_and_v04c/writing_portable/question_packets.json",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/unit_and_v04c/writing_portable/unit_bundle.json",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/vlm_transcriber/reading_portable/page_001/meta.json",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/fixtures/english_text_first_v05/vlm_transcriber/writing_portable/page_001/meta.json",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/fixtures/english_text_first_v05"
+    },
+    {
+      "path": "tests/test_english_text_first_sidecar_graph_v01.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/test_english_text_first_sidecar_graph_v01.py"
+    },
+    {
+      "path": "tests/test_english_text_first_v05_pipeline.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tests/test_english_text_first_v05_pipeline.py"
+    },
+    {
+      "path": "tools/english_text_first_sidecar_graph_v01.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tools/english_text_first_sidecar_graph_v01.py"
+    },
+    {
+      "path": "tools/english_text_first_v05_model_gate.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tools/english_text_first_v05_model_gate.py"
+    },
+    {
+      "path": "tools/english_text_first_v05_pipeline.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tools/english_text_first_v05_pipeline.py"
+    },
+    {
+      "path": "tools/english_text_first_verifier_projector_v02.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_english",
+      "reason": "matches protected path tools/english_text_first_verifier_projector_v02.py"
+    },
+    {
+      "path": "tools/apply_format_normalize_existing_results.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_math",
+      "reason": "matches protected path tools/apply_format_normalize_existing_results.py"
+    },
+    {
+      "path": "tools/assetize_question_images.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_math",
+      "reason": "matches protected path tools/assetize_question_images.py"
+    },
+    {
+      "path": "tools/audit_question_asset_package.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_math",
+      "reason": "matches protected path tools/audit_question_asset_package.py"
+    },
+    {
+      "path": "tools/build_figure_candidate_source.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_math",
+      "reason": "matches protected path tools/build_figure_candidate_source.py"
+    },
+    {
+      "path": "tools/consolidate_visual_assets.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_math",
+      "reason": "matches protected path tools/consolidate_visual_assets.py"
+    },
+    {
+      "path": "tools/merge_candidate_prepared_sources.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_math",
+      "reason": "matches protected path tools/merge_candidate_prepared_sources.py"
+    },
+    {
+      "path": "tools/model_image_need_gate.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_math",
+      "reason": "matches protected path tools/model_image_need_gate.py"
+    },
+    {
+      "path": "tools/prepare_option_visual_source.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_math",
+      "reason": "matches protected path tools/prepare_option_visual_source.py"
+    },
+    {
+      "path": "tools/reconcile_and_refine_visual_assets.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_math",
+      "reason": "matches protected path tools/reconcile_and_refine_visual_assets.py"
+    },
+    {
+      "path": "tools/run_question_ingest_skill.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_math",
+      "reason": "matches protected path tools/run_question_ingest_skill.py"
+    },
+    {
+      "path": "tools/teacher_handout_visual_transcribe_doubao.py",
+      "kind": "file",
+      "category": "protected_final_chain_surface",
+      "chain_id": "pdf_math",
+      "reason": "matches protected path tools/teacher_handout_visual_transcribe_doubao.py"
+    },
+    {
+      "path": "config/migrations/20260623_postgres_sole_source.sql",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/migrations/20260623_runtime_backbone_validation.sql",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/migrations/20260624_three_track_validation_alignment.sql",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/pipeline_feature_flags.yaml",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/pipeline_registry.yaml",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/runtime_observability.yaml",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/semantic_profiles/biology.yaml",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/semantic_profiles/common.yaml",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/semantic_profiles/content_blocks.yaml",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/semantic_profiles/document_types.yaml",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/semantic_profiles/english.yaml",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/semantic_profiles/math.yaml",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/semantic_profiles/route_availability.yaml",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/semantic_profiles/thresholds.yaml",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "config/subject_tracks.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/README.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/architecture/teachbase_python_architecture_v01.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/artifact_lineage.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/db/后端数据库草案_v0.1.sql",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/diagrams/项目开发管理工作流图.svg",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/mermaid-render-config.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/pipeline_maintenance_and_isolation.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/planning/后端处理结构设计_v0.2.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/planning/后端处理结构设计_v0.3.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/planning/后端实施清单_v0.1.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/planning/开发工作流与技术栈资源说明_v0.1.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/planning/项目立项设计_v0.1.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/postgres_sole_source_migration_plan.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/previews/展示网页—讲义工作台.html",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/previews/结构改造预览_v2_任务中心_题块审核.html",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/previews/结构改造预览_题目工厂.html",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/production_readiness_audit.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/production_readiness_defects.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/release_decision_gate.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/release_gate/2026-07-01_validation_baseline.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/auto_vs_gold_field_level_audit_10q_v0.1_20260624.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/backend_current_state_audit_2026-07-06.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/cleanup_candidates_cleanroom_20260731.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/cleanup_candidates_cleanroom_20260731.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/cleanup_candidates_old_local_20260731.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/cleanup_candidates_old_local_20260731.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/doubao18_10q_manual_field_audit_20260624.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/manual_gold_testset_10q_review_summary_v0.1_20260624.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/manual_gold_testset_10q_with_span_audit_v0.1_20260624.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/math_symbol_200q_live_field_audit_20260624.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/math_symbol_pack_200q_coverage_audit_20260624.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/math_symbol_pack_reaudit_and_dataset_cognition_20260624.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/math_transcription_latex_md_audit_v0.1_20260624.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/math_transcription_layer_test_report_v0.1_20260624.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/modularization_phase2_plan_20260715.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/modularization_phase2a_baseline_20260715.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/modularization_phase2a_golden_comparison_20260715.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/modularization_phase2a_golden_master_report_20260715.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/modularization_phase2a_test_report_20260715.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/phase2a_isolated_venv_verification_20260715.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/pipeline_isolation_audit_20260714.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/postgres_schema_current_audit_2026-07-01.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/reliable_gold_standard_20260625.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/repository_rescue_phase1_baseline_20260715.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/repository_rescue_phase1_test_report_20260715.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/semantic_role_effectiveness_eval_20260715.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/semantic_role_shadow_effectiveness_observation_20260714.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/semantic_role_shadow_isolation_20260714.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/semantic_role_shadow_isolation_preflight_20260714.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/skill_runtime_backend_alignment_audit_v0.1_20260630.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/teacher_handout_unified_skill_audit_v0.1_20260623.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/倍长中线与截长补短教师版_学段差异审计_v0.1.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/各学科年级基准拆分结构报告_v0.1.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/后端现状汇报_v0.1.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/后端现状汇报_v0.2.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/后端目标与现状对齐报告_v0.1_20260624.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/拆分构建首轮样例报告_v0.1.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/解三角形综合教师版_跨学科差异审计_v0.1.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/讲义拆分标准化分析_v0.1.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/reports/阅读理解记叙文教师版_视觉拆解审计_v0.1.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/repro_samples/case140/images/case_140.png",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/repro_samples/case140/source.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/skill-product-development-flow.mmd",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/skill-product-development-flow.png",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/skill-product-development-flow.svg",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/staging_runtime_validation.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/teacher-handout-to-ingest-flow.mmd",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/teacher-handout-to-ingest-flow.png",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/teacher-handout-to-ingest-flow.svg",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/three_track_known_limitations.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/three_track_validation_baseline_report.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/three_track_validation_release_notes.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "docs/visual_asset_flow_reproduce.md",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/api/runtime_api_e2e.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/audit/runtime_architecture_gate.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/business/runtime_business_checks.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/compat/runtime_compat_proxy_checks.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/concurrency/runtime_concurrency_checks.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/failure-injection/runtime_failure_checks.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/fixtures/chinese/minimal_bundle.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/fixtures/english/minimal_bundle.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/fixtures/invalid/duplicate_local_task_id.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/fixtures/math/minimal_bundle.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/fixtures/semantic_role_effectiveness_v01/fixture_cases.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/fixtures/semantic_role_effectiveness_v01/schema.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/fixtures/split_v03_golden_cases.yml",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/fixtures/three_track/english_senior_bundle.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/fixtures/three_track/math_junior_bundle.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/fixtures/three_track/math_senior_bundle.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/bad_cases.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/case_level_results.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/confidence_calibration.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/confusion_matrix.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/contract_fixture_snapshot.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/critical_misroutes.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/dataset_coverage.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/evaluation_manifest.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/false_safe_cases.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/metrics_summary.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/per_role_metrics.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/per_subject_metrics.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/predictions.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/real_gold_snapshot.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/review_capture_report.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/review_pack__review_decisions.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/run_summary.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/files/verified_cases_snapshot.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/golden/semantic_role_effectiveness_phase2a_c2d874a/manifest.json",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/helpers/runtime_testkit.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/migrations/postgres_migration_checks.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/postgres-sole-source/runtime_postgres_sole_source.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/projection/runtime_projection_read_path_checks.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/release_gate/00_preflight_env.test.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/release_gate/01_migration_schema.test.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/release_gate/04_source_refs_merge.test.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/release_gate/05_question_visual_structure.test.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/release_gate/06_asset_resolver.test.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/release_gate/07_release_decision.test.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/release_gate/08_artifact_lineage.test.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/release_gate/08_visual_split_adapter.test.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/release_gate/13_concurrency_idempotency.test.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/release_gate/14_html_externalization.test.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/release_gate/release_gate_shared.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/release_gate/run_release_gate.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/security/runtime_security_checks.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/store-contract/file_and_postgres_contracts.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_architecture_boundaries.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_cleanup_candidate_report.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_docx_native_formula_providers.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_docx_native_formula_token_stream_v01.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_docx_native_text_repair_model_node_v01.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_pipeline_registry.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_semantic_role_effectiveness_run.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_semantic_role_eval_metrics.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_semantic_role_eval_schema.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_semantic_role_gold_leakage.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_semantic_role_golden_parity.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_semantic_role_shadow_isolation.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_split_v03_continuation_finder.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_split_v03_contract.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_split_v03_coordinate_integrity.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/test_split_v03_golden_cases.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/three-track/runtime_three_track_baseline.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tests/unit/static_checks.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/__init__.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/apply_manual_gold_updates.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/apply_strict_eval_adapter.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/audit_artifact_lineage.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/audit_visual_split_quality_v01.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_binary_gold_review_bundle.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_cleanup_candidate_report.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_content_error_200_report.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_external_instance_pack_208.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_failed_transcription_audit_html.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_leader_single_html.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_manual_gold_workbook.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_math_symbol_pack_200q_clean_main.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_math_symbol_pack_200q_production.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_mock_workbench_data.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_question_split_external_report.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_release_decision.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_semantic_shadow_review_baseline.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_skill_flow_external_pdf.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_split_review_gallery.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/build_transcription_field_review_pack.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/coordinate_audit_v03.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/create_senior_manual_review_v03.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/crop_executor_v03.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/cross_page_node_accumulator_v03.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/curate_math_symbol_pack_manual_audit.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/document_profile_resolver.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/docx_flow_visual_review_v01.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/docx_pair_question_binder_v01.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/doubao_visual_lesson_placement.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/doubao_visual_lesson_placement.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/english_teacher_visual_dual_extract_v01.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/export_brd_doc.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/layout_block_extractor_v03.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/merge_visual_transcription_results.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/mock_workbench_api_server.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/mock_workbench_export_bundle.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/mock_workbench_generate_compass.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/monitor_downstream_runtime.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/option_anchor_detection.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/option_choice_gating.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/option_crop_staging.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/page_render_adapter_v03.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/pdf_preflight_v03.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/pipeline_run_context.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/postprocess_visual_transcription_results.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/prepare_math_symbol_transcription_source.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/question_slice_auditor_v03.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/question_visual_structure_contract.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/reading_block_builder_v03.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/rebuild_math_symbol_pack_bilingual.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/rebuild_task_projections.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/recover_visual_transcription_run.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/render_architecture_diagram.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/render_skill_chain_audit.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/run_math_symbol_200q_doubao18.ps1",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/run_modularization_phase2a_gate.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/run_question_image_asset_flow.ps1",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/run_repository_rescue_phase1_gate.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/run_semantic_role_adapter_shadow.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/run_semantic_role_effectiveness_eval.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/run_semantic_shadow_real_rerun_validation.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/run_staging_validation.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/run_visible_ingest_runtime.ps1",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/run_visible_ingest_runtime.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_backbone_api_server.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_backbone_consistency_check.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_backbone_failure_injection_checks.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_backbone_postgres_live_checks.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_backbone_postgres_store.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_backbone_production_readiness.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_backbone_soak.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_backbone_store.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_backbone_store_interface.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_backbone_validation_checks.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_clean_reproduction_check.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_dependency_paths.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_manifest_to_lesson_bundle_adapter.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_subject_tracks.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_three_track_validation_baseline.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/runtime_visual_split_adapter.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/semantic_block_assembler_v03.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/semantic_profile_config.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/semantic_role_adapter.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/semantic_role_eval_metrics.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/semantic_shadow_compare.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/source_refs_json_merge.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/split_math_symbol_pack_gold_vs_edge.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/split_pipeline_v03.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/split_v03_quick_debug.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/split_v03_refine_review_nodes.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/split_v03_refine_review_nodes_snapshot_20260709_crosspage_flag.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/split_v03_sixpage_debug.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/start_mock_workbench_runtime.ps1",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/static_preview_server.mjs",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/teacher_handout_runtime_v01.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/teacher_pdf_question_split_from_components_v01.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/teacher_pdf_visual_component_split_v01.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/teacher_pdf_visual_question_split_v02.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/teacher_pdf_visual_runtime_vision_primary.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/unit_planner_v01.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/validate_pipeline_registry.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/vision_prompt_store.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/visual_pdf_question_splitter_v01.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/visual_transcription_core.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/visual_transcription_local_refine.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/visual_transcription_pipeline.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/visual_transcription_strict_eval_adapter.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/watch_runtime_status.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "tools/write_manual_asset_audit_61.py",
+      "kind": "file",
+      "category": "unclassified_non_chain_surface",
+      "chain_id": "",
+      "reason": "no protected, legacy, historical, or chain-adjacent signal"
+    },
+    {
+      "path": "outputs/pipeline_baseline_snapshot",
+      "kind": "directory",
+      "category": "unregistered_output_surface",
+      "chain_id": "",
+      "reason": "output surface not protected by final-chain registry"
+    },
+    {
+      "path": "outputs/pipeline_baseline_snapshot/control_plane_20260714_v02",
+      "kind": "directory",
+      "category": "unregistered_output_surface",
+      "chain_id": "",
+      "reason": "output surface not protected by final-chain registry"
+    },
+    {
+      "path": "outputs/pipeline_baseline_snapshot/semantic_shadow_review_path_20260714_v01",
+      "kind": "directory",
+      "category": "unregistered_output_surface",
+      "chain_id": "",
+      "reason": "output surface not protected by final-chain registry"
+    }
+  ],
+  "summary": {
+    "total_records": 356,
+    "counts_by_category": {
+      "chain_adjacent_needs_review": 12,
+      "finalish_name_needs_review": 20,
+      "historical_or_probe_surface": 20,
+      "protected_final_chain_surface": 32,
+      "unclassified_non_chain_surface": 269,
+      "unregistered_output_surface": 3
+    },
+    "counts_by_chain": {
+      "doc_math": 8,
+      "pdf_english": 22,
+      "pdf_math": 14
+    },
+    "samples_by_category": {
+      "chain_adjacent_needs_review": [
+        {
+          "path": "config/docx_native_text_repair_system_prompt.md",
+          "kind": "file",
+          "category": "chain_adjacent_needs_review",
+          "chain_id": "doc_math",
+          "reason": "matches chain naming hints but is not protected by registry"
+        },
+        {
+          "path": "config/docx_native_text_repair_user_template.md",
+          "kind": "file",
+          "category": "chain_adjacent_needs_review",
+          "chain_id": "doc_math",
+          "reason": "matches chain naming hints but is not protected by registry"
+        },
+        {
+          "path": "docs/reports/math_formula_and_image_ownership_output_audit_v0.1_20260624.md",
+          "kind": "file",
+          "category": "chain_adjacent_needs_review",
+          "chain_id": "doc_math",
+          "reason": "matches chain naming hints but is not protected by registry"
+        },
+        {
+          "path": "tests/fixtures/docx_native_repair_v01/question_packets_formula_tokens.json",
+          "kind": "file",
+          "category": "chain_adjacent_needs_review",
+          "chain_id": "doc_math",
+          "reason": "matches chain naming hints but is not protected by registry"
+        },
+        {
+          "path": "tests/fixtures/docx_native_repair_v01/recorded_text_repair_response.json",
+          "kind": "file",
+          "category": "chain_adjacent_needs_review",
+          "chain_id": "doc_math",
+          "reason": "matches chain naming hints but is not protected by registry"
+        },
+        {
+          "path": "tools/docx_native_formula_providers.py",
+          "kind": "file",
+          "category": "chain_adjacent_needs_review",
+          "chain_id": "doc_math",
+          "reason": "matches chain naming hints but is not protected by registry"
+        },
+        {
+          "path": "tools/docx_native_formula_token_stream_v01.py",
+          "kind": "file",
+          "category": "chain_adjacent_needs_review",
+          "chain_id": "doc_math",
+          "reason": "matches chain naming hints but is not protected by registry"
+        },
+        {
+          "path": "tools/docx_native_text_repair_model_node_v01.py",
+          "kind": "file",
+          "category": "chain_adjacent_needs_review",
+          "chain_id": "doc_math",
+          "reason": "matches chain naming hints but is not protected by registry"
+        },
+        {
+          "path": "tools/english_text_first_model_graph_regression_v01.py",
+          "kind": "file",
+          "category": "chain_adjacent_needs_review",
+          "chain_id": "pdf_english",
+          "reason": "matches chain naming hints but is not protected by registry"
+        },
+        {
+          "path": "config/teacher_handout_visual_prompts.yaml",
+          "kind": "file",
+          "category": "chain_adjacent_needs_review",
+          "chain_id": "pdf_math",
+          "reason": "matches chain naming hints but is not protected by registry"
+        },
+        {
+          "path": "docs/reports/run_question_ingest_modularization_v02_plan.md",
+          "kind": "file",
+          "category": "chain_adjacent_needs_review",
+          "chain_id": "pdf_math",
+          "reason": "matches chain naming hints but is not protected by registry"
+        },
+        {
+          "path": "tests/fixtures/teacher_handout_visual_transcription_testset_10q.json",
+          "kind": "file",
+          "category": "chain_adjacent_needs_review",
+          "chain_id": "pdf_math",
+          "reason": "matches chain naming hints but is not protected by registry"
+        }
+      ],
+      "finalish_name_needs_review": [
+        {
+          "path": "config/final_chain_registry.yaml",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "config/migrations/20260624_three_track_final_review_hardening.sql",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "docs/production_readiness_final_report.md",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "docs/reports/final_chain_inventory_20260731.json",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "docs/reports/final_chain_inventory_20260731.md",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "docs/reports/final_chain_surface_classification_cleanroom_20260731.json",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "docs/reports/final_chain_surface_classification_cleanroom_20260731.md",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "docs/reports/final_chain_surface_classification_old_local_20260731.json",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "docs/reports/final_chain_surface_classification_old_local_20260731.md",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "docs/reports/modularization_phase2a_final_20260715.md",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "docs/reports/repository_rescue_phase1_final_20260715.md",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "tests/postgres-sole-source/runtime_postgres_sole_source_full.mjs",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): full"
+        },
+        {
+          "path": "tests/test_final_chain_registry.py",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "tests/test_final_chain_surface_classifier.py",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "tools/classify_final_chain_surface.py",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "tools/run_split_v03_full_doc.py",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): full"
+        },
+        {
+          "path": "tools/run_teacher_handout_full_flow.ps1",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): full"
+        },
+        {
+          "path": "tools/run_teacher_handout_full_flow.py",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): full"
+        },
+        {
+          "path": "tools/runtime_baseline_final_review.mjs",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        },
+        {
+          "path": "tools/validate_final_chain_registry.py",
+          "kind": "file",
+          "category": "finalish_name_needs_review",
+          "chain_id": "",
+          "reason": "name contains final-like marker(s): final"
+        }
+      ],
+      "historical_or_probe_surface": [
+        {
+          "path": "config/ngrok.demo.yml",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): demo"
+        },
+        {
+          "path": "docs/backup_restore_runbook.md",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): backup"
+        },
+        {
+          "path": "docs/reports/visual_pipeline_and_manual_transcription_demo_v0.1_20260624.md",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): demo"
+        },
+        {
+          "path": "tests/backup-restore/runtime_backup_restore.mjs",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): backup"
+        },
+        {
+          "path": "tests/performance/runtime_smoke_load.mjs",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): smoke"
+        },
+        {
+          "path": "tests/release_gate/02_backup_restore.test.mjs",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): backup"
+        },
+        {
+          "path": "tests/release_gate/15_legacy_regression.test.mjs",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): legacy"
+        },
+        {
+          "path": "tests/release_gate/16_performance_smoke.test.mjs",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): smoke"
+        },
+        {
+          "path": "tools/compose_legacy_stem_md.py",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): legacy"
+        },
+        {
+          "path": "tools/package_leader_demo.mjs",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): demo"
+        },
+        {
+          "path": "tools/probe_ark_auth.ps1",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): probe"
+        },
+        {
+          "path": "tools/runtime_backbone_backup_restore.mjs",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): backup"
+        },
+        {
+          "path": "tools/runtime_backbone_load_smoke.mjs",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): smoke"
+        },
+        {
+          "path": "tools/semantic_role_eval_legacy_predictor.py",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): legacy"
+        },
+        {
+          "path": "tools/split_v03_recovery_smoke.py",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): smoke"
+        },
+        {
+          "path": "tools/start_demo_stack.ps1",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): demo"
+        },
+        {
+          "path": "tools/start_runtime_backbone_demo.ps1",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): demo"
+        },
+        {
+          "path": "tools/stop_demo_stack.ps1",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): demo"
+        },
+        {
+          "path": "tools/stop_runtime_backbone_demo.ps1",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): demo"
+        },
+        {
+          "path": "tools/visual_unit_planner_probe.py",
+          "kind": "file",
+          "category": "historical_or_probe_surface",
+          "chain_id": "",
+          "reason": "name contains historical marker(s): probe"
+        }
+      ],
+      "protected_final_chain_surface": [
+        {
+          "path": "config/english_text_first_v05.yaml",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path config/english_text_first_v05.yaml"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/english_text_first_v05.fixture_config.json",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/human_acceptance_review/human_acceptance_review.json",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/page_images/reading_portable_p001.png",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/page_images/writing_portable_p001.png",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/semantic_reference_v03b/reading_portable/question_packets.json",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/semantic_reference_v03b/writing_portable/question_packets.json",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/unit_and_v04c/reading_portable/evidence_bundle.json",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/unit_and_v04c/reading_portable/question_packets.json",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/unit_and_v04c/reading_portable/unit_bundle.json",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/unit_and_v04c/writing_portable/evidence_bundle.json",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/unit_and_v04c/writing_portable/question_packets.json",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/unit_and_v04c/writing_portable/unit_bundle.json",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/vlm_transcriber/reading_portable/page_001/meta.json",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/fixtures/english_text_first_v05/vlm_transcriber/writing_portable/page_001/meta.json",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/fixtures/english_text_first_v05"
+        },
+        {
+          "path": "tests/test_english_text_first_sidecar_graph_v01.py",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/test_english_text_first_sidecar_graph_v01.py"
+        },
+        {
+          "path": "tests/test_english_text_first_v05_pipeline.py",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tests/test_english_text_first_v05_pipeline.py"
+        },
+        {
+          "path": "tools/english_text_first_sidecar_graph_v01.py",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tools/english_text_first_sidecar_graph_v01.py"
+        },
+        {
+          "path": "tools/english_text_first_v05_model_gate.py",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tools/english_text_first_v05_model_gate.py"
+        },
+        {
+          "path": "tools/english_text_first_v05_pipeline.py",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tools/english_text_first_v05_pipeline.py"
+        },
+        {
+          "path": "tools/english_text_first_verifier_projector_v02.py",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_english",
+          "reason": "matches protected path tools/english_text_first_verifier_projector_v02.py"
+        },
+        {
+          "path": "tools/apply_format_normalize_existing_results.py",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_math",
+          "reason": "matches protected path tools/apply_format_normalize_existing_results.py"
+        },
+        {
+          "path": "tools/assetize_question_images.py",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_math",
+          "reason": "matches protected path tools/assetize_question_images.py"
+        },
+        {
+          "path": "tools/audit_question_asset_package.py",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_math",
+          "reason": "matches protected path tools/audit_question_asset_package.py"
+        },
+        {
+          "path": "tools/build_figure_candidate_source.py",
+          "kind": "file",
+          "category": "protected_final_chain_surface",
+          "chain_id": "pdf_math",
+          "reason": "matches protected path tools/build_figure_candidate_source.py"
+        }
+      ],
+      "unclassified_non_chain_surface": [
+        {
+          "path": "config/migrations/20260623_postgres_sole_source.sql",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/migrations/20260623_runtime_backbone_validation.sql",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/migrations/20260624_three_track_validation_alignment.sql",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/pipeline_feature_flags.yaml",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/pipeline_registry.yaml",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/runtime_observability.yaml",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/semantic_profiles/biology.yaml",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/semantic_profiles/common.yaml",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/semantic_profiles/content_blocks.yaml",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/semantic_profiles/document_types.yaml",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/semantic_profiles/english.yaml",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/semantic_profiles/math.yaml",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/semantic_profiles/route_availability.yaml",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/semantic_profiles/thresholds.yaml",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "config/subject_tracks.json",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "docs/README.md",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "docs/architecture/teachbase_python_architecture_v01.md",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "docs/artifact_lineage.md",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "docs/db/后端数据库草案_v0.1.sql",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "docs/diagrams/项目开发管理工作流图.svg",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "docs/mermaid-render-config.json",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "docs/pipeline_maintenance_and_isolation.md",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "docs/planning/后端处理结构设计_v0.2.md",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "docs/planning/后端处理结构设计_v0.3.md",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        },
+        {
+          "path": "docs/planning/后端实施清单_v0.1.md",
+          "kind": "file",
+          "category": "unclassified_non_chain_surface",
+          "chain_id": "",
+          "reason": "no protected, legacy, historical, or chain-adjacent signal"
+        }
+      ],
+      "unregistered_output_surface": [
+        {
+          "path": "outputs/pipeline_baseline_snapshot",
+          "kind": "directory",
+          "category": "unregistered_output_surface",
+          "chain_id": "",
+          "reason": "output surface not protected by final-chain registry"
+        },
+        {
+          "path": "outputs/pipeline_baseline_snapshot/control_plane_20260714_v02",
+          "kind": "directory",
+          "category": "unregistered_output_surface",
+          "chain_id": "",
+          "reason": "output surface not protected by final-chain registry"
+        },
+        {
+          "path": "outputs/pipeline_baseline_snapshot/semantic_shadow_review_path_20260714_v01",
+          "kind": "directory",
+          "category": "unregistered_output_surface",
+          "chain_id": "",
+          "reason": "output surface not protected by final-chain registry"
+        }
+      ]
+    }
+  }
+}
