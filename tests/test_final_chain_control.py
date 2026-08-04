@@ -2277,6 +2277,46 @@ def test_pdf_english_recovery_source_audit_uses_labels_without_absolute_paths() 
     }
 
 
+def test_final_chain_ops_health_seals_operator_cli_surface() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/build_final_chain_ops_health.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    checks = {item["name"]: item for item in payload["checks"]}
+    assert payload["schema_version"] == "final_chain_ops_health.v0.1"
+    assert payload["status"] == "pass"
+    assert payload["chain_ids"] == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
+    assert payload["ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math"]
+    assert payload["blocked_chain_ids"] == ["pdf_english"]
+    assert payload["missing_npm_scripts"] == []
+    assert payload["pdf_english_intake_status"] == "blocked_missing_or_invalid_recovery_candidate"
+    assert checks["four_final_chains_split_is_stable"]["ok"] is True
+    assert checks["control_cli_commands_declared"]["ok"] is True
+    assert checks["npm_operator_scripts_expose_control_surface"]["ok"] is True
+    assert checks["job_recovery_and_replacement_are_non_executing"]["ok"] is True
+    assert checks["job_transition_guard_is_locked_and_versioned"]["ok"] is True
+    assert checks["filesystem_and_runtime_policy_are_closed"]["ok"] is True
+    assert checks["dashboard_lanes_match_current_recovery_state"]["ok"] is True
+    assert checks["pdf_english_intake_gate_keeps_ready_claim_blocked"]["ok"] is True
+    assert payload["execution_contract"] == {
+        "model_invoked": False,
+        "database_written": False,
+        "runtime_imported": False,
+        "business_secrets_read": False,
+    }
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
 def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None:
     completed = subprocess.run(
         [sys.executable, "tools/run_final_chain_ops_gate.py"],
@@ -2299,6 +2339,7 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     assert payload["batch_queue_validation_schema"] == "final_chain_batch_queue_validation.v0.1"
     assert payload["orchestrator_handshake_schema"] == "final_chain_orchestrator_handshake.v0.1"
     assert payload["orchestrator_handshake_validation_schema"] == "final_chain_orchestrator_handshake_validation.v0.1"
+    assert payload["ops_health_schema"] == "final_chain_ops_health.v0.1"
     assert payload["batch_queue_ready_count"] == 3
     assert payload["batch_queue_blocked_count"] == 1
     assert payload["pdf_english_recovery_validation_status"] == "blocked_missing_or_invalid_manifest"
@@ -2309,6 +2350,7 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     assert checks["pdf_english_recovery_source_audit_has_no_importable_source"]["ok"] is True
     assert checks["pdf_english_recovery_intake_fails_closed_without_candidate"]["ok"] is True
     assert checks["pdf_english_recovery_intake_requires_manifest_checker_and_smoke"]["ok"] is True
+    assert checks["final_chain_ops_health_passes"]["ok"] is True
     assert checks["ready_sample_job_records_validate"]["ok"] is True
     assert checks["batch_queue_covers_four_chains"]["ok"] is True
     assert checks["batch_queue_schedules_three_ready_one_blocked"]["ok"] is True
@@ -2349,11 +2391,13 @@ def test_cleanroom_hardening_manifest_seals_current_gate_outputs() -> None:
     assert payload["reports"]["final_chain_batch_queue_validation"]["status"] == "pass"
     assert payload["reports"]["final_chain_orchestrator_handshake"]["status"] == "pass"
     assert payload["reports"]["final_chain_orchestrator_handshake_validation"]["status"] == "pass"
+    assert payload["reports"]["final_chain_ops_health"]["status"] == "pass"
     assert payload["reports"]["pdf_english_recovery_intake_validation"]["status"] == "blocked_missing_or_invalid_recovery_candidate"
     assert checks["final_chain_ops_covers_four_chains"]["ok"] is True
     assert checks["final_chain_job_records_self_and_external_validated"]["ok"] is True
     assert checks["pdf_english_is_explicit_fail_closed_blocker"]["ok"] is True
     assert checks["pdf_english_recovery_intake_gate_is_sealed"]["ok"] is True
+    assert checks["final_chain_ops_health_is_sealed"]["ok"] is True
     assert payload["known_blockers"] == [
         {
             "chain_id": "pdf_english",

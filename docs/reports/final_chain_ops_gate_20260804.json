@@ -225,6 +225,11 @@
       ]
     },
     {
+      "name": "final_chain_ops_health_passes",
+      "ok": true,
+      "value": "pass"
+    },
+    {
       "name": "no_runtime_side_effects_reported",
       "ok": true,
       "value": "model/database/runtime/secrets all false"
@@ -249,6 +254,7 @@
   "batch_queue_validation_schema": "final_chain_batch_queue_validation.v0.1",
   "orchestrator_handshake_schema": "final_chain_orchestrator_handshake.v0.1",
   "orchestrator_handshake_validation_schema": "final_chain_orchestrator_handshake_validation.v0.1",
+  "ops_health_schema": "final_chain_ops_health.v0.1",
   "batch_queue_ready_count": 3,
   "batch_queue_blocked_count": 1,
   "pdf_english_recovery_status": "blocked_missing_manifest_and_smoke_artifacts",

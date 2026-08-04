@@ -30,4 +30,5 @@ Status: `pass`
 - `pass` `pdf_english_recovery_requires_four_branch_manifest`
 - `pass` `pdf_english_recovery_intake_fails_closed_without_candidate`
 - `pass` `pdf_english_recovery_intake_requires_manifest_checker_and_smoke`
+- `pass` `final_chain_ops_health_passes`
 - `pass` `no_runtime_side_effects_reported`

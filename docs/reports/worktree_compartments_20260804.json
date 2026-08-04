@@ -8,29 +8,12 @@
     "review mixed_control_file changes line-by-line before staging"
   ],
   "counts": {
-    "final_chain_registry": 20,
+    "final_chain_registry": 14,
     "foundation_hardening": 1,
-    "precleanup_safety_gate": 1,
-    "worktree_compartment_report": 3,
-    "mixed_control_file": 1
+    "mixed_control_file": 1,
+    "worktree_compartment_report": 1
   },
   "records": [
-    {
-      "status": " M",
-      "path": "docs/reports/cleanroom_goal_gap_audit_20260804.json",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
-      ]
-    },
-    {
-      "status": " M",
-      "path": "docs/reports/cleanroom_goal_gap_audit_20260804.md",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
-      ]
-    },
     {
       "status": " M",
       "path": "docs/reports/cleanroom_hardening_manifest_20260804.json",
@@ -50,14 +33,6 @@
     {
       "status": " M",
       "path": "docs/reports/cleanroom_hardening_manifest_validation_20260804.json",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
-      ]
-    },
-    {
-      "status": " M",
-      "path": "docs/reports/cleanroom_hardening_status_20260804.json",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -89,46 +64,6 @@
     },
     {
       "status": " M",
-      "path": "docs/reports/pdf_english_manifest_recovery_audit_20260804.json",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
-      ]
-    },
-    {
-      "status": " M",
-      "path": "docs/reports/pdf_english_manifest_recovery_audit_20260804.md",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
-      ]
-    },
-    {
-      "status": " M",
-      "path": "docs/reports/precleanup_safety_gate_20260804.json",
-      "bucket": "precleanup_safety_gate",
-      "reasons": [
-        "combined guard for protected-chain cleanup work"
-      ]
-    },
-    {
-      "status": " M",
-      "path": "docs/reports/worktree_compartments_20260804.json",
-      "bucket": "worktree_compartment_report",
-      "reasons": [
-        "review compartment documentation and report generator"
-      ]
-    },
-    {
-      "status": " M",
-      "path": "docs/reports/worktree_compartments_20260804.md",
-      "bucket": "worktree_compartment_report",
-      "reasons": [
-        "review compartment documentation and report generator"
-      ]
-    },
-    {
-      "status": " M",
       "path": "package.json",
       "bucket": "mixed_control_file",
       "reasons": [
@@ -138,7 +73,8 @@
         "precleanup_deep_audit npm script",
         "precleanup_safety npm script",
         "cleanroom_goal_gap audit npm script",
-        "pdf_english_recovery_intake audit npm script"
+        "pdf_english_recovery_intake audit npm script",
+        "final_chain_ops_health audit npm script"
       ]
     },
     {
@@ -175,14 +111,6 @@
     },
     {
       "status": " M",
-      "path": "tools/build_pdf_english_recovery_source_audit.py",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
-      ]
-    },
-    {
-      "status": " M",
       "path": "tools/build_worktree_compartment_report.py",
       "bucket": "worktree_compartment_report",
       "reasons": [
@@ -207,7 +135,7 @@
     },
     {
       "status": "??",
-      "path": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
+      "path": "docs/reports/final_chain_ops_health_20260804.json",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -215,7 +143,7 @@
     },
     {
       "status": "??",
-      "path": "docs/reports/pdf_english_recovery_intake_validation_20260804.md",
+      "path": "docs/reports/final_chain_ops_health_20260804.md",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -223,7 +151,7 @@
     },
     {
       "status": "??",
-      "path": "tools/validate_pdf_english_recovery_intake.py",
+      "path": "tools/build_final_chain_ops_health.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"

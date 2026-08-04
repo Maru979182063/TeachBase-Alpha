@@ -52,6 +52,7 @@
         "final_chain_control_contract",
         "final_chain_environment_contract",
         "final_chain_ops",
+        "final_chain_ops_health",
         "final_chain_orchestrator_handshake",
         "final_chain_orchestrator_handshake_validation",
         "final_chain_ready_samples",
@@ -76,6 +77,7 @@
         "final_chain_batch_queue_validation": "docs/reports/final_chain_batch_queue_validation_20260804.json",
         "final_chain_orchestrator_handshake": "docs/reports/final_chain_orchestrator_handshake_20260804.json",
         "final_chain_orchestrator_handshake_validation": "docs/reports/final_chain_orchestrator_handshake_validation_20260804.json",
+        "final_chain_ops_health": "docs/reports/final_chain_ops_health_20260804.json",
         "pdf_english_recovery_validation": "docs/reports/pdf_english_recovery_validation_20260804.json",
         "pdf_english_recovery_source_audit": "docs/reports/pdf_english_manifest_recovery_audit_20260804.json",
         "pdf_english_recovery_intake_validation": "docs/reports/pdf_english_recovery_intake_validation_20260804.json"
@@ -91,6 +93,7 @@
         "final_chain_job_records_self_and_external_validated": true,
         "pdf_english_is_explicit_fail_closed_blocker": true,
         "pdf_english_recovery_intake_gate_is_sealed": true,
+        "final_chain_ops_health_is_sealed": true,
         "no_report_declares_runtime_side_effects": true
       }
     },

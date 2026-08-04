@@ -59,6 +59,8 @@ FINAL_CHAIN_PATHS = {
     "docs/reports/final_chain_orchestrator_handshake_validation_20260804.md",
     "docs/reports/final_chain_ops_gate_20260804.json",
     "docs/reports/final_chain_ops_gate_20260804.md",
+    "docs/reports/final_chain_ops_health_20260804.json",
+    "docs/reports/final_chain_ops_health_20260804.md",
     "docs/reports/pdf_english_recovery_validation_20260804.json",
     "docs/reports/pdf_english_recovery_validation_20260804.md",
     "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
@@ -95,6 +97,7 @@ FINAL_CHAIN_PATHS = {
     "tools/build_final_chain_orchestrator_handshake.py",
     "tools/validate_final_chain_orchestrator_handshake.py",
     "tools/build_pdf_english_recovery_source_audit.py",
+    "tools/build_final_chain_ops_health.py",
     "tools/run_final_chain_ops_gate.py",
     "tools/validate_pdf_english_recovery.py",
     "tools/validate_pdf_english_recovery_intake.py",
@@ -159,6 +162,7 @@ MIXED_PATHS = {
         "precleanup_safety npm script",
         "cleanroom_goal_gap audit npm script",
         "pdf_english_recovery_intake audit npm script",
+        "final_chain_ops_health audit npm script",
     ],
 }
 

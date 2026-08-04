@@ -17,6 +17,7 @@ Terror index estimate: `3.0_to_3.2`
 - `pass` `final_chain_job_records_self_and_external_validated`
 - `pass` `pdf_english_is_explicit_fail_closed_blocker`
 - `pass` `pdf_english_recovery_intake_gate_is_sealed`
+- `pass` `final_chain_ops_health_is_sealed`
 - `pass` `no_report_declares_runtime_side_effects`
 
 ## Known Blockers

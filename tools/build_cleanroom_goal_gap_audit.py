@@ -24,6 +24,7 @@ SOURCES = {
     "environment_contract": "docs/reports/final_chain_environment_contract_20260804.json",
     "handshake_validation": "docs/reports/final_chain_orchestrator_handshake_validation_20260804.json",
     "pdf_english_recovery_intake_validation": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
+    "final_chain_ops_health": "docs/reports/final_chain_ops_health_20260804.json",
 }
 
 NO_SIDE_EFFECTS = {
@@ -165,6 +166,15 @@ def _build_checks(sources: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
                     "pdf_english_recovery_intake_validation",
                     ["required_check_failures"],
                 ),
+            },
+        },
+        {
+            "name": "final_chain_ops_health_seals_cli_and_recovery_surface",
+            "ok": _source_status(sources, "final_chain_ops_health") == "pass"
+            and _value(sources, "final_chain_ops_health", ["missing_npm_scripts"]) == [],
+            "value": {
+                "status": _source_status(sources, "final_chain_ops_health"),
+                "missing_npm_scripts": _value(sources, "final_chain_ops_health", ["missing_npm_scripts"]),
             },
         },
     ]

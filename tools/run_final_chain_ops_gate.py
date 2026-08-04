@@ -31,6 +31,12 @@ from tools.validate_pdf_english_recovery_intake import (
     build_report as build_pdf_english_recovery_intake_report,
     render_markdown as render_pdf_english_recovery_intake_markdown,
 )
+from tools.build_final_chain_ops_health import (
+    REPORT_JSON as OPS_HEALTH_JSON,
+    REPORT_MD as OPS_HEALTH_MD,
+    build_report as build_ops_health_report,
+    render_markdown as render_ops_health_markdown,
+)
 from tools.validate_final_chain_batch_queue_report import (
     REPORT_JSON as BATCH_QUEUE_VALIDATION_JSON,
     REPORT_MD as BATCH_QUEUE_VALIDATION_MD,
@@ -79,6 +85,9 @@ def build_gate_report() -> dict[str, Any]:
     pdf_english_recovery_intake = build_pdf_english_recovery_intake_report()
     write_json(PDF_ENGLISH_INTAKE_JSON, pdf_english_recovery_intake)
     write_text(PDF_ENGLISH_INTAKE_MD, render_pdf_english_recovery_intake_markdown(pdf_english_recovery_intake))
+    ops_health = build_ops_health_report()
+    write_json(OPS_HEALTH_JSON, ops_health)
+    write_text(OPS_HEALTH_MD, render_ops_health_markdown(ops_health))
     checks = [
         {
             "name": "dashboard_contract_ok",
@@ -234,6 +243,11 @@ def build_gate_report() -> dict[str, Any]:
             "value": pdf_english_recovery_intake["required_check_failures"],
         },
         {
+            "name": "final_chain_ops_health_passes",
+            "ok": ops_health["status"] == "pass",
+            "value": ops_health["status"],
+        },
+        {
             "name": "no_runtime_side_effects_reported",
             "ok": all_no_side_effects(
                 dashboard,
@@ -247,6 +261,7 @@ def build_gate_report() -> dict[str, Any]:
                 pdf_english_blocker,
                 pdf_english_recovery,
                 pdf_english_recovery_intake,
+                ops_health,
             ),
             "value": "model/database/runtime/secrets all false",
         },
@@ -268,6 +283,7 @@ def build_gate_report() -> dict[str, Any]:
         "batch_queue_validation_schema": batch_queue_validation["schema_version"],
         "orchestrator_handshake_schema": orchestrator_handshake["schema_version"],
         "orchestrator_handshake_validation_schema": orchestrator_handshake_validation["schema_version"],
+        "ops_health_schema": ops_health["schema_version"],
         "batch_queue_ready_count": batch_queue["scheduled_ready_count"],
         "batch_queue_blocked_count": batch_queue["scheduled_blocked_count"],
         "pdf_english_recovery_status": pdf_english_blocker["recovery_status"],

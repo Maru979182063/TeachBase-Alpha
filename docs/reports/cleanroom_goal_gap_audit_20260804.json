@@ -134,6 +134,12 @@
           "database_written": false,
           "runtime_imported": false,
           "business_secrets_read": false
+        },
+        "final_chain_ops_health": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
         }
       }
     },
@@ -155,7 +161,7 @@
       "ok": true,
       "value": {
         "exit_code": 0,
-        "output_tail": "........................................................................ [ 86%]\n...........                                                              [100%]\n83 passed in 5.29s\n"
+        "output_tail": "........................................................................ [ 85%]\n............                                                             [100%]\n84 passed in 5.40s\n"
       }
     },
     {
@@ -181,6 +187,14 @@
           "prior_smoke_dir_present",
           "prior_smoke_dir_nonempty"
         ]
+      }
+    },
+    {
+      "name": "final_chain_ops_health_seals_cli_and_recovery_surface",
+      "ok": true,
+      "value": {
+        "status": "pass",
+        "missing_npm_scripts": []
       }
     }
   ],
@@ -223,6 +237,10 @@
     },
     "pdf_english_recovery_intake_validation": {
       "path": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
+      "exists": true
+    },
+    "final_chain_ops_health": {
+      "path": "docs/reports/final_chain_ops_health_20260804.json",
       "exists": true
     }
   },

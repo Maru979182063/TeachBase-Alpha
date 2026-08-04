@@ -24,6 +24,7 @@ REQUIRED_REPORTS = {
     "final_chain_batch_queue_validation": "docs/reports/final_chain_batch_queue_validation_20260804.json",
     "final_chain_orchestrator_handshake": "docs/reports/final_chain_orchestrator_handshake_20260804.json",
     "final_chain_orchestrator_handshake_validation": "docs/reports/final_chain_orchestrator_handshake_validation_20260804.json",
+    "final_chain_ops_health": "docs/reports/final_chain_ops_health_20260804.json",
     "pdf_english_recovery_validation": "docs/reports/pdf_english_recovery_validation_20260804.json",
     "pdf_english_recovery_source_audit": "docs/reports/pdf_english_manifest_recovery_audit_20260804.json",
     "pdf_english_recovery_intake_validation": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
@@ -88,6 +89,15 @@ def build_report() -> dict[str, Any]:
                     "pdf_english_recovery_intake_validation",
                     ["candidate_root_contract", "path_recording"],
                 ),
+            },
+        },
+        {
+            "name": "final_chain_ops_health_is_sealed",
+            "ok": _json_value(reports, "final_chain_ops_health", ["status"]) == "pass"
+            and _json_value(reports, "final_chain_ops_health", ["missing_npm_scripts"]) == [],
+            "value": {
+                "status": _json_value(reports, "final_chain_ops_health", ["status"]),
+                "missing_npm_scripts": _json_value(reports, "final_chain_ops_health", ["missing_npm_scripts"]),
             },
         },
         {

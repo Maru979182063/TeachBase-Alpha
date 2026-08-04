@@ -19,6 +19,7 @@ Completion claim allowed: `false`
 - `pass` `final_chain_contract_tests_pass`
 - `pass` `pdf_english_remains_fail_closed_not_silent_ready`
 - `pass` `pdf_english_recovery_intake_gate_ready_for_restored_candidate`
+- `pass` `final_chain_ops_health_seals_cli_and_recovery_surface`
 
 ## Completion Blockers
 
