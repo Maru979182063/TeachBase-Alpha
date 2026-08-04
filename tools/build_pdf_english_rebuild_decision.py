@@ -42,6 +42,7 @@ def build_report(source_roots: tuple[SourceRoot, ...] | None = None, *, run_regr
     recovery_validation = _load_json("docs/reports/pdf_english_recovery_validation_20260804.json")
     source_audit = _load_json("docs/reports/pdf_english_manifest_recovery_audit_20260804.json")
     intake_validation = _load_json("docs/reports/pdf_english_recovery_intake_validation_20260804.json")
+    user_zip_intake = _load_json("docs/reports/pdf_english_user_zip_intake_20260804.json")
     source_code_state = [_source_code_state(source_root) for source_root in source_roots]
     cleanroom_state = _cleanroom_rebuild_state()
     regression = _run_portable_regression() if run_regression else {"status": "not_run", "exit_code": None}
@@ -72,6 +73,22 @@ def build_report(source_roots: tuple[SourceRoot, ...] | None = None, *, run_regr
             "name": "portable_regression_passes_without_model_or_runtime",
             "ok": regression["status"] == "pass" and regression["execution_contract"] == NO_SIDE_EFFECTS,
             "value": regression,
+        },
+        {
+            "name": "user_supplied_downstream_review_evidence_if_present",
+            "ok": not user_zip_intake
+            or (
+                user_zip_intake.get("status") == "downstream_review_evidence_received"
+                and user_zip_intake.get("ready_claim_allowed") is False
+                and user_zip_intake.get("old_identity_claim_allowed") is False
+            ),
+            "value": {
+                "status": user_zip_intake.get("status") if user_zip_intake else "not_provided",
+                "received_branch_evidence": user_zip_intake.get("received_branch_evidence", [])
+                if user_zip_intake
+                else [],
+                "ready_claim_allowed": user_zip_intake.get("ready_claim_allowed") if user_zip_intake else False,
+            },
         },
     ]
     legacy_ready = checks[0]["ok"] is not True

@@ -10,6 +10,7 @@ Ready claim allowed: `false`
 - `pass` `cleanroom_v05_rebuild_scaffold_present`
 - `pass` `old_local_graph_first_source_code_available_if_present`
 - `pass` `portable_regression_passes_without_model_or_runtime`
+- `pass` `user_supplied_downstream_review_evidence_if_present`
 
 ## Required Promotion Evidence
 

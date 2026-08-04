@@ -2615,6 +2615,48 @@ def test_pdf_english_rebuild_decision_keeps_old_identity_closed_but_allows_rebui
     assert "/Users/" not in serialized
 
 
+def test_pdf_english_user_zip_intake_classifies_downstream_review_evidence(tmp_path: Path) -> None:
+    from tools.build_pdf_english_user_zip_intake import build_report
+
+    zips = [
+        _write_review_zip(tmp_path / "en_reading_downstream_fixed_20260728.zip", "English_reading_downstream_fixed"),
+        _write_review_zip(tmp_path / "en_writing_downstream_fixed_20260728.zip", "English_writing_downstream_fixed"),
+        _write_review_zip(tmp_path / "en_grammar_downstream_fixed_20260728.zip", "English_grammar_downstream_fixed"),
+        _write_review_zip(tmp_path / "en_cloze_gloss_end_3cases_20260728_review_v2.zip", "完形填空选项释义后置 3题回归"),
+        _write_doc_math_review_zip(tmp_path / "doc1_triangles__side_by_side_filtered_v02.zip"),
+    ]
+
+    payload = build_report(zips)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    checks = {item["name"]: item for item in payload["checks"]}
+
+    assert payload["schema_version"] == "pdf_english_user_zip_intake.v0.1"
+    assert payload["status"] == "downstream_review_evidence_received"
+    assert payload["received_branch_evidence"] == ["cloze", "grammar", "reading", "writing"]
+    assert payload["non_pdf_english_zip_count"] == 1
+    assert payload["canonical_recovery_artifacts_present"] is False
+    assert payload["legacy_artifact_recovery_ready"] is False
+    assert payload["rebuild_evidence_available"] is True
+    assert payload["ready_claim_allowed"] is False
+    assert payload["old_identity_claim_allowed"] is False
+    assert checks["four_pdf_english_branch_review_packages_present"]["ok"] is True
+    assert checks["no_zip_contains_canonical_active_manifest"]["ok"] is True
+    assert checks["no_zip_contains_final_chain_smoke"]["ok"] is True
+    assert any(record["classification"] == "doc_math_review" for record in payload["records"])
+    assert str(tmp_path) not in serialized
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
+def test_pdf_english_rebuild_source_import_allowlist_is_unique_and_source_only() -> None:
+    from tools.import_pdf_english_rebuild_sources import SOURCE_FILES
+
+    assert len(SOURCE_FILES) == len(set(SOURCE_FILES))
+    assert all(not item.startswith("outputs/") for item in SOURCE_FILES)
+    assert not any("active_manifest" in item for item in SOURCE_FILES)
+
+
 def test_cleanroom_hardening_manifest_validator_rejects_tampered_contract() -> None:
     from tools.validate_cleanroom_hardening_manifest import _build_checks
 
@@ -2743,3 +2785,20 @@ def test_cleanroom_import_audit_reports_candidates_without_absolute_paths(tmp_pa
     assert by_role["canonical_entrypoint"]["source_candidates"][0]["source_label"] == "old_local"
     assert by_role["canonical_entrypoint"]["source_candidates"][0]["matches_handoff_inventory"] is True
     assert str(source) not in json.dumps(report)
+
+
+def _write_review_zip(path: Path, title: str) -> Path:
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("index.html", f"<!doctype html><title>{title}</title><img src='assets/pages/page_001.png'>")
+        archive.writestr("assets/pages/page_001.png", b"not-a-real-image-but-valid-zip-entry")
+    return path
+
+
+def _write_doc_math_review_zip(path: Path) -> Path:
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("index.html", "<!doctype html><title>DOCX math side-by-side review</title>")
+        archive.writestr(
+            "review_package_summary.json",
+            json.dumps({"schema": "docx_math_side_by_side_review_v0.1", "run_id": "gatefix"}),
+        )
+    return path
