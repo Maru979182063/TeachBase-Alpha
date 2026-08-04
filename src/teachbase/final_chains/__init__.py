@@ -7,6 +7,7 @@ from .control import (
     FinalChainRegistry,
     build_chain_run_plan,
     load_final_chain_registry,
+    schedule_chain_run,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "FinalChainRegistry",
     "build_chain_run_plan",
     "load_final_chain_registry",
+    "schedule_chain_run",
 ]

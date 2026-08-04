@@ -4,7 +4,13 @@ import argparse
 import json
 from pathlib import Path
 
-from teachbase.final_chains import ChainRunRequest, EnvironmentPolicy, build_chain_run_plan, load_final_chain_registry
+from teachbase.final_chains import (
+    ChainRunRequest,
+    EnvironmentPolicy,
+    build_chain_run_plan,
+    load_final_chain_registry,
+    schedule_chain_run,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +54,18 @@ def build_plan(args: argparse.Namespace) -> dict:
     return build_chain_run_plan(registry, request, workspace_root=ROOT)
 
 
+def build_schedule(args: argparse.Namespace) -> dict:
+    registry = load_final_chain_registry(Path(args.registry))
+    request = ChainRunRequest(
+        chain_id=args.chain_id,
+        input_path=args.input,
+        output_root=args.output_root,
+        dry_run=True,
+        environment=EnvironmentPolicy(name=args.environment),
+    )
+    return schedule_chain_run(registry, request, workspace_root=ROOT)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Inspect and plan protected TeachBase final-chain runs.")
     parser.add_argument("--registry", default=str(DEFAULT_REGISTRY.relative_to(ROOT)))
@@ -65,13 +83,26 @@ def main() -> int:
     plan_parser.add_argument("--allow-database-writes", action="store_true")
     plan_parser.add_argument("--allow-runtime-import", action="store_true")
 
+    schedule_parser = subparsers.add_parser("schedule", help="Record a non-executing final-chain job plan.")
+    schedule_parser.add_argument("--chain-id", required=True)
+    schedule_parser.add_argument("--input", required=True)
+    schedule_parser.add_argument("--output-root", default="outputs/final_chain_runs")
+    schedule_parser.add_argument("--environment", default="local_dry_run")
+
     args = parser.parse_args()
     if args.command == "list":
         result = list_chains(Path(args.registry))
+    elif args.command == "schedule":
+        result = build_schedule(args)
     else:
         result = build_plan(args)
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0 if result.get("status") != "blocked" or args.command == "list" else 2
+    if args.command == "list":
+        return 0
+    status = result.get("status")
+    if status in {"blocked", "rejected", "scheduled_blocked"}:
+        return 2
+    return 0
 
 
 if __name__ == "__main__":

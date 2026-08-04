@@ -7,7 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from teachbase.final_chains import ChainRunRequest, EnvironmentPolicy, build_chain_run_plan, load_final_chain_registry
+from teachbase.final_chains import (
+    ChainRunRequest,
+    EnvironmentPolicy,
+    build_chain_run_plan,
+    load_final_chain_registry,
+    schedule_chain_run,
+)
 from teachbase.core.errors import ConfigurationError
 
 
@@ -120,3 +126,91 @@ def test_final_chain_control_cli_outputs_machine_readable_plan() -> None:
     assert payload["chain_id"] == "doc_math"
     assert payload["status"] == "blocked"
     assert "input_path_present" in payload["blocked_reasons"]
+
+
+def test_scheduler_records_blocked_job_inside_workspace(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "tools").mkdir()
+    (workspace / "tools" / "run.py").write_text("print('not imported')\n", encoding="utf-8")
+    input_path = workspace / "input.pdf"
+    input_path.write_text("pdf placeholder\n", encoding="utf-8")
+    registry_path = workspace / "final_chain_registry.yaml"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "final_chain_registry.v0.1",
+                "selection_policy": {},
+                "chains": [
+                    {
+                        "chain_id": "pdf_math",
+                        "display_name": "PDF Math",
+                        "input_format": "pdf",
+                        "subject": "math",
+                        "protection_status": "protected",
+                        "registry_readiness": "ready",
+                        "confidence": "high",
+                        "canonical_entrypoint": "tools/run.py",
+                        "smoke_status": {"status": "pass"},
+                        "runtime_import_policy": {"default_enabled": False},
+                        "database_write_policy": {"default_enabled": False},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    registry = load_final_chain_registry(registry_path)
+    request = ChainRunRequest(
+        chain_id="pdf_math",
+        input_path=str(input_path.relative_to(workspace)),
+        output_root="outputs/final_chain_runs",
+        environment=EnvironmentPolicy(allow_model_calls=True),
+    )
+
+    record = schedule_chain_run(registry, request, workspace_root=workspace)
+
+    assert record["status"] == "scheduled_blocked"
+    assert record["execution_contract"]["model_invoked"] is False
+    assert "environment_blocks_model_calls" in record["plan"]["blocked_reasons"]
+    record_path = workspace / record["record_path"]
+    assert record_path.exists()
+    assert json.loads(record_path.read_text(encoding="utf-8"))["job_id"] == record["job_id"]
+
+
+def test_scheduler_rejects_output_root_outside_workspace(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    registry_path = workspace / "final_chain_registry.yaml"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "final_chain_registry.v0.1",
+                "selection_policy": {},
+                "chains": [
+                    {
+                        "chain_id": "pdf_math",
+                        "display_name": "PDF Math",
+                        "input_format": "pdf",
+                        "subject": "math",
+                        "protection_status": "protected",
+                        "registry_readiness": "ready",
+                        "confidence": "high",
+                        "canonical_entrypoint": "tools/run.py",
+                        "smoke_status": {"status": "pass"},
+                        "runtime_import_policy": {"default_enabled": False},
+                        "database_write_policy": {"default_enabled": False},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    registry = load_final_chain_registry(registry_path)
+    request = ChainRunRequest(chain_id="pdf_math", input_path="input.pdf", output_root=str(tmp_path / "outside"))
+
+    record = schedule_chain_run(registry, request, workspace_root=workspace)
+
+    assert record["status"] == "rejected"
+    assert record["record_path"] == ""
+    assert not (tmp_path / "outside").exists()

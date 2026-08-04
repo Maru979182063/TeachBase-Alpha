@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any, Literal
 
 from teachbase.core.errors import ConfigurationError
+from teachbase.core.run_context import generate_run_id, utc_now_iso
+from teachbase.infrastructure.artifact_store import write_json
 
 PlanStatus = Literal["ready", "blocked"]
 
@@ -197,3 +199,43 @@ def build_chain_run_plan(
             "business_secrets_read": False,
         },
     }
+
+
+def schedule_chain_run(
+    registry: FinalChainRegistry,
+    request: ChainRunRequest,
+    *,
+    workspace_root: Path,
+) -> dict[str, Any]:
+    plan = build_chain_run_plan(registry, request, workspace_root=workspace_root)
+    output_check = next((check for check in plan["checks"] if check["name"] == "output_root_inside_workspace"), None)
+    if output_check is None or not output_check["ok"]:
+        return {
+            "schema_version": "final_chain_job_record.v0.1",
+            "job_id": "",
+            "created_at": utc_now_iso(),
+            "status": "rejected",
+            "chain_id": request.chain_id,
+            "record_path": "",
+            "plan": plan,
+            "execution_contract": plan["execution_contract"],
+            "errors": [{"code": "output_root_outside_workspace"}],
+        }
+
+    job_id = generate_run_id(f"final_chain_{request.chain_id}")
+    record_root = _resolve_under_workspace(workspace_root, request.output_root) / "_control" / "jobs" / job_id
+    record_path = record_root / "job_record.json"
+    status = "scheduled_ready" if plan["status"] == "ready" else "scheduled_blocked"
+    record = {
+        "schema_version": "final_chain_job_record.v0.1",
+        "job_id": job_id,
+        "created_at": utc_now_iso(),
+        "status": status,
+        "chain_id": request.chain_id,
+        "record_path": str(record_path.relative_to(workspace_root)).replace("\\", "/"),
+        "plan": plan,
+        "execution_contract": plan["execution_contract"],
+        "errors": [],
+    }
+    write_json(record_path, record)
+    return record
