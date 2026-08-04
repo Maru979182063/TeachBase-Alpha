@@ -13,6 +13,10 @@ Status: `pass`
 - `pass` `ready_sample_adapters_do_not_invoke_entrypoints`
 - `pass` `control_contract_is_dry_run_only`
 - `pass` `control_contract_covers_four_chains`
+- `pass` `environment_contract_passes`
+- `pass` `environment_contract_covers_four_profiles`
+- `pass` `environment_contract_keeps_pdf_english_fail_closed`
+- `pass` `environment_contract_limits_writes_to_outputs`
 - `pass` `pdf_english_recovery_blocker_is_explicit`
 - `pass` `pdf_english_recovery_source_audit_has_no_importable_source`
 - `pass` `pdf_english_recovery_validator_fails_closed`

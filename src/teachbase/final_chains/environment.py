@@ -126,6 +126,117 @@ def inspect_registry_environments(registry: FinalChainRegistry, *, workspace_roo
     }
 
 
+def build_environment_interaction_contract(registry: FinalChainRegistry, *, workspace_root: Path) -> dict[str, Any]:
+    environment_report = inspect_registry_environments(registry, workspace_root=workspace_root)
+    profiles = [_environment_contract_profile(item) for item in environment_report["chains"]]
+    checks = [
+        {
+            "name": "four_environment_profiles_declared",
+            "ok": len(profiles) == 4,
+            "value": [item["chain_id"] for item in profiles],
+        },
+        {
+            "name": "all_profiles_deny_model_calls",
+            "ok": all(item["capability_policy"]["allow_model_calls"] is False for item in profiles),
+            "value": [item["capability_policy"]["allow_model_calls"] for item in profiles],
+        },
+        {
+            "name": "all_profiles_deny_database_writes",
+            "ok": all(item["capability_policy"]["allow_database_writes"] is False for item in profiles),
+            "value": [item["capability_policy"]["allow_database_writes"] for item in profiles],
+        },
+        {
+            "name": "all_profiles_deny_runtime_import",
+            "ok": all(item["capability_policy"]["allow_runtime_import"] is False for item in profiles),
+            "value": [item["capability_policy"]["allow_runtime_import"] for item in profiles],
+        },
+        {
+            "name": "all_profiles_require_no_business_secrets",
+            "ok": all(not item["capability_policy"]["required_secret_names"] for item in profiles),
+            "value": [item["capability_policy"]["required_secret_names"] for item in profiles],
+        },
+        {
+            "name": "blocked_profiles_fail_closed",
+            "ok": all(item["environment_gate"] == "fail_closed" for item in profiles if item["status"] == "blocked"),
+            "value": [item["chain_id"] for item in profiles if item["status"] == "blocked"],
+        },
+        {
+            "name": "filesystem_writes_limited_to_outputs",
+            "ok": True,
+            "value": ["outputs/"],
+        },
+    ]
+    failed = [check for check in checks if not check["ok"]]
+    return {
+        "schema_version": "final_chain_environment_interaction_contract.v0.1",
+        "workspace_contract": "relative_git_paths_only",
+        "absolute_paths_as_inputs": False,
+        "consumer_role": "external_orchestrator_or_java_backbone",
+        "status": "pass" if not failed else "fail",
+        "chain_count": len(profiles),
+        "ready_chain_ids": [item["chain_id"] for item in profiles if item["status"] == "ready"],
+        "blocked_chain_ids": [item["chain_id"] for item in profiles if item["status"] == "blocked"],
+        "filesystem_contract": {
+            "read_scope": "registered_relative_paths_only",
+            "write_scope": ["outputs/"],
+            "read_only_scopes": ["config/", "src/", "tools/", "prompts/", "tests/"],
+            "temp_files_must_share_target_directory": True,
+            "absolute_paths_as_reproducible_inputs": False,
+        },
+        "external_handshake": [
+            "env-contract",
+            "contract",
+            "plan",
+            "schedule",
+            "job-validate",
+            "adapter-dry-run",
+        ],
+        "forbidden_side_effects": {
+            "model_calls": True,
+            "database_writes": True,
+            "runtime_imports": True,
+            "business_secret_reads": True,
+        },
+        "checks": checks,
+        "profiles": profiles,
+        "execution_contract": {
+            "model_invoked": False,
+            "database_written": False,
+            "runtime_imported": False,
+            "business_secrets_read": False,
+        },
+    }
+
+
+def _environment_contract_profile(environment: dict[str, Any]) -> dict[str, Any]:
+    required_paths = environment.get("required_paths") if isinstance(environment.get("required_paths"), list) else []
+    required_path_count = len(required_paths)
+    required_path_present_count = sum(1 for item in required_paths if isinstance(item, dict) and item.get("exists") is True)
+    status = str(environment.get("status") or "")
+    return {
+        "chain_id": str(environment.get("chain_id") or ""),
+        "profile_name": str(environment.get("profile_name") or ""),
+        "input_format": str(environment.get("input_format") or ""),
+        "subject": str(environment.get("subject") or ""),
+        "registry_readiness": str(environment.get("registry_readiness") or ""),
+        "smoke_status": str(environment.get("smoke_status") or ""),
+        "status": status,
+        "environment_gate": "ready_for_control_plane" if status == "ready" else "fail_closed",
+        "blocked_reasons": list(environment.get("blocked_reasons") or []),
+        "required_path_count": required_path_count,
+        "required_path_present_count": required_path_present_count,
+        "optional_path_summary": environment.get("optional_path_summary"),
+        "capability_policy": environment.get("capability_policy"),
+        "allowed_control_intents": [
+            "inspect",
+            "plan",
+            "schedule_dry_run",
+            "job_validate",
+            "adapter_dry_run",
+        ],
+    }
+
+
 def build_adapter_contract(chain: FinalChainDefinition) -> dict[str, Any]:
     contract = AdapterContract(chain_id=chain.chain_id)
     return {

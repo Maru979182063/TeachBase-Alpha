@@ -24,6 +24,7 @@ Chains: `doc_math, doc_english, pdf_math, pdf_english`
 ## Commands
 
 - `contract`: `tools/final_chain_control.py contract --json`
+- `env_contract`: `tools/final_chain_control.py env-contract --json`
 - `list`: `tools/final_chain_control.py list --json`
 - `plan`: `tools/final_chain_control.py plan --chain-id <chain_id> --input <path> --json`
 - `schedule`: `tools/final_chain_control.py schedule --chain-id <chain_id> --input <path>`

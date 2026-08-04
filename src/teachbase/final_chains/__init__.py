@@ -16,6 +16,7 @@ from .adapters import FinalChainAdapter, build_final_chain_adapters, describe_ad
 from .environment import (
     build_adapter_contract,
     build_environment_profile,
+    build_environment_interaction_contract,
     inspect_adapter_contracts,
     inspect_chain_environment,
     inspect_registry_environments,
@@ -49,6 +50,7 @@ __all__ = [
     "describe_adapters",
     "build_adapter_contract",
     "build_environment_profile",
+    "build_environment_interaction_contract",
     "inspect_adapter_contracts",
     "inspect_chain_environment",
     "inspect_registry_environments",

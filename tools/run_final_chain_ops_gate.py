@@ -9,7 +9,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
-from teachbase.final_chains import build_final_chain_control_contract, build_final_chain_control_dashboard, load_final_chain_registry
+from teachbase.final_chains import (
+    build_environment_interaction_contract,
+    build_final_chain_control_contract,
+    build_final_chain_control_dashboard,
+    load_final_chain_registry,
+)
 from teachbase.infrastructure.artifact_store import write_json, write_text
 
 from tools.build_final_chain_ready_sample_report import build_report as build_ready_sample_report
@@ -25,6 +30,7 @@ def build_gate_report() -> dict[str, Any]:
     registry = load_final_chain_registry(REGISTRY)
     dashboard = build_final_chain_control_dashboard(registry, workspace_root=ROOT)
     control_contract = build_final_chain_control_contract(registry)
+    environment_contract = build_environment_interaction_contract(registry, workspace_root=ROOT)
     ready_samples = build_ready_sample_report()
     pdf_english_blocker = build_pdf_english_source_audit_report()
     pdf_english_recovery = build_pdf_english_recovery_report()
@@ -76,6 +82,26 @@ def build_gate_report() -> dict[str, Any]:
             "value": control_contract["chain_ids"],
         },
         {
+            "name": "environment_contract_passes",
+            "ok": environment_contract["status"] == "pass",
+            "value": environment_contract["status"],
+        },
+        {
+            "name": "environment_contract_covers_four_profiles",
+            "ok": environment_contract["chain_count"] == 4,
+            "value": [item["chain_id"] for item in environment_contract["profiles"]],
+        },
+        {
+            "name": "environment_contract_keeps_pdf_english_fail_closed",
+            "ok": environment_contract["blocked_chain_ids"] == ["pdf_english"],
+            "value": environment_contract["blocked_chain_ids"],
+        },
+        {
+            "name": "environment_contract_limits_writes_to_outputs",
+            "ok": environment_contract["filesystem_contract"]["write_scope"] == ["outputs/"],
+            "value": environment_contract["filesystem_contract"]["write_scope"],
+        },
+        {
             "name": "pdf_english_recovery_blocker_is_explicit",
             "ok": pdf_english_blocker["recovery_status"] == "blocked_missing_manifest_and_smoke_artifacts",
             "value": pdf_english_blocker["recovery_status"],
@@ -97,7 +123,14 @@ def build_gate_report() -> dict[str, Any]:
         },
         {
             "name": "no_runtime_side_effects_reported",
-            "ok": all_no_side_effects(dashboard, control_contract, ready_samples, pdf_english_blocker, pdf_english_recovery),
+            "ok": all_no_side_effects(
+                dashboard,
+                control_contract,
+                environment_contract,
+                ready_samples,
+                pdf_english_blocker,
+                pdf_english_recovery,
+            ),
             "value": "model/database/runtime/secrets all false",
         },
     ]
@@ -110,6 +143,9 @@ def build_gate_report() -> dict[str, Any]:
         "checks": checks,
         "dashboard_lane_counts": dashboard["lane_counts"],
         "control_contract_schema": control_contract["schema_version"],
+        "environment_contract_schema": environment_contract["schema_version"],
+        "environment_ready_chain_ids": environment_contract["ready_chain_ids"],
+        "environment_blocked_chain_ids": environment_contract["blocked_chain_ids"],
         "ready_sample_count": ready_samples["ready_for_adapter_dry_run_count"],
         "pdf_english_recovery_status": pdf_english_blocker["recovery_status"],
         "pdf_english_recovery_source_audit_status": pdf_english_blocker["source_audit_status"],

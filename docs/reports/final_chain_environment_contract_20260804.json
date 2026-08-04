@@ -1,0 +1,367 @@
+{
+  "schema_version": "final_chain_environment_interaction_contract.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "consumer_role": "external_orchestrator_or_java_backbone",
+  "status": "pass",
+  "chain_count": 4,
+  "ready_chain_ids": [
+    "doc_math",
+    "doc_english",
+    "pdf_math"
+  ],
+  "blocked_chain_ids": [
+    "pdf_english"
+  ],
+  "filesystem_contract": {
+    "read_scope": "registered_relative_paths_only",
+    "write_scope": [
+      "outputs/"
+    ],
+    "read_only_scopes": [
+      "config/",
+      "src/",
+      "tools/",
+      "prompts/",
+      "tests/"
+    ],
+    "temp_files_must_share_target_directory": true,
+    "absolute_paths_as_reproducible_inputs": false
+  },
+  "external_handshake": [
+    "env-contract",
+    "contract",
+    "plan",
+    "schedule",
+    "job-validate",
+    "adapter-dry-run"
+  ],
+  "forbidden_side_effects": {
+    "model_calls": true,
+    "database_writes": true,
+    "runtime_imports": true,
+    "business_secret_reads": true
+  },
+  "checks": [
+    {
+      "name": "four_environment_profiles_declared",
+      "ok": true,
+      "value": [
+        "doc_math",
+        "doc_english",
+        "pdf_math",
+        "pdf_english"
+      ]
+    },
+    {
+      "name": "all_profiles_deny_model_calls",
+      "ok": true,
+      "value": [
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "name": "all_profiles_deny_database_writes",
+      "ok": true,
+      "value": [
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "name": "all_profiles_deny_runtime_import",
+      "ok": true,
+      "value": [
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "name": "all_profiles_require_no_business_secrets",
+      "ok": true,
+      "value": [
+        [],
+        [],
+        [],
+        []
+      ]
+    },
+    {
+      "name": "blocked_profiles_fail_closed",
+      "ok": true,
+      "value": [
+        "pdf_english"
+      ]
+    },
+    {
+      "name": "filesystem_writes_limited_to_outputs",
+      "ok": true,
+      "value": [
+        "outputs/"
+      ]
+    }
+  ],
+  "profiles": [
+    {
+      "chain_id": "doc_math",
+      "profile_name": "cleanroom_dry_run",
+      "input_format": "docx",
+      "subject": "math",
+      "registry_readiness": "ready",
+      "smoke_status": "pass",
+      "status": "ready",
+      "environment_gate": "ready_for_control_plane",
+      "blocked_reasons": [],
+      "required_path_count": 3,
+      "required_path_present_count": 3,
+      "optional_path_summary": {
+        "count": 0,
+        "present": 0,
+        "missing": 0,
+        "missing_samples": []
+      },
+      "capability_policy": {
+        "allow_model_calls": false,
+        "allow_database_writes": false,
+        "allow_runtime_import": false,
+        "required_secret_names": []
+      },
+      "allowed_control_intents": [
+        "inspect",
+        "plan",
+        "schedule_dry_run",
+        "job_validate",
+        "adapter_dry_run"
+      ]
+    },
+    {
+      "chain_id": "doc_english",
+      "profile_name": "cleanroom_dry_run",
+      "input_format": "docx",
+      "subject": "english",
+      "registry_readiness": "ready_for_protected_segment",
+      "smoke_status": "pass",
+      "status": "ready",
+      "environment_gate": "ready_for_control_plane",
+      "blocked_reasons": [],
+      "required_path_count": 3,
+      "required_path_present_count": 3,
+      "optional_path_summary": {
+        "count": 79,
+        "present": 34,
+        "missing": 45,
+        "missing_samples": [
+          {
+            "path": "outputs/english_docx_integrated_chain_v0_1/protected_doc5_doc6_20260731_v01",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "outputs/english_docx_group_repair_gate_v0_1/protected_doc5_doc6_20260731_v01_repair",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "outputs/delivery_packs/english_docx_docs1_6_final_20260731_v01.zip",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v04.zip",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v04",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "outputs/english_docx_parent_child_projection_v0_2/doc3_cloze_20_answers_20260731_v04",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v10.zip",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v10",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "outputs/english_docx_parent_child_projection_v0_2/doc3_cloze_20_answers_20260731_v10",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "outputs/delivery_packs/english_docx_doc1_parent_only_20260731_v01.zip",
+            "exists": false,
+            "kind": "missing"
+          }
+        ]
+      },
+      "capability_policy": {
+        "allow_model_calls": false,
+        "allow_database_writes": false,
+        "allow_runtime_import": false,
+        "required_secret_names": []
+      },
+      "allowed_control_intents": [
+        "inspect",
+        "plan",
+        "schedule_dry_run",
+        "job_validate",
+        "adapter_dry_run"
+      ]
+    },
+    {
+      "chain_id": "pdf_math",
+      "profile_name": "cleanroom_dry_run",
+      "input_format": "pdf",
+      "subject": "math",
+      "registry_readiness": "ready",
+      "smoke_status": "pass",
+      "status": "ready",
+      "environment_gate": "ready_for_control_plane",
+      "blocked_reasons": [],
+      "required_path_count": 1,
+      "required_path_present_count": 1,
+      "optional_path_summary": {
+        "count": 15,
+        "present": 12,
+        "missing": 3,
+        "missing_samples": [
+          {
+            "path": "tools/math_formula_library_gate.py",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "outputs/review_packages/s_math47_overlap24_final2_colleague_review_20260721_165138.zip",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "outputs/review_packages/s_math47_overlap24_final2_colleague_review_20260721_165138",
+            "exists": false,
+            "kind": "missing"
+          }
+        ]
+      },
+      "capability_policy": {
+        "allow_model_calls": false,
+        "allow_database_writes": false,
+        "allow_runtime_import": false,
+        "required_secret_names": []
+      },
+      "allowed_control_intents": [
+        "inspect",
+        "plan",
+        "schedule_dry_run",
+        "job_validate",
+        "adapter_dry_run"
+      ]
+    },
+    {
+      "chain_id": "pdf_english",
+      "profile_name": "cleanroom_dry_run",
+      "input_format": "pdf",
+      "subject": "english",
+      "registry_readiness": "protected_definition_ready_needs_artifact_restore_or_smoke_rerun",
+      "smoke_status": "partial",
+      "status": "blocked",
+      "environment_gate": "fail_closed",
+      "blocked_reasons": [
+        "required_paths_present"
+      ],
+      "required_path_count": 1,
+      "required_path_present_count": 0,
+      "optional_path_summary": {
+        "count": 36,
+        "present": 8,
+        "missing": 28,
+        "missing_samples": [
+          {
+            "path": "config/english_text_first_graph_first/active_manifest.json",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "config/english_text_first_v02.yaml",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "docs/english_text_first_graph_first_environment.md",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "tools/english_text_first_graph_first_manifest_check.py",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "tools/english_text_first_full_chain_runner_v01.py",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "tools/english_text_first_controlled_node1_vlm_transcriber.py",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "tools/english_text_first_controlled_node1b_attribute_tagger.py",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "tools/english_text_first_sliding_window_composer_v01.py",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "tools/english_text_first_group_normalizer_v01.py",
+            "exists": false,
+            "kind": "missing"
+          },
+          {
+            "path": "tools/english_text_first_group_relation_resolver_v01.py",
+            "exists": false,
+            "kind": "missing"
+          }
+        ]
+      },
+      "capability_policy": {
+        "allow_model_calls": false,
+        "allow_database_writes": false,
+        "allow_runtime_import": false,
+        "required_secret_names": []
+      },
+      "allowed_control_intents": [
+        "inspect",
+        "plan",
+        "schedule_dry_run",
+        "job_validate",
+        "adapter_dry_run"
+      ]
+    }
+  ],
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}

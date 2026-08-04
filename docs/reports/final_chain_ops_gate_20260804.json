@@ -75,6 +75,35 @@
       ]
     },
     {
+      "name": "environment_contract_passes",
+      "ok": true,
+      "value": "pass"
+    },
+    {
+      "name": "environment_contract_covers_four_profiles",
+      "ok": true,
+      "value": [
+        "doc_math",
+        "doc_english",
+        "pdf_math",
+        "pdf_english"
+      ]
+    },
+    {
+      "name": "environment_contract_keeps_pdf_english_fail_closed",
+      "ok": true,
+      "value": [
+        "pdf_english"
+      ]
+    },
+    {
+      "name": "environment_contract_limits_writes_to_outputs",
+      "ok": true,
+      "value": [
+        "outputs/"
+      ]
+    },
+    {
       "name": "pdf_english_recovery_blocker_is_explicit",
       "ok": true,
       "value": "blocked_missing_manifest_and_smoke_artifacts"
@@ -112,6 +141,15 @@
     "needs_artifact_restore_or_smoke": 1
   },
   "control_contract_schema": "final_chain_control_contract.v0.1",
+  "environment_contract_schema": "final_chain_environment_interaction_contract.v0.1",
+  "environment_ready_chain_ids": [
+    "doc_math",
+    "doc_english",
+    "pdf_math"
+  ],
+  "environment_blocked_chain_ids": [
+    "pdf_english"
+  ],
   "ready_sample_count": 3,
   "pdf_english_recovery_status": "blocked_missing_manifest_and_smoke_artifacts",
   "pdf_english_recovery_source_audit_status": "no_importable_source_found",

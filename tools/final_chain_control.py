@@ -8,6 +8,7 @@ from teachbase.core.errors import TeachBaseError
 from teachbase.final_chains import (
     ChainRunRequest,
     EnvironmentPolicy,
+    build_environment_interaction_contract,
     build_final_chain_adapters,
     build_final_chain_control_dashboard,
     build_final_chain_control_contract,
@@ -89,6 +90,11 @@ def build_env_check(args: argparse.Namespace) -> dict:
         report["ready_count"] = sum(1 for item in report["chains"] if item["status"] == "ready")
         report["blocked_count"] = sum(1 for item in report["chains"] if item["status"] == "blocked")
     return report
+
+
+def build_env_contract(args: argparse.Namespace) -> dict:
+    registry = load_final_chain_registry(Path(args.registry))
+    return build_environment_interaction_contract(registry, workspace_root=ROOT)
 
 
 def build_adapter_contracts(args: argparse.Namespace) -> dict:
@@ -231,6 +237,10 @@ def main() -> int:
     )
     env_parser.add_argument("--chain-id", default="")
 
+    add_json_flag(
+        subparsers.add_parser("env-contract", help="Print the external orchestrator environment interaction contract.")
+    )
+
     adapter_parser = add_json_flag(
         subparsers.add_parser("adapter-contracts", help="Print adapter contracts for protected final chains.")
     )
@@ -295,6 +305,8 @@ def main() -> int:
             result = build_schedule(args)
         elif args.command == "env-check":
             result = build_env_check(args)
+        elif args.command == "env-contract":
+            result = build_env_contract(args)
         elif args.command == "adapter-contracts":
             result = build_adapter_contracts(args)
         elif args.command == "adapter-describe":
@@ -337,6 +349,7 @@ def main() -> int:
         "list",
         "adapter-contracts",
         "adapter-describe",
+        "env-contract",
         "readiness-matrix",
         "job-inspect",
         "dashboard",

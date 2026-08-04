@@ -11,6 +11,7 @@ import pytest
 from teachbase.final_chains import (
     ChainRunRequest,
     EnvironmentPolicy,
+    build_environment_interaction_contract,
     build_final_chain_adapters,
     build_final_chain_control_dashboard,
     build_chain_run_plan,
@@ -681,6 +682,37 @@ def test_environment_report_is_machine_readable_and_side_effect_free() -> None:
     assert "smoke_status_partial_requires_restore_or_rerun" in by_id["pdf_english"]["notes"]
 
 
+def test_environment_interaction_contract_is_external_orchestrator_safe() -> None:
+    registry = load_final_chain_registry(REGISTRY)
+
+    report = build_environment_interaction_contract(registry, workspace_root=ROOT)
+
+    assert report["schema_version"] == "final_chain_environment_interaction_contract.v0.1"
+    assert report["status"] == "pass"
+    assert report["consumer_role"] == "external_orchestrator_or_java_backbone"
+    assert report["ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math"]
+    assert report["blocked_chain_ids"] == ["pdf_english"]
+    assert report["filesystem_contract"]["write_scope"] == ["outputs/"]
+    assert report["filesystem_contract"]["absolute_paths_as_reproducible_inputs"] is False
+    assert report["forbidden_side_effects"] == {
+        "model_calls": True,
+        "database_writes": True,
+        "runtime_imports": True,
+        "business_secret_reads": True,
+    }
+    checks = {item["name"]: item for item in report["checks"]}
+    assert checks["all_profiles_deny_model_calls"]["ok"] is True
+    assert checks["blocked_profiles_fail_closed"]["value"] == ["pdf_english"]
+    by_id = {item["chain_id"]: item for item in report["profiles"]}
+    assert by_id["pdf_english"]["environment_gate"] == "fail_closed"
+    assert by_id["pdf_math"]["environment_gate"] == "ready_for_control_plane"
+    assert by_id["pdf_math"]["required_path_count"] == by_id["pdf_math"]["required_path_present_count"]
+    serialized = json.dumps(report, ensure_ascii=False)
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
 def test_adapter_contracts_forbid_runtime_side_effects_in_dry_run() -> None:
     registry = load_final_chain_registry(REGISTRY)
 
@@ -717,6 +749,23 @@ def test_final_chain_control_cli_env_check_and_adapter_contracts() -> None:
     assert env_payload["chain_count"] == 1
     assert env_payload["chains"][0]["chain_id"] == "pdf_english"
     assert env_payload["chains"][0]["status"] == "blocked"
+
+    env_contract_completed = subprocess.run(
+        [sys.executable, "tools/final_chain_control.py", "env-contract", "--json"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    assert env_contract_completed.returncode == 0
+    env_contract_payload = json.loads(env_contract_completed.stdout)
+    env_contract_serialized = json.dumps(env_contract_payload, ensure_ascii=False)
+    assert env_contract_payload["schema_version"] == "final_chain_environment_interaction_contract.v0.1"
+    assert env_contract_payload["blocked_chain_ids"] == ["pdf_english"]
+    assert "D:\\" not in env_contract_serialized
+    assert "C:\\" not in env_contract_serialized
+    assert "/Users/" not in env_contract_serialized
 
     adapter_completed = subprocess.run(
         [sys.executable, "tools/final_chain_control.py", "adapter-contracts", "--chain-id", "pdf_math", "--json"],
@@ -937,6 +986,7 @@ def test_final_chain_control_contract_is_external_orchestrator_safe() -> None:
     assert report["control_plane_contract"]["scheduler_writes_only_under"] == "outputs/"
     assert all(report["forbidden_side_effects"].values())
     assert report["commands"]["contract"] == "tools/final_chain_control.py contract --json"
+    assert report["commands"]["env_contract"] == "tools/final_chain_control.py env-contract --json"
     assert report["commands"]["job_validate"] == (
         "tools/final_chain_control.py job-validate --record <relative_record_path> --json"
     )
@@ -962,6 +1012,26 @@ def test_final_chain_control_contract_report_has_no_absolute_paths() -> None:
     payload = json.loads(completed.stdout)
     serialized = json.dumps(payload, ensure_ascii=False)
     assert payload["schema_version"] == "final_chain_control_contract.v0.1"
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
+def test_final_chain_environment_contract_report_has_no_absolute_paths() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/build_final_chain_environment_contract.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    assert payload["schema_version"] == "final_chain_environment_interaction_contract.v0.1"
+    assert payload["status"] == "pass"
     assert "D:\\" not in serialized
     assert "C:\\" not in serialized
     assert "/Users/" not in serialized
@@ -1117,12 +1187,19 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     checks = {item["name"]: item for item in payload["checks"]}
     assert payload["status"] == "pass"
     assert payload["control_contract_schema"] == "final_chain_control_contract.v0.1"
+    assert payload["environment_contract_schema"] == "final_chain_environment_interaction_contract.v0.1"
+    assert payload["environment_ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math"]
+    assert payload["environment_blocked_chain_ids"] == ["pdf_english"]
     assert payload["pdf_english_recovery_validation_status"] == "blocked_missing_or_invalid_manifest"
     assert payload["pdf_english_recovery_source_audit_status"] == "no_importable_source_found"
     assert checks["pdf_english_recovery_validator_fails_closed"]["ok"] is True
     assert checks["pdf_english_recovery_requires_four_branch_manifest"]["ok"] is True
     assert checks["pdf_english_recovery_source_audit_has_no_importable_source"]["ok"] is True
     assert checks["ready_sample_job_records_validate"]["ok"] is True
+    assert checks["environment_contract_passes"]["ok"] is True
+    assert checks["environment_contract_covers_four_profiles"]["ok"] is True
+    assert checks["environment_contract_keeps_pdf_english_fail_closed"]["ok"] is True
+    assert checks["environment_contract_limits_writes_to_outputs"]["ok"] is True
     assert checks["control_contract_is_dry_run_only"]["ok"] is True
     assert checks["control_contract_covers_four_chains"]["ok"] is True
 
