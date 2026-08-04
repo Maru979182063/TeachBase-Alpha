@@ -12,6 +12,7 @@ from teachbase.infrastructure.artifact_store import write_json
 from .jobs import attach_job_record_validation, build_job_lifecycle, build_job_recovery_plan, validate_job_record
 
 PlanStatus = Literal["ready", "blocked"]
+JOB_ALLOCATION_ATTEMPTS = 16
 
 
 @dataclass(frozen=True)
@@ -342,8 +343,7 @@ def schedule_chain_run(
             "errors": [{"code": "output_root_not_under_outputs"}],
         })
 
-    job_id = generate_run_id(f"final_chain_{request.chain_id}")
-    record_root = _resolve_under_workspace(workspace_root, request.output_root) / "_control" / "jobs" / job_id
+    job_id, record_root = _allocate_job_record_root(request, workspace_root=workspace_root)
     record_path = record_root / "job_record.json"
     status = "scheduled_ready" if plan["status"] == "ready" else "scheduled_blocked"
     created_at = utc_now_iso()
@@ -362,8 +362,36 @@ def schedule_chain_run(
         "errors": [],
     }
     record = attach_job_record_validation(record)
-    write_json(record_path, record)
+    try:
+        write_json(record_path, record)
+    except Exception:
+        _remove_empty_dir(record_root)
+        raise
     return record
+
+
+def _allocate_job_record_root(request: ChainRunRequest, *, workspace_root: Path) -> tuple[str, Path]:
+    jobs_root = _resolve_under_workspace(workspace_root, request.output_root) / "_control" / "jobs"
+    for _ in range(JOB_ALLOCATION_ATTEMPTS):
+        job_id = generate_run_id(f"final_chain_{request.chain_id}")
+        record_root = jobs_root / job_id
+        try:
+            record_root.mkdir(parents=True, exist_ok=False)
+        except FileExistsError:
+            continue
+        return job_id, record_root
+    raise ConfigurationError(
+        "final_chain_job_id_allocation_exhausted",
+        "Could not allocate a unique final-chain job record directory",
+        evidence={"chain_id": request.chain_id, "output_root": request.output_root},
+    )
+
+
+def _remove_empty_dir(path: Path) -> None:
+    try:
+        path.rmdir()
+    except OSError:
+        pass
 
 
 def schedule_replacement_chain_run(

@@ -23,8 +23,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.35,
-      "output_tail": "....                                                                     [100%]\n4 passed in 0.07s\n"
+      "duration_seconds": 0.387,
+      "output_tail": "....                                                                     [100%]\n4 passed in 0.10s\n"
     },
     {
       "name": "model_call_retry_checkpoint",
@@ -36,8 +36,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.391,
-      "output_tail": ".........                                                                [100%]\n9 passed in 0.10s\n"
+      "duration_seconds": 0.383,
+      "output_tail": ".........                                                                [100%]\n9 passed in 0.09s\n"
     },
     {
       "name": "docx_model_checkpoint_integration",
@@ -49,8 +49,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.358,
-      "output_tail": ".....                                                                    [100%]\n5 passed in 0.08s\n"
+      "duration_seconds": 0.353,
+      "output_tail": ".....                                                                    [100%]\n5 passed in 0.07s\n"
     },
     {
       "name": "visual_model_checkpoint_integration",
@@ -62,8 +62,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.361,
-      "output_tail": "...                                                                      [100%]\n3 passed in 0.08s\n"
+      "duration_seconds": 0.362,
+      "output_tail": "...                                                                      [100%]\n3 passed in 0.07s\n"
     },
     {
       "name": "architecture_boundaries",
@@ -76,7 +76,7 @@
       ],
       "exit_code": 0,
       "duration_seconds": 0.387,
-      "output_tail": ".......                                                                  [100%]\n7 passed in 0.10s\n"
+      "output_tail": ".......                                                                  [100%]\n7 passed in 0.11s\n"
     }
   ]
 }

@@ -564,7 +564,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     assets = extracted["assets"]
     block_stream = {
         "schema_version": "english_docx_native_md_block_stream.v0.1",
-        "source_docx": str(docx_path),
+        "source_docx": safe_rel(docx_path),
         "counts": extracted["counts"],
         "blocks": blocks,
     }
@@ -577,7 +577,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "schema_version": "english_docx_native_md_summary.v0.1",
         "pipeline_id": "english_docx_native_md_v01",
         "run_id": args.run_id,
-        "source_docx": str(docx_path),
+        "source_docx": safe_rel(docx_path),
         "status": "needs_review" if extracted["counts"]["needs_review_blocks"] else "ok",
         "source_probe": docx_probe(docx_path),
         **extracted["counts"],

@@ -7,6 +7,7 @@ import sys
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -73,6 +74,36 @@ def _valid_job_record_with_history(status: str, history: list[dict]) -> dict:
         },
         "errors": [],
     }
+
+
+def _write_minimal_english_docx(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    files = {
+        "[Content_Types].xml": """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>""",
+        "_rels/.rels": """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>""",
+        "word/_rels/document.xml.rels": """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>""",
+        "word/document.xml": """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p><w:r><w:t>Read the passage and answer the question.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>1. Choose the best title.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Answer: </w:t></w:r><w:r><w:rPr><w:u w:val="single"/></w:rPr><w:t>    1    </w:t></w:r></w:p>
+    <w:sectPr/>
+  </w:body>
+</w:document>""",
+    }
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as archive:
+        for name, data in files.items():
+            archive.writestr(name, data)
 
 
 def test_final_chain_control_lists_four_registered_chains_without_runtime_imports() -> None:
@@ -467,6 +498,99 @@ def test_scheduler_snapshots_absolute_input_as_portable_metadata(tmp_path: Path)
     leaking_validation = validate_job_record(leaking_record)
     assert "unknown_status" in {error["code"] for error in leaking_validation["errors"]}
     assert "D:\\unsafe" not in json.dumps(leaking_validation)
+
+
+def test_scheduler_retries_job_id_collision_without_overwriting(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import teachbase.final_chains.control as control_module
+
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "tools").mkdir()
+    (workspace / "tools" / "run.py").write_text("print('not imported')\n", encoding="utf-8")
+    input_path = workspace / "input.pdf"
+    input_path.write_text("pdf placeholder\n", encoding="utf-8")
+    registry_path = workspace / "final_chain_registry.yaml"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "final_chain_registry.v0.1",
+                "selection_policy": {},
+                "chains": [
+                    {
+                        "chain_id": "pdf_math",
+                        "display_name": "PDF Math",
+                        "input_format": "pdf",
+                        "subject": "math",
+                        "protection_status": "protected",
+                        "registry_readiness": "ready",
+                        "confidence": "high",
+                        "canonical_entrypoint": "tools/run.py",
+                        "smoke_status": {"status": "pass"},
+                        "runtime_import_policy": {"default_enabled": False},
+                        "database_write_policy": {"default_enabled": False},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    registry = load_final_chain_registry(registry_path)
+    request = ChainRunRequest(chain_id="pdf_math", input_path="input.pdf", output_root="outputs/final_chain_runs")
+    ids = iter(
+        [
+            "final_chain_pdf_math_collision",
+            "final_chain_pdf_math_collision",
+            "final_chain_pdf_math_unique",
+        ]
+    )
+    monkeypatch.setattr(control_module, "generate_run_id", lambda prefix: next(ids))
+
+    first = schedule_chain_run(registry, request, workspace_root=workspace)
+    second = schedule_chain_run(registry, request, workspace_root=workspace)
+
+    assert first["job_id"] == "final_chain_pdf_math_collision"
+    assert second["job_id"] == "final_chain_pdf_math_unique"
+    assert first["record_path"] != second["record_path"]
+    first_payload = json.loads((workspace / first["record_path"]).read_text(encoding="utf-8"))
+    second_payload = json.loads((workspace / second["record_path"]).read_text(encoding="utf-8"))
+    assert first_payload["job_id"] == first["job_id"]
+    assert second_payload["job_id"] == second["job_id"]
+    assert validate_job_record(first_payload)["ok"] is True
+    assert validate_job_record(second_payload)["ok"] is True
+
+
+def test_english_docx_native_md_records_portable_source_paths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tools_path = ROOT / "tools"
+    if str(tools_path) not in sys.path:
+        sys.path.insert(0, str(tools_path))
+    import english_docx_native_md_v01 as native_md
+
+    workspace = tmp_path / "workspace"
+    docx_path = workspace / "inputs" / "english_native_smoke.docx"
+    out_root = workspace / "outputs" / "english_docx_native_md"
+    _write_minimal_english_docx(docx_path)
+    monkeypatch.setattr(native_md, "ROOT", workspace)
+
+    summary = native_md.run(
+        SimpleNamespace(
+            docx=docx_path,
+            run_id="portable_source_paths",
+            out_root=str(out_root),
+            clean=True,
+        )
+    )
+    block_stream_path = workspace / summary["artifacts"]["block_stream"]
+    block_stream = json.loads(block_stream_path.read_text(encoding="utf-8"))
+
+    assert summary["status"] == "ok"
+    assert summary["source_docx"] == "inputs/english_native_smoke.docx"
+    assert block_stream["source_docx"] == "inputs/english_native_smoke.docx"
+    assert Path(summary["source_docx"]).is_absolute() is False
+    assert Path(block_stream["source_docx"]).is_absolute() is False
+    assert block_stream["counts"]["word_underline_blank_tokens"] == 1
+    assert "[[BLANK_1]]" in (workspace / summary["artifacts"]["document_markdown"]).read_text(encoding="utf-8")
+    assert str(workspace) not in json.dumps(summary)
+    assert str(workspace) not in json.dumps(block_stream)
 
 
 def test_batch_scheduler_queues_ready_chains_and_blocks_pdf_english() -> None:
