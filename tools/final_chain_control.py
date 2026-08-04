@@ -9,6 +9,7 @@ from teachbase.final_chains import (
     ChainRunRequest,
     EnvironmentPolicy,
     build_final_chain_adapters,
+    build_final_chain_control_dashboard,
     build_chain_run_plan,
     build_readiness_matrix,
     describe_adapters,
@@ -148,6 +149,27 @@ def build_readiness(args: argparse.Namespace) -> dict:
     return report
 
 
+def build_dashboard(args: argparse.Namespace) -> dict:
+    registry = load_final_chain_registry(Path(args.registry))
+    sample_inputs = {}
+    for item in args.sample_input or []:
+        chain_id, sep, value = item.partition("=")
+        if sep:
+            sample_inputs[chain_id] = value
+    report = build_final_chain_control_dashboard(registry, workspace_root=ROOT, sample_inputs=sample_inputs)
+    if args.chain_id:
+        report = {
+            **report,
+            "rows": [item for item in report["rows"] if item["chain_id"] == args.chain_id],
+        }
+        report["chain_count"] = len(report["rows"])
+        lane_counts: dict[str, int] = {}
+        for row in report["rows"]:
+            lane_counts[row["lane"]] = lane_counts.get(row["lane"], 0) + 1
+        report["lane_counts"] = lane_counts
+    return report
+
+
 def inspect_job(args: argparse.Namespace) -> dict:
     return inspect_job_record_path(ROOT / args.record)
 
@@ -214,6 +236,10 @@ def main() -> int:
     job_transition_parser.add_argument("--reason", required=True)
     job_transition_parser.add_argument("--with-checkpoint", action="store_true")
 
+    dashboard_parser = subparsers.add_parser("dashboard", help="Summarize final-chain scheduling readiness.")
+    dashboard_parser.add_argument("--chain-id", default="")
+    dashboard_parser.add_argument("--sample-input", action="append")
+
     args = parser.parse_args()
     try:
         if args.command == "list":
@@ -234,6 +260,8 @@ def main() -> int:
             result = inspect_job(args)
         elif args.command == "job-transition":
             result = transition_job(args)
+        elif args.command == "dashboard":
+            result = build_dashboard(args)
         else:
             result = build_plan(args)
     except TeachBaseError as exc:
@@ -254,7 +282,14 @@ def main() -> int:
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 2
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    if args.command in {"list", "adapter-contracts", "adapter-describe", "readiness-matrix", "job-inspect"}:
+    if args.command in {
+        "list",
+        "adapter-contracts",
+        "adapter-describe",
+        "readiness-matrix",
+        "job-inspect",
+        "dashboard",
+    }:
         return 0
     if args.command == "adapter-dry-run":
         return 0 if result.get("status") == "dry_run_ready" else 2

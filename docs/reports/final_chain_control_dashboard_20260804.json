@@ -1,0 +1,136 @@
+{
+  "schema_version": "final_chain_control_dashboard.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "chain_count": 4,
+  "lane_counts": {
+    "needs_cleanroom_import": 2,
+    "needs_sample_input": 1,
+    "needs_artifact_restore_or_smoke": 1
+  },
+  "contract_ok": true,
+  "readiness_tier_counts": {
+    "cleanroom_import_required": 2,
+    "environment_ready_input_needed": 1,
+    "restore_or_rerun_required": 1
+  },
+  "job_lifecycle_policy": {
+    "schema_version": "final_chain_job_lifecycle.v0.1",
+    "terminal_statuses": [
+      "cancelled",
+      "dry_run_failed",
+      "dry_run_passed",
+      "rejected",
+      "scheduled_blocked"
+    ],
+    "allowed_transitions": {
+      "cancelled": [],
+      "dry_run_failed": [],
+      "dry_run_passed": [],
+      "dry_run_started": [
+        "dry_run_passed",
+        "dry_run_failed",
+        "cancelled"
+      ],
+      "rejected": [],
+      "scheduled_blocked": [],
+      "scheduled_ready": [
+        "dry_run_started",
+        "cancelled"
+      ]
+    }
+  },
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  },
+  "rows": [
+    {
+      "chain_id": "doc_math",
+      "display_name": "DOCX Math Final Pipeline",
+      "input_format": "docx",
+      "subject": "math",
+      "lane": "needs_cleanroom_import",
+      "readiness_tier": "cleanroom_import_required",
+      "environment_status": "blocked",
+      "adapter_dry_run_status": "dry_run_blocked",
+      "blocked_reasons": [
+        "canonical_configs_present",
+        "canonical_entrypoint_present",
+        "input_path_present",
+        "required_paths_present"
+      ],
+      "recommended_actions": [
+        "import_or_restore_canonical_entrypoint_and_configs"
+      ],
+      "scheduler_entrypoint": "tools/final_chain_control.py schedule",
+      "adapter_dry_run_entrypoint": "tools/final_chain_control.py adapter-dry-run",
+      "job_record_contract": "final_chain_job_record.v0.1"
+    },
+    {
+      "chain_id": "doc_english",
+      "display_name": "DOCX English Native Markdown Protected Chain",
+      "input_format": "docx",
+      "subject": "english",
+      "lane": "needs_cleanroom_import",
+      "readiness_tier": "cleanroom_import_required",
+      "environment_status": "blocked",
+      "adapter_dry_run_status": "dry_run_blocked",
+      "blocked_reasons": [
+        "canonical_configs_present",
+        "canonical_entrypoint_present",
+        "input_path_present",
+        "required_paths_present"
+      ],
+      "recommended_actions": [
+        "import_or_restore_canonical_entrypoint_and_configs"
+      ],
+      "scheduler_entrypoint": "tools/final_chain_control.py schedule",
+      "adapter_dry_run_entrypoint": "tools/final_chain_control.py adapter-dry-run",
+      "job_record_contract": "final_chain_job_record.v0.1"
+    },
+    {
+      "chain_id": "pdf_math",
+      "display_name": "PDF Math Visual Ingest Asset Package Chain",
+      "input_format": "pdf",
+      "subject": "math",
+      "lane": "needs_sample_input",
+      "readiness_tier": "environment_ready_input_needed",
+      "environment_status": "ready",
+      "adapter_dry_run_status": "dry_run_blocked",
+      "blocked_reasons": [
+        "input_path_present"
+      ],
+      "recommended_actions": [
+        "provide_existing_input_file_for_adapter_dry_run"
+      ],
+      "scheduler_entrypoint": "tools/final_chain_control.py schedule",
+      "adapter_dry_run_entrypoint": "tools/final_chain_control.py adapter-dry-run",
+      "job_record_contract": "final_chain_job_record.v0.1"
+    },
+    {
+      "chain_id": "pdf_english",
+      "display_name": "English Text First Graph First",
+      "input_format": "pdf",
+      "subject": "english",
+      "lane": "needs_artifact_restore_or_smoke",
+      "readiness_tier": "restore_or_rerun_required",
+      "environment_status": "blocked",
+      "adapter_dry_run_status": "dry_run_blocked",
+      "blocked_reasons": [
+        "canonical_entrypoint_present",
+        "input_path_present",
+        "required_paths_present"
+      ],
+      "recommended_actions": [
+        "import_or_restore_canonical_entrypoint_and_configs",
+        "restore_active_manifest_or_rerun_smoke_artifacts"
+      ],
+      "scheduler_entrypoint": "tools/final_chain_control.py schedule",
+      "adapter_dry_run_entrypoint": "tools/final_chain_control.py adapter-dry-run",
+      "job_record_contract": "final_chain_job_record.v0.1"
+    }
+  ]
+}

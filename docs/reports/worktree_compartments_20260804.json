@@ -8,27 +8,11 @@
     "review mixed_control_file changes line-by-line before staging"
   ],
   "counts": {
-    "worktree_compartment_report": 3,
     "mixed_control_file": 1,
-    "final_chain_registry": 5
+    "final_chain_registry": 7,
+    "worktree_compartment_report": 1
   },
   "records": [
-    {
-      "status": " M",
-      "path": "docs/reports/worktree_compartments_20260804.json",
-      "bucket": "worktree_compartment_report",
-      "reasons": [
-        "review compartment documentation and report generator"
-      ]
-    },
-    {
-      "status": " M",
-      "path": "docs/reports/worktree_compartments_20260804.md",
-      "bucket": "worktree_compartment_report",
-      "reasons": [
-        "review compartment documentation and report generator"
-      ]
-    },
     {
       "status": " M",
       "path": "package.json",
@@ -44,14 +28,6 @@
     {
       "status": " M",
       "path": "src/teachbase/final_chains/__init__.py",
-      "bucket": "final_chain_registry",
-      "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
-      ]
-    },
-    {
-      "status": " M",
-      "path": "src/teachbase/final_chains/control.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -83,7 +59,31 @@
     },
     {
       "status": "??",
-      "path": "src/teachbase/final_chains/jobs.py",
+      "path": "docs/reports/final_chain_control_dashboard_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "docs/reports/final_chain_control_dashboard_20260804.md",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "src/teachbase/final_chains/dashboard.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/build_final_chain_control_dashboard.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"

@@ -11,6 +11,7 @@ from teachbase.final_chains import (
     ChainRunRequest,
     EnvironmentPolicy,
     build_final_chain_adapters,
+    build_final_chain_control_dashboard,
     build_chain_run_plan,
     build_readiness_matrix,
     describe_adapters,
@@ -588,3 +589,58 @@ def test_final_chain_control_cli_readiness_matrix(tmp_path: Path) -> None:
     assert payload["chain_count"] == 1
     assert payload["rows"][0]["chain_id"] == "pdf_math"
     assert payload["rows"][0]["readiness_tier"] == "ready_for_adapter_dry_run"
+
+
+def test_final_chain_control_dashboard_groups_chains_by_scheduling_lane() -> None:
+    registry = load_final_chain_registry(REGISTRY)
+
+    report = build_final_chain_control_dashboard(registry, workspace_root=ROOT)
+
+    assert report["schema_version"] == "final_chain_control_dashboard.v0.1"
+    assert report["workspace_contract"] == "relative_git_paths_only"
+    assert report["absolute_paths_as_inputs"] is False
+    assert report["contract_ok"] is True
+    assert report["execution_contract"] == {
+        "model_invoked": False,
+        "database_written": False,
+        "runtime_imported": False,
+        "business_secrets_read": False,
+    }
+    by_id = {item["chain_id"]: item for item in report["rows"]}
+    assert by_id["doc_math"]["lane"] == "needs_cleanroom_import"
+    assert by_id["doc_english"]["lane"] == "needs_cleanroom_import"
+    assert by_id["pdf_math"]["lane"] == "needs_sample_input"
+    assert by_id["pdf_english"]["lane"] == "needs_artifact_restore_or_smoke"
+    assert report["job_lifecycle_policy"]["allowed_transitions"]["scheduled_ready"] == [
+        "dry_run_started",
+        "cancelled",
+    ]
+
+
+def test_final_chain_control_cli_dashboard_filters_one_chain(tmp_path: Path) -> None:
+    sample = tmp_path / "sample.pdf"
+    sample.write_text("pdf placeholder", encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/final_chain_control.py",
+            "dashboard",
+            "--chain-id",
+            "pdf_math",
+            "--sample-input",
+            f"pdf_math={sample}",
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    assert payload["schema_version"] == "final_chain_control_dashboard.v0.1"
+    assert payload["chain_count"] == 1
+    assert payload["lane_counts"] == {"adapter_dry_run_ready": 1}
+    assert payload["rows"][0]["chain_id"] == "pdf_math"

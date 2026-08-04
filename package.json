@@ -33,6 +33,8 @@
     "final-chain:adapter-describe": "python tools/final_chain_control.py adapter-describe",
     "final-chain:adapter-dry-run": "python tools/final_chain_control.py adapter-dry-run",
     "final-chain:readiness-matrix": "python tools/final_chain_control.py readiness-matrix",
+    "final-chain:dashboard": "python tools/final_chain_control.py dashboard",
+    "audit:final-chain-dashboard": "python tools/build_final_chain_control_dashboard.py",
     "final-chain:job-inspect": "python tools/final_chain_control.py job-inspect",
     "final-chain:job-transition": "python tools/final_chain_control.py job-transition",
     "test:cleanup-candidates": "python -m pytest tests/test_cleanup_candidate_report.py -q",
