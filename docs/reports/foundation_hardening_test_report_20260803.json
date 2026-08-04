@@ -23,8 +23,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.387,
-      "output_tail": "....                                                                     [100%]\n4 passed in 0.10s\n"
+      "duration_seconds": 0.358,
+      "output_tail": "....                                                                     [100%]\n4 passed in 0.09s\n"
     },
     {
       "name": "model_call_retry_checkpoint",
@@ -36,7 +36,7 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.383,
+      "duration_seconds": 0.362,
       "output_tail": ".........                                                                [100%]\n9 passed in 0.09s\n"
     },
     {
@@ -49,8 +49,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.353,
-      "output_tail": ".....                                                                    [100%]\n5 passed in 0.07s\n"
+      "duration_seconds": 0.336,
+      "output_tail": ".....                                                                    [100%]\n5 passed in 0.06s\n"
     },
     {
       "name": "visual_model_checkpoint_integration",
@@ -62,7 +62,7 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.362,
+      "duration_seconds": 0.349,
       "output_tail": "...                                                                      [100%]\n3 passed in 0.07s\n"
     },
     {
@@ -75,8 +75,8 @@
         "-q"
       ],
       "exit_code": 0,
-      "duration_seconds": 0.387,
-      "output_tail": ".......                                                                  [100%]\n7 passed in 0.11s\n"
+      "duration_seconds": 0.369,
+      "output_tail": ".......                                                                  [100%]\n7 passed in 0.10s\n"
     }
   ]
 }

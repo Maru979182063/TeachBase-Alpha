@@ -10,7 +10,9 @@
     {
       "chain_id": "pdf_english",
       "status": "blocked_missing_manifest_and_smoke_artifacts",
-      "safe_boundary": "validate_pdf_english_recovery_requires_manifest_before_ready_claim"
+      "safe_boundary": "validate_pdf_english_recovery_requires_manifest_before_ready_claim",
+      "legacy_artifact_wait_required": false,
+      "safe_rebuild_boundary": "pdf_english_rebuild_decision_requires_fresh_manifest_and_smoke_before_ready_claim"
     }
   ],
   "checks": [
@@ -135,6 +137,12 @@
           "runtime_imported": false,
           "business_secrets_read": false
         },
+        "pdf_english_rebuild_decision": {
+          "model_invoked": false,
+          "database_written": false,
+          "runtime_imported": false,
+          "business_secrets_read": false
+        },
         "final_chain_ops_health": {
           "model_invoked": false,
           "database_written": false,
@@ -161,7 +169,7 @@
       "ok": true,
       "value": {
         "exit_code": 0,
-        "output_tail": "........................................................................ [ 83%]\n..............                                                           [100%]\n86 passed in 5.43s\n"
+        "output_tail": "........................................................................ [ 82%]\n...............                                                          [100%]\n87 passed in 5.96s\n"
       }
     },
     {
@@ -187,6 +195,15 @@
           "prior_smoke_dir_present",
           "prior_smoke_dir_nonempty"
         ]
+      }
+    },
+    {
+      "name": "pdf_english_lost_artifacts_have_rebuild_track",
+      "ok": true,
+      "value": {
+        "status": "rebuild_track_allowed",
+        "legacy_artifact_wait_required": false,
+        "ready_claim_allowed": false
       }
     },
     {
@@ -237,6 +254,10 @@
     },
     "pdf_english_recovery_intake_validation": {
       "path": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
+      "exists": true
+    },
+    "pdf_english_rebuild_decision": {
+      "path": "docs/reports/pdf_english_rebuild_decision_20260804.json",
       "exists": true
     },
     "final_chain_ops_health": {

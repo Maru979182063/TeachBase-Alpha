@@ -53,6 +53,7 @@
     "audit:pdf-english-recovery": "python tools/validate_pdf_english_recovery.py",
     "audit:pdf-english-recovery-sources": "python tools/build_pdf_english_recovery_source_audit.py",
     "audit:pdf-english-recovery-intake": "python tools/validate_pdf_english_recovery_intake.py",
+    "audit:pdf-english-rebuild-decision": "python tools/build_pdf_english_rebuild_decision.py",
     "final-chain:job-inspect": "python tools/final_chain_control.py job-inspect",
     "final-chain:job-validate": "python tools/final_chain_control.py job-validate",
     "final-chain:job-transition": "python tools/final_chain_control.py job-transition",

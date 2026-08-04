@@ -28,6 +28,7 @@ REQUIRED_REPORTS = {
     "pdf_english_recovery_validation": "docs/reports/pdf_english_recovery_validation_20260804.json",
     "pdf_english_recovery_source_audit": "docs/reports/pdf_english_manifest_recovery_audit_20260804.json",
     "pdf_english_recovery_intake_validation": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
+    "pdf_english_rebuild_decision": "docs/reports/pdf_english_rebuild_decision_20260804.json",
 }
 
 
@@ -92,6 +93,23 @@ def build_report() -> dict[str, Any]:
             },
         },
         {
+            "name": "pdf_english_rebuild_track_is_explicit",
+            "ok": _json_value(reports, "pdf_english_rebuild_decision", ["status"]) == "rebuild_track_allowed"
+            and _json_value(reports, "pdf_english_rebuild_decision", ["rebuild_track_allowed"]) is True
+            and _json_value(reports, "pdf_english_rebuild_decision", ["legacy_artifact_wait_required"]) is False
+            and _json_value(reports, "pdf_english_rebuild_decision", ["ready_claim_allowed"]) is False,
+            "value": {
+                "status": _json_value(reports, "pdf_english_rebuild_decision", ["status"]),
+                "rebuild_track_allowed": _json_value(
+                    reports, "pdf_english_rebuild_decision", ["rebuild_track_allowed"]
+                ),
+                "legacy_artifact_wait_required": _json_value(
+                    reports, "pdf_english_rebuild_decision", ["legacy_artifact_wait_required"]
+                ),
+                "ready_claim_allowed": _json_value(reports, "pdf_english_rebuild_decision", ["ready_claim_allowed"]),
+            },
+        },
+        {
             "name": "final_chain_ops_health_is_sealed",
             "ok": _json_value(reports, "final_chain_ops_health", ["status"]) == "pass"
             and _json_value(reports, "final_chain_ops_health", ["missing_npm_scripts"]) == [],
@@ -130,6 +148,8 @@ def build_report() -> dict[str, Any]:
                 "status": "blocked_missing_manifest_and_smoke_artifacts",
                 "guard": "pdf_english_recovery_requires_four_branch_manifest",
                 "allowed_behavior": "fail_closed",
+                "legacy_artifact_wait_required": False,
+                "safe_rebuild_boundary": "pdf_english_rebuild_decision_requires_fresh_manifest_and_smoke_before_ready_claim",
             }
         ],
         "checks": checks,
@@ -187,6 +207,7 @@ def _status_reports_ok(reports: dict[str, dict[str, Any]]) -> bool:
         "pdf_english_recovery_validation": "blocked_missing_or_invalid_manifest",
         "pdf_english_recovery_source_audit": "no_importable_source_found",
         "pdf_english_recovery_intake_validation": "blocked_missing_or_invalid_recovery_candidate",
+        "pdf_english_rebuild_decision": "rebuild_track_allowed",
     }
     for name, record in reports.items():
         status = record["status"]

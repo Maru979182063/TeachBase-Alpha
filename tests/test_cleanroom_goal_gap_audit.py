@@ -31,6 +31,8 @@ def test_cleanroom_goal_gap_audit_tracks_residual_completion_gap() -> None:
             "chain_id": "pdf_english",
             "status": "blocked_missing_manifest_and_smoke_artifacts",
             "safe_boundary": "validate_pdf_english_recovery_requires_manifest_before_ready_claim",
+            "legacy_artifact_wait_required": False,
+            "safe_rebuild_boundary": "pdf_english_rebuild_decision_requires_fresh_manifest_and_smoke_before_ready_claim",
         }
     ]
     assert checks["foundation_gate_sealed"]["ok"] is True
@@ -46,6 +48,7 @@ def test_cleanroom_goal_gap_audit_tracks_residual_completion_gap() -> None:
     assert checks["final_chain_contract_tests_pass"]["ok"] is True
     assert checks["pdf_english_remains_fail_closed_not_silent_ready"]["ok"] is True
     assert checks["pdf_english_recovery_intake_gate_ready_for_restored_candidate"]["ok"] is True
+    assert checks["pdf_english_lost_artifacts_have_rebuild_track"]["ok"] is True
     assert checks["final_chain_ops_health_seals_cli_and_recovery_surface"]["ok"] is True
     assert payload["execution_contract"] == {
         "model_invoked": False,

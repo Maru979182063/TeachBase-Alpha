@@ -8,11 +8,53 @@
     "review mixed_control_file changes line-by-line before staging"
   ],
   "counts": {
+    "final_chain_registry": 14,
     "foundation_hardening": 1,
-    "final_chain_registry": 2,
-    "doc_english_code_import": 1
+    "precleanup_safety_gate": 1,
+    "worktree_compartment_report": 3,
+    "mixed_control_file": 1
   },
   "records": [
+    {
+      "status": " M",
+      "path": "docs/reports/cleanroom_hardening_manifest_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/cleanroom_hardening_manifest_20260804.md",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/cleanroom_hardening_manifest_validation_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/cleanroom_hardening_status_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/cleanroom_hardening_status_20260804.md",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
     {
       "status": " M",
       "path": "docs/reports/foundation_hardening_test_report_20260803.json",
@@ -23,7 +65,47 @@
     },
     {
       "status": " M",
-      "path": "src/teachbase/final_chains/control.py",
+      "path": "docs/reports/precleanup_safety_gate_20260804.json",
+      "bucket": "precleanup_safety_gate",
+      "reasons": [
+        "combined guard for protected-chain cleanup work"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/worktree_compartments_20260804.json",
+      "bucket": "worktree_compartment_report",
+      "reasons": [
+        "review compartment documentation and report generator"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/worktree_compartments_20260804.md",
+      "bucket": "worktree_compartment_report",
+      "reasons": [
+        "review compartment documentation and report generator"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "package.json",
+      "bucket": "mixed_control_file",
+      "reasons": [
+        "foundation_hardening npm script",
+        "final_chain_registry npm scripts",
+        "precleanup_archive npm scripts",
+        "precleanup_deep_audit npm script",
+        "precleanup_safety npm script",
+        "cleanroom_goal_gap audit npm script",
+        "pdf_english_recovery_intake audit npm script",
+        "pdf_english_rebuild_decision audit npm script",
+        "final_chain_ops_health audit npm script"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "tests/test_cleanroom_goal_gap_audit.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -39,10 +121,66 @@
     },
     {
       "status": " M",
-      "path": "tools/english_docx_native_md_v01.py",
-      "bucket": "doc_english_code_import",
+      "path": "tools/build_cleanroom_goal_gap_audit.py",
+      "bucket": "final_chain_registry",
       "reasons": [
-        "copied from DOCX English protected code/config/prompt paths"
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "tools/build_cleanroom_hardening_manifest.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "tools/build_worktree_compartment_report.py",
+      "bucket": "worktree_compartment_report",
+      "reasons": [
+        "review compartment documentation and report generator"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "tools/run_cleanroom_hardening_status_gate.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "tools/validate_cleanroom_hardening_manifest.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "docs/reports/pdf_english_rebuild_decision_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "docs/reports/pdf_english_rebuild_decision_20260804.md",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/build_pdf_english_rebuild_decision.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
       ]
     }
   ]

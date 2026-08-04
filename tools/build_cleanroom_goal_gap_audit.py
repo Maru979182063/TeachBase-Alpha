@@ -24,6 +24,7 @@ SOURCES = {
     "environment_contract": "docs/reports/final_chain_environment_contract_20260804.json",
     "handshake_validation": "docs/reports/final_chain_orchestrator_handshake_validation_20260804.json",
     "pdf_english_recovery_intake_validation": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
+    "pdf_english_rebuild_decision": "docs/reports/pdf_english_rebuild_decision_20260804.json",
     "final_chain_ops_health": "docs/reports/final_chain_ops_health_20260804.json",
 }
 
@@ -169,6 +170,19 @@ def _build_checks(sources: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
             },
         },
         {
+            "name": "pdf_english_lost_artifacts_have_rebuild_track",
+            "ok": _source_status(sources, "pdf_english_rebuild_decision") == "rebuild_track_allowed"
+            and _value(sources, "pdf_english_rebuild_decision", ["legacy_artifact_wait_required"]) is False
+            and _value(sources, "pdf_english_rebuild_decision", ["ready_claim_allowed"]) is False,
+            "value": {
+                "status": _source_status(sources, "pdf_english_rebuild_decision"),
+                "legacy_artifact_wait_required": _value(
+                    sources, "pdf_english_rebuild_decision", ["legacy_artifact_wait_required"]
+                ),
+                "ready_claim_allowed": _value(sources, "pdf_english_rebuild_decision", ["ready_claim_allowed"]),
+            },
+        },
+        {
             "name": "final_chain_ops_health_seals_cli_and_recovery_surface",
             "ok": _source_status(sources, "final_chain_ops_health") == "pass"
             and _value(sources, "final_chain_ops_health", ["missing_npm_scripts"]) == [],
@@ -192,6 +206,8 @@ def _residual_gaps(sources: dict[str, dict[str, Any]]) -> list[dict[str, str]]:
                     "chain_id": str(blocker.get("chain_id") or ""),
                     "status": str(blocker.get("status") or ""),
                     "safe_boundary": str(blocker.get("safe_boundary") or ""),
+                    "legacy_artifact_wait_required": blocker.get("legacy_artifact_wait_required") is True,
+                    "safe_rebuild_boundary": str(blocker.get("safe_rebuild_boundary") or ""),
                 }
             )
     return gaps

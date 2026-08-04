@@ -2517,10 +2517,12 @@ def test_cleanroom_hardening_manifest_seals_current_gate_outputs() -> None:
     assert payload["reports"]["final_chain_orchestrator_handshake_validation"]["status"] == "pass"
     assert payload["reports"]["final_chain_ops_health"]["status"] == "pass"
     assert payload["reports"]["pdf_english_recovery_intake_validation"]["status"] == "blocked_missing_or_invalid_recovery_candidate"
+    assert payload["reports"]["pdf_english_rebuild_decision"]["status"] == "rebuild_track_allowed"
     assert checks["final_chain_ops_covers_four_chains"]["ok"] is True
     assert checks["final_chain_job_records_self_and_external_validated"]["ok"] is True
     assert checks["pdf_english_is_explicit_fail_closed_blocker"]["ok"] is True
     assert checks["pdf_english_recovery_intake_gate_is_sealed"]["ok"] is True
+    assert checks["pdf_english_rebuild_track_is_explicit"]["ok"] is True
     assert checks["final_chain_ops_health_is_sealed"]["ok"] is True
     assert payload["known_blockers"] == [
         {
@@ -2528,6 +2530,8 @@ def test_cleanroom_hardening_manifest_seals_current_gate_outputs() -> None:
             "status": "blocked_missing_manifest_and_smoke_artifacts",
             "guard": "pdf_english_recovery_requires_four_branch_manifest",
             "allowed_behavior": "fail_closed",
+            "legacy_artifact_wait_required": False,
+            "safe_rebuild_boundary": "pdf_english_rebuild_decision_requires_fresh_manifest_and_smoke_before_ready_claim",
         }
     ]
     assert "D:\\" not in serialized
@@ -2574,6 +2578,43 @@ def test_cleanroom_hardening_manifest_validator_accepts_sealed_manifest() -> Non
     assert "/Users/" not in serialized
 
 
+def test_pdf_english_rebuild_decision_keeps_old_identity_closed_but_allows_rebuild() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/build_pdf_english_rebuild_decision.py"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    checks = {item["name"]: item for item in payload["checks"]}
+    assert payload["schema_version"] == "pdf_english_rebuild_decision.v0.1"
+    assert payload["status"] == "rebuild_track_allowed"
+    assert payload["legacy_artifact_wait_required"] is False
+    assert payload["rebuild_track_allowed"] is True
+    assert payload["ready_claim_allowed"] is False
+    assert payload["old_identity_claim_allowed"] is False
+    assert checks["legacy_artifact_recovery_is_not_ready"]["ok"] is True
+    assert checks["cleanroom_v05_rebuild_scaffold_present"]["ok"] is True
+    assert checks["old_local_graph_first_source_code_available_if_present"]["ok"] is True
+    assert checks["portable_regression_passes_without_model_or_runtime"]["ok"] is True
+    assert "new_active_manifest_generated_from_fresh_rebuild_outputs" in payload["required_promotion_evidence"]
+    assert "do_not_synthesize_old_active_manifest" in payload["unsafe_actions"]
+    assert payload["execution_contract"] == {
+        "model_invoked": False,
+        "database_written": False,
+        "runtime_imported": False,
+        "business_secrets_read": False,
+    }
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+
+
 def test_cleanroom_hardening_manifest_validator_rejects_tampered_contract() -> None:
     from tools.validate_cleanroom_hardening_manifest import _build_checks
 
@@ -2599,6 +2640,8 @@ def test_cleanroom_hardening_manifest_validator_rejects_tampered_contract() -> N
                 "status": "blocked_missing_manifest_and_smoke_artifacts",
                 "guard": "pdf_english_recovery_requires_four_branch_manifest",
                 "allowed_behavior": "fail_closed",
+                "legacy_artifact_wait_required": False,
+                "safe_rebuild_boundary": "pdf_english_rebuild_decision_requires_fresh_manifest_and_smoke_before_ready_claim",
             }
         ],
         "checks": [

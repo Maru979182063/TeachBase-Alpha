@@ -43,6 +43,7 @@ REQUIRED_REPORTS = {
     "pdf_english_recovery_validation",
     "pdf_english_recovery_source_audit",
     "pdf_english_recovery_intake_validation",
+    "pdf_english_rebuild_decision",
 }
 
 REQUIRED_MANIFEST_CHECKS = {
@@ -52,6 +53,7 @@ REQUIRED_MANIFEST_CHECKS = {
     "final_chain_job_records_self_and_external_validated",
     "pdf_english_is_explicit_fail_closed_blocker",
     "pdf_english_recovery_intake_gate_is_sealed",
+    "pdf_english_rebuild_track_is_explicit",
     "final_chain_ops_health_is_sealed",
     "no_report_declares_runtime_side_effects",
 }
@@ -61,6 +63,8 @@ EXPECTED_BLOCKER = {
     "status": "blocked_missing_manifest_and_smoke_artifacts",
     "guard": "pdf_english_recovery_requires_four_branch_manifest",
     "allowed_behavior": "fail_closed",
+    "legacy_artifact_wait_required": False,
+    "safe_rebuild_boundary": "pdf_english_rebuild_decision_requires_fresh_manifest_and_smoke_before_ready_claim",
 }
 
 ABSOLUTE_PATH_PATTERN = re.compile(r"(?:[A-Za-z]:\\|/Users/|\\\\)")

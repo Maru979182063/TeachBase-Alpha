@@ -28,6 +28,11 @@ GATES = [
         "report": "docs/reports/final_chain_ops_gate_20260804.json",
     },
     {
+        "name": "pdf_english_rebuild_decision",
+        "command": [sys.executable, "tools/build_pdf_english_rebuild_decision.py"],
+        "report": "docs/reports/pdf_english_rebuild_decision_20260804.json",
+    },
+    {
         "name": "cleanroom_hardening_manifest",
         "command": [sys.executable, "tools/build_cleanroom_hardening_manifest.py"],
         "report": "docs/reports/cleanroom_hardening_manifest_20260804.json",
@@ -101,6 +106,7 @@ def build_report() -> dict[str, Any]:
             "precleanup_archive_safety",
             "final_chain_control_and_scheduling_shell",
             "pdf_english_recovery_fail_closed_boundary",
+            "pdf_english_lost_artifact_rebuild_track",
         ],
         "checks": checks,
         "gates": gate_results,
@@ -109,6 +115,8 @@ def build_report() -> dict[str, Any]:
                 "chain_id": "pdf_english",
                 "status": "blocked_missing_manifest_and_smoke_artifacts",
                 "safe_boundary": "validate_pdf_english_recovery_requires_manifest_before_ready_claim",
+                "legacy_artifact_wait_required": False,
+                "safe_rebuild_boundary": "pdf_english_rebuild_decision_requires_fresh_manifest_and_smoke_before_ready_claim",
             }
         ],
         "execution_contract": {
@@ -177,7 +185,11 @@ def _build_checks(gate_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         },
         {
             "name": "all_gate_reports_pass_or_ok",
-            "ok": all(gate["report_status"] in {"pass", "ok"} for gate in gate_results),
+            "ok": all(
+                gate["report_status"] in {"pass", "ok"}
+                or (gate["name"] == "pdf_english_rebuild_decision" and gate["report_status"] == "rebuild_track_allowed")
+                for gate in gate_results
+            ),
             "value": {gate["name"]: gate["report_status"] for gate in gate_results},
         },
         {
@@ -201,6 +213,24 @@ def _build_checks(gate_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "name": "three_ready_chains_sample_scheduled",
                 "ok": payload.get("ready_sample_count") == 3,
                 "value": payload.get("ready_sample_count"),
+            }
+        )
+    rebuild_gate = next((gate for gate in gate_results if gate["name"] == "pdf_english_rebuild_decision"), None)
+    if rebuild_gate:
+        payload = _read_report(rebuild_gate["report_path"])
+        checks.append(
+            {
+                "name": "pdf_english_has_non_blocking_rebuild_track",
+                "ok": payload.get("status") == "rebuild_track_allowed"
+                and payload.get("rebuild_track_allowed") is True
+                and payload.get("legacy_artifact_wait_required") is False
+                and payload.get("ready_claim_allowed") is False,
+                "value": {
+                    "status": payload.get("status"),
+                    "rebuild_track_allowed": payload.get("rebuild_track_allowed"),
+                    "legacy_artifact_wait_required": payload.get("legacy_artifact_wait_required"),
+                    "ready_claim_allowed": payload.get("ready_claim_allowed"),
+                },
             }
         )
     manifest_gate = next((gate for gate in gate_results if gate["name"] == "cleanroom_hardening_manifest"), None)
