@@ -11,16 +11,16 @@
     "doc_math"
   ],
   "row_count": 8,
-  "missing_in_cleanroom_count": 7,
+  "missing_in_cleanroom_count": 4,
   "importable_candidate_count": 7,
   "rows": [
     {
       "chain_id": "doc_math",
       "role": "canonical_entrypoint",
       "relative_path": "tools/docx_math_pipeline_final_orchestrator_v01.py",
-      "cleanroom_exists": false,
-      "cleanroom_bytes": 0,
-      "cleanroom_sha256": "",
+      "cleanroom_exists": true,
+      "cleanroom_bytes": 27056,
+      "cleanroom_sha256": "d77939c9a111f37609db12c88b469ebd29b93574463261c5a4ffddfee4c9009f",
       "handoff_inventory_sha256": "d77939c9a111f37609db12c88b469ebd29b93574463261c5a4ffddfee4c9009f",
       "source_candidates": [
         {
@@ -40,15 +40,15 @@
           "matches_handoff_inventory": null
         }
       ],
-      "import_action": "candidate_available_for_reviewed_import"
+      "import_action": "already_present_in_cleanroom"
     },
     {
       "chain_id": "doc_math",
       "role": "canonical_config_1",
       "relative_path": "config/docx_math_pipeline_final_v01.yaml",
-      "cleanroom_exists": false,
-      "cleanroom_bytes": 0,
-      "cleanroom_sha256": "",
+      "cleanroom_exists": true,
+      "cleanroom_bytes": 3471,
+      "cleanroom_sha256": "36336f7c5e5cfe63fce7542b7451340e98f8492a3921795b13098e4d790ad943",
       "handoff_inventory_sha256": "36336f7c5e5cfe63fce7542b7451340e98f8492a3921795b13098e4d790ad943",
       "source_candidates": [
         {
@@ -68,15 +68,15 @@
           "matches_handoff_inventory": null
         }
       ],
-      "import_action": "candidate_available_for_reviewed_import"
+      "import_action": "already_present_in_cleanroom"
     },
     {
       "chain_id": "doc_math",
       "role": "canonical_config_2",
       "relative_path": "config/docx_math_pipeline_final_active_manifest.json",
-      "cleanroom_exists": false,
-      "cleanroom_bytes": 0,
-      "cleanroom_sha256": "",
+      "cleanroom_exists": true,
+      "cleanroom_bytes": 4486,
+      "cleanroom_sha256": "cb336031c400a46c376cf6c36dbafb39bb901b2677014f695d81f8ee2788a528",
       "handoff_inventory_sha256": "cb336031c400a46c376cf6c36dbafb39bb901b2677014f695d81f8ee2788a528",
       "source_candidates": [
         {
@@ -96,7 +96,7 @@
           "matches_handoff_inventory": null
         }
       ],
-      "import_action": "candidate_available_for_reviewed_import"
+      "import_action": "already_present_in_cleanroom"
     },
     {
       "chain_id": "doc_english",

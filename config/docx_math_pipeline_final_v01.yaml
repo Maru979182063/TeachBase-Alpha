@@ -1,0 +1,75 @@
+{
+  "schema_version": "docx_math_pipeline_final_v01.config",
+  "pipeline_id": "docx_math_pipeline_final_v01",
+  "pipeline_name": "DOCX Math Native Final Pipeline",
+  "status": "experimental_final_candidate",
+  "entrypoint": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+  "owned_output_root": "outputs/docx_math_pipeline_final_v0_1",
+  "runtime_import_enabled": false,
+  "database_write_enabled": false,
+  "node_sequence": [
+    {
+      "node_id": "stage0_router",
+      "entrypoint": "tools/docx_native_stage0_router_v01.py",
+      "role": "DOCX native unzip/XML/media/OMML/OLE/run-math token stream entry"
+    },
+    {
+      "node_id": "block_tagger",
+      "entrypoint": "tools/docx_native_block_tagger_v01.py",
+      "role": "per-block coarse role tagging and noise reduction"
+    },
+    {
+      "node_id": "asset_role_visual_tagger",
+      "entrypoint": "tools/docx_asset_role_visual_tagger_v01.py",
+      "role": "vision-based image ownership tagging: stem diagram, explanation diagram, option diagram, section/title/decorative image"
+    },
+    {
+      "node_id": "question_boundary_cutter",
+      "entrypoint": "tools/docx_question_boundary_cutter_v01.py",
+      "role": "model-only boundary cutting using enhanced block tags; no packet rewriting; assembler only follows model starts"
+    },
+    {
+      "node_id": "membership_adapter",
+      "entrypoint": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+      "role": "mechanically converts boundary assembled packets to membership_groups.json"
+    },
+    {
+      "node_id": "complexity_router",
+      "entrypoint": "tools/docx_question_complexity_router_v01.py",
+      "role": "routes normal vs long question part normalization"
+    },
+    {
+      "node_id": "part_normalizer",
+      "entrypoint": "tools/docx_question_part_normalizer_v01.py / tools/docx_question_part_long_normalizer_v01.py",
+      "role": "normalizes grouped source blocks into stem/subquestions/options/answer/explanation fields"
+    },
+    {
+      "node_id": "source_backed_draft_builder",
+      "entrypoint": "tools/docx_math_source_backed_draft_builder_v01.py",
+      "role": "builds source-backed draft items with source block and asset references"
+    },
+    {
+      "node_id": "fullchain_refiner",
+      "entrypoint": "tools/docx_math_fullchain_orchestrator_v01.py",
+      "role": "question-level refine, gate repair, long-composite refine, and final review packets"
+    },
+    {
+      "node_id": "side_by_side_review",
+      "entrypoint": "tools/docx_math_build_side_by_side_review_v01.py",
+      "role": "optional human review package"
+    }
+  ],
+  "hard_gates": [
+    "stage0_router.handoff_manifest.routing_contract.must_not_enter_native_block_tagger must be false; READY_FOR_BLOCK_TAGGER_WITH_FORMULA_RISK is allowed and must carry repairable formula risk downstream",
+    "asset_role_visual_tagger must emit asset_role_map.json and enhanced_block_tags.json before boundary/normalizer/builder",
+    "question_boundary_cutter.unassigned_candidate_block_count must be 0",
+    "complexity_router hard_fail groups must stop the chain",
+    "merged part normalizer blocking issues must stop the chain",
+    "runtime/database writes remain disabled"
+  ],
+  "known_not_implemented": [
+    "automatic PDF/visual formula recovery runner is still not implemented; Stage0 now blocks native downstream and emits fallback_jobs handoff",
+    "production Runtime import is not enabled",
+    "database writes are not enabled"
+  ]
+}

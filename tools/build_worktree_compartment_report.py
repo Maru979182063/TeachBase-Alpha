@@ -37,6 +37,8 @@ FINAL_CHAIN_PATHS = {
     "docs/reports/final_chain_control_dashboard_20260804.md",
     "docs/reports/final_chain_cleanroom_import_audit_20260804.json",
     "docs/reports/final_chain_cleanroom_import_audit_20260804.md",
+    "docs/reports/docx_math_final_import_20260804.json",
+    "docs/reports/docx_math_final_import_20260804.md",
     "docs/reports/final_chain_surface_classification_cleanroom_20260731.json",
     "docs/reports/final_chain_surface_classification_cleanroom_20260731.md",
     "docs/reports/final_chain_surface_classification_old_local_20260731.json",
@@ -50,6 +52,7 @@ FINAL_CHAIN_PATHS = {
     "tools/final_chain_control.py",
     "tools/build_final_chain_control_dashboard.py",
     "tools/audit_final_chain_cleanroom_imports.py",
+    "tools/build_docx_math_final_import_report.py",
     "tools/validate_final_chain_registry.py",
     "src/teachbase/final_chains/__init__.py",
     "src/teachbase/final_chains/adapters.py",
@@ -109,6 +112,22 @@ def is_archive_payload(path: str) -> bool:
     return path in {"_archive", "_archive/"} or path.startswith("_archive/precleanup_20260804/")
 
 
+def is_docx_math_final_import(path: str) -> bool:
+    return (
+        path in {"prompts/", "schemas/", "docs/docx_math_pipeline_final_repro.md"}
+        or path.startswith("config/docx_")
+        or path.startswith("prompts/docx_")
+        or path.startswith("schemas/docx_math_")
+        or path.startswith("tools/docx_")
+        or path
+        in {
+            "tools/katex_validate_math.cjs",
+            "tools/mathml_to_latex_batch.cjs",
+            "tools/ruby_mtef_to_mathml_batch.rb",
+        }
+    )
+
+
 def git_status_porcelain() -> list[dict[str, str]]:
     completed = subprocess.run(
         ["git", "status", "--porcelain=v1"],
@@ -145,6 +164,8 @@ def classify(path: str) -> tuple[str, list[str]]:
         return "precleanup_archive_payload", ["source path moved into precleanup archive"]
     if is_archive_payload(path):
         return "precleanup_archive_payload", ["archived by precleanup archive execution"]
+    if is_docx_math_final_import(path):
+        return "docx_math_final_import", ["copied from verified DOCX math final-chain handoff inventory"]
     return "unclassified", ["needs review before commit"]
 
 

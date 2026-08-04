@@ -1,0 +1,35 @@
+{
+  "schema_version": "docx_question_part_normalizer_v01.config",
+  "pipeline_id": "docx_question_part_normalizer_v01",
+  "status": "experimental_isolated_node",
+  "model_provider": "volcengine_ark",
+  "default_model_alias": "doubao2.0mini",
+  "default_model_endpoint_id": "doubao-seed-2-0-mini-260428",
+  "api_key_env": "ARK_API_KEY",
+  "owned_output_root": "outputs/docx_question_part_normalizer_v0_1",
+  "runtime_import_enabled": false,
+  "database_write_enabled": false,
+  "prompt_version": "docx_question_part_normalizer_v0.1_block_membership_to_parts_20260717",
+  "system_prompt_path": "prompts/docx_question_part_normalizer_v01.system.md",
+  "user_prompt_path": "prompts/docx_question_part_normalizer_v01.user.md",
+  "runner": {
+    "max_group_attempts": 3
+  },
+  "max_block_preview_chars": 1400,
+  "max_section_context_blocks": 3,
+  "allowed_part_types": [
+    "stem",
+    "options",
+    "subquestions",
+    "answer",
+    "explanation",
+    "teaching_note",
+    "unknown"
+  ],
+  "solution_policies": [
+    "required",
+    "optional",
+    "absent_expected",
+    "unknown"
+  ]
+}

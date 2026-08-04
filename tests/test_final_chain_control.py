@@ -58,7 +58,7 @@ def test_plan_blocks_wrong_input_format_before_execution() -> None:
 
 def test_plan_reports_missing_cleanroom_entrypoints_as_blockers() -> None:
     registry = load_final_chain_registry(REGISTRY)
-    request = ChainRunRequest(chain_id="doc_math", input_path="sample.docx", output_root="outputs/final_chain_runs")
+    request = ChainRunRequest(chain_id="doc_english", input_path="sample.docx", output_root="outputs/final_chain_runs")
 
     plan = build_chain_run_plan(registry, request, workspace_root=ROOT)
 
@@ -392,8 +392,9 @@ def test_environment_report_is_machine_readable_and_side_effect_free() -> None:
     assert report["business_secrets_read"] is False
     by_id = {item["chain_id"]: item for item in report["chains"]}
     assert by_id["pdf_math"]["checks"]["required_paths_present"] is True
-    assert by_id["doc_math"]["status"] == "blocked"
-    assert "required_paths_present" in by_id["doc_math"]["blocked_reasons"]
+    assert by_id["doc_math"]["status"] == "ready"
+    assert by_id["doc_english"]["status"] == "blocked"
+    assert "required_paths_present" in by_id["doc_english"]["blocked_reasons"]
     assert "smoke_status_partial_requires_restore_or_rerun" in by_id["pdf_english"]["notes"]
 
 
@@ -420,7 +421,7 @@ def test_adapter_contracts_forbid_runtime_side_effects_in_dry_run() -> None:
 
 def test_final_chain_control_cli_env_check_and_adapter_contracts() -> None:
     env_completed = subprocess.run(
-        [sys.executable, "tools/final_chain_control.py", "env-check", "--chain-id", "doc_math"],
+        [sys.executable, "tools/final_chain_control.py", "env-check", "--chain-id", "doc_english"],
         cwd=ROOT,
         text=True,
         stdout=subprocess.PIPE,
@@ -431,7 +432,7 @@ def test_final_chain_control_cli_env_check_and_adapter_contracts() -> None:
     env_payload = json.loads(env_completed.stdout)
     assert env_payload["schema_version"] == "final_chain_environment_report.v0.1"
     assert env_payload["chain_count"] == 1
-    assert env_payload["chains"][0]["chain_id"] == "doc_math"
+    assert env_payload["chains"][0]["chain_id"] == "doc_english"
     assert env_payload["chains"][0]["status"] == "blocked"
 
     adapter_completed = subprocess.run(
@@ -544,7 +545,7 @@ def test_readiness_matrix_summarizes_four_chain_import_and_dry_run_gaps() -> Non
     assert report["runtime_imported"] is False
     by_id = {item["chain_id"]: item for item in report["rows"]}
     assert by_id["pdf_math"]["readiness_tier"] == "environment_ready_input_needed"
-    assert by_id["doc_math"]["readiness_tier"] == "cleanroom_import_required"
+    assert by_id["doc_math"]["readiness_tier"] == "environment_ready_input_needed"
     assert by_id["pdf_english"]["readiness_tier"] == "restore_or_rerun_required"
     assert "import_or_restore_canonical_entrypoint_and_configs" in by_id["doc_english"]["recommended_actions"]
 
@@ -609,7 +610,7 @@ def test_final_chain_control_dashboard_groups_chains_by_scheduling_lane() -> Non
         "business_secrets_read": False,
     }
     by_id = {item["chain_id"]: item for item in report["rows"]}
-    assert by_id["doc_math"]["lane"] == "needs_cleanroom_import"
+    assert by_id["doc_math"]["lane"] == "needs_sample_input"
     assert by_id["doc_english"]["lane"] == "needs_cleanroom_import"
     assert by_id["pdf_math"]["lane"] == "needs_sample_input"
     assert by_id["pdf_english"]["lane"] == "needs_artifact_restore_or_smoke"

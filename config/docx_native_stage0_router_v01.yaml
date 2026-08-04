@@ -1,0 +1,46 @@
+schema_version: docx_native_stage0_router_config.v0.1
+
+# Node name: DocxNativeStage0Router
+# 中文：DOCX 原生入口路由节点。它不切题、不精修、不入库，只负责把 DOCX 的公式来源判断清楚，
+# 再把可恢复的公式接入 Stage0 block stream。
+node:
+  id: docx_native_stage0_router_v01
+  input: docx_path
+  output:
+    router_summary: router_summary.json
+    handoff_manifest: handoff_manifest.json
+    paragraph_stream: normalized_block_stream.json
+    raw_paragraph_stream: paragraph_stream_formula_tokens.json
+    asset_manifest: asset_manifest_native.json
+    formula_audit: formula_token_audit.json
+    run_math_normalization_report: run_math_normalization_report.json
+
+# Route order:
+# 中文：先看 OMML；再看 legacy Equation Editor OLE/MTEF；
+# 再把 Word 普通 run 上下角标这类机械数学片段归一成 Markdown 数学；
+# 如果 OLE 恢复失败或 Stage0 仍有老公式缺失，才输出 PDF/视觉补证 fallback 信号。
+route_order:
+  - inspect_docx_formula_sources
+  - omml_native_stage0
+  - legacy_ole_mtef_recovery
+  - stage0_token_stream_with_manifest
+  - run_math_normalizer
+  - image_or_pdf_formula_fallback_signal
+
+# Fields:
+# 中文：这些字段给后续管线管理器和审计页读取。
+fields:
+  omml_elements: native Office Math XML formula count
+  ole_objects: legacy Equation Editor OLE object count in document.xml
+  embedding_files: binary embedding count under word/embeddings
+  legacy_mtef_tokens: legacy formulas that were actually attached to Stage0 markdown
+  run_math_normalizer_changed_blocks: paragraph blocks whose Word run-level scripts were normalized
+  run_math_normalizer_skipped_blocks: unsafe run-level script candidates left unchanged
+  needs_review_blocks: Stage0 blocks that still cannot be trusted
+  fallback_signal: non-empty only when formula recovery cannot produce trustworthy text
+
+quality_policy:
+  no_question_cutting: true
+  no_text_refine: true
+  no_database_write: true
+  unresolved_formula_status: needs_review

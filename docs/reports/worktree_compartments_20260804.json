@@ -8,29 +8,57 @@
     "review mixed_control_file changes line-by-line before staging"
   ],
   "counts": {
-    "mixed_control_file": 1,
-    "final_chain_registry": 6,
-    "worktree_compartment_report": 1
+    "final_chain_registry": 8,
+    "worktree_compartment_report": 3,
+    "docx_math_final_import": 36
   },
   "records": [
     {
       "status": " M",
-      "path": "package.json",
-      "bucket": "mixed_control_file",
+      "path": "docs/reports/final_chain_cleanroom_import_audit_20260804.json",
+      "bucket": "final_chain_registry",
       "reasons": [
-        "foundation_hardening npm script",
-        "final_chain_registry npm scripts",
-        "precleanup_archive npm scripts",
-        "precleanup_deep_audit npm script",
-        "precleanup_safety npm script"
+        "protected-chain inventory, classifier, or cleanup candidate audit"
       ]
     },
     {
       "status": " M",
-      "path": "src/teachbase/final_chains/__init__.py",
+      "path": "docs/reports/final_chain_cleanroom_import_audit_20260804.md",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/final_chain_control_dashboard_20260804.json",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/final_chain_control_dashboard_20260804.md",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/worktree_compartments_20260804.json",
+      "bucket": "worktree_compartment_report",
+      "reasons": [
+        "review compartment documentation and report generator"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "docs/reports/worktree_compartments_20260804.md",
+      "bucket": "worktree_compartment_report",
+      "reasons": [
+        "review compartment documentation and report generator"
       ]
     },
     {
@@ -51,7 +79,103 @@
     },
     {
       "status": "??",
-      "path": "docs/reports/final_chain_cleanroom_import_audit_20260804.json",
+      "path": "config/docx_asset_role_visual_tagger_v01.yaml",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "config/docx_math_long_packet_assembler_v01.yaml",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "config/docx_math_pipeline_final_active_manifest.json",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "config/docx_math_pipeline_final_v01.yaml",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "config/docx_native_block_tagger_v01.yaml",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "config/docx_native_stage0_router_v01.yaml",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "config/docx_question_boundary_cutter_v01.yaml",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "config/docx_question_complexity_router_v01.yaml",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "config/docx_question_part_long_normalizer_v01.yaml",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "config/docx_question_part_normalizer_v01.yaml",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "config/docx_question_part_twostage_probe_v01.yaml",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "docs/docx_math_pipeline_final_repro.md",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "docs/reports/docx_math_final_import_20260804.json",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -59,7 +183,7 @@
     },
     {
       "status": "??",
-      "path": "docs/reports/final_chain_cleanroom_import_audit_20260804.md",
+      "path": "docs/reports/docx_math_final_import_20260804.md",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -67,7 +191,23 @@
     },
     {
       "status": "??",
-      "path": "src/teachbase/final_chains/import_audit.py",
+      "path": "prompts/",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "schemas/",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/build_docx_math_final_import_report.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"
@@ -75,10 +215,178 @@
     },
     {
       "status": "??",
-      "path": "tools/audit_final_chain_cleanroom_imports.py",
-      "bucket": "final_chain_registry",
+      "path": "tools/docx_asset_role_visual_tagger_v01.py",
+      "bucket": "docx_math_final_import",
       "reasons": [
-        "protected-chain inventory, classifier, or cleanup candidate audit"
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_legacy_formula_recovery_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_math_build_side_by_side_review_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_math_fullchain_orchestrator_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_math_long_composite_refiner_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_math_long_packet_assembler_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_math_question_refiner_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_math_refine_gate_repair_orchestrator_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_math_source_backed_draft_builder_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_native_block_tagger_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_native_stage0_router_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_native_transcription_package_builder_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_question_boundary_cutter_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_question_complexity_router_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_question_part_long_normalizer_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_question_part_normalizer_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_question_part_twostage_probe_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/docx_run_math_normalizer_v01.py",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/katex_validate_math.cjs",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/mathml_to_latex_batch.cjs",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
+      ]
+    },
+    {
+      "status": "??",
+      "path": "tools/ruby_mtef_to_mathml_batch.rb",
+      "bucket": "docx_math_final_import",
+      "reasons": [
+        "copied from verified DOCX math final-chain handoff inventory"
       ]
     }
   ]

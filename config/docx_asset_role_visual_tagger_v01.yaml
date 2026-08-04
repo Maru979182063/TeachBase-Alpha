@@ -1,0 +1,47 @@
+{
+  "schema_version": "docx_asset_role_visual_tagger_v01.config",
+  "pipeline_id": "docx_asset_role_visual_tagger_v01",
+  "status": "experimental_final_candidate",
+  "model_provider": "volcengine_ark",
+  "default_model_alias": "doubao2.0mini",
+  "default_model_endpoint_id": "doubao-seed-2-0-mini-260428",
+  "api_key_env": "ARK_API_KEY",
+  "owned_output_root": "outputs/docx_asset_role_visual_tagger_v0_1",
+  "prompt_version": "docx_asset_role_visual_tagger_v01",
+  "system_prompt_path": "prompts/docx_asset_role_visual_tagger_v01.system.md",
+  "runner": {
+    "max_workers": 4,
+    "per_asset_timeout_seconds": 120,
+    "max_asset_attempts": 2
+  },
+  "context": {
+    "left_blocks": 3,
+    "right_blocks": 3,
+    "max_text_chars": 420
+  },
+  "allowed_asset_roles": [
+    "question_stem_diagram",
+    "explanation_diagram",
+    "option_diagram",
+    "formula_image",
+    "table_image",
+    "section_title_image",
+    "decorative_header",
+    "logo_watermark",
+    "unknown"
+  ],
+  "allowed_target_fields": [
+    "stem",
+    "subquestions",
+    "options",
+    "answer",
+    "explanation",
+    "teaching_note",
+    "context",
+    "other_evidence",
+    "none",
+    "unknown"
+  ],
+  "runtime_import_enabled": false,
+  "database_write_enabled": false
+}
