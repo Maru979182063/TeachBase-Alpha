@@ -412,6 +412,33 @@ def test_job_lifecycle_allows_only_guarded_dry_run_transitions(tmp_path: Path) -
     assert inspection["model_invoked"] is False
 
 
+def test_job_lifecycle_portabilizes_string_checkpoint_paths(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    record = {
+        "schema_version": "final_chain_job_record.v0.1",
+        "job_id": "job",
+        "created_at": "2026-08-04T00:00:00+00:00",
+        "status": "dry_run_started",
+        "chain_id": "pdf_math",
+    }
+    report_path = workspace / "outputs" / "final_chain_runs" / "report.json"
+    outside_path = tmp_path / "outside" / "report.json"
+
+    passed = transition_job_record(
+        record,
+        "dry_run_passed",
+        reason="adapter dry-run completed",
+        checkpoint={"report_path": str(report_path), "outside_path": str(outside_path)},
+        workspace_root=workspace,
+    )
+
+    checkpoint = passed["lifecycle"]["history"][-1]["checkpoint"]
+    assert checkpoint["report_path"] == "outputs/final_chain_runs/report.json"
+    assert checkpoint["outside_path"] == "<outside-workspace>"
+    assert str(tmp_path) not in json.dumps(checkpoint)
+
+
 def test_job_lifecycle_rejects_illegal_transition() -> None:
     record = {
         "schema_version": "final_chain_job_record.v0.1",
@@ -606,6 +633,9 @@ def test_adapter_dry_run_never_invokes_entrypoint_or_runtime(tmp_path: Path) -> 
     assert result["database_written"] is False
     assert result["runtime_imported"] is False
     assert result["business_secrets_read"] is False
+    assert result["plan"]["workspace_contract"] == "relative_git_paths_only"
+    assert result["request_snapshot"]["input"]["path"] == "<outside-workspace>"
+    assert str(tmp_path) not in json.dumps(result)
 
 
 def test_adapter_dry_run_blocks_missing_input() -> None:

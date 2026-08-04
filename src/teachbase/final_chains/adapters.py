@@ -4,7 +4,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .control import ChainRunRequest, FinalChainDefinition, FinalChainRegistry, build_chain_run_plan
+from .control import (
+    ChainRunRequest,
+    FinalChainDefinition,
+    FinalChainRegistry,
+    build_chain_run_plan,
+    build_environment_snapshot,
+    build_portable_plan_snapshot,
+    build_request_snapshot,
+)
 from .environment import build_adapter_contract, inspect_chain_environment
 
 
@@ -58,7 +66,9 @@ class FinalChainAdapter:
             "schema_version": "final_chain_adapter_dry_run.v0.1",
             "chain_id": self.chain.chain_id,
             "status": status,
-            "plan": plan,
+            "plan": build_portable_plan_snapshot(plan, workspace_root=self.workspace_root),
+            "request_snapshot": build_request_snapshot(request, workspace_root=self.workspace_root),
+            "environment_snapshot": build_environment_snapshot(request),
             "execution_contract": _no_side_effect_contract(),
             "adapter_invoked_entrypoint": False,
             "model_invoked": False,

@@ -176,7 +176,13 @@ def inspect_job(args: argparse.Namespace) -> dict:
 
 def transition_job(args: argparse.Namespace) -> dict:
     checkpoint = {"source": "final_chain_control_cli"} if args.with_checkpoint else None
-    return transition_job_record_path(ROOT / args.record, args.status, reason=args.reason, checkpoint=checkpoint)
+    return transition_job_record_path(
+        ROOT / args.record,
+        args.status,
+        reason=args.reason,
+        checkpoint=checkpoint,
+        workspace_root=ROOT,
+    )
 
 
 def add_json_flag(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:

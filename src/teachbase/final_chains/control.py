@@ -218,7 +218,7 @@ def _portable_record_value(value: Any, *, workspace_root: Path) -> Any:
     return value
 
 
-def _portable_plan_snapshot(plan: dict[str, Any], *, workspace_root: Path) -> dict[str, Any]:
+def build_portable_plan_snapshot(plan: dict[str, Any], *, workspace_root: Path) -> dict[str, Any]:
     snapshot = _portable_record_value(plan, workspace_root=workspace_root)
     if isinstance(snapshot, dict):
         snapshot["workspace_contract"] = "relative_git_paths_only"
@@ -305,7 +305,7 @@ def schedule_chain_run(
     workspace_root: Path,
 ) -> dict[str, Any]:
     plan = build_chain_run_plan(registry, request, workspace_root=workspace_root)
-    portable_plan = _portable_plan_snapshot(plan, workspace_root=workspace_root)
+    portable_plan = build_portable_plan_snapshot(plan, workspace_root=workspace_root)
     output_check = next((check for check in plan["checks"] if check["name"] == "output_root_inside_workspace"), None)
     if output_check is None or not output_check["ok"]:
         return {

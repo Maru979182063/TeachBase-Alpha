@@ -9,7 +9,7 @@
   ],
   "counts": {
     "foundation_hardening": 1,
-    "final_chain_registry": 2
+    "final_chain_registry": 6
   },
   "records": [
     {
@@ -22,6 +22,22 @@
     },
     {
       "status": " M",
+      "path": "src/teachbase/final_chains/__init__.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "src/teachbase/final_chains/adapters.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
       "path": "src/teachbase/final_chains/control.py",
       "bucket": "final_chain_registry",
       "reasons": [
@@ -30,7 +46,23 @@
     },
     {
       "status": " M",
+      "path": "src/teachbase/final_chains/jobs.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
       "path": "tests/test_final_chain_control.py",
+      "bucket": "final_chain_registry",
+      "reasons": [
+        "protected-chain inventory, classifier, or cleanup candidate audit"
+      ]
+    },
+    {
+      "status": " M",
+      "path": "tools/final_chain_control.py",
       "bucket": "final_chain_registry",
       "reasons": [
         "protected-chain inventory, classifier, or cleanup candidate audit"

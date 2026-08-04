@@ -77,6 +77,7 @@ def transition_job_record(
     *,
     reason: str,
     checkpoint: dict[str, Any] | None = None,
+    workspace_root: Path | None = None,
 ) -> dict[str, Any]:
     _require_known_status(target_status)
     current_status = str(record.get("status") or "")
@@ -102,7 +103,7 @@ def transition_job_record(
         "status": target_status,
         "at": now,
         "reason": reason,
-        "checkpoint": _portable_checkpoint(checkpoint),
+        "checkpoint": _portable_checkpoint(checkpoint, workspace_root=workspace_root),
     }
     history.append(event)
     lifecycle.update(
@@ -147,8 +148,15 @@ def transition_job_record_path(
     *,
     reason: str,
     checkpoint: dict[str, Any] | None = None,
+    workspace_root: Path | None = None,
 ) -> dict[str, Any]:
-    updated = transition_job_record(load_job_record(path), target_status, reason=reason, checkpoint=checkpoint)
+    updated = transition_job_record(
+        load_job_record(path),
+        target_status,
+        reason=reason,
+        checkpoint=checkpoint,
+        workspace_root=workspace_root,
+    )
     write_json(path, updated)
     return updated
 
@@ -158,13 +166,28 @@ def _require_known_status(status: str) -> None:
         raise ConfigurationError("final_chain_job_unknown_status", f"Unknown final-chain job status: {status}")
 
 
-def _portable_checkpoint(checkpoint: dict[str, Any] | None) -> dict[str, Any] | None:
+def _portable_checkpoint(checkpoint: dict[str, Any] | None, *, workspace_root: Path | None = None) -> dict[str, Any] | None:
     if checkpoint is None:
         return None
     portable: dict[str, Any] = {}
     for key, value in checkpoint.items():
         if isinstance(value, Path):
-            portable[key] = value.as_posix()
+            portable[key] = _portable_path(value, workspace_root=workspace_root)
+        elif isinstance(value, str) and Path(value).is_absolute():
+            portable[key] = _portable_path(Path(value), workspace_root=workspace_root)
         else:
             portable[key] = value
     return portable
+
+
+def _portable_path(path: Path, *, workspace_root: Path | None = None) -> str:
+    if workspace_root is None:
+        return path.as_posix()
+    try:
+        resolved = path.resolve()
+        root = workspace_root.resolve()
+        if resolved == root or root in resolved.parents:
+            return resolved.relative_to(root).as_posix()
+    except OSError:
+        pass
+    return "<outside-workspace>"
