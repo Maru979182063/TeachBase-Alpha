@@ -1,0 +1,109 @@
+{
+  "schema_version": "precleanup_post_archive_state.v0.1",
+  "report_phase": "post_archive_state_inspection",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "source_reports": {
+    "execution_report": "docs/reports/precleanup_archive_execution_20260804.json",
+    "deep_audit_report": "docs/reports/precleanup_deep_audit_20260804.json"
+  },
+  "archive_root": "_archive/precleanup_20260804",
+  "checks": {
+    "execution_report_successful_real_run": true,
+    "current_deep_audit_not_executable": true,
+    "current_deep_audit_has_no_allowed_roots": true,
+    "moved_sources_blocked_as_missing": true,
+    "baseline_snapshot_still_blocked_by_reference": true,
+    "all_move_inspections_ok": true,
+    "no_unexpected_archive_files": true,
+    "no_missing_archive_files": true
+  },
+  "ok": true,
+  "move_inspections": [
+    {
+      "source": "docs/backup_restore_runbook.md",
+      "target": "_archive/precleanup_20260804/docs/backup_restore_runbook.md",
+      "checks": {
+        "move_record_status_moved": true,
+        "source_missing_after_archive": true,
+        "target_exists_after_archive": true,
+        "target_inside_archive_root": true,
+        "execution_record_before_after_match": true,
+        "target_inventory_matches_execution": true
+      },
+      "ok": true,
+      "source_state": {
+        "exists": false,
+        "kind": "missing",
+        "file_count": 0,
+        "total_bytes": 0,
+        "sha256": ""
+      },
+      "target_state": {
+        "exists": true,
+        "kind": "file",
+        "file_count": 1,
+        "total_bytes": 2881,
+        "sha256": "8cc94debacdd9856ec17ba1f488c17d4cebbde301d45c6f033ab7138857d58f5"
+      },
+      "expected_target_state": {
+        "kind": "file",
+        "file_count": 1,
+        "total_bytes": 2881,
+        "sha256": "8cc94debacdd9856ec17ba1f488c17d4cebbde301d45c6f033ab7138857d58f5"
+      }
+    },
+    {
+      "source": "docs/reports/visual_pipeline_and_manual_transcription_demo_v0.1_20260624.md",
+      "target": "_archive/precleanup_20260804/docs/reports/visual_pipeline_and_manual_transcription_demo_v0.1_20260624.md",
+      "checks": {
+        "move_record_status_moved": true,
+        "source_missing_after_archive": true,
+        "target_exists_after_archive": true,
+        "target_inside_archive_root": true,
+        "execution_record_before_after_match": true,
+        "target_inventory_matches_execution": true
+      },
+      "ok": true,
+      "source_state": {
+        "exists": false,
+        "kind": "missing",
+        "file_count": 0,
+        "total_bytes": 0,
+        "sha256": ""
+      },
+      "target_state": {
+        "exists": true,
+        "kind": "file",
+        "file_count": 1,
+        "total_bytes": 8385,
+        "sha256": "3b3efd6c3ba5a70bf6d26423d9c0adb8c7e694a4cc6cdc8d308fc725d2c932c5"
+      },
+      "expected_target_state": {
+        "kind": "file",
+        "file_count": 1,
+        "total_bytes": 8385,
+        "sha256": "3b3efd6c3ba5a70bf6d26423d9c0adb8c7e694a4cc6cdc8d308fc725d2c932c5"
+      }
+    }
+  ],
+  "source_block_checks": [
+    {
+      "source": "docs/backup_restore_runbook.md",
+      "blocked_in_current_deep_audit": true,
+      "has_path_missing_blocker": true
+    },
+    {
+      "source": "docs/reports/visual_pipeline_and_manual_transcription_demo_v0.1_20260624.md",
+      "blocked_in_current_deep_audit": true,
+      "has_path_missing_blocker": true
+    }
+  ],
+  "actual_archive_file_count": 2,
+  "expected_archive_file_count": 2,
+  "unexpected_archive_files": [],
+  "missing_archive_files": [],
+  "baseline_snapshot_blockers": [
+    "referenced_by_repo"
+  ]
+}
