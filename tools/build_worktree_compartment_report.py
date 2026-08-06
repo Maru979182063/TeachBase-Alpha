@@ -28,6 +28,8 @@ FOUNDATION_PATHS = {
 FINAL_CHAIN_PATHS = {
     "config/final_chain_registry.yaml",
     "config/english_text_first_graph_first/active_manifest.json",
+    "config/java_shell_contract_v01.json",
+    "docs/java_shell_contract_v01.md",
     "docs/reports/cleanup_candidates_cleanroom_20260731.json",
     "docs/reports/cleanup_candidates_cleanroom_20260731.md",
     "docs/reports/cleanup_candidates_old_local_20260731.json",
@@ -64,6 +66,8 @@ FINAL_CHAIN_PATHS = {
     "docs/reports/final_chain_ops_health_20260804.md",
     "docs/reports/final_chain_execution_gap_20260806.json",
     "docs/reports/final_chain_execution_gap_20260806.md",
+    "docs/reports/java_shell_contract_validation_20260806.json",
+    "docs/reports/java_shell_contract_validation_20260806.md",
     "docs/reports/pdf_english_graph_first_rebuild_smoke_20260806.json",
     "docs/reports/pdf_english_graph_first_rebuild_smoke_20260806.md",
     "docs/reports/pdf_english_raw_pdf_promotion_20260806.json",
@@ -91,6 +95,7 @@ FINAL_CHAIN_PATHS = {
     "tests/test_final_chain_registry.py",
     "tests/test_final_chain_surface_classifier.py",
     "tests/test_final_chain_control.py",
+    "tests/test_java_shell_contract.py",
     "tools/build_cleanup_candidate_report.py",
     "tools/classify_final_chain_surface.py",
     "tools/final_chain_control.py",
@@ -118,6 +123,7 @@ FINAL_CHAIN_PATHS = {
     "tools/build_cleanroom_hardening_manifest.py",
     "tools/validate_cleanroom_hardening_manifest.py",
     "tools/build_cleanroom_goal_gap_audit.py",
+    "tools/validate_java_shell_contract.py",
     "tools/validate_final_chain_registry.py",
     "src/teachbase/final_chains/__init__.py",
     "src/teachbase/final_chains/adapters.py",
@@ -182,6 +188,7 @@ MIXED_PATHS = {
         "pdf_english_raw_pdf_promotion audit npm script",
         "final_chain_ops_health audit npm script",
         "final_chain_execution_gap audit npm script",
+        "java_shell_contract audit and test npm scripts",
     ],
 }
 
