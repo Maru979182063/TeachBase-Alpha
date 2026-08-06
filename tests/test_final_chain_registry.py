@@ -45,14 +45,16 @@ def test_high_confidence_chains_have_passed_smoke_status() -> None:
         assert chains[chain_id]["smoke_status"]["status"] == "pass"
 
 
-def test_pdf_english_is_registered_with_restore_marker() -> None:
+def test_pdf_english_is_registered_with_raw_pdf_promotion_admission() -> None:
     chains = {item["chain_id"]: item for item in _load_registry()["chains"]}
     pdf_english = chains["pdf_english"]
     assert pdf_english["canonical_pipeline_name"] == "english_text_first_graph_first"
     assert pdf_english["canonical_entrypoint"] == "config/english_text_first_graph_first/active_manifest.json"
-    assert pdf_english["smoke_status"]["status"] == "partial"
-    assert "needs_artifact_restore_or_smoke_rerun" in pdf_english["registry_readiness"]
-    assert any("active_manifest.json is missing" in item for item in pdf_english["smoke_status"]["blocking_checks"])
+    assert pdf_english["smoke_status"]["status"] == "pass"
+    assert pdf_english["registry_readiness"] == "ready_for_java_shell_admission"
+    assert pdf_english["java_shell_admission"]["allowed"] is True
+    assert pdf_english["java_shell_admission"]["not_a_model_execution_claim"] is True
+    assert pdf_english["production_model_execution_policy"]["model_calls_default_enabled"] is False
 
 
 def test_duplicate_final_chain_id_fails() -> None:
@@ -66,17 +68,17 @@ def test_duplicate_final_chain_id_fails() -> None:
     assert any(error["code"] == "duplicate_chain_id" for error in result["errors"])
 
 
-def test_pdf_english_restore_marker_is_required() -> None:
+def test_pdf_english_java_shell_admission_marker_is_required() -> None:
     registry = _load_registry()
     for chain in registry["chains"]:
         if chain["chain_id"] == "pdf_english":
             chain["registry_readiness"] = "protected_definition_ready"
-            chain["smoke_status"]["blocking_checks"] = []
+            chain["java_shell_admission"]["allowed"] = False
     with tempfile.TemporaryDirectory() as td:
         temp_registry = Path(td) / "final_chain_registry.yaml"
         temp_registry.write_text(json.dumps(registry), encoding="utf-8")
         result = validate_final_chain_registry(temp_registry, ROOT)
     assert not result["ok"]
     codes = {error["code"] for error in result["errors"]}
-    assert "pdf_english_missing_restore_marker" in codes
-    assert "partial_smoke_without_blocking_checks" in codes
+    assert "pdf_english_missing_java_shell_admission_marker" in codes
+    assert "pdf_english_java_shell_admission_not_allowed" in codes

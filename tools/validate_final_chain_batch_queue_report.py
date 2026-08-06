@@ -17,8 +17,8 @@ REPORT_MD = ROOT / "docs" / "reports" / "final_chain_batch_queue_validation_2026
 
 EXPECTED_CHAIN_IDS = ["doc_math", "doc_english", "pdf_math", "pdf_english"]
 EXPECTED_RECORD_PATH = "outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json"
-EXPECTED_READY = {"doc_math", "doc_english", "pdf_math"}
-EXPECTED_BLOCKED = {"pdf_english"}
+EXPECTED_READY = {"doc_math", "doc_english", "pdf_math", "pdf_english"}
+EXPECTED_BLOCKED: set[str] = set()
 ABSOLUTE_PATH_PATTERN = re.compile(r"(?:[A-Za-z]:\\|/Users/|\\\\)")
 
 
@@ -86,9 +86,12 @@ def _build_checks(batch_report: dict[str, Any]) -> list[dict[str, Any]]:
             },
         },
         {
-            "name": "pdf_english_fails_closed_with_blockers",
-            "ok": _pdf_english_blocker_ok(by_id.get("pdf_english")),
-            "value": by_id.get("pdf_english", {}).get("blocked_reasons"),
+            "name": "pdf_english_schedules_ready_after_raw_pdf_promotion",
+            "ok": _pdf_english_ready_ok(by_id.get("pdf_english")),
+            "value": {
+                "schedule_status": by_id.get("pdf_english", {}).get("schedule_status"),
+                "plan_status": by_id.get("pdf_english", {}).get("plan_status"),
+            },
         },
         {
             "name": "job_record_contract_paths_are_stable_and_under_outputs",
@@ -142,21 +145,19 @@ def _status_split_ok(batch_report: dict[str, Any], statuses: dict[str, str]) -> 
         ready == EXPECTED_READY
         and blocked == EXPECTED_BLOCKED
         and not rejected
-        and batch_report.get("scheduled_ready_count") == 3
-        and batch_report.get("scheduled_blocked_count") == 1
+        and batch_report.get("scheduled_ready_count") == 4
+        and batch_report.get("scheduled_blocked_count") == 0
         and batch_report.get("rejected_count") == 0
     )
 
 
-def _pdf_english_blocker_ok(row: dict[str, Any] | None) -> bool:
+def _pdf_english_ready_ok(row: dict[str, Any] | None) -> bool:
     if not isinstance(row, dict):
         return False
-    blocked_reasons = row.get("blocked_reasons")
     return (
-        row.get("schedule_status") == "scheduled_blocked"
-        and row.get("plan_status") == "blocked"
-        and isinstance(blocked_reasons, list)
-        and "canonical_entrypoint_present" in blocked_reasons
+        row.get("schedule_status") == "scheduled_ready"
+        and row.get("plan_status") == "ready"
+        and row.get("blocked_reasons") == []
     )
 
 
@@ -173,8 +174,8 @@ def _report_check_statuses(checks: Any) -> dict[str, bool | None]:
 def _required_report_checks_pass(checks: dict[str, bool | None]) -> bool:
     required = {
         "batch_covers_four_registered_chains",
-        "three_ready_jobs_scheduled",
-        "pdf_english_is_scheduled_blocked",
+        "four_ready_jobs_scheduled",
+        "pdf_english_is_scheduled_ready_after_raw_pdf_promotion",
         "no_rejected_jobs",
         "all_job_records_validate",
         "all_job_records_written_under_outputs",

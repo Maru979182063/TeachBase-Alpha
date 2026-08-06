@@ -13,6 +13,6 @@ Manifest: `docs/reports/cleanroom_hardening_manifest_20260804.json`
 - `pass` `required_report_records_present`
 - `pass` `report_paths_are_relative_and_existing`
 - `pass` `required_manifest_checks_pass`
-- `pass` `known_pdf_english_blocker_is_fail_closed`
+- `pass` `known_continuous_production_blocker_is_non_executing`
 - `pass` `execution_contract_has_no_runtime_side_effects`
 - `pass` `manifest_contains_no_absolute_paths`

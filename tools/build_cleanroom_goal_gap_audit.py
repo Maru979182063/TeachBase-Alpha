@@ -26,6 +26,8 @@ SOURCES = {
     "pdf_english_recovery_intake_validation": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
     "pdf_english_rebuild_decision": "docs/reports/pdf_english_rebuild_decision_20260804.json",
     "pdf_english_rebuild_source_import": "docs/reports/pdf_english_rebuild_source_import_20260804.json",
+    "pdf_english_rebuild_smoke": "docs/reports/pdf_english_graph_first_rebuild_smoke_20260806.json",
+    "pdf_english_raw_pdf_promotion": "docs/reports/pdf_english_raw_pdf_promotion_20260806.json",
     "final_chain_ops_health": "docs/reports/final_chain_ops_health_20260804.json",
 }
 
@@ -88,8 +90,8 @@ def _build_checks(sources: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
         {
             "name": "four_final_chains_accounted_for",
             "ok": _value(sources, "final_chain_ops", ["environment_ready_chain_ids"])
-            == ["doc_math", "doc_english", "pdf_math"]
-            and _value(sources, "final_chain_ops", ["environment_blocked_chain_ids"]) == ["pdf_english"],
+            == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
+            and _value(sources, "final_chain_ops", ["environment_blocked_chain_ids"]) == [],
             "value": {
                 "ready": _value(sources, "final_chain_ops", ["environment_ready_chain_ids"]),
                 "blocked": _value(sources, "final_chain_ops", ["environment_blocked_chain_ids"]),
@@ -145,16 +147,16 @@ def _build_checks(sources: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
             },
         },
         {
-            "name": "pdf_english_remains_fail_closed_not_silent_ready",
-            "ok": final_chain_checks.get("pdf_english_recovery_validator_fails_closed") is True
+            "name": "pdf_english_fresh_candidate_is_manifest_validated",
+            "ok": final_chain_checks.get("pdf_english_recovery_validator_ready_for_manifest_gate") is True
             and _value(sources, "final_chain_ops", ["pdf_english_recovery_validation_status"])
-            == "blocked_missing_or_invalid_manifest",
+            == "ready_for_manifest_gate",
             "value": _value(sources, "final_chain_ops", ["pdf_english_recovery_validation_status"]),
         },
         {
-            "name": "pdf_english_recovery_intake_gate_ready_for_restored_candidate",
+            "name": "pdf_english_recovery_intake_gate_has_fresh_candidate",
             "ok": _source_status(sources, "pdf_english_recovery_intake_validation")
-            == "blocked_missing_or_invalid_recovery_candidate"
+            == "candidate_ready_for_quarantine_import"
             and _value(
                 sources,
                 "pdf_english_recovery_intake_validation",
@@ -195,6 +197,30 @@ def _build_checks(sources: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
             },
         },
         {
+            "name": "pdf_english_rebuild_smoke_sealed",
+            "ok": _source_status(sources, "pdf_english_rebuild_smoke") == "pass"
+            and _value(sources, "pdf_english_rebuild_smoke", ["ready_claim_allowed"]) is False,
+            "value": {
+                "status": _source_status(sources, "pdf_english_rebuild_smoke"),
+                "ready_claim_allowed": _value(sources, "pdf_english_rebuild_smoke", ["ready_claim_allowed"]),
+            },
+        },
+        {
+            "name": "pdf_english_raw_pdf_promotion_sealed",
+            "ok": _source_status(sources, "pdf_english_raw_pdf_promotion") == "pass"
+            and _value(sources, "pdf_english_raw_pdf_promotion", ["java_shell_admission", "allowed"]) is True
+            and _value(
+                sources,
+                "pdf_english_raw_pdf_promotion",
+                ["production_model_execution_policy", "model_calls_default_enabled"],
+            )
+            is False,
+            "value": {
+                "status": _source_status(sources, "pdf_english_raw_pdf_promotion"),
+                "java_shell_admission": _value(sources, "pdf_english_raw_pdf_promotion", ["java_shell_admission"]),
+            },
+        },
+        {
             "name": "final_chain_ops_health_seals_cli_and_recovery_surface",
             "ok": _source_status(sources, "final_chain_ops_health") == "pass"
             and _value(sources, "final_chain_ops_health", ["missing_npm_scripts"]) == [],
@@ -207,6 +233,16 @@ def _build_checks(sources: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _residual_gaps(sources: dict[str, dict[str, Any]]) -> list[dict[str, str]]:
+    if _source_status(sources, "pdf_english_raw_pdf_promotion") == "pass":
+        return [
+            {
+                "scope": "continuous_production_worker",
+                "status": "java_orchestrator_worker_db_contract_not_implemented",
+                "safe_boundary": "no_model_db_runtime_execution_without_explicit_worker_contract",
+                "legacy_artifact_wait_required": False,
+                "safe_rebuild_boundary": "",
+            }
+        ]
     blockers = _value(sources, "status", ["remaining_known_blockers"])
     if not isinstance(blockers, list):
         return []
@@ -215,7 +251,7 @@ def _residual_gaps(sources: dict[str, dict[str, Any]]) -> list[dict[str, str]]:
         if isinstance(blocker, dict):
             gaps.append(
                 {
-                    "chain_id": str(blocker.get("chain_id") or ""),
+                    "scope": str(blocker.get("scope") or blocker.get("chain_id") or ""),
                     "status": str(blocker.get("status") or ""),
                     "safe_boundary": str(blocker.get("safe_boundary") or ""),
                     "legacy_artifact_wait_required": blocker.get("legacy_artifact_wait_required") is True,
@@ -305,7 +341,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         lines.append(f"- `{status}` `{check['name']}`")
     lines.extend(["", "## Completion Blockers", ""])
     for blocker in report["completion_blockers"]:
-        lines.append(f"- `{blocker['chain_id']}` `{blocker['status']}`")
+        lines.append(f"- `{blocker['scope']}` `{blocker['status']}`")
     lines.append("")
     return "\n".join(lines)
 

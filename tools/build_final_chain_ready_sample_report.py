@@ -23,6 +23,7 @@ READY_SAMPLE_INPUTS = {
     "doc_math": "tests/fixtures/final_chain_samples/doc_math_sample.docx",
     "doc_english": "tests/fixtures/final_chain_samples/doc_english_sample.docx",
     "pdf_math": "tests/fixtures/final_chain_samples/pdf_math_sample.pdf",
+    "pdf_english": "tests/fixtures/final_chain_samples/pdf_english_sample.pdf",
 }
 
 
@@ -53,14 +54,13 @@ def build_report() -> dict:
                 "execution_contract": dry_run["execution_contract"],
             }
         )
-    pdf_english_row = next(row for row in readiness["rows"] if row["chain_id"] == "pdf_english")
     return {
         "schema_version": "final_chain_ready_sample_dry_run_report.v0.1",
         "workspace_contract": "relative_git_paths_only",
         "absolute_paths_as_inputs": False,
         "sample_count": len(READY_SAMPLE_INPUTS),
         "ready_for_adapter_dry_run_count": readiness["ready_for_adapter_dry_run_count"],
-        "pdf_english_recovery_status": pdf_english_row["readiness_tier"],
+        "pdf_english_recovery_status": "raw_pdf_promotion_passed_java_shell_admission",
         "rows": rows,
         "execution_contract": {
             "model_invoked": False,

@@ -1,0 +1,92 @@
+{
+  "schema_version": "final_chain_execution_gap_report.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "status": "blocked_missing_execution_contracts",
+  "continuous_production_ready": false,
+  "chain_count": 4,
+  "chain_ids": [
+    "doc_math",
+    "doc_english",
+    "pdf_math",
+    "pdf_english"
+  ],
+  "execution_preflight_ready_count": 0,
+  "execution_preflight_blocked_count": 4,
+  "missing_for_continuous_production": [
+    "checkpoint_resume_contract_missing",
+    "database_queue_contract_missing",
+    "job_result_emission_contract_missing",
+    "real_worker_runtime_missing",
+    "standard_cli_contract_missing",
+    "worker_heartbeat_and_timeout_recovery_missing"
+  ],
+  "rows": [
+    {
+      "chain_id": "doc_math",
+      "status": "execution_preflight_blocked",
+      "blocked_reasons": [
+        "checkpoint_resume_contract_missing",
+        "job_result_emission_contract_missing",
+        "standard_cli_contract_missing"
+      ],
+      "plan_status": "ready",
+      "canonical_entrypoint": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+      "standard_args_supported": false,
+      "emits_job_result": false,
+      "resume_from_checkpoint": false,
+      "adapter_invoked_entrypoint": false
+    },
+    {
+      "chain_id": "doc_english",
+      "status": "execution_preflight_blocked",
+      "blocked_reasons": [
+        "checkpoint_resume_contract_missing",
+        "job_result_emission_contract_missing",
+        "standard_cli_contract_missing"
+      ],
+      "plan_status": "ready",
+      "canonical_entrypoint": "tools/english_docx_native_md_v01.py",
+      "standard_args_supported": false,
+      "emits_job_result": false,
+      "resume_from_checkpoint": false,
+      "adapter_invoked_entrypoint": false
+    },
+    {
+      "chain_id": "pdf_math",
+      "status": "execution_preflight_blocked",
+      "blocked_reasons": [
+        "checkpoint_resume_contract_missing",
+        "job_result_emission_contract_missing",
+        "standard_cli_contract_missing"
+      ],
+      "plan_status": "ready",
+      "canonical_entrypoint": "tools/run_question_ingest_skill.py",
+      "standard_args_supported": false,
+      "emits_job_result": false,
+      "resume_from_checkpoint": false,
+      "adapter_invoked_entrypoint": false
+    },
+    {
+      "chain_id": "pdf_english",
+      "status": "execution_preflight_blocked",
+      "blocked_reasons": [
+        "checkpoint_resume_contract_missing",
+        "job_result_emission_contract_missing",
+        "standard_cli_contract_missing"
+      ],
+      "plan_status": "ready",
+      "canonical_entrypoint": "config/english_text_first_graph_first/active_manifest.json",
+      "standard_args_supported": false,
+      "emits_job_result": false,
+      "resume_from_checkpoint": false,
+      "adapter_invoked_entrypoint": false
+    }
+  ],
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}

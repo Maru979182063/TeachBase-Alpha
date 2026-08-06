@@ -28,6 +28,11 @@ GATES = [
         "report": "docs/reports/final_chain_ops_gate_20260804.json",
     },
     {
+        "name": "pdf_english_raw_pdf_promotion",
+        "command": [sys.executable, "tools/build_pdf_english_raw_pdf_promotion_gate.py"],
+        "report": "docs/reports/pdf_english_raw_pdf_promotion_20260806.json",
+    },
+    {
         "name": "pdf_english_rebuild_decision",
         "command": [sys.executable, "tools/build_pdf_english_rebuild_decision.py"],
         "report": "docs/reports/pdf_english_rebuild_decision_20260804.json",
@@ -105,18 +110,17 @@ def build_report() -> dict[str, Any]:
             "foundation_artifact_and_model_call_hardening",
             "precleanup_archive_safety",
             "final_chain_control_and_scheduling_shell",
-            "pdf_english_recovery_fail_closed_boundary",
+            "pdf_english_raw_pdf_java_shell_admission",
             "pdf_english_lost_artifact_rebuild_track",
         ],
         "checks": checks,
         "gates": gate_results,
         "remaining_known_blockers": [
             {
-                "chain_id": "pdf_english",
-                "status": "blocked_missing_manifest_and_smoke_artifacts",
-                "safe_boundary": "validate_pdf_english_recovery_requires_manifest_before_ready_claim",
+                "scope": "continuous_production_worker",
+                "status": "java_orchestrator_worker_db_contract_not_implemented",
+                "safe_boundary": "no_model_db_runtime_execution_without_explicit_worker_contract",
                 "legacy_artifact_wait_required": False,
-                "safe_rebuild_boundary": "pdf_english_rebuild_decision_requires_fresh_manifest_and_smoke_before_ready_claim",
             }
         ],
         "execution_contract": {
@@ -203,15 +207,21 @@ def _build_checks(gate_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         payload = _read_report(final_chain_gate["report_path"])
         checks.append(
             {
-                "name": "final_chain_ops_keeps_pdf_english_fail_closed",
-                "ok": payload.get("pdf_english_recovery_validation_status") == "blocked_missing_or_invalid_manifest",
-                "value": payload.get("pdf_english_recovery_validation_status"),
+                "name": "final_chain_ops_admits_pdf_english_after_raw_pdf_promotion",
+                "ok": payload.get("pdf_english_raw_pdf_promotion_status") == "pass"
+                and payload.get("pdf_english_java_shell_admission_allowed") is True
+                and payload.get("environment_blocked_chain_ids") == [],
+                "value": {
+                    "promotion": payload.get("pdf_english_raw_pdf_promotion_status"),
+                    "java_shell_admission": payload.get("pdf_english_java_shell_admission_allowed"),
+                    "blocked": payload.get("environment_blocked_chain_ids"),
+                },
             }
         )
         checks.append(
             {
-                "name": "three_ready_chains_sample_scheduled",
-                "ok": payload.get("ready_sample_count") == 3,
+                "name": "four_ready_chains_sample_scheduled",
+                "ok": payload.get("ready_sample_count") == 4,
                 "value": payload.get("ready_sample_count"),
             }
         )
@@ -245,11 +255,11 @@ def _build_checks(gate_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         )
         checks.append(
             {
-                "name": "cleanroom_hardening_manifest_tracks_known_blocker",
+                "name": "cleanroom_hardening_manifest_tracks_continuous_production_blocker",
                 "ok": any(
                     isinstance(item, dict)
-                    and item.get("chain_id") == "pdf_english"
-                    and item.get("allowed_behavior") == "fail_closed"
+                    and item.get("scope") == "continuous_production_worker"
+                    and item.get("allowed_behavior") == "control_plane_dry_run_and_queue_only"
                     for item in payload.get("known_blockers", [])
                 ),
                 "value": payload.get("known_blockers", []),
@@ -307,7 +317,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         lines.append(f"- `{status}` `{check['name']}`")
     lines.extend(["", "## Remaining Known Blockers", ""])
     for blocker in report["remaining_known_blockers"]:
-        lines.append(f"- `{blocker['chain_id']}`: `{blocker['status']}`")
+        lines.append(f"- `{blocker['scope']}`: `{blocker['status']}`")
     lines.append("")
     return "\n".join(lines)
 

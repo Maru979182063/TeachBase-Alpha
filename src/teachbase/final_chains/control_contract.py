@@ -44,6 +44,10 @@ def build_final_chain_control_contract(registry: FinalChainRegistry) -> dict[str
             "schedule": "tools/final_chain_control.py schedule --chain-id <chain_id> --input <path>",
             "queue": "tools/final_chain_control.py queue --sample-input <chain_id=path> --json",
             "adapter_dry_run": "tools/final_chain_control.py adapter-dry-run --chain-id <chain_id> --input <path> --json",
+            "adapter_execution_preflight": (
+                "tools/final_chain_control.py adapter-execution-preflight "
+                "--chain-id <chain_id> --input <path> --json"
+            ),
             "job_inspect": "tools/final_chain_control.py job-inspect --record <relative_record_path> --json",
             "job_validate": "tools/final_chain_control.py job-validate --record <relative_record_path> --json",
             "job_recovery_plan": (

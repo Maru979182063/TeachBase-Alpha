@@ -3,35 +3,35 @@
   "workspace_contract": "relative_git_paths_only",
   "absolute_paths_as_inputs": false,
   "chain_id": "pdf_english",
-  "status": "blocked_missing_or_invalid_manifest",
+  "status": "ready_for_manifest_gate",
   "checks": [
     {
       "name": "active_manifest_exists",
-      "ok": false,
+      "ok": true,
       "path": "config/english_text_first_graph_first/active_manifest.json"
     },
     {
       "name": "active_manifest_json_object",
-      "ok": false,
-      "error": "manifest_missing"
+      "ok": true,
+      "error": ""
     },
     {
       "name": "pipeline_name_matches",
-      "ok": false,
+      "ok": true,
       "expected": "english_text_first_graph_first",
-      "actual": null
+      "actual": "english_text_first_graph_first"
     },
     {
       "name": "allow_only_manifest_runs_enabled",
-      "ok": false
+      "ok": true
     },
     {
       "name": "timestamp_latest_selection_forbidden",
-      "ok": false
+      "ok": true
     },
     {
       "name": "four_branch_runs_declared",
-      "ok": false,
+      "ok": true,
       "required": [
         "reading",
         "grammar",
@@ -40,30 +40,27 @@
       ]
     },
     {
-      "name": "prior_smoke_zip_present",
-      "ok": false,
-      "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip"
+      "name": "smoke_zip_present",
+      "ok": true,
+      "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01.zip"
     },
     {
-      "name": "prior_smoke_dir_present",
-      "ok": false,
-      "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728"
+      "name": "smoke_dir_present",
+      "ok": true,
+      "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01"
     }
   ],
-  "required_manifest_check_failures": [
-    "active_manifest_exists",
-    "active_manifest_json_object",
-    "pipeline_name_matches",
-    "allow_only_manifest_runs_enabled",
-    "timestamp_latest_selection_forbidden",
-    "four_branch_runs_declared"
-  ],
+  "required_manifest_check_failures": [],
+  "smoke_artifacts": {
+    "smoke_zip": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01.zip",
+    "smoke_dir": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01",
+    "source": "active_manifest_fresh_smoke_artifacts"
+  },
   "manifest_gate": "python tools/english_text_first_graph_first_manifest_check.py",
   "manifest_success_marker": "english_text_first_graph_first_manifest_valid",
   "safe_next_actions": [
-    "restore_active_manifest_from_original_machine_or_backup",
-    "restore_or_rerun_small_smoke_artifacts",
-    "do_not_create_synthetic_active_manifest"
+    "run_python_tools_english_text_first_graph_first_manifest_check",
+    "run_small_smoke_before_adapter_ready_claim"
   ],
   "execution_contract": {
     "model_invoked": false,

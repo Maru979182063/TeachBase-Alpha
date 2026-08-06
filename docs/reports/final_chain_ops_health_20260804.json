@@ -12,20 +12,22 @@
   "ready_chain_ids": [
     "doc_math",
     "doc_english",
-    "pdf_math"
-  ],
-  "blocked_chain_ids": [
+    "pdf_math",
     "pdf_english"
   ],
+  "blocked_chain_ids": [],
   "lane_counts": {
-    "needs_sample_input": 3,
-    "needs_artifact_restore_or_smoke": 1
+    "needs_sample_input": 4
   },
   "required_npm_scripts": [
+    "audit:final-chain-execution-gap",
+    "audit:pdf-english-raw-pdf-promotion",
+    "audit:pdf-english-rebuild-smoke",
     "audit:pdf-english-recovery-intake",
     "final-chain:adapter-contracts",
     "final-chain:adapter-describe",
     "final-chain:adapter-dry-run",
+    "final-chain:adapter-execution-preflight",
     "final-chain:contract",
     "final-chain:dashboard",
     "final-chain:env-check",
@@ -43,7 +45,9 @@
     "test:final-chain-ops"
   ],
   "missing_npm_scripts": [],
-  "pdf_english_intake_status": "blocked_missing_or_invalid_recovery_candidate",
+  "pdf_english_intake_status": "candidate_ready_for_quarantine_import",
+  "pdf_english_raw_pdf_promotion_status": "pass",
+  "pdf_english_java_shell_admission_allowed": true,
   "checks": [
     {
       "name": "four_final_chains_split_is_stable",
@@ -58,11 +62,10 @@
         "ready": [
           "doc_math",
           "doc_english",
-          "pdf_math"
-        ],
-        "blocked": [
+          "pdf_math",
           "pdf_english"
-        ]
+        ],
+        "blocked": []
       }
     },
     {
@@ -70,6 +73,7 @@
       "ok": true,
       "value": [
         "adapter_dry_run",
+        "adapter_execution_preflight",
         "contract",
         "env_contract",
         "job_inspect",
@@ -136,27 +140,31 @@
       "name": "dashboard_lanes_match_current_recovery_state",
       "ok": true,
       "value": {
-        "needs_sample_input": 3,
-        "needs_artifact_restore_or_smoke": 1
+        "needs_sample_input": 4
       }
     },
     {
-      "name": "pdf_english_intake_gate_keeps_ready_claim_blocked",
+      "name": "pdf_english_intake_gate_has_fresh_candidate",
       "ok": true,
       "value": {
-        "status": "blocked_missing_or_invalid_recovery_candidate",
-        "required_check_failures": [
-          "active_manifest_present",
-          "active_manifest_json_object",
-          "pipeline_name_matches",
-          "allow_only_manifest_runs_enabled",
-          "timestamp_latest_selection_forbidden",
-          "four_branch_runs_declared",
-          "prior_smoke_zip_present",
-          "prior_smoke_zip_valid",
-          "prior_smoke_dir_present",
-          "prior_smoke_dir_nonempty"
-        ]
+        "status": "candidate_ready_for_quarantine_import",
+        "required_check_failures": []
+      }
+    },
+    {
+      "name": "pdf_english_raw_pdf_promotion_admits_java_shell_without_model_execution",
+      "ok": true,
+      "value": {
+        "status": "pass",
+        "java_shell_admission": {
+          "allowed": true,
+          "scope": "adapter_preflight_and_queue_contract",
+          "not_a_model_execution_claim": true
+        },
+        "production_model_execution_policy": {
+          "model_calls_default_enabled": false,
+          "requires_explicit_runtime_authorization": true
+        }
       }
     }
   ],

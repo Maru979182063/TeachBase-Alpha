@@ -28,11 +28,11 @@ def test_cleanroom_goal_gap_audit_tracks_residual_completion_gap() -> None:
     assert payload["completion_claim_allowed"] is False
     assert payload["completion_blockers"] == [
         {
-            "chain_id": "pdf_english",
-            "status": "blocked_missing_manifest_and_smoke_artifacts",
-            "safe_boundary": "validate_pdf_english_recovery_requires_manifest_before_ready_claim",
+            "scope": "continuous_production_worker",
+            "status": "java_orchestrator_worker_db_contract_not_implemented",
+            "safe_boundary": "no_model_db_runtime_execution_without_explicit_worker_contract",
             "legacy_artifact_wait_required": False,
-            "safe_rebuild_boundary": "pdf_english_rebuild_decision_requires_fresh_manifest_and_smoke_before_ready_claim",
+            "safe_rebuild_boundary": "",
         }
     ]
     assert checks["foundation_gate_sealed"]["ok"] is True
@@ -46,10 +46,12 @@ def test_cleanroom_goal_gap_audit_tracks_residual_completion_gap() -> None:
     assert checks["terror_index_in_target_band"]["ok"] is True
     assert checks["cleanroom_manifest_validated"]["ok"] is True
     assert checks["final_chain_contract_tests_pass"]["ok"] is True
-    assert checks["pdf_english_remains_fail_closed_not_silent_ready"]["ok"] is True
-    assert checks["pdf_english_recovery_intake_gate_ready_for_restored_candidate"]["ok"] is True
+    assert checks["pdf_english_fresh_candidate_is_manifest_validated"]["ok"] is True
+    assert checks["pdf_english_recovery_intake_gate_has_fresh_candidate"]["ok"] is True
     assert checks["pdf_english_lost_artifacts_have_rebuild_track"]["ok"] is True
     assert checks["pdf_english_rebuild_source_import_sealed"]["ok"] is True
+    assert checks["pdf_english_rebuild_smoke_sealed"]["ok"] is True
+    assert checks["pdf_english_raw_pdf_promotion_sealed"]["ok"] is True
     assert checks["final_chain_ops_health_seals_cli_and_recovery_surface"]["ok"] is True
     assert payload["execution_contract"] == {
         "model_invoked": False,

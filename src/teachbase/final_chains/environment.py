@@ -81,6 +81,7 @@ def inspect_chain_environment(
         "runtime_import_profile_disabled": profile.allow_runtime_import is False,
         "required_paths_present": all(item["exists"] for item in required_path_states),
         "no_required_business_secrets": not profile.required_secret_names,
+        "smoke_status_not_partial": chain.smoke_status != "partial",
     }
     return {
         "chain_id": chain.chain_id,
@@ -191,6 +192,7 @@ def build_environment_interaction_contract(registry: FinalChainRegistry, *, work
             "queue",
             "job-validate",
             "adapter-dry-run",
+            "adapter-execution-preflight",
         ],
         "forbidden_side_effects": {
             "model_calls": True,
@@ -234,6 +236,7 @@ def _environment_contract_profile(environment: dict[str, Any]) -> dict[str, Any]
             "schedule_dry_run",
             "job_validate",
             "adapter_dry_run",
+            "adapter_execution_preflight",
         ],
     }
 

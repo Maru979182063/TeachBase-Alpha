@@ -1,28 +1,28 @@
 # PDF English Recovery Intake Validation 2026-08-04
 
-Status: `blocked_missing_or_invalid_recovery_candidate`
+Status: `candidate_ready_for_quarantine_import`
 Candidate: `current_cleanroom_workspace`
 
 ## Checks
 
 - `pass` `candidate_root_exists`
-- `fail` `active_manifest_present`
-- `fail` `active_manifest_json_object`
-- `fail` `pipeline_name_matches`
-- `fail` `allow_only_manifest_runs_enabled`
-- `fail` `timestamp_latest_selection_forbidden`
-- `fail` `four_branch_runs_declared`
+- `pass` `active_manifest_present`
+- `pass` `active_manifest_json_object`
+- `pass` `pipeline_name_matches`
+- `pass` `allow_only_manifest_runs_enabled`
+- `pass` `timestamp_latest_selection_forbidden`
+- `pass` `four_branch_runs_declared`
 - `pass` `manifest_checker_present`
-- `fail` `prior_smoke_zip_present`
-- `fail` `prior_smoke_zip_valid`
-- `fail` `prior_smoke_dir_present`
-- `fail` `prior_smoke_dir_nonempty`
+- `pass` `smoke_zip_present`
+- `pass` `smoke_zip_valid`
+- `pass` `smoke_dir_present`
+- `pass` `smoke_dir_nonempty`
 
 ## Safe Next Actions
 
-- `stage_recovered_artifacts_under_a_candidate_root`
-- `preserve_relative_paths_from_config_tools_outputs`
-- `rerun_this_intake_gate_before_copying_into_protected_paths`
+- `copy_candidate_artifacts_with_preserved_relative_paths_into_quarantine_branch`
+- `run_python_tools_english_text_first_graph_first_manifest_check`
+- `run_small_smoke_before_claiming_pdf_english_ready`
 
 ## Unsafe Actions
 

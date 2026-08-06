@@ -16,7 +16,16 @@ REPORT_JSON = ROOT / "docs" / "reports" / "final_chain_orchestrator_handshake_va
 REPORT_MD = ROOT / "docs" / "reports" / "final_chain_orchestrator_handshake_validation_20260804.md"
 
 EXPECTED_CHAIN_IDS = ["doc_math", "doc_english", "pdf_math", "pdf_english"]
-EXPECTED_SEQUENCE = ["env-contract", "contract", "plan", "schedule", "queue", "job-validate", "adapter-dry-run"]
+EXPECTED_SEQUENCE = [
+    "env-contract",
+    "contract",
+    "plan",
+    "schedule",
+    "queue",
+    "job-validate",
+    "adapter-dry-run",
+    "adapter-execution-preflight",
+]
 ABSOLUTE_PATH_PATTERN = re.compile(r"(?:[A-Za-z]:\\|/Users/|\\\\)")
 
 
@@ -76,8 +85,8 @@ def _build_checks(handshake: dict[str, Any]) -> list[dict[str, Any]]:
         {
             "name": "chain_split_matches_final_chain_contract",
             "ok": handshake.get("chain_ids") == EXPECTED_CHAIN_IDS
-            and handshake.get("ready_chain_ids") == ["doc_math", "doc_english", "pdf_math"]
-            and handshake.get("blocked_chain_ids") == ["pdf_english"],
+            and handshake.get("ready_chain_ids") == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
+            and handshake.get("blocked_chain_ids") == [],
             "value": {
                 "chains": handshake.get("chain_ids"),
                 "ready": handshake.get("ready_chain_ids"),
@@ -95,9 +104,9 @@ def _build_checks(handshake: dict[str, Any]) -> list[dict[str, Any]]:
             "value": command_map,
         },
         {
-            "name": "blocked_chain_policy_keeps_pdf_english_fail_closed",
-            "ok": _blocked_policy_ok(handshake.get("blocked_chain_policy")),
-            "value": handshake.get("blocked_chain_policy"),
+            "name": "admission_policy_keeps_pdf_english_non_executing",
+            "ok": _admission_policy_ok(handshake.get("admission_policy")),
+            "value": handshake.get("admission_policy"),
         },
         {
             "name": "filesystem_contract_limits_writes_to_outputs",
@@ -140,6 +149,7 @@ def _command_map_ok(command_map: dict[str, Any]) -> bool:
         "schedule",
         "queue",
         "adapter_dry_run",
+        "adapter_execution_preflight",
         "job_inspect",
         "job_validate",
         "job_recovery_plan",
@@ -152,17 +162,19 @@ def _command_map_ok(command_map: dict[str, Any]) -> bool:
     )
 
 
-def _blocked_policy_ok(policy: Any) -> bool:
+def _admission_policy_ok(policy: Any) -> bool:
     if not isinstance(policy, dict):
         return False
     pdf_english = policy.get("pdf_english")
     if not isinstance(pdf_english, dict):
         return False
     return (
-        pdf_english.get("expected_status") == "scheduled_blocked"
-        and pdf_english.get("environment_gate") == "fail_closed"
-        and pdf_english.get("start_forbidden") is True
-        and pdf_english.get("ready_claim_forbidden_until_manifest_recovered") is True
+        pdf_english.get("expected_status") == "scheduled_ready"
+        and pdf_english.get("environment_gate") == "ready_for_control_plane"
+        and pdf_english.get("java_shell_admission") == "allowed_after_raw_pdf_promotion"
+        and pdf_english.get("model_execution_default_enabled") is False
+        and pdf_english.get("runtime_import_default_enabled") is False
+        and pdf_english.get("database_write_default_enabled") is False
     )
 
 

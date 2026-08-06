@@ -59,11 +59,7 @@ def build_report(source_roots: tuple[SourceRoot, ...] | None = None) -> dict[str
         for item in source_candidates
         if all(artifact["exists"] for artifact in item["required_artifacts"])
     ]
-    recovery_status = (
-        "candidate_found_needs_manifest_gate"
-        if importable_sources
-        else "blocked_missing_manifest_and_smoke_artifacts"
-    )
+    recovery_status = "fresh_rebuild_candidate_found" if importable_sources else "blocked_missing_manifest_and_smoke_artifacts"
     return {
         "schema_version": "pdf_english_manifest_recovery_audit.v0.1",
         "workspace_contract": "relative_git_paths_only",
@@ -72,10 +68,10 @@ def build_report(source_roots: tuple[SourceRoot, ...] | None = None) -> dict[str
         "canonical_entrypoint": "config/english_text_first_graph_first/active_manifest.json",
         "search_method": "targeted_known_source_roots_by_label",
         "searched_location_labels": [source_root.label for source_root in source_roots],
-        "searched_artifacts": [item["relative_path"] for item in ARTIFACTS],
+        "searched_artifacts": sorted({artifact["relative_path"] for item in source_candidates for artifact in item["required_artifacts"]}),
         "source_candidates": source_candidates,
         "importable_source_labels": importable_sources,
-        "source_audit_status": "importable_source_found" if importable_sources else "no_importable_source_found",
+        "source_audit_status": "fresh_rebuild_candidate_found" if importable_sources else "no_importable_source_found",
         "recovery_status": recovery_status,
         "safe_next_actions": _safe_next_actions(recovery_status),
         "unsafe_actions": [
@@ -93,7 +89,7 @@ def build_report(source_roots: tuple[SourceRoot, ...] | None = None) -> dict[str
 
 
 def _source_candidate(source_root: SourceRoot) -> dict[str, Any]:
-    artifacts = [_artifact_state(source_root.path, item) for item in ARTIFACTS]
+    artifacts = [_artifact_state(source_root.path, item) for item in _artifacts_for_root(source_root.path)]
     required = [item for item in artifacts if item["required_for_import"]]
     return {
         "source_label": source_root.label,
@@ -102,6 +98,21 @@ def _source_candidate(source_root: SourceRoot) -> dict[str, Any]:
         "required_artifacts_total": len(required),
         "required_artifacts": required,
     }
+
+
+def _artifacts_for_root(source_root: Path) -> tuple[dict[str, Any], ...]:
+    manifest_path = source_root / "config/english_text_first_graph_first/active_manifest.json"
+    manifest = _load_manifest(manifest_path)
+    if isinstance(manifest, dict):
+        smoke = manifest.get("fresh_smoke_artifacts")
+        if isinstance(smoke, dict) and isinstance(smoke.get("smoke_zip"), str) and isinstance(smoke.get("smoke_dir"), str):
+            return (
+                ARTIFACTS[0],
+                ARTIFACTS[1],
+                {"key": "fresh_smoke_zip", "relative_path": str(smoke["smoke_zip"]), "required_for_import": True},
+                {"key": "fresh_smoke_dir", "relative_path": str(smoke["smoke_dir"]), "required_for_import": True},
+            )
+    return ARTIFACTS
 
 
 def _artifact_state(source_root: Path, artifact: dict[str, Any]) -> dict[str, Any]:
@@ -143,12 +154,9 @@ def _zip_testzip(path: Path) -> str | None:
 
 
 def _manifest_checks(path: Path) -> dict[str, Any]:
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8-sig"))
-    except json.JSONDecodeError:
-        return {"json_object": False, "error": "manifest_invalid_json"}
+    payload = _load_manifest(path)
     if not isinstance(payload, dict):
-        return {"json_object": False, "error": "manifest_not_object"}
+        return {"json_object": False, "error": "manifest_invalid_json"}
     run_maps = [payload.get(key) for key in ("runs", "branch_runs", "active_runs", "run_ids")]
     return {
         "json_object": True,
@@ -163,12 +171,21 @@ def _manifest_checks(path: Path) -> dict[str, Any]:
     }
 
 
+def _load_manifest(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8-sig"))
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
 def _safe_next_actions(recovery_status: str) -> list[str]:
-    if recovery_status == "candidate_found_needs_manifest_gate":
+    if recovery_status == "fresh_rebuild_candidate_found":
         return [
-            "copy_candidate_artifacts_with_preserved_relative_paths",
             "run_python_tools_english_text_first_graph_first_manifest_check",
-            "run_small_smoke_before_claiming_adapter_ready",
+            "keep_unattended_production_ready_claim_blocked_until_java_worker_and_database_contract_exist",
         ]
     return [
         "restore_active_manifest_from_original_machine_or_backup",

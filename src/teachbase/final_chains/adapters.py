@@ -14,6 +14,7 @@ from .control import (
     build_request_snapshot,
 )
 from .environment import build_adapter_contract, inspect_chain_environment
+from .execution import FINAL_CHAIN_JOB_STATUSES, build_execution_preflight
 
 
 @dataclass(frozen=True)
@@ -77,6 +78,15 @@ class FinalChainAdapter:
             "business_secrets_read": False,
         }
 
+    def execution_preflight(self, request: ChainRunRequest) -> dict[str, Any]:
+        plan = self.plan(request)
+        return build_execution_preflight(
+            chain=self.chain,
+            request=request,
+            plan=plan,
+            workspace_root=self.workspace_root,
+        )
+
 
 def _no_side_effect_contract() -> dict[str, bool]:
     return {
@@ -97,6 +107,7 @@ def describe_adapters(registry: FinalChainRegistry, *, workspace_root: Path) -> 
     return {
         "schema_version": "final_chain_adapter_description_report.v0.1",
         "chain_count": len(descriptions),
+        "supported_job_statuses": list(FINAL_CHAIN_JOB_STATUSES),
         "descriptions": descriptions,
         "model_invoked": False,
         "database_written": False,

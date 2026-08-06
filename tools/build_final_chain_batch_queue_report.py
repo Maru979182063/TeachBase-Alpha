@@ -16,6 +16,7 @@ READY_SAMPLE_INPUTS = {
     "doc_math": "tests/fixtures/final_chain_samples/doc_math_sample.docx",
     "doc_english": "tests/fixtures/final_chain_samples/doc_english_sample.docx",
     "pdf_math": "tests/fixtures/final_chain_samples/pdf_math_sample.pdf",
+    "pdf_english": "tests/fixtures/final_chain_samples/pdf_english_sample.pdf",
 }
 
 
@@ -35,14 +36,14 @@ def build_report() -> dict:
             "value": [row["chain_id"] for row in rows],
         },
         {
-            "name": "three_ready_jobs_scheduled",
-            "ok": raw_report["scheduled_ready_count"] == 3,
+            "name": "four_ready_jobs_scheduled",
+            "ok": raw_report["scheduled_ready_count"] == 4,
             "value": raw_report["scheduled_ready_count"],
         },
         {
-            "name": "pdf_english_is_scheduled_blocked",
-            "ok": _row(raw_report, "pdf_english").get("schedule_status") == "scheduled_blocked",
-            "value": _row(raw_report, "pdf_english").get("blocked_reasons"),
+            "name": "pdf_english_is_scheduled_ready_after_raw_pdf_promotion",
+            "ok": _row(raw_report, "pdf_english").get("schedule_status") == "scheduled_ready",
+            "value": _row(raw_report, "pdf_english").get("plan_status"),
         },
         {
             "name": "no_rejected_jobs",

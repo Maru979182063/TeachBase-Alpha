@@ -428,9 +428,9 @@
       "input_format": "pdf",
       "subject": "english",
       "protection_status": "protected",
-      "registry_readiness": "protected_definition_ready_needs_artifact_restore_or_smoke_rerun",
-      "confidence": "medium_high",
-      "source_state": "handoff_identity_confirmed_artifacts_missing_in_moved_local_copy",
+      "registry_readiness": "ready_for_java_shell_admission",
+      "confidence": "high",
+      "source_state": "fresh_rebuild_candidate_and_raw_pdf_promotion_passed",
       "canonical_pipeline_name": "english_text_first_graph_first",
       "canonical_entrypoint": "config/english_text_first_graph_first/active_manifest.json",
       "manifest_gate": "python tools/english_text_first_graph_first_manifest_check.py",
@@ -489,6 +489,15 @@
         "prompts/english_group_relation_resolver_cloze_system_v0.1.md",
         "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
         "outputs/english_text_first_graph_first/final_chain_smoke_20260728",
+        "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01.zip",
+        "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01",
+        "tools/build_pdf_english_graph_first_rebuild_smoke.py",
+        "tools/build_pdf_english_raw_pdf_promotion_gate.py",
+        "docs/reports/pdf_english_graph_first_rebuild_smoke_20260806.json",
+        "docs/reports/pdf_english_graph_first_rebuild_smoke_20260806.md",
+        "docs/reports/pdf_english_raw_pdf_promotion_20260806.json",
+        "docs/reports/pdf_english_raw_pdf_promotion_20260806.md",
+        "tests/fixtures/final_chain_samples/pdf_english_sample.pdf",
         "tests/test_english_text_first_v05_pipeline.py",
         "tests/test_english_text_first_sidecar_graph_v01.py",
         "tests/fixtures/english_text_first_v05"
@@ -504,19 +513,24 @@
         ]
       },
       "smoke_status": {
-        "status": "partial",
-        "checks_passed": [
-          "handoff zip exists and testzip is None",
-          "handoff declares unique active_manifest entry",
-          "manifest checker --help loads in old local copy",
-          "2026-07-28 v02 config, graph-first doc, and full-chain runner exist",
-          "cleanroom english_text_first_v05 portable regression passes"
-        ],
-        "blocking_checks": [
-          "config/english_text_first_graph_first/active_manifest.json is missing in the moved old-local copy",
-          "final_chain_smoke_20260728.zip is missing in the moved old-local copy",
-          "final_chain_smoke_20260728/ is missing in the moved old-local copy"
+        "status": "pass",
+        "checks": [
+          "fresh rebuild active manifest exists and graph-first manifest check passes",
+          "fresh rebuild graph-first smoke zip testzip is None",
+          "raw PDF promotion sample exists and preflight accepts the English PDF profile",
+          "raw PDF promotion renders pages and extracts text blocks into a page manifest",
+          "raw PDF promotion declares no model, database, Runtime import, or business secret side effects"
         ]
+      },
+      "java_shell_admission": {
+        "allowed": true,
+        "scope": "adapter_preflight_and_queue_contract",
+        "source_report": "docs/reports/pdf_english_raw_pdf_promotion_20260806.json",
+        "not_a_model_execution_claim": true
+      },
+      "production_model_execution_policy": {
+        "model_calls_default_enabled": false,
+        "requires_explicit_runtime_authorization": true
       },
       "runtime_import_policy": {
         "default_enabled": false,
@@ -526,7 +540,7 @@
         "default_enabled": false,
         "policy": "forbidden"
       },
-      "caution": "Register as the protected PDF English final-chain definition. Do not claim artifact-complete graph-first production readiness until the active manifest and 20260728 smoke artifacts are restored or rerun."
+      "caution": "Raw-PDF graph-first promotion is sufficient for Java shell queue/dry-run admission. Do not treat this as automatic model execution, Runtime import, database write, or unattended continuous-production readiness."
     }
   ]
 }

@@ -11,17 +11,21 @@
   "old_identity_claim_allowed": false,
   "completed_rebuild_evidence": [
     "cleanroom_import_of_required_graph_first_source_files",
-    "user_supplied_four_branch_downstream_review_evidence"
+    "user_supplied_four_branch_downstream_review_evidence",
+    "new_active_manifest_generated_from_fresh_rebuild_outputs",
+    "english_text_first_graph_first_manifest_check_passes",
+    "new_small_pdf_smoke_package_zip_testzip_is_none",
+    "raw_pdf_graph_first_promotion_passes_for_java_shell_admission"
   ],
   "decision": "If the 2026-07-28 graph-first smoke package is permanently unavailable, keep the old identity fail-closed and rebuild a new candidate from surviving source, fixtures, and fresh smoke evidence.",
   "checks": [
     {
-      "name": "legacy_artifact_recovery_is_not_ready",
+      "name": "fresh_rebuild_candidate_replaces_missing_legacy_artifacts",
       "ok": true,
       "value": {
-        "validation": "blocked_missing_or_invalid_manifest",
-        "source_audit": "no_importable_source_found",
-        "intake": "blocked_missing_or_invalid_recovery_candidate"
+        "validation": "ready_for_manifest_gate",
+        "source_audit": "fresh_rebuild_candidate_found",
+        "intake": "candidate_ready_for_quarantine_import"
       }
     },
     {
@@ -170,13 +174,43 @@
         "dry_run": false,
         "imported_file_count": 23
       }
+    },
+    {
+      "name": "fresh_rebuild_smoke_manifest_gate_passes",
+      "ok": true,
+      "value": {
+        "status": "pass",
+        "active_manifest": "config/english_text_first_graph_first/active_manifest.json",
+        "smoke_zip": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01.zip",
+        "branch_page_counts": {
+          "reading": 38,
+          "writing": 21,
+          "grammar": 24,
+          "cloze": 4
+        },
+        "ready_claim_allowed": false
+      }
+    },
+    {
+      "name": "raw_pdf_graph_first_promotion_passes",
+      "ok": true,
+      "value": {
+        "status": "pass",
+        "java_shell_admission": {
+          "allowed": true,
+          "scope": "adapter_preflight_and_queue_contract",
+          "not_a_model_execution_claim": true
+        },
+        "production_model_execution_policy": {
+          "model_calls_default_enabled": false,
+          "requires_explicit_runtime_authorization": true
+        }
+      }
     }
   ],
   "required_promotion_evidence": [
-    "new_active_manifest_generated_from_fresh_rebuild_outputs",
-    "english_text_first_graph_first_manifest_check_passes",
-    "new_small_pdf_smoke_package_zip_testzip_is_none",
-    "final_chain_registry_pdf_english_readiness_updated_only_after_smoke"
+    "final_chain_registry_pdf_english_readiness_updated_only_after_smoke",
+    "java_worker_and_database_contract_before_unattended_production_ready_claim"
   ],
   "unsafe_actions": [
     "do_not_synthesize_old_active_manifest",

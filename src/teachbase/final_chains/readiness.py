@@ -22,6 +22,8 @@ def _recommended_actions(tier: str, blocked_reasons: list[str]) -> list[str]:
     actions: list[str] = []
     if "required_paths_present" in blocked_reasons:
         actions.append("import_or_restore_canonical_entrypoint_and_configs")
+    if "smoke_status_not_partial" in blocked_reasons:
+        actions.append("promote_full_raw_pdf_graph_first_smoke_before_ready_claim")
     if tier == "restore_or_rerun_required":
         actions.append("restore_active_manifest_or_rerun_smoke_artifacts")
     if tier == "environment_ready_input_needed":

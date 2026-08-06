@@ -17,12 +17,14 @@ Completion claim allowed: `false`
 - `pass` `terror_index_in_target_band`
 - `pass` `cleanroom_manifest_validated`
 - `pass` `final_chain_contract_tests_pass`
-- `pass` `pdf_english_remains_fail_closed_not_silent_ready`
-- `pass` `pdf_english_recovery_intake_gate_ready_for_restored_candidate`
+- `pass` `pdf_english_fresh_candidate_is_manifest_validated`
+- `pass` `pdf_english_recovery_intake_gate_has_fresh_candidate`
 - `pass` `pdf_english_lost_artifacts_have_rebuild_track`
 - `pass` `pdf_english_rebuild_source_import_sealed`
+- `pass` `pdf_english_rebuild_smoke_sealed`
+- `pass` `pdf_english_raw_pdf_promotion_sealed`
 - `pass` `final_chain_ops_health_seals_cli_and_recovery_surface`
 
 ## Completion Blockers
 
-- `pdf_english` `blocked_missing_manifest_and_smoke_artifacts`
+- `continuous_production_worker` `java_orchestrator_worker_db_contract_not_implemented`

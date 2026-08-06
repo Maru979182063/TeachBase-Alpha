@@ -28,13 +28,23 @@ REQUIRED_COMMANDS = {
     "schedule",
     "queue",
     "adapter_dry_run",
+    "adapter_execution_preflight",
     "job_inspect",
     "job_validate",
     "job_recovery_plan",
     "job_schedule_replacement",
     "job_transition",
 }
-REQUIRED_HANDSHAKE_STEPS = ["env-contract", "contract", "plan", "schedule", "queue", "job-validate", "adapter-dry-run"]
+REQUIRED_HANDSHAKE_STEPS = [
+    "env-contract",
+    "contract",
+    "plan",
+    "schedule",
+    "queue",
+    "job-validate",
+    "adapter-dry-run",
+    "adapter-execution-preflight",
+]
 NO_SIDE_EFFECT_CONTRACT = {
     "model_invoked": False,
     "database_written": False,
@@ -63,12 +73,14 @@ def build_report() -> dict[str, Any]:
         "filesystem_contract": environment_contract.get("filesystem_contract", {}),
         "job_lifecycle_policy": control_contract.get("job_lifecycle_policy", {}),
         "required_job_record_sections": control_contract.get("required_job_record_sections", []),
-        "blocked_chain_policy": {
+        "admission_policy": {
             "pdf_english": {
-                "expected_status": "scheduled_blocked",
-                "environment_gate": "fail_closed",
-                "start_forbidden": True,
-                "ready_claim_forbidden_until_manifest_recovered": True,
+                "expected_status": "scheduled_ready",
+                "environment_gate": "ready_for_control_plane",
+                "java_shell_admission": "allowed_after_raw_pdf_promotion",
+                "model_execution_default_enabled": False,
+                "runtime_import_default_enabled": False,
+                "database_write_default_enabled": False,
             }
         },
         "source_reports": {
@@ -121,8 +133,8 @@ def _build_checks(
         },
         {
             "name": "environment_ready_blocked_split_is_explicit",
-            "ok": environment_contract.get("ready_chain_ids") == ["doc_math", "doc_english", "pdf_math"]
-            and environment_contract.get("blocked_chain_ids") == ["pdf_english"],
+            "ok": environment_contract.get("ready_chain_ids") == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
+            and environment_contract.get("blocked_chain_ids") == [],
             "value": {
                 "ready": environment_contract.get("ready_chain_ids"),
                 "blocked": environment_contract.get("blocked_chain_ids"),

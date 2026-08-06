@@ -42,11 +42,10 @@
         "ready": [
           "doc_math",
           "doc_english",
-          "pdf_math"
-        ],
-        "blocked": [
+          "pdf_math",
           "pdf_english"
-        ]
+        ],
+        "blocked": []
       }
     },
     {
@@ -59,7 +58,8 @@
         "schedule",
         "queue",
         "job-validate",
-        "adapter-dry-run"
+        "adapter-dry-run",
+        "adapter-execution-preflight"
       ]
     },
     {
@@ -67,6 +67,7 @@
       "ok": true,
       "value": {
         "adapter_dry_run": "tools/final_chain_control.py adapter-dry-run --chain-id <chain_id> --input <path> --json",
+        "adapter_execution_preflight": "tools/final_chain_control.py adapter-execution-preflight --chain-id <chain_id> --input <path> --json",
         "contract": "tools/final_chain_control.py contract --json",
         "env_contract": "tools/final_chain_control.py env-contract --json",
         "job_inspect": "tools/final_chain_control.py job-inspect --record <relative_record_path> --json",
@@ -80,14 +81,16 @@
       }
     },
     {
-      "name": "blocked_chain_policy_keeps_pdf_english_fail_closed",
+      "name": "admission_policy_keeps_pdf_english_non_executing",
       "ok": true,
       "value": {
         "pdf_english": {
-          "expected_status": "scheduled_blocked",
-          "environment_gate": "fail_closed",
-          "start_forbidden": true,
-          "ready_claim_forbidden_until_manifest_recovered": true
+          "expected_status": "scheduled_ready",
+          "environment_gate": "ready_for_control_plane",
+          "java_shell_admission": "allowed_after_raw_pdf_promotion",
+          "model_execution_default_enabled": false,
+          "runtime_import_default_enabled": false,
+          "database_write_default_enabled": false
         }
       }
     },

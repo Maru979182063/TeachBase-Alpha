@@ -4,8 +4,8 @@
   "absolute_paths_as_inputs": false,
   "status": "pass",
   "chain_count": 4,
-  "scheduled_ready_count": 3,
-  "scheduled_blocked_count": 1,
+  "scheduled_ready_count": 4,
+  "scheduled_blocked_count": 0,
   "rejected_count": 0,
   "output_root": "outputs/final_chain_batch_queue",
   "rows": [
@@ -69,17 +69,14 @@
     {
       "chain_id": "pdf_english",
       "input_path": "tests/fixtures/final_chain_samples/pdf_english_sample.pdf",
-      "schedule_status": "scheduled_blocked",
-      "plan_status": "blocked",
+      "schedule_status": "scheduled_ready",
+      "plan_status": "ready",
       "record_path": "outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json",
       "record_validation_ok": true,
       "record_validation_error_count": 0,
       "self_validation_ok": true,
       "self_validation_error_count": 0,
-      "blocked_reasons": [
-        "input_path_present",
-        "canonical_entrypoint_present"
-      ],
+      "blocked_reasons": [],
       "execution_contract": {
         "model_invoked": false,
         "database_written": false,
@@ -107,17 +104,14 @@
       ]
     },
     {
-      "name": "three_ready_jobs_scheduled",
+      "name": "four_ready_jobs_scheduled",
       "ok": true,
-      "value": 3
+      "value": 4
     },
     {
-      "name": "pdf_english_is_scheduled_blocked",
+      "name": "pdf_english_is_scheduled_ready_after_raw_pdf_promotion",
       "ok": true,
-      "value": [
-        "input_path_present",
-        "canonical_entrypoint_present"
-      ]
+      "value": "ready"
     },
     {
       "name": "no_rejected_jobs",

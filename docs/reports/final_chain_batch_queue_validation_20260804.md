@@ -10,7 +10,7 @@ Batch report: `docs/reports/final_chain_batch_queue_20260804.json`
 - `pass` `batch_report_status_passes`
 - `pass` `batch_report_covers_exact_four_final_chains`
 - `pass` `batch_queue_status_split_is_expected`
-- `pass` `pdf_english_fails_closed_with_blockers`
+- `pass` `pdf_english_schedules_ready_after_raw_pdf_promotion`
 - `pass` `job_record_contract_paths_are_stable_and_under_outputs`
 - `pass` `job_record_validations_are_clean`
 - `pass` `batch_report_checks_pass`

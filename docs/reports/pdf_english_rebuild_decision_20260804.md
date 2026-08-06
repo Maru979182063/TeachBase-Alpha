@@ -8,22 +8,26 @@ Ready claim allowed: `false`
 
 - `cleanroom_import_of_required_graph_first_source_files`
 - `user_supplied_four_branch_downstream_review_evidence`
+- `new_active_manifest_generated_from_fresh_rebuild_outputs`
+- `english_text_first_graph_first_manifest_check_passes`
+- `new_small_pdf_smoke_package_zip_testzip_is_none`
+- `raw_pdf_graph_first_promotion_passes_for_java_shell_admission`
 
 ## Checks
 
-- `pass` `legacy_artifact_recovery_is_not_ready`
+- `pass` `fresh_rebuild_candidate_replaces_missing_legacy_artifacts`
 - `pass` `cleanroom_v05_rebuild_scaffold_present`
 - `pass` `old_local_graph_first_source_code_available_if_present`
 - `pass` `portable_regression_passes_without_model_or_runtime`
 - `pass` `user_supplied_downstream_review_evidence_if_present`
 - `pass` `cleanroom_graph_first_source_import_is_sealed`
+- `pass` `fresh_rebuild_smoke_manifest_gate_passes`
+- `pass` `raw_pdf_graph_first_promotion_passes`
 
 ## Required Promotion Evidence
 
-- `new_active_manifest_generated_from_fresh_rebuild_outputs`
-- `english_text_first_graph_first_manifest_check_passes`
-- `new_small_pdf_smoke_package_zip_testzip_is_none`
 - `final_chain_registry_pdf_english_readiness_updated_only_after_smoke`
+- `java_worker_and_database_contract_before_unattended_production_ready_claim`
 
 ## Unsafe Actions
 

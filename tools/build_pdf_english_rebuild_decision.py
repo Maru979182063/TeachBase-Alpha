@@ -44,15 +44,17 @@ def build_report(source_roots: tuple[SourceRoot, ...] | None = None, *, run_regr
     intake_validation = _load_json("docs/reports/pdf_english_recovery_intake_validation_20260804.json")
     user_zip_intake = _load_json("docs/reports/pdf_english_user_zip_intake_20260804.json")
     source_import = _load_json("docs/reports/pdf_english_rebuild_source_import_20260804.json")
+    rebuild_smoke = _load_json("docs/reports/pdf_english_graph_first_rebuild_smoke_20260806.json")
+    raw_promotion = _load_json("docs/reports/pdf_english_raw_pdf_promotion_20260806.json")
     source_code_state = [_source_code_state(source_root) for source_root in source_roots]
     cleanroom_state = _cleanroom_rebuild_state()
     regression = _run_portable_regression() if run_regression else {"status": "not_run", "exit_code": None}
     checks = [
         {
-            "name": "legacy_artifact_recovery_is_not_ready",
-            "ok": recovery_validation.get("status") == "blocked_missing_or_invalid_manifest"
-            and source_audit.get("source_audit_status") == "no_importable_source_found"
-            and intake_validation.get("status") == "blocked_missing_or_invalid_recovery_candidate",
+            "name": "fresh_rebuild_candidate_replaces_missing_legacy_artifacts",
+            "ok": recovery_validation.get("status") == "ready_for_manifest_gate"
+            and source_audit.get("source_audit_status") == "fresh_rebuild_candidate_found"
+            and intake_validation.get("status") == "candidate_ready_for_quarantine_import",
             "value": {
                 "validation": recovery_validation.get("status"),
                 "source_audit": source_audit.get("source_audit_status"),
@@ -103,15 +105,42 @@ def build_report(source_roots: tuple[SourceRoot, ...] | None = None, *, run_regr
                 "imported_file_count": source_import.get("imported_file_count"),
             },
         },
+        {
+            "name": "fresh_rebuild_smoke_manifest_gate_passes",
+            "ok": rebuild_smoke.get("status") == "pass"
+            and rebuild_smoke.get("smoke_zip_testzip") is None
+            and rebuild_smoke.get("ready_claim_allowed") is False,
+            "value": {
+                "status": rebuild_smoke.get("status"),
+                "active_manifest": rebuild_smoke.get("active_manifest"),
+                "smoke_zip": rebuild_smoke.get("smoke_zip"),
+                "branch_page_counts": rebuild_smoke.get("branch_page_counts"),
+                "ready_claim_allowed": rebuild_smoke.get("ready_claim_allowed"),
+            },
+        },
+        {
+            "name": "raw_pdf_graph_first_promotion_passes",
+            "ok": raw_promotion.get("status") == "pass"
+            and raw_promotion.get("java_shell_admission", {}).get("allowed") is True
+            and raw_promotion.get("production_model_execution_policy", {}).get("model_calls_default_enabled") is False,
+            "value": {
+                "status": raw_promotion.get("status"),
+                "java_shell_admission": raw_promotion.get("java_shell_admission"),
+                "production_model_execution_policy": raw_promotion.get("production_model_execution_policy"),
+            },
+        },
     ]
-    legacy_ready = checks[0]["ok"] is not True
     rebuild_allowed = (
+        checks[0]["ok"] is True
+        and
         cleanroom_state["required_present"] is True
         and checks[2]["ok"] is True
         and checks[3]["ok"] is True
         and checks[5]["ok"] is True
+        and checks[6]["ok"] is True
+        and checks[7]["ok"] is True
     )
-    ready_claim_allowed = legacy_ready
+    ready_claim_allowed = False
     status = "rebuild_track_allowed" if rebuild_allowed and not ready_claim_allowed else "fail"
     return {
         "schema_version": "pdf_english_rebuild_decision.v0.1",
@@ -127,8 +156,12 @@ def build_report(source_roots: tuple[SourceRoot, ...] | None = None, *, run_regr
         "completed_rebuild_evidence": [
             "cleanroom_import_of_required_graph_first_source_files",
             "user_supplied_four_branch_downstream_review_evidence",
+            "new_active_manifest_generated_from_fresh_rebuild_outputs",
+            "english_text_first_graph_first_manifest_check_passes",
+            "new_small_pdf_smoke_package_zip_testzip_is_none",
+            "raw_pdf_graph_first_promotion_passes_for_java_shell_admission",
         ]
-        if checks[4]["ok"] and checks[5]["ok"]
+        if checks[4]["ok"] and checks[5]["ok"] and checks[6]["ok"] and checks[7]["ok"]
         else [],
         "decision": (
             "If the 2026-07-28 graph-first smoke package is permanently unavailable, keep the old identity "
@@ -136,10 +169,8 @@ def build_report(source_roots: tuple[SourceRoot, ...] | None = None, *, run_regr
         ),
         "checks": checks,
         "required_promotion_evidence": [
-            "new_active_manifest_generated_from_fresh_rebuild_outputs",
-            "english_text_first_graph_first_manifest_check_passes",
-            "new_small_pdf_smoke_package_zip_testzip_is_none",
             "final_chain_registry_pdf_english_readiness_updated_only_after_smoke",
+            "java_worker_and_database_contract_before_unattended_production_ready_claim",
         ],
         "unsafe_actions": [
             "do_not_synthesize_old_active_manifest",

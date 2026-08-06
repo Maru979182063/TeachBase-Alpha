@@ -151,6 +151,20 @@ def build_adapter_dry_run(args: argparse.Namespace) -> dict:
     return adapter.dry_run(request)
 
 
+def build_adapter_execution_preflight(args: argparse.Namespace) -> dict:
+    registry = load_final_chain_registry(Path(args.registry))
+    adapters = build_final_chain_adapters(registry, workspace_root=ROOT)
+    adapter = adapters[args.chain_id]
+    request = ChainRunRequest(
+        chain_id=args.chain_id,
+        input_path=args.input,
+        output_root=args.output_root,
+        dry_run=True,
+        environment=EnvironmentPolicy(name=args.environment),
+    )
+    return adapter.execution_preflight(request)
+
+
 def build_readiness(args: argparse.Namespace) -> dict:
     registry = load_final_chain_registry(Path(args.registry))
     sample_inputs = parse_sample_inputs(args.sample_input)
@@ -299,6 +313,17 @@ def main() -> int:
     adapter_dry_run_parser.add_argument("--output-root", default="outputs/final_chain_runs")
     adapter_dry_run_parser.add_argument("--environment", default="local_dry_run")
 
+    adapter_execution_preflight_parser = add_json_flag(
+        subparsers.add_parser(
+            "adapter-execution-preflight",
+            help="Check whether one final-chain adapter has the unified worker execution contract.",
+        )
+    )
+    adapter_execution_preflight_parser.add_argument("--chain-id", required=True)
+    adapter_execution_preflight_parser.add_argument("--input", required=True)
+    adapter_execution_preflight_parser.add_argument("--output-root", default="outputs/final_chain_runs")
+    adapter_execution_preflight_parser.add_argument("--environment", default="local_dry_run")
+
     readiness_parser = add_json_flag(
         subparsers.add_parser("readiness-matrix", help="Summarize final-chain adapter readiness.")
     )
@@ -372,6 +397,8 @@ def main() -> int:
             result = build_adapter_descriptions(args)
         elif args.command == "adapter-dry-run":
             result = build_adapter_dry_run(args)
+        elif args.command == "adapter-execution-preflight":
+            result = build_adapter_execution_preflight(args)
         elif args.command == "readiness-matrix":
             result = build_readiness(args)
         elif args.command == "job-inspect":
@@ -412,6 +439,7 @@ def main() -> int:
         "list",
         "adapter-contracts",
         "adapter-describe",
+        "adapter-execution-preflight",
         "env-contract",
         "readiness-matrix",
         "job-inspect",

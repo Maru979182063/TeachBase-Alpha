@@ -30,6 +30,8 @@ REQUIRED_REPORTS = {
     "pdf_english_recovery_intake_validation": "docs/reports/pdf_english_recovery_intake_validation_20260804.json",
     "pdf_english_rebuild_decision": "docs/reports/pdf_english_rebuild_decision_20260804.json",
     "pdf_english_rebuild_source_import": "docs/reports/pdf_english_rebuild_source_import_20260804.json",
+    "pdf_english_rebuild_smoke": "docs/reports/pdf_english_graph_first_rebuild_smoke_20260806.json",
+    "pdf_english_raw_pdf_promotion": "docs/reports/pdf_english_raw_pdf_promotion_20260806.json",
 }
 
 
@@ -52,8 +54,9 @@ def build_report() -> dict[str, Any]:
                 "doc_math",
                 "doc_english",
                 "pdf_math",
+                "pdf_english",
             ]
-            and _json_value(reports, "final_chain_ops", ["environment_blocked_chain_ids"]) == ["pdf_english"],
+            and _json_value(reports, "final_chain_ops", ["environment_blocked_chain_ids"]) == [],
             "value": {
                 "ready": _json_value(reports, "final_chain_ops", ["environment_ready_chain_ids"]),
                 "blocked": _json_value(reports, "final_chain_ops", ["environment_blocked_chain_ids"]),
@@ -65,13 +68,13 @@ def build_report() -> dict[str, Any]:
             "value": _json_value(reports, "final_chain_ops", ["checks"]),
         },
         {
-            "name": "pdf_english_is_explicit_fail_closed_blocker",
+            "name": "pdf_english_fresh_rebuild_candidate_is_sealed",
             "ok": _json_value(reports, "pdf_english_recovery_validation", ["status"])
-            == "blocked_missing_or_invalid_manifest"
+            == "ready_for_manifest_gate"
             and _json_value(reports, "pdf_english_recovery_source_audit", ["source_audit_status"])
-            == "no_importable_source_found"
+            == "fresh_rebuild_candidate_found"
             and _json_value(reports, "pdf_english_recovery_intake_validation", ["status"])
-            == "blocked_missing_or_invalid_recovery_candidate",
+            == "candidate_ready_for_quarantine_import",
             "value": {
                 "validation": _json_value(reports, "pdf_english_recovery_validation", ["status"]),
                 "source_audit": _json_value(reports, "pdf_english_recovery_source_audit", ["source_audit_status"]),
@@ -125,6 +128,37 @@ def build_report() -> dict[str, Any]:
             },
         },
         {
+            "name": "pdf_english_rebuild_smoke_is_sealed",
+            "ok": _json_value(reports, "pdf_english_rebuild_smoke", ["status"]) == "pass"
+            and _json_value(reports, "pdf_english_rebuild_smoke", ["ready_claim_allowed"]) is False
+            and _json_value(reports, "pdf_english_rebuild_smoke", ["smoke_zip_testzip"]) is None,
+            "value": {
+                "status": _json_value(reports, "pdf_english_rebuild_smoke", ["status"]),
+                "ready_claim_allowed": _json_value(reports, "pdf_english_rebuild_smoke", ["ready_claim_allowed"]),
+                "smoke_zip": _json_value(reports, "pdf_english_rebuild_smoke", ["smoke_zip"]),
+            },
+        },
+        {
+            "name": "pdf_english_raw_pdf_promotion_is_sealed",
+            "ok": _json_value(reports, "pdf_english_raw_pdf_promotion", ["status"]) == "pass"
+            and _json_value(reports, "pdf_english_raw_pdf_promotion", ["java_shell_admission", "allowed"]) is True
+            and _json_value(
+                reports,
+                "pdf_english_raw_pdf_promotion",
+                ["production_model_execution_policy", "model_calls_default_enabled"],
+            )
+            is False,
+            "value": {
+                "status": _json_value(reports, "pdf_english_raw_pdf_promotion", ["status"]),
+                "java_shell_admission": _json_value(
+                    reports, "pdf_english_raw_pdf_promotion", ["java_shell_admission"]
+                ),
+                "production_model_execution_policy": _json_value(
+                    reports, "pdf_english_raw_pdf_promotion", ["production_model_execution_policy"]
+                ),
+            },
+        },
+        {
             "name": "final_chain_ops_health_is_sealed",
             "ok": _json_value(reports, "final_chain_ops_health", ["status"]) == "pass"
             and _json_value(reports, "final_chain_ops_health", ["missing_npm_scripts"]) == [],
@@ -149,6 +183,7 @@ def build_report() -> dict[str, Any]:
         "sealed_scopes": [
             "foundation_artifact_atomicity_and_model_checkpoint_guard",
             "final_chain_registry_control_contract_environment_contract_and_scheduler",
+            "pdf_english_raw_pdf_graph_first_java_shell_admission",
             "precleanup_archive_safety_and_worktree_compartment_guard",
         ],
         "replay_commands": [
@@ -159,12 +194,12 @@ def build_report() -> dict[str, Any]:
         ],
         "known_blockers": [
             {
-                "chain_id": "pdf_english",
-                "status": "blocked_missing_manifest_and_smoke_artifacts",
-                "guard": "pdf_english_recovery_requires_four_branch_manifest",
-                "allowed_behavior": "fail_closed",
+                "scope": "continuous_production_worker",
+                "status": "java_orchestrator_worker_db_contract_not_implemented",
+                "guard": "external_backbone_required_for_unattended_batch_processing",
+                "allowed_behavior": "control_plane_dry_run_and_queue_only",
                 "legacy_artifact_wait_required": False,
-                "safe_rebuild_boundary": "pdf_english_rebuild_decision_requires_fresh_manifest_and_smoke_before_ready_claim",
+                "safe_boundary": "no_model_db_runtime_execution_without_explicit_worker_contract",
             }
         ],
         "checks": checks,
@@ -211,7 +246,7 @@ def _report_status(payload: dict[str, Any]) -> str:
     if payload.get("schema_version") == "final_chain_control_contract.v0.1":
         return "pass"
     if payload.get("schema_version") == "final_chain_ready_sample_dry_run_report.v0.1":
-        return "pass" if payload.get("ready_for_adapter_dry_run_count") == 3 else "fail"
+        return "pass" if payload.get("ready_for_adapter_dry_run_count") == 4 else "fail"
     if payload.get("schema_version") == "pdf_english_manifest_recovery_audit.v0.1":
         return str(payload.get("source_audit_status") or "unknown")
     return "unknown"
@@ -219,10 +254,12 @@ def _report_status(payload: dict[str, Any]) -> str:
 
 def _status_reports_ok(reports: dict[str, dict[str, Any]]) -> bool:
     expected_blocked = {
-        "pdf_english_recovery_validation": "blocked_missing_or_invalid_manifest",
-        "pdf_english_recovery_source_audit": "no_importable_source_found",
-        "pdf_english_recovery_intake_validation": "blocked_missing_or_invalid_recovery_candidate",
+        "pdf_english_recovery_validation": "ready_for_manifest_gate",
+        "pdf_english_recovery_source_audit": "fresh_rebuild_candidate_found",
+        "pdf_english_recovery_intake_validation": "candidate_ready_for_quarantine_import",
         "pdf_english_rebuild_decision": "rebuild_track_allowed",
+        "pdf_english_rebuild_smoke": "pass",
+        "pdf_english_raw_pdf_promotion": "pass",
     }
     for name, record in reports.items():
         status = record["status"]
@@ -287,7 +324,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         lines.append(f"- `{status}` `{check['name']}`")
     lines.extend(["", "## Known Blockers", ""])
     for blocker in report["known_blockers"]:
-        lines.append(f"- `{blocker['chain_id']}` `{blocker['status']}` `{blocker['allowed_behavior']}`")
+        lines.append(f"- `{blocker['scope']}` `{blocker['status']}` `{blocker['allowed_behavior']}`")
     lines.append("")
     return "\n".join(lines)
 

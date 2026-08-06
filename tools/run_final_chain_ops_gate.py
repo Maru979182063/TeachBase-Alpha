@@ -25,6 +25,12 @@ from tools.build_final_chain_batch_queue_report import (
     render_markdown as render_batch_queue_markdown,
 )
 from tools.build_pdf_english_recovery_source_audit import build_report as build_pdf_english_source_audit_report
+from tools.build_pdf_english_raw_pdf_promotion_gate import (
+    REPORT_JSON as PDF_ENGLISH_RAW_PROMOTION_JSON,
+    REPORT_MD as PDF_ENGLISH_RAW_PROMOTION_MD,
+    build_report as build_pdf_english_raw_promotion_report,
+    render_markdown as render_pdf_english_raw_promotion_markdown,
+)
 from tools.validate_pdf_english_recovery_intake import (
     REPORT_JSON as PDF_ENGLISH_INTAKE_JSON,
     REPORT_MD as PDF_ENGLISH_INTAKE_MD,
@@ -85,6 +91,9 @@ def build_gate_report() -> dict[str, Any]:
     pdf_english_recovery_intake = build_pdf_english_recovery_intake_report()
     write_json(PDF_ENGLISH_INTAKE_JSON, pdf_english_recovery_intake)
     write_text(PDF_ENGLISH_INTAKE_MD, render_pdf_english_recovery_intake_markdown(pdf_english_recovery_intake))
+    pdf_english_raw_promotion = build_pdf_english_raw_promotion_report()
+    write_json(PDF_ENGLISH_RAW_PROMOTION_JSON, pdf_english_raw_promotion)
+    write_text(PDF_ENGLISH_RAW_PROMOTION_MD, render_pdf_english_raw_promotion_markdown(pdf_english_raw_promotion))
     ops_health = build_ops_health_report()
     write_json(OPS_HEALTH_JSON, ops_health)
     write_text(OPS_HEALTH_MD, render_ops_health_markdown(ops_health))
@@ -95,18 +104,18 @@ def build_gate_report() -> dict[str, Any]:
             "value": dashboard["contract_ok"],
         },
         {
-            "name": "three_chains_need_only_sample_inputs",
-            "ok": dashboard["lane_counts"].get("needs_sample_input") == 3,
+            "name": "four_chains_need_only_sample_inputs",
+            "ok": dashboard["lane_counts"].get("needs_sample_input") == 4,
             "value": dashboard["lane_counts"].get("needs_sample_input"),
         },
         {
-            "name": "one_chain_requires_artifact_restore_or_smoke",
-            "ok": dashboard["lane_counts"].get("needs_artifact_restore_or_smoke") == 1,
+            "name": "no_chain_requires_artifact_restore_or_smoke_after_raw_pdf_promotion",
+            "ok": dashboard["lane_counts"].get("needs_artifact_restore_or_smoke", 0) == 0,
             "value": dashboard["lane_counts"].get("needs_artifact_restore_or_smoke"),
         },
         {
-            "name": "ready_sample_dry_runs_cover_three_chains",
-            "ok": ready_samples["ready_for_adapter_dry_run_count"] == 3,
+            "name": "ready_sample_dry_runs_cover_four_chains",
+            "ok": ready_samples["ready_for_adapter_dry_run_count"] == 4,
             "value": ready_samples["ready_for_adapter_dry_run_count"],
         },
         {
@@ -133,9 +142,9 @@ def build_gate_report() -> dict[str, Any]:
             "value": [row["chain_id"] for row in batch_queue["rows"]],
         },
         {
-            "name": "batch_queue_schedules_three_ready_one_blocked",
-            "ok": batch_queue["scheduled_ready_count"] == 3
-            and batch_queue["scheduled_blocked_count"] == 1
+            "name": "batch_queue_schedules_four_ready_zero_blocked",
+            "ok": batch_queue["scheduled_ready_count"] == 4
+            and batch_queue["scheduled_blocked_count"] == 0
             and batch_queue["rejected_count"] == 0,
             "value": {
                 "ready": batch_queue["scheduled_ready_count"],
@@ -198,8 +207,9 @@ def build_gate_report() -> dict[str, Any]:
             "value": [item["chain_id"] for item in environment_contract["profiles"]],
         },
         {
-            "name": "environment_contract_keeps_pdf_english_fail_closed",
-            "ok": environment_contract["blocked_chain_ids"] == ["pdf_english"],
+            "name": "environment_contract_admits_four_chains_to_control_plane",
+            "ok": environment_contract["ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
+            and environment_contract["blocked_chain_ids"] == [],
             "value": environment_contract["blocked_chain_ids"],
         },
         {
@@ -208,38 +218,45 @@ def build_gate_report() -> dict[str, Any]:
             "value": environment_contract["filesystem_contract"]["write_scope"],
         },
         {
-            "name": "pdf_english_recovery_blocker_is_explicit",
-            "ok": pdf_english_blocker["recovery_status"] == "blocked_missing_manifest_and_smoke_artifacts",
+            "name": "pdf_english_fresh_rebuild_candidate_is_explicit",
+            "ok": pdf_english_blocker["recovery_status"] == "fresh_rebuild_candidate_found",
             "value": pdf_english_blocker["recovery_status"],
         },
         {
-            "name": "pdf_english_recovery_source_audit_has_no_importable_source",
-            "ok": pdf_english_blocker["source_audit_status"] == "no_importable_source_found",
+            "name": "pdf_english_recovery_source_audit_has_fresh_candidate",
+            "ok": pdf_english_blocker["source_audit_status"] == "fresh_rebuild_candidate_found",
             "value": pdf_english_blocker["source_audit_status"],
         },
         {
-            "name": "pdf_english_recovery_validator_fails_closed",
-            "ok": pdf_english_recovery["status"] == "blocked_missing_or_invalid_manifest",
+            "name": "pdf_english_recovery_validator_ready_for_manifest_gate",
+            "ok": pdf_english_recovery["status"] == "ready_for_manifest_gate",
             "value": pdf_english_recovery["status"],
         },
         {
-            "name": "pdf_english_recovery_requires_four_branch_manifest",
-            "ok": "four_branch_runs_declared" in pdf_english_recovery["required_manifest_check_failures"],
+            "name": "pdf_english_recovery_four_branch_manifest_declared",
+            "ok": pdf_english_recovery["required_manifest_check_failures"] == [],
             "value": pdf_english_recovery["required_manifest_check_failures"],
         },
         {
-            "name": "pdf_english_recovery_intake_fails_closed_without_candidate",
-            "ok": pdf_english_recovery_intake["status"] == "blocked_missing_or_invalid_recovery_candidate",
+            "name": "pdf_english_recovery_intake_candidate_ready",
+            "ok": pdf_english_recovery_intake["status"] == "candidate_ready_for_quarantine_import",
             "value": pdf_english_recovery_intake["status"],
         },
         {
-            "name": "pdf_english_recovery_intake_requires_manifest_and_smoke_after_checker_import",
-            "ok": {
-                "active_manifest_present",
-                "prior_smoke_zip_present",
-                "prior_smoke_dir_present",
-            }.issubset(set(pdf_english_recovery_intake["required_check_failures"])),
+            "name": "pdf_english_recovery_intake_manifest_and_smoke_present",
+            "ok": pdf_english_recovery_intake["required_check_failures"] == [],
             "value": pdf_english_recovery_intake["required_check_failures"],
+        },
+        {
+            "name": "pdf_english_raw_pdf_promotion_passes",
+            "ok": pdf_english_raw_promotion["status"] == "pass"
+            and pdf_english_raw_promotion["java_shell_admission"]["allowed"] is True
+            and pdf_english_raw_promotion["production_model_execution_policy"]["model_calls_default_enabled"] is False,
+            "value": {
+                "status": pdf_english_raw_promotion["status"],
+                "java_shell_admission": pdf_english_raw_promotion["java_shell_admission"],
+                "production_model_execution_policy": pdf_english_raw_promotion["production_model_execution_policy"],
+            },
         },
         {
             "name": "final_chain_ops_health_passes",
@@ -260,6 +277,7 @@ def build_gate_report() -> dict[str, Any]:
                 pdf_english_blocker,
                 pdf_english_recovery,
                 pdf_english_recovery_intake,
+                pdf_english_raw_promotion,
                 ops_health,
             ),
             "value": "model/database/runtime/secrets all false",
@@ -289,6 +307,8 @@ def build_gate_report() -> dict[str, Any]:
         "pdf_english_recovery_source_audit_status": pdf_english_blocker["source_audit_status"],
         "pdf_english_recovery_validation_status": pdf_english_recovery["status"],
         "pdf_english_recovery_intake_status": pdf_english_recovery_intake["status"],
+        "pdf_english_raw_pdf_promotion_status": pdf_english_raw_promotion["status"],
+        "pdf_english_java_shell_admission_allowed": pdf_english_raw_promotion["java_shell_admission"]["allowed"],
         "execution_contract": {
             "model_invoked": False,
             "database_written": False,

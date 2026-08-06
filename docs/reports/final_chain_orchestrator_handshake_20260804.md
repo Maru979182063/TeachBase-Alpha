@@ -12,6 +12,7 @@ Consumer: `external_orchestrator_or_java_backbone`
 - `queue`
 - `job-validate`
 - `adapter-dry-run`
+- `adapter-execution-preflight`
 
 ## Checks
 

@@ -12,23 +12,34 @@
   ],
   "searched_artifacts": [
     "config/english_text_first_graph_first/active_manifest.json",
-    "tools/english_text_first_graph_first_manifest_check.py",
+    "outputs/english_text_first_graph_first/final_chain_smoke_20260728",
     "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
-    "outputs/english_text_first_graph_first/final_chain_smoke_20260728"
+    "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01",
+    "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01.zip",
+    "tools/english_text_first_graph_first_manifest_check.py"
   ],
   "source_candidates": [
     {
       "source_label": "cleanroom_current",
       "source_root_present": true,
-      "required_artifacts_present": 1,
+      "required_artifacts_present": 4,
       "required_artifacts_total": 4,
       "required_artifacts": [
         {
           "key": "active_manifest",
           "relative_path": "config/english_text_first_graph_first/active_manifest.json",
           "required_for_import": true,
-          "exists": false,
-          "kind": "missing"
+          "exists": true,
+          "kind": "file",
+          "size_bytes": 8798,
+          "sha256": "2cff66eaba81256800d742edc4905814214924fa97ea07690a8dcc82d4966a5d",
+          "manifest_checks": {
+            "json_object": true,
+            "pipeline_name_matches": true,
+            "allow_only_manifest_runs_enabled": true,
+            "timestamp_latest_selection_forbidden": true,
+            "four_branch_runs_declared": true
+          }
         },
         {
           "key": "manifest_checker",
@@ -40,18 +51,22 @@
           "sha256": "aa14bec8eef296b932c617b64be81269f0123650cc04d78ba0d4a754bc1b393b"
         },
         {
-          "key": "prior_smoke_zip",
-          "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
+          "key": "fresh_smoke_zip",
+          "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01.zip",
           "required_for_import": true,
-          "exists": false,
-          "kind": "missing"
+          "exists": true,
+          "kind": "file",
+          "size_bytes": 43553430,
+          "sha256": "cc19c6b9fbbbfc591fb5f6a0294f7b4a20b7a45b84b47022cb6402d0957c5f0c",
+          "zip_testzip": null
         },
         {
-          "key": "prior_smoke_dir",
-          "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728",
+          "key": "fresh_smoke_dir",
+          "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01",
           "required_for_import": true,
-          "exists": false,
-          "kind": "missing"
+          "exists": true,
+          "kind": "directory",
+          "direct_child_count": 4
         }
       ]
     },
@@ -130,13 +145,14 @@
       ]
     }
   ],
-  "importable_source_labels": [],
-  "source_audit_status": "no_importable_source_found",
-  "recovery_status": "blocked_missing_manifest_and_smoke_artifacts",
+  "importable_source_labels": [
+    "cleanroom_current"
+  ],
+  "source_audit_status": "fresh_rebuild_candidate_found",
+  "recovery_status": "fresh_rebuild_candidate_found",
   "safe_next_actions": [
-    "restore_active_manifest_from_original_machine_or_backup",
-    "restore_final_chain_smoke_20260728_artifacts_if_available",
-    "otherwise_rerun_manifest_check_and_small_smoke_before_claiming_ready"
+    "run_python_tools_english_text_first_graph_first_manifest_check",
+    "keep_unattended_production_ready_claim_blocked_until_java_worker_and_database_contract_exist"
   ],
   "unsafe_actions": [
     "do_not_create_synthetic_active_manifest",

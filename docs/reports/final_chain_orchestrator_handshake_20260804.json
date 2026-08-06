@@ -13,11 +13,10 @@
   "ready_chain_ids": [
     "doc_math",
     "doc_english",
-    "pdf_math"
-  ],
-  "blocked_chain_ids": [
+    "pdf_math",
     "pdf_english"
   ],
+  "blocked_chain_ids": [],
   "required_command_sequence": [
     "env-contract",
     "contract",
@@ -25,10 +24,12 @@
     "schedule",
     "queue",
     "job-validate",
-    "adapter-dry-run"
+    "adapter-dry-run",
+    "adapter-execution-preflight"
   ],
   "commands": {
     "adapter_dry_run": "tools/final_chain_control.py adapter-dry-run --chain-id <chain_id> --input <path> --json",
+    "adapter_execution_preflight": "tools/final_chain_control.py adapter-execution-preflight --chain-id <chain_id> --input <path> --json",
     "contract": "tools/final_chain_control.py contract --json",
     "env_contract": "tools/final_chain_control.py env-contract --json",
     "job_inspect": "tools/final_chain_control.py job-inspect --record <relative_record_path> --json",
@@ -103,12 +104,14 @@
     "lifecycle",
     "execution_contract"
   ],
-  "blocked_chain_policy": {
+  "admission_policy": {
     "pdf_english": {
-      "expected_status": "scheduled_blocked",
-      "environment_gate": "fail_closed",
-      "start_forbidden": true,
-      "ready_claim_forbidden_until_manifest_recovered": true
+      "expected_status": "scheduled_ready",
+      "environment_gate": "ready_for_control_plane",
+      "java_shell_admission": "allowed_after_raw_pdf_promotion",
+      "model_execution_default_enabled": false,
+      "runtime_import_default_enabled": false,
+      "database_write_default_enabled": false
     }
   },
   "source_reports": {
@@ -145,11 +148,10 @@
         "ready": [
           "doc_math",
           "doc_english",
-          "pdf_math"
-        ],
-        "blocked": [
+          "pdf_math",
           "pdf_english"
-        ]
+        ],
+        "blocked": []
       }
     },
     {
@@ -157,6 +159,7 @@
       "ok": true,
       "value": [
         "adapter_dry_run",
+        "adapter_execution_preflight",
         "contract",
         "env_contract",
         "job_inspect",
@@ -180,7 +183,8 @@
         "schedule",
         "queue",
         "job-validate",
-        "adapter-dry-run"
+        "adapter-dry-run",
+        "adapter-execution-preflight"
       ]
     },
     {

@@ -1,0 +1,169 @@
+{
+  "schema_version": "english_text_first_graph_first.active_manifest.v0.1",
+  "pipeline_name": "english_text_first_graph_first",
+  "active_version": "pdf_english_rebuild_20260806_v01",
+  "manifest_kind": "fresh_rebuild_candidate",
+  "generated_at": "2026-08-06T17:08:30",
+  "allow_only_manifest_runs": true,
+  "forbid_timestamp_latest_selection": true,
+  "selection_policy": {
+    "allow_only_manifest_runs": true,
+    "forbid_timestamp_latest_selection": true,
+    "forbidden_run_name_fragments": [
+      "backup",
+      "probe",
+      "tmp",
+      "scratch",
+      ".bak"
+    ]
+  },
+  "fresh_smoke_artifacts": {
+    "smoke_dir": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01",
+    "smoke_zip": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01.zip",
+    "zip_testzip": null
+  },
+  "branch_runs": {
+    "reading": {
+      "run_id": "pdf_english_rebuild_20260806_v01_reading",
+      "source": "fresh_rebuild_smoke_from_user_zip_evidence",
+      "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/reading/branch_summary.json",
+      "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/reading/page_manifest.json",
+      "page_count": 38
+    },
+    "writing": {
+      "run_id": "pdf_english_rebuild_20260806_v01_writing",
+      "source": "fresh_rebuild_smoke_from_user_zip_evidence",
+      "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/writing/branch_summary.json",
+      "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/writing/page_manifest.json",
+      "page_count": 21
+    },
+    "grammar": {
+      "run_id": "pdf_english_rebuild_20260806_v01_grammar",
+      "source": "fresh_rebuild_smoke_from_user_zip_evidence",
+      "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/grammar/branch_summary.json",
+      "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/grammar/page_manifest.json",
+      "page_count": 24
+    },
+    "cloze": {
+      "run_id": "pdf_english_rebuild_20260806_v01_cloze",
+      "source": "fresh_rebuild_smoke_from_user_zip_evidence",
+      "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/cloze/branch_summary.json",
+      "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/cloze/page_manifest.json",
+      "page_count": 4
+    }
+  },
+  "source_page_images": {
+    "reading": {
+      "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/source_page_images/reading",
+      "expected_page_count": 38,
+      "source": "user_supplied_downstream_review_zip_pages"
+    },
+    "writing": {
+      "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/source_page_images/writing",
+      "expected_page_count": 21,
+      "source": "user_supplied_downstream_review_zip_pages"
+    },
+    "grammar": {
+      "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/source_page_images/grammar",
+      "expected_page_count": 24,
+      "source": "user_supplied_downstream_review_zip_pages"
+    },
+    "cloze": {
+      "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/source_page_images/cloze",
+      "expected_page_count": 4,
+      "source": "user_supplied_downstream_review_zip_pages"
+    }
+  },
+  "documents": {
+    "reading": {
+      "doc_id": "reading",
+      "runs": {
+        "downstream_review_pages": {
+          "run_id": "pdf_english_rebuild_20260806_v01_reading_downstream_review_pages",
+          "expected_doc_id": "reading",
+          "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/reading/branch_summary.json",
+          "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/reading/page_manifest.json",
+          "expected_count": 38
+        },
+        "v05_packet_candidates": {
+          "run_id": "pdf_english_rebuild_20260806_v01_reading_v05_packet_candidates",
+          "expected_doc_id": "reading_portable",
+          "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/v05_rebuild/run_summary.json",
+          "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/v05_rebuild/reading_portable/question_packet_candidates.json",
+          "expected_count": 3,
+          "summary_count_required": false
+        },
+        "sidecar_projection": {
+          "run_id": "pdf_english_rebuild_20260806_v01_reading_sidecar_projection",
+          "expected_doc_id": "reading_portable",
+          "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/sidecar_graph/run_summary.json",
+          "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/sidecar_graph/projection_report.json",
+          "summary_count_required": false,
+          "artifact_count_required": false
+        }
+      }
+    },
+    "writing": {
+      "doc_id": "writing",
+      "runs": {
+        "downstream_review_pages": {
+          "run_id": "pdf_english_rebuild_20260806_v01_writing_downstream_review_pages",
+          "expected_doc_id": "writing",
+          "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/writing/branch_summary.json",
+          "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/writing/page_manifest.json",
+          "expected_count": 21
+        },
+        "v05_packet_candidates": {
+          "run_id": "pdf_english_rebuild_20260806_v01_writing_v05_packet_candidates",
+          "expected_doc_id": "writing_portable",
+          "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/v05_rebuild/run_summary.json",
+          "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/v05_rebuild/writing_portable/question_packet_candidates.json",
+          "expected_count": 1,
+          "summary_count_required": false
+        },
+        "sidecar_projection": {
+          "run_id": "pdf_english_rebuild_20260806_v01_writing_sidecar_projection",
+          "expected_doc_id": "writing_portable",
+          "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/sidecar_graph/run_summary.json",
+          "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/sidecar_graph/projection_report.json",
+          "summary_count_required": false,
+          "artifact_count_required": false
+        }
+      }
+    },
+    "grammar": {
+      "doc_id": "grammar",
+      "runs": {
+        "downstream_review_pages": {
+          "run_id": "pdf_english_rebuild_20260806_v01_grammar_downstream_review_pages",
+          "expected_doc_id": "grammar",
+          "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/grammar/branch_summary.json",
+          "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/grammar/page_manifest.json",
+          "expected_count": 24
+        }
+      }
+    },
+    "cloze": {
+      "doc_id": "cloze",
+      "runs": {
+        "downstream_review_pages": {
+          "run_id": "pdf_english_rebuild_20260806_v01_cloze_downstream_review_pages",
+          "expected_doc_id": "cloze",
+          "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/cloze/branch_summary.json",
+          "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/cloze/page_manifest.json",
+          "expected_count": 4
+        }
+      }
+    }
+  },
+  "ready_claim_policy": {
+    "ready_claim_allowed": false,
+    "reason": "Fresh smoke validates manifest and branch evidence; production ready still requires full raw-PDF graph-first promotion."
+  },
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}

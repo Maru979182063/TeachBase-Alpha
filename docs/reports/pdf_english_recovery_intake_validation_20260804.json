@@ -3,7 +3,7 @@
   "workspace_contract": "relative_git_paths_only",
   "absolute_paths_as_inputs": false,
   "chain_id": "pdf_english",
-  "status": "blocked_missing_or_invalid_recovery_candidate",
+  "status": "candidate_ready_for_quarantine_import",
   "candidate_root_contract": {
     "path_recording": "label_or_workspace_relative_only",
     "candidate_label": "current_cleanroom_workspace",
@@ -14,16 +14,18 @@
   "required_relative_artifacts": [
     "config/english_text_first_graph_first/active_manifest.json",
     "tools/english_text_first_graph_first_manifest_check.py",
-    "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
-    "outputs/english_text_first_graph_first/final_chain_smoke_20260728"
+    "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01.zip",
+    "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01"
   ],
   "artifact_states": [
     {
       "key": "active_manifest",
       "relative_path": "config/english_text_first_graph_first/active_manifest.json",
       "expected_kind": "file",
-      "exists": false,
-      "kind": "missing"
+      "exists": true,
+      "kind": "file",
+      "size_bytes": 8798,
+      "sha256": "2cff66eaba81256800d742edc4905814214924fa97ea07690a8dcc82d4966a5d"
     },
     {
       "key": "manifest_checker",
@@ -35,20 +37,24 @@
       "sha256": "aa14bec8eef296b932c617b64be81269f0123650cc04d78ba0d4a754bc1b393b"
     },
     {
-      "key": "prior_smoke_zip",
-      "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
+      "key": "smoke_zip",
+      "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01.zip",
       "expected_kind": "file",
-      "exists": false,
-      "kind": "missing",
-      "zip_error": "zip_missing",
-      "zip_testzip": ""
+      "exists": true,
+      "kind": "file",
+      "size_bytes": 43553430,
+      "sha256": "cc19c6b9fbbbfc591fb5f6a0294f7b4a20b7a45b84b47022cb6402d0957c5f0c",
+      "zip_error": "",
+      "zip_testzip": null,
+      "zip_entry_count": 110
     },
     {
-      "key": "prior_smoke_dir",
-      "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728",
+      "key": "smoke_dir",
+      "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01",
       "expected_kind": "directory",
-      "exists": false,
-      "kind": "missing"
+      "exists": true,
+      "kind": "directory",
+      "direct_child_count": 4
     }
   ],
   "checks": [
@@ -59,35 +65,35 @@
     },
     {
       "name": "active_manifest_present",
-      "ok": false,
+      "ok": true,
       "required": true
     },
     {
       "name": "active_manifest_json_object",
-      "ok": false,
+      "ok": true,
       "required": true,
-      "error": "manifest_missing"
+      "error": ""
     },
     {
       "name": "pipeline_name_matches",
-      "ok": false,
+      "ok": true,
       "required": true,
       "expected": "english_text_first_graph_first",
-      "actual": null
+      "actual": "english_text_first_graph_first"
     },
     {
       "name": "allow_only_manifest_runs_enabled",
-      "ok": false,
+      "ok": true,
       "required": true
     },
     {
       "name": "timestamp_latest_selection_forbidden",
-      "ok": false,
+      "ok": true,
       "required": true
     },
     {
       "name": "four_branch_runs_declared",
-      "ok": false,
+      "ok": true,
       "required": true,
       "required_run_keys": [
         "reading",
@@ -102,42 +108,31 @@
       "required": true
     },
     {
-      "name": "prior_smoke_zip_present",
-      "ok": false,
+      "name": "smoke_zip_present",
+      "ok": true,
       "required": true
     },
     {
-      "name": "prior_smoke_zip_valid",
-      "ok": false,
+      "name": "smoke_zip_valid",
+      "ok": true,
       "required": true
     },
     {
-      "name": "prior_smoke_dir_present",
-      "ok": false,
+      "name": "smoke_dir_present",
+      "ok": true,
       "required": true
     },
     {
-      "name": "prior_smoke_dir_nonempty",
-      "ok": false,
+      "name": "smoke_dir_nonempty",
+      "ok": true,
       "required": true
     }
   ],
-  "required_check_failures": [
-    "active_manifest_present",
-    "active_manifest_json_object",
-    "pipeline_name_matches",
-    "allow_only_manifest_runs_enabled",
-    "timestamp_latest_selection_forbidden",
-    "four_branch_runs_declared",
-    "prior_smoke_zip_present",
-    "prior_smoke_zip_valid",
-    "prior_smoke_dir_present",
-    "prior_smoke_dir_nonempty"
-  ],
+  "required_check_failures": [],
   "safe_next_actions": [
-    "stage_recovered_artifacts_under_a_candidate_root",
-    "preserve_relative_paths_from_config_tools_outputs",
-    "rerun_this_intake_gate_before_copying_into_protected_paths"
+    "copy_candidate_artifacts_with_preserved_relative_paths_into_quarantine_branch",
+    "run_python_tools_english_text_first_graph_first_manifest_check",
+    "run_small_smoke_before_claiming_pdf_english_ready"
   ],
   "unsafe_actions": [
     "do_not_copy_candidate_into_config_until_this_report_is_ready",

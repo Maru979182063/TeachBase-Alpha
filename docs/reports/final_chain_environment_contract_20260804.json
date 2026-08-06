@@ -8,11 +8,10 @@
   "ready_chain_ids": [
     "doc_math",
     "doc_english",
-    "pdf_math"
-  ],
-  "blocked_chain_ids": [
+    "pdf_math",
     "pdf_english"
   ],
+  "blocked_chain_ids": [],
   "filesystem_contract": {
     "read_scope": "registered_relative_paths_only",
     "write_scope": [
@@ -35,7 +34,8 @@
     "schedule",
     "queue",
     "job-validate",
-    "adapter-dry-run"
+    "adapter-dry-run",
+    "adapter-execution-preflight"
   ],
   "forbidden_side_effects": {
     "model_calls": true,
@@ -97,9 +97,7 @@
     {
       "name": "blocked_profiles_fail_closed",
       "ok": true,
-      "value": [
-        "pdf_english"
-      ]
+      "value": []
     },
     {
       "name": "filesystem_writes_limited_to_outputs",
@@ -139,7 +137,8 @@
         "plan",
         "schedule_dry_run",
         "job_validate",
-        "adapter_dry_run"
+        "adapter_dry_run",
+        "adapter_execution_preflight"
       ]
     },
     {
@@ -222,7 +221,8 @@
         "plan",
         "schedule_dry_run",
         "job_validate",
-        "adapter_dry_run"
+        "adapter_dry_run",
+        "adapter_execution_preflight"
       ]
     },
     {
@@ -270,7 +270,8 @@
         "plan",
         "schedule_dry_run",
         "job_validate",
-        "adapter_dry_run"
+        "adapter_dry_run",
+        "adapter_execution_preflight"
       ]
     },
     {
@@ -278,25 +279,18 @@
       "profile_name": "cleanroom_dry_run",
       "input_format": "pdf",
       "subject": "english",
-      "registry_readiness": "protected_definition_ready_needs_artifact_restore_or_smoke_rerun",
-      "smoke_status": "partial",
-      "status": "blocked",
-      "environment_gate": "fail_closed",
-      "blocked_reasons": [
-        "required_paths_present"
-      ],
+      "registry_readiness": "ready_for_java_shell_admission",
+      "smoke_status": "pass",
+      "status": "ready",
+      "environment_gate": "ready_for_control_plane",
+      "blocked_reasons": [],
       "required_path_count": 1,
-      "required_path_present_count": 0,
+      "required_path_present_count": 1,
       "optional_path_summary": {
-        "count": 36,
-        "present": 28,
-        "missing": 8,
+        "count": 45,
+        "present": 38,
+        "missing": 7,
         "missing_samples": [
-          {
-            "path": "config/english_text_first_graph_first/active_manifest.json",
-            "exists": false,
-            "kind": "missing"
-          },
           {
             "path": "prompts/english_question_packet_refiner_cloze_system_v0.1.md",
             "exists": false,
@@ -345,7 +339,8 @@
         "plan",
         "schedule_dry_run",
         "job_validate",
-        "adapter_dry_run"
+        "adapter_dry_run",
+        "adapter_execution_preflight"
       ]
     }
   ],

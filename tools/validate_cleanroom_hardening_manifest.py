@@ -18,6 +18,7 @@ REPORT_MD = ROOT / "docs" / "reports" / "cleanroom_hardening_manifest_validation
 REQUIRED_SCOPES = {
     "foundation_artifact_atomicity_and_model_checkpoint_guard",
     "final_chain_registry_control_contract_environment_contract_and_scheduler",
+    "pdf_english_raw_pdf_graph_first_java_shell_admission",
     "precleanup_archive_safety_and_worktree_compartment_guard",
 }
 
@@ -45,6 +46,8 @@ REQUIRED_REPORTS = {
     "pdf_english_recovery_intake_validation",
     "pdf_english_rebuild_decision",
     "pdf_english_rebuild_source_import",
+    "pdf_english_rebuild_smoke",
+    "pdf_english_raw_pdf_promotion",
 }
 
 REQUIRED_MANIFEST_CHECKS = {
@@ -52,21 +55,23 @@ REQUIRED_MANIFEST_CHECKS = {
     "all_status_reports_pass_or_expected_blocked",
     "final_chain_ops_covers_four_chains",
     "final_chain_job_records_self_and_external_validated",
-    "pdf_english_is_explicit_fail_closed_blocker",
+    "pdf_english_fresh_rebuild_candidate_is_sealed",
     "pdf_english_recovery_intake_gate_is_sealed",
     "pdf_english_rebuild_track_is_explicit",
     "pdf_english_rebuild_source_import_is_sealed",
+    "pdf_english_rebuild_smoke_is_sealed",
+    "pdf_english_raw_pdf_promotion_is_sealed",
     "final_chain_ops_health_is_sealed",
     "no_report_declares_runtime_side_effects",
 }
 
 EXPECTED_BLOCKER = {
-    "chain_id": "pdf_english",
-    "status": "blocked_missing_manifest_and_smoke_artifacts",
-    "guard": "pdf_english_recovery_requires_four_branch_manifest",
-    "allowed_behavior": "fail_closed",
+    "scope": "continuous_production_worker",
+    "status": "java_orchestrator_worker_db_contract_not_implemented",
+    "guard": "external_backbone_required_for_unattended_batch_processing",
+    "allowed_behavior": "control_plane_dry_run_and_queue_only",
     "legacy_artifact_wait_required": False,
-    "safe_rebuild_boundary": "pdf_english_rebuild_decision_requires_fresh_manifest_and_smoke_before_ready_claim",
+    "safe_boundary": "no_model_db_runtime_execution_without_explicit_worker_contract",
 }
 
 ABSOLUTE_PATH_PATTERN = re.compile(r"(?:[A-Za-z]:\\|/Users/|\\\\)")
@@ -148,7 +153,7 @@ def _build_checks(manifest: dict[str, Any]) -> list[dict[str, Any]]:
             "value": _manifest_check_statuses(manifest.get("checks")),
         },
         {
-            "name": "known_pdf_english_blocker_is_fail_closed",
+            "name": "known_continuous_production_blocker_is_non_executing",
             "ok": EXPECTED_BLOCKER in _dict_list(manifest.get("known_blockers")),
             "value": manifest.get("known_blockers"),
         },

@@ -14,6 +14,7 @@ import pytest
 from teachbase.final_chains import (
     ChainRunRequest,
     EnvironmentPolicy,
+    FINAL_CHAIN_JOB_STATUSES,
     build_environment_interaction_contract,
     build_final_chain_adapters,
     build_final_chain_control_dashboard,
@@ -138,7 +139,7 @@ def test_plan_reports_missing_cleanroom_entrypoints_as_blockers() -> None:
     plan = build_chain_run_plan(registry, request, workspace_root=ROOT)
 
     assert plan["status"] == "blocked"
-    assert "canonical_entrypoint_present" in plan["blocked_reasons"]
+    assert "input_path_present" in plan["blocked_reasons"]
 
 
 def test_environment_flags_are_not_a_backdoor_for_dry_run_control() -> None:
@@ -593,12 +594,13 @@ def test_english_docx_native_md_records_portable_source_paths(tmp_path: Path, mo
     assert str(workspace) not in json.dumps(block_stream)
 
 
-def test_batch_scheduler_queues_ready_chains_and_blocks_pdf_english() -> None:
+def test_batch_scheduler_queues_all_four_ready_chains_after_raw_pdf_promotion() -> None:
     registry = load_final_chain_registry(REGISTRY)
     sample_inputs = {
         "doc_math": "tests/fixtures/final_chain_samples/doc_math_sample.docx",
         "doc_english": "tests/fixtures/final_chain_samples/doc_english_sample.docx",
         "pdf_math": "tests/fixtures/final_chain_samples/pdf_math_sample.pdf",
+        "pdf_english": "tests/fixtures/final_chain_samples/pdf_english_sample.pdf",
     }
 
     report = schedule_registry_batch(
@@ -615,14 +617,14 @@ def test_batch_scheduler_queues_ready_chains_and_blocks_pdf_english() -> None:
     assert report["workspace_contract"] == "relative_git_paths_only"
     assert report["absolute_paths_as_inputs"] is False
     assert report["chain_count"] == 4
-    assert report["scheduled_ready_count"] == 3
-    assert report["scheduled_blocked_count"] == 1
+    assert report["scheduled_ready_count"] == 4
+    assert report["scheduled_blocked_count"] == 0
     assert report["rejected_count"] == 0
     assert rows["doc_math"]["schedule_status"] == "scheduled_ready"
     assert rows["doc_english"]["schedule_status"] == "scheduled_ready"
     assert rows["pdf_math"]["schedule_status"] == "scheduled_ready"
-    assert rows["pdf_english"]["schedule_status"] == "scheduled_blocked"
-    assert "canonical_entrypoint_present" in rows["pdf_english"]["blocked_reasons"]
+    assert rows["pdf_english"]["schedule_status"] == "scheduled_ready"
+    assert rows["pdf_english"]["blocked_reasons"] == []
     assert all(row["record_validation_ok"] and row["self_validation_ok"] for row in report["rows"])
     assert all(row["record_path"].startswith("outputs/final_chain_batch_queue/_control/jobs/") for row in report["rows"])
     assert report["execution_contract"] == {
@@ -1460,9 +1462,8 @@ def test_environment_report_is_machine_readable_and_side_effect_free() -> None:
     assert by_id["pdf_math"]["checks"]["required_paths_present"] is True
     assert by_id["doc_math"]["status"] == "ready"
     assert by_id["doc_english"]["status"] == "ready"
-    assert by_id["pdf_english"]["status"] == "blocked"
-    assert "required_paths_present" in by_id["pdf_english"]["blocked_reasons"]
-    assert "smoke_status_partial_requires_restore_or_rerun" in by_id["pdf_english"]["notes"]
+    assert by_id["pdf_english"]["status"] == "ready"
+    assert by_id["pdf_english"]["blocked_reasons"] == []
 
 
 def test_environment_interaction_contract_is_external_orchestrator_safe() -> None:
@@ -1473,8 +1474,8 @@ def test_environment_interaction_contract_is_external_orchestrator_safe() -> Non
     assert report["schema_version"] == "final_chain_environment_interaction_contract.v0.1"
     assert report["status"] == "pass"
     assert report["consumer_role"] == "external_orchestrator_or_java_backbone"
-    assert report["ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math"]
-    assert report["blocked_chain_ids"] == ["pdf_english"]
+    assert report["ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
+    assert report["blocked_chain_ids"] == []
     assert report["filesystem_contract"]["write_scope"] == ["outputs/"]
     assert report["filesystem_contract"]["absolute_paths_as_reproducible_inputs"] is False
     assert report["forbidden_side_effects"] == {
@@ -1485,9 +1486,9 @@ def test_environment_interaction_contract_is_external_orchestrator_safe() -> Non
     }
     checks = {item["name"]: item for item in report["checks"]}
     assert checks["all_profiles_deny_model_calls"]["ok"] is True
-    assert checks["blocked_profiles_fail_closed"]["value"] == ["pdf_english"]
+    assert checks["blocked_profiles_fail_closed"]["value"] == []
     by_id = {item["chain_id"]: item for item in report["profiles"]}
-    assert by_id["pdf_english"]["environment_gate"] == "fail_closed"
+    assert by_id["pdf_english"]["environment_gate"] == "ready_for_control_plane"
     assert by_id["pdf_math"]["environment_gate"] == "ready_for_control_plane"
     assert by_id["pdf_math"]["required_path_count"] == by_id["pdf_math"]["required_path_present_count"]
     serialized = json.dumps(report, ensure_ascii=False)
@@ -1526,12 +1527,12 @@ def test_final_chain_control_cli_env_check_and_adapter_contracts() -> None:
         stderr=subprocess.PIPE,
         check=False,
     )
-    assert env_completed.returncode == 2
+    assert env_completed.returncode == 0
     env_payload = json.loads(env_completed.stdout)
     assert env_payload["schema_version"] == "final_chain_environment_report.v0.1"
     assert env_payload["chain_count"] == 1
     assert env_payload["chains"][0]["chain_id"] == "pdf_english"
-    assert env_payload["chains"][0]["status"] == "blocked"
+    assert env_payload["chains"][0]["status"] == "ready"
 
     env_contract_completed = subprocess.run(
         [sys.executable, "tools/final_chain_control.py", "env-contract", "--json"],
@@ -1545,7 +1546,7 @@ def test_final_chain_control_cli_env_check_and_adapter_contracts() -> None:
     env_contract_payload = json.loads(env_contract_completed.stdout)
     env_contract_serialized = json.dumps(env_contract_payload, ensure_ascii=False)
     assert env_contract_payload["schema_version"] == "final_chain_environment_interaction_contract.v0.1"
-    assert env_contract_payload["blocked_chain_ids"] == ["pdf_english"]
+    assert env_contract_payload["blocked_chain_ids"] == []
     assert "D:\\" not in env_contract_serialized
     assert "C:\\" not in env_contract_serialized
     assert "/Users/" not in env_contract_serialized
@@ -1577,7 +1578,7 @@ def test_adapter_registry_covers_all_four_final_chains() -> None:
     assert report["runtime_imported"] is False
     by_id = {item["chain_id"]: item for item in report["descriptions"]}
     assert by_id["pdf_math"]["contract"]["required_methods"] == ["describe", "plan", "dry_run"]
-    assert by_id["pdf_english"]["environment"]["status"] == "blocked"
+    assert by_id["pdf_english"]["environment"]["status"] == "ready"
 
 
 def test_adapter_dry_run_never_invokes_entrypoint_or_runtime(tmp_path: Path) -> None:
@@ -1610,6 +1611,33 @@ def test_adapter_dry_run_blocks_missing_input() -> None:
 
     assert result["status"] == "dry_run_blocked"
     assert "input_path_present" in result["plan"]["blocked_reasons"]
+
+
+def test_adapter_execution_preflight_exposes_unified_worker_contract(tmp_path: Path) -> None:
+    registry = load_final_chain_registry(REGISTRY)
+    adapter = build_final_chain_adapters(registry, workspace_root=ROOT)["pdf_math"]
+    sample = tmp_path / "sample.pdf"
+    sample.write_text("pdf placeholder", encoding="utf-8")
+    request = ChainRunRequest(
+        chain_id="pdf_math",
+        input_path=str(sample),
+        output_root="outputs/final_chain_runs",
+    )
+
+    result = adapter.execution_preflight(request)
+
+    assert result["schema_version"] == "final_chain_execution_preflight.v0.1"
+    assert result["status"] == "execution_preflight_blocked"
+    assert result["adapter_api_version"] == "final_chain_adapter.v0.2"
+    assert result["supported_job_statuses"] == list(FINAL_CHAIN_JOB_STATUSES)
+    assert "standard_cli_contract_missing" in result["blocked_reasons"]
+    assert result["command_contract"]["canonical_entrypoint"] == "tools/run_question_ingest_skill.py"
+    assert result["command_contract"]["execute_now"] is False
+    assert result["result_contract"]["schema_version"] == "final_chain_job_result.v0.1"
+    assert result["adapter_invoked_entrypoint"] is False
+    assert result["model_invoked"] is False
+    assert result["database_written"] is False
+    assert result["runtime_imported"] is False
 
 
 def test_final_chain_control_cli_adapter_describe_and_dry_run(tmp_path: Path) -> None:
@@ -1651,6 +1679,35 @@ def test_final_chain_control_cli_adapter_describe_and_dry_run(tmp_path: Path) ->
     assert dry_run_payload["adapter_invoked_entrypoint"] is False
 
 
+def test_final_chain_control_cli_adapter_execution_preflight(tmp_path: Path) -> None:
+    sample = tmp_path / "sample.pdf"
+    sample.write_text("pdf placeholder", encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "tools/final_chain_control.py",
+            "adapter-execution-preflight",
+            "--chain-id",
+            "pdf_math",
+            "--input",
+            str(sample),
+            "--json",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    assert payload["schema_version"] == "final_chain_execution_preflight.v0.1"
+    assert payload["status"] == "execution_preflight_blocked"
+    assert "standard_cli_contract_missing" in payload["blocked_reasons"]
+    assert payload["adapter_invoked_entrypoint"] is False
+
+
 def test_readiness_matrix_summarizes_four_chain_import_and_dry_run_gaps() -> None:
     registry = load_final_chain_registry(REGISTRY)
 
@@ -1665,8 +1722,8 @@ def test_readiness_matrix_summarizes_four_chain_import_and_dry_run_gaps() -> Non
     assert by_id["pdf_math"]["readiness_tier"] == "environment_ready_input_needed"
     assert by_id["doc_math"]["readiness_tier"] == "environment_ready_input_needed"
     assert by_id["doc_english"]["readiness_tier"] == "environment_ready_input_needed"
-    assert by_id["pdf_english"]["readiness_tier"] == "restore_or_rerun_required"
-    assert "import_or_restore_canonical_entrypoint_and_configs" in by_id["pdf_english"]["recommended_actions"]
+    assert by_id["pdf_english"]["readiness_tier"] == "environment_ready_input_needed"
+    assert "provide_existing_input_file_for_adapter_dry_run" in by_id["pdf_english"]["recommended_actions"]
 
 
 def test_readiness_matrix_uses_sample_input_to_mark_adapter_dry_run_ready(tmp_path: Path) -> None:
@@ -1674,9 +1731,11 @@ def test_readiness_matrix_uses_sample_input_to_mark_adapter_dry_run_ready(tmp_pa
     doc_math_sample = tmp_path / "doc_math.docx"
     doc_english_sample = tmp_path / "doc_english.docx"
     pdf_math_sample = tmp_path / "pdf_math.pdf"
+    pdf_english_sample = tmp_path / "pdf_english.pdf"
     doc_math_sample.write_text("docx placeholder", encoding="utf-8")
     doc_english_sample.write_text("docx placeholder", encoding="utf-8")
     pdf_math_sample.write_text("pdf placeholder", encoding="utf-8")
+    pdf_english_sample.write_text("pdf placeholder", encoding="utf-8")
 
     report = build_readiness_matrix(
         registry,
@@ -1685,16 +1744,17 @@ def test_readiness_matrix_uses_sample_input_to_mark_adapter_dry_run_ready(tmp_pa
             "doc_math": str(doc_math_sample),
             "doc_english": str(doc_english_sample),
             "pdf_math": str(pdf_math_sample),
+            "pdf_english": str(pdf_english_sample),
         },
     )
 
     by_id = {item["chain_id"]: item for item in report["rows"]}
-    assert report["ready_for_adapter_dry_run_count"] == 3
+    assert report["ready_for_adapter_dry_run_count"] == 4
     assert by_id["doc_math"]["readiness_tier"] == "ready_for_adapter_dry_run"
     assert by_id["doc_english"]["readiness_tier"] == "ready_for_adapter_dry_run"
     assert by_id["pdf_math"]["readiness_tier"] == "ready_for_adapter_dry_run"
     assert by_id["pdf_math"]["adapter_dry_run_status"] == "dry_run_ready"
-    assert by_id["pdf_english"]["readiness_tier"] == "restore_or_rerun_required"
+    assert by_id["pdf_english"]["readiness_tier"] == "ready_for_adapter_dry_run"
     assert by_id["pdf_math"]["recommended_actions"] == [
         "wire_real_adapter_dry_run_without_model_or_database_side_effects"
     ]
@@ -1742,6 +1802,8 @@ def test_final_chain_control_cli_queues_four_chain_batch_without_execution() -> 
             "doc_english=tests/fixtures/final_chain_samples/doc_english_sample.docx",
             "--sample-input",
             "pdf_math=tests/fixtures/final_chain_samples/pdf_math_sample.pdf",
+            "--sample-input",
+            "pdf_english=tests/fixtures/final_chain_samples/pdf_english_sample.pdf",
             "--json",
         ],
         cwd=ROOT,
@@ -1756,8 +1818,8 @@ def test_final_chain_control_cli_queues_four_chain_batch_without_execution() -> 
     serialized = json.dumps(payload, ensure_ascii=False)
     assert payload["schema_version"] == "final_chain_batch_queue_report.v0.1"
     assert payload["status"] == "pass"
-    assert payload["scheduled_ready_count"] == 3
-    assert payload["scheduled_blocked_count"] == 1
+    assert payload["scheduled_ready_count"] == 4
+    assert payload["scheduled_blocked_count"] == 0
     assert payload["rejected_count"] == 0
     assert "D:\\" not in serialized
     assert "C:\\" not in serialized
@@ -1783,7 +1845,7 @@ def test_final_chain_control_dashboard_groups_chains_by_scheduling_lane() -> Non
     assert by_id["doc_math"]["lane"] == "needs_sample_input"
     assert by_id["doc_english"]["lane"] == "needs_sample_input"
     assert by_id["pdf_math"]["lane"] == "needs_sample_input"
-    assert by_id["pdf_english"]["lane"] == "needs_artifact_restore_or_smoke"
+    assert by_id["pdf_english"]["lane"] == "needs_sample_input"
     assert report["job_lifecycle_policy"]["allowed_transitions"]["scheduled_ready"] == [
         "dry_run_started",
         "cancelled",
@@ -1906,7 +1968,7 @@ def test_final_chain_control_cli_dashboard_filters_one_chain(tmp_path: Path) -> 
     assert payload["rows"][0]["chain_id"] == "pdf_math"
 
 
-def test_ready_sample_report_runs_three_control_adapters_without_side_effects() -> None:
+def test_ready_sample_report_runs_four_control_adapters_without_side_effects() -> None:
     completed = subprocess.run(
         [sys.executable, "tools/build_final_chain_ready_sample_report.py"],
         cwd=ROOT,
@@ -1921,9 +1983,9 @@ def test_ready_sample_report_runs_three_control_adapters_without_side_effects() 
     assert payload["schema_version"] == "final_chain_ready_sample_dry_run_report.v0.1"
     assert payload["workspace_contract"] == "relative_git_paths_only"
     assert payload["absolute_paths_as_inputs"] is False
-    assert payload["ready_for_adapter_dry_run_count"] == 3
-    assert payload["pdf_english_recovery_status"] == "restore_or_rerun_required"
-    assert {row["chain_id"] for row in payload["rows"]} == {"doc_math", "doc_english", "pdf_math"}
+    assert payload["ready_for_adapter_dry_run_count"] == 4
+    assert payload["pdf_english_recovery_status"] == "raw_pdf_promotion_passed_java_shell_admission"
+    assert {row["chain_id"] for row in payload["rows"]} == {"doc_math", "doc_english", "pdf_math", "pdf_english"}
     for row in payload["rows"]:
         assert row["sample_input"].startswith("tests/fixtures/final_chain_samples/")
         assert row["adapter_dry_run_status"] == "dry_run_ready"
@@ -1958,11 +2020,11 @@ def test_batch_queue_report_schedules_four_chain_control_records() -> None:
     assert payload["schema_version"] == "final_chain_batch_queue_report.v0.1"
     assert payload["status"] == "pass"
     assert payload["chain_count"] == 4
-    assert payload["scheduled_ready_count"] == 3
-    assert payload["scheduled_blocked_count"] == 1
+    assert payload["scheduled_ready_count"] == 4
+    assert payload["scheduled_blocked_count"] == 0
     assert checks["batch_covers_four_registered_chains"]["ok"] is True
-    assert checks["three_ready_jobs_scheduled"]["ok"] is True
-    assert checks["pdf_english_is_scheduled_blocked"]["ok"] is True
+    assert checks["four_ready_jobs_scheduled"]["ok"] is True
+    assert checks["pdf_english_is_scheduled_ready_after_raw_pdf_promotion"]["ok"] is True
     assert checks["all_job_records_validate"]["ok"] is True
     assert checks["all_job_records_written_under_outputs"]["ok"] is True
     assert "D:\\" not in serialized
@@ -1999,7 +2061,7 @@ def test_batch_queue_report_validator_accepts_sealed_queue_report() -> None:
     assert payload["batch_report_path"] == "docs/reports/final_chain_batch_queue_20260804.json"
     assert checks["batch_report_covers_exact_four_final_chains"]["ok"] is True
     assert checks["batch_queue_status_split_is_expected"]["ok"] is True
-    assert checks["pdf_english_fails_closed_with_blockers"]["ok"] is True
+    assert checks["pdf_english_schedules_ready_after_raw_pdf_promotion"]["ok"] is True
     assert checks["job_record_contract_paths_are_stable_and_under_outputs"]["ok"] is True
     assert checks["job_record_validations_are_clean"]["ok"] is True
     assert checks["batch_report_contains_no_absolute_paths"]["ok"] is True
@@ -2112,8 +2174,9 @@ def test_batch_queue_report_validator_rejects_tampered_queue_report() -> None:
     }
 
     checks = {item["name"]: item for item in _build_checks(tampered)}
-    assert checks["batch_queue_status_split_is_expected"]["ok"] is False
-    assert checks["pdf_english_fails_closed_with_blockers"]["ok"] is False
+    assert checks["batch_queue_status_split_is_expected"]["ok"] is True
+    assert checks["pdf_english_schedules_ready_after_raw_pdf_promotion"]["ok"] is True
+    assert checks["batch_report_checks_pass"]["ok"] is False
     assert checks["job_record_contract_paths_are_stable_and_under_outputs"]["ok"] is False
     assert checks["batch_report_contains_no_absolute_paths"]["ok"] is False
 
@@ -2155,9 +2218,10 @@ def test_orchestrator_handshake_report_summarizes_external_control_contract() ->
     assert payload["status"] == "pass"
     assert payload["consumer_role"] == "external_orchestrator_or_java_backbone"
     assert payload["chain_ids"] == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
-    assert payload["ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math"]
-    assert payload["blocked_chain_ids"] == ["pdf_english"]
-    assert payload["blocked_chain_policy"]["pdf_english"]["start_forbidden"] is True
+    assert payload["ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
+    assert payload["blocked_chain_ids"] == []
+    assert payload["admission_policy"]["pdf_english"]["java_shell_admission"] == "allowed_after_raw_pdf_promotion"
+    assert payload["admission_policy"]["pdf_english"]["model_execution_default_enabled"] is False
     assert payload["commands"]["queue"] == "tools/final_chain_control.py queue --sample-input <chain_id=path> --json"
     assert checks["required_commands_are_declared"]["ok"] is True
     assert checks["filesystem_contract_is_outputs_only"]["ok"] is True
@@ -2197,7 +2261,7 @@ def test_orchestrator_handshake_validator_accepts_sealed_handshake() -> None:
     assert checks["external_orchestrator_role_is_explicit"]["ok"] is True
     assert checks["chain_split_matches_final_chain_contract"]["ok"] is True
     assert checks["required_command_sequence_is_stable"]["ok"] is True
-    assert checks["blocked_chain_policy_keeps_pdf_english_fail_closed"]["ok"] is True
+    assert checks["admission_policy_keeps_pdf_english_non_executing"]["ok"] is True
     assert checks["source_reports_are_relative_and_present"]["ok"] is True
     assert checks["handshake_contains_no_absolute_paths"]["ok"] is True
     assert "D:\\" not in serialized
@@ -2233,12 +2297,14 @@ def test_orchestrator_handshake_validator_rejects_tampered_handshake() -> None:
                 "scheduled_blocked": ["dry_run_started"],
             }
         },
-        "blocked_chain_policy": {
+        "admission_policy": {
             "pdf_english": {
                 "expected_status": "scheduled_ready",
                 "environment_gate": "ready_for_control_plane",
-                "start_forbidden": False,
-                "ready_claim_forbidden_until_manifest_recovered": False,
+                "java_shell_admission": "allowed_after_raw_pdf_promotion",
+                "model_execution_default_enabled": True,
+                "runtime_import_default_enabled": False,
+                "database_write_default_enabled": False,
             }
         },
         "source_reports": {
@@ -2256,17 +2322,17 @@ def test_orchestrator_handshake_validator_rejects_tampered_handshake() -> None:
     }
 
     checks = {item["name"]: item for item in _build_checks(tampered)}
-    assert checks["chain_split_matches_final_chain_contract"]["ok"] is False
+    assert checks["chain_split_matches_final_chain_contract"]["ok"] is True
     assert checks["required_command_sequence_is_stable"]["ok"] is False
     assert checks["command_map_uses_legacy_cli_only"]["ok"] is False
-    assert checks["blocked_chain_policy_keeps_pdf_english_fail_closed"]["ok"] is False
+    assert checks["admission_policy_keeps_pdf_english_non_executing"]["ok"] is False
     assert checks["filesystem_contract_limits_writes_to_outputs"]["ok"] is False
     assert checks["job_lifecycle_policy_blocks_scheduled_blocked_start"]["ok"] is False
     assert checks["source_reports_are_relative_and_present"]["ok"] is False
     assert checks["handshake_contains_no_absolute_paths"]["ok"] is False
 
 
-def test_pdf_english_recovery_validator_fails_closed_without_manifest() -> None:
+def test_pdf_english_recovery_validator_accepts_fresh_rebuild_manifest() -> None:
     completed = subprocess.run(
         [sys.executable, "tools/validate_pdf_english_recovery.py", "--require-ready"],
         cwd=ROOT,
@@ -2276,11 +2342,12 @@ def test_pdf_english_recovery_validator_fails_closed_without_manifest() -> None:
         check=False,
     )
 
-    assert completed.returncode == 2
+    assert completed.returncode == 0
     payload = json.loads(completed.stdout)
     assert payload["schema_version"] == "pdf_english_recovery_validation.v0.1"
-    assert payload["status"] == "blocked_missing_or_invalid_manifest"
-    assert "four_branch_runs_declared" in payload["required_manifest_check_failures"]
+    assert payload["status"] == "ready_for_manifest_gate"
+    assert payload["required_manifest_check_failures"] == []
+    assert payload["smoke_artifacts"]["source"] == "active_manifest_fresh_smoke_artifacts"
     assert payload["execution_contract"] == {
         "model_invoked": False,
         "database_written": False,
@@ -2289,7 +2356,7 @@ def test_pdf_english_recovery_validator_fails_closed_without_manifest() -> None:
     }
 
 
-def test_pdf_english_recovery_intake_fails_closed_without_candidate() -> None:
+def test_pdf_english_recovery_intake_accepts_current_fresh_candidate() -> None:
     completed = subprocess.run(
         [sys.executable, "tools/validate_pdf_english_recovery_intake.py", "--require-ready"],
         cwd=ROOT,
@@ -2299,17 +2366,19 @@ def test_pdf_english_recovery_intake_fails_closed_without_candidate() -> None:
         check=False,
     )
 
-    assert completed.returncode == 2
+    assert completed.returncode == 0
     payload = json.loads(completed.stdout)
     serialized = json.dumps(payload, ensure_ascii=False)
     checks = {item["name"]: item for item in payload["checks"]}
     assert payload["schema_version"] == "pdf_english_recovery_intake_validation.v0.1"
-    assert payload["status"] == "blocked_missing_or_invalid_recovery_candidate"
+    assert payload["status"] == "candidate_ready_for_quarantine_import"
     assert payload["candidate_root_contract"]["candidate_label"] == "current_cleanroom_workspace"
-    assert checks["active_manifest_present"]["ok"] is False
+    assert checks["active_manifest_present"]["ok"] is True
     assert checks["manifest_checker_present"]["ok"] is True
-    assert checks["prior_smoke_zip_present"]["ok"] is False
-    assert checks["prior_smoke_dir_present"]["ok"] is False
+    assert checks["smoke_zip_present"]["ok"] is True
+    assert checks["smoke_dir_present"]["ok"] is True
+    assert checks["smoke_zip_valid"]["ok"] is True
+    assert payload["required_check_failures"] == []
     assert payload["execution_contract"] == {
         "model_invoked": False,
         "database_written": False,
@@ -2365,8 +2434,8 @@ def test_pdf_english_recovery_intake_accepts_isolated_candidate_without_path_lea
     assert checks["pipeline_name_matches"]["ok"] is True
     assert checks["four_branch_runs_declared"]["ok"] is True
     assert checks["manifest_checker_present"]["ok"] is True
-    assert checks["prior_smoke_zip_valid"]["ok"] is True
-    assert checks["prior_smoke_dir_nonempty"]["ok"] is True
+    assert checks["smoke_zip_valid"]["ok"] is True
+    assert checks["smoke_dir_nonempty"]["ok"] is True
     assert str(tmp_path) not in serialized
     assert "D:\\" not in serialized
     assert "C:\\" not in serialized
@@ -2387,8 +2456,9 @@ def test_pdf_english_recovery_source_audit_uses_labels_without_absolute_paths() 
     payload = json.loads(completed.stdout)
     serialized = json.dumps(payload, ensure_ascii=False)
     assert payload["schema_version"] == "pdf_english_manifest_recovery_audit.v0.1"
-    assert payload["source_audit_status"] == "no_importable_source_found"
-    assert payload["recovery_status"] == "blocked_missing_manifest_and_smoke_artifacts"
+    assert payload["source_audit_status"] == "fresh_rebuild_candidate_found"
+    assert payload["recovery_status"] == "fresh_rebuild_candidate_found"
+    assert payload["importable_source_labels"] == ["cleanroom_current"]
     assert "old_local_d_projects_jiaoyan" in payload["searched_location_labels"]
     assert "D:\\" not in serialized
     assert "C:\\" not in serialized
@@ -2418,10 +2488,12 @@ def test_final_chain_ops_health_seals_operator_cli_surface() -> None:
     assert payload["schema_version"] == "final_chain_ops_health.v0.1"
     assert payload["status"] == "pass"
     assert payload["chain_ids"] == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
-    assert payload["ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math"]
-    assert payload["blocked_chain_ids"] == ["pdf_english"]
+    assert payload["ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
+    assert payload["blocked_chain_ids"] == []
     assert payload["missing_npm_scripts"] == []
-    assert payload["pdf_english_intake_status"] == "blocked_missing_or_invalid_recovery_candidate"
+    assert payload["pdf_english_intake_status"] == "candidate_ready_for_quarantine_import"
+    assert payload["pdf_english_raw_pdf_promotion_status"] == "pass"
+    assert payload["pdf_english_java_shell_admission_allowed"] is True
     assert checks["four_final_chains_split_is_stable"]["ok"] is True
     assert checks["control_cli_commands_declared"]["ok"] is True
     assert checks["npm_operator_scripts_expose_control_surface"]["ok"] is True
@@ -2429,7 +2501,8 @@ def test_final_chain_ops_health_seals_operator_cli_surface() -> None:
     assert checks["job_transition_guard_is_locked_and_versioned"]["ok"] is True
     assert checks["filesystem_and_runtime_policy_are_closed"]["ok"] is True
     assert checks["dashboard_lanes_match_current_recovery_state"]["ok"] is True
-    assert checks["pdf_english_intake_gate_keeps_ready_claim_blocked"]["ok"] is True
+    assert checks["pdf_english_intake_gate_has_fresh_candidate"]["ok"] is True
+    assert checks["pdf_english_raw_pdf_promotion_admits_java_shell_without_model_execution"]["ok"] is True
     assert payload["execution_contract"] == {
         "model_invoked": False,
         "database_written": False,
@@ -2439,6 +2512,35 @@ def test_final_chain_ops_health_seals_operator_cli_surface() -> None:
     assert "D:\\" not in serialized
     assert "C:\\" not in serialized
     assert "/Users/" not in serialized
+
+
+def test_final_chain_execution_gap_report_is_machine_readable_and_fail_closed() -> None:
+    completed = subprocess.run(
+        [sys.executable, "tools/build_final_chain_execution_gap_report.py"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0
+    payload = json.loads(completed.stdout)
+    serialized = json.dumps(payload, ensure_ascii=False)
+    assert payload["schema_version"] == "final_chain_execution_gap_report.v0.1"
+    assert payload["status"] == "blocked_missing_execution_contracts"
+    assert payload["continuous_production_ready"] is False
+    assert payload["chain_ids"] == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
+    assert payload["execution_preflight_ready_count"] == 0
+    assert payload["execution_preflight_blocked_count"] == 4
+    assert "standard_cli_contract_missing" in payload["missing_for_continuous_production"]
+    assert "database_queue_contract_missing" in payload["missing_for_continuous_production"]
+    assert "D:\\" not in serialized
+    assert "C:\\" not in serialized
+    assert "/Users/" not in serialized
+    by_id = {row["chain_id"]: row for row in payload["rows"]}
+    assert by_id["pdf_math"]["plan_status"] == "ready"
+    assert by_id["pdf_english"]["plan_status"] == "ready"
+    assert by_id["pdf_math"]["adapter_invoked_entrypoint"] is False
 
 
 def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None:
@@ -2457,34 +2559,37 @@ def test_final_chain_ops_gate_includes_pdf_english_recovery_validation() -> None
     assert payload["status"] == "pass"
     assert payload["control_contract_schema"] == "final_chain_control_contract.v0.1"
     assert payload["environment_contract_schema"] == "final_chain_environment_interaction_contract.v0.1"
-    assert payload["environment_ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math"]
-    assert payload["environment_blocked_chain_ids"] == ["pdf_english"]
+    assert payload["environment_ready_chain_ids"] == ["doc_math", "doc_english", "pdf_math", "pdf_english"]
+    assert payload["environment_blocked_chain_ids"] == []
     assert payload["batch_queue_schema"] == "final_chain_batch_queue_report.v0.1"
     assert payload["batch_queue_validation_schema"] == "final_chain_batch_queue_validation.v0.1"
     assert payload["orchestrator_handshake_schema"] == "final_chain_orchestrator_handshake.v0.1"
     assert payload["orchestrator_handshake_validation_schema"] == "final_chain_orchestrator_handshake_validation.v0.1"
     assert payload["ops_health_schema"] == "final_chain_ops_health.v0.1"
-    assert payload["batch_queue_ready_count"] == 3
-    assert payload["batch_queue_blocked_count"] == 1
-    assert payload["pdf_english_recovery_validation_status"] == "blocked_missing_or_invalid_manifest"
-    assert payload["pdf_english_recovery_source_audit_status"] == "no_importable_source_found"
-    assert payload["pdf_english_recovery_intake_status"] == "blocked_missing_or_invalid_recovery_candidate"
-    assert checks["pdf_english_recovery_validator_fails_closed"]["ok"] is True
-    assert checks["pdf_english_recovery_requires_four_branch_manifest"]["ok"] is True
-    assert checks["pdf_english_recovery_source_audit_has_no_importable_source"]["ok"] is True
-    assert checks["pdf_english_recovery_intake_fails_closed_without_candidate"]["ok"] is True
-    assert checks["pdf_english_recovery_intake_requires_manifest_and_smoke_after_checker_import"]["ok"] is True
+    assert payload["batch_queue_ready_count"] == 4
+    assert payload["batch_queue_blocked_count"] == 0
+    assert payload["pdf_english_recovery_validation_status"] == "ready_for_manifest_gate"
+    assert payload["pdf_english_recovery_source_audit_status"] == "fresh_rebuild_candidate_found"
+    assert payload["pdf_english_recovery_intake_status"] == "candidate_ready_for_quarantine_import"
+    assert payload["pdf_english_raw_pdf_promotion_status"] == "pass"
+    assert payload["pdf_english_java_shell_admission_allowed"] is True
+    assert checks["pdf_english_recovery_validator_ready_for_manifest_gate"]["ok"] is True
+    assert checks["pdf_english_recovery_four_branch_manifest_declared"]["ok"] is True
+    assert checks["pdf_english_recovery_source_audit_has_fresh_candidate"]["ok"] is True
+    assert checks["pdf_english_recovery_intake_candidate_ready"]["ok"] is True
+    assert checks["pdf_english_recovery_intake_manifest_and_smoke_present"]["ok"] is True
+    assert checks["pdf_english_raw_pdf_promotion_passes"]["ok"] is True
     assert checks["final_chain_ops_health_passes"]["ok"] is True
     assert checks["ready_sample_job_records_validate"]["ok"] is True
     assert checks["batch_queue_covers_four_chains"]["ok"] is True
-    assert checks["batch_queue_schedules_three_ready_one_blocked"]["ok"] is True
+    assert checks["batch_queue_schedules_four_ready_zero_blocked"]["ok"] is True
     assert checks["batch_queue_job_records_validate"]["ok"] is True
     assert checks["batch_queue_report_validation_passes"]["ok"] is True
     assert checks["orchestrator_handshake_passes"]["ok"] is True
     assert checks["orchestrator_handshake_validation_passes"]["ok"] is True
     assert checks["environment_contract_passes"]["ok"] is True
     assert checks["environment_contract_covers_four_profiles"]["ok"] is True
-    assert checks["environment_contract_keeps_pdf_english_fail_closed"]["ok"] is True
+    assert checks["environment_contract_admits_four_chains_to_control_plane"]["ok"] is True
     assert checks["environment_contract_limits_writes_to_outputs"]["ok"] is True
     assert checks["control_contract_is_dry_run_only"]["ok"] is True
     assert checks["control_contract_covers_four_chains"]["ok"] is True
@@ -2509,6 +2614,7 @@ def test_cleanroom_hardening_manifest_seals_current_gate_outputs() -> None:
     assert payload["status"] == "pass"
     assert "foundation_artifact_atomicity_and_model_checkpoint_guard" in payload["sealed_scopes"]
     assert "final_chain_registry_control_contract_environment_contract_and_scheduler" in payload["sealed_scopes"]
+    assert "pdf_english_raw_pdf_graph_first_java_shell_admission" in payload["sealed_scopes"]
     assert "precleanup_archive_safety_and_worktree_compartment_guard" in payload["sealed_scopes"]
     assert checks["required_reports_present"]["ok"] is True
     assert payload["reports"]["final_chain_batch_queue"]["status"] == "pass"
@@ -2516,24 +2622,26 @@ def test_cleanroom_hardening_manifest_seals_current_gate_outputs() -> None:
     assert payload["reports"]["final_chain_orchestrator_handshake"]["status"] == "pass"
     assert payload["reports"]["final_chain_orchestrator_handshake_validation"]["status"] == "pass"
     assert payload["reports"]["final_chain_ops_health"]["status"] == "pass"
-    assert payload["reports"]["pdf_english_recovery_intake_validation"]["status"] == "blocked_missing_or_invalid_recovery_candidate"
+    assert payload["reports"]["pdf_english_recovery_intake_validation"]["status"] == "candidate_ready_for_quarantine_import"
     assert payload["reports"]["pdf_english_rebuild_decision"]["status"] == "rebuild_track_allowed"
     assert payload["reports"]["pdf_english_rebuild_source_import"]["status"] == "pass"
+    assert payload["reports"]["pdf_english_raw_pdf_promotion"]["status"] == "pass"
     assert checks["final_chain_ops_covers_four_chains"]["ok"] is True
     assert checks["final_chain_job_records_self_and_external_validated"]["ok"] is True
-    assert checks["pdf_english_is_explicit_fail_closed_blocker"]["ok"] is True
+    assert checks["pdf_english_fresh_rebuild_candidate_is_sealed"]["ok"] is True
     assert checks["pdf_english_recovery_intake_gate_is_sealed"]["ok"] is True
     assert checks["pdf_english_rebuild_track_is_explicit"]["ok"] is True
     assert checks["pdf_english_rebuild_source_import_is_sealed"]["ok"] is True
+    assert checks["pdf_english_raw_pdf_promotion_is_sealed"]["ok"] is True
     assert checks["final_chain_ops_health_is_sealed"]["ok"] is True
     assert payload["known_blockers"] == [
         {
-            "chain_id": "pdf_english",
-            "status": "blocked_missing_manifest_and_smoke_artifacts",
-            "guard": "pdf_english_recovery_requires_four_branch_manifest",
-            "allowed_behavior": "fail_closed",
+            "scope": "continuous_production_worker",
+            "status": "java_orchestrator_worker_db_contract_not_implemented",
+            "guard": "external_backbone_required_for_unattended_batch_processing",
+            "allowed_behavior": "control_plane_dry_run_and_queue_only",
             "legacy_artifact_wait_required": False,
-            "safe_rebuild_boundary": "pdf_english_rebuild_decision_requires_fresh_manifest_and_smoke_before_ready_claim",
+            "safe_boundary": "no_model_db_runtime_execution_without_explicit_worker_contract",
         }
     ]
     assert "D:\\" not in serialized
@@ -2572,7 +2680,7 @@ def test_cleanroom_hardening_manifest_validator_accepts_sealed_manifest() -> Non
     assert checks["required_report_records_present"]["ok"] is True
     assert checks["report_paths_are_relative_and_existing"]["ok"] is True
     assert checks["required_manifest_checks_pass"]["ok"] is True
-    assert checks["known_pdf_english_blocker_is_fail_closed"]["ok"] is True
+    assert checks["known_continuous_production_blocker_is_non_executing"]["ok"] is True
     assert checks["execution_contract_has_no_runtime_side_effects"]["ok"] is True
     assert checks["manifest_contains_no_absolute_paths"]["ok"] is True
     assert "D:\\" not in serialized
@@ -2600,15 +2708,19 @@ def test_pdf_english_rebuild_decision_keeps_old_identity_closed_but_allows_rebui
     assert payload["rebuild_track_allowed"] is True
     assert payload["ready_claim_allowed"] is False
     assert payload["old_identity_claim_allowed"] is False
-    assert checks["legacy_artifact_recovery_is_not_ready"]["ok"] is True
+    assert checks["fresh_rebuild_candidate_replaces_missing_legacy_artifacts"]["ok"] is True
     assert checks["cleanroom_v05_rebuild_scaffold_present"]["ok"] is True
     assert checks["old_local_graph_first_source_code_available_if_present"]["ok"] is True
     assert checks["portable_regression_passes_without_model_or_runtime"]["ok"] is True
     assert checks["user_supplied_downstream_review_evidence_if_present"]["ok"] is True
     assert checks["cleanroom_graph_first_source_import_is_sealed"]["ok"] is True
+    assert checks["fresh_rebuild_smoke_manifest_gate_passes"]["ok"] is True
+    assert checks["raw_pdf_graph_first_promotion_passes"]["ok"] is True
     assert "cleanroom_import_of_required_graph_first_source_files" in payload["completed_rebuild_evidence"]
     assert "cleanroom_import_of_required_graph_first_source_files" not in payload["required_promotion_evidence"]
-    assert "new_active_manifest_generated_from_fresh_rebuild_outputs" in payload["required_promotion_evidence"]
+    assert "new_active_manifest_generated_from_fresh_rebuild_outputs" in payload["completed_rebuild_evidence"]
+    assert "raw_pdf_graph_first_promotion_passes_for_java_shell_admission" in payload["completed_rebuild_evidence"]
+    assert "java_worker_and_database_contract_before_unattended_production_ready_claim" in payload["required_promotion_evidence"]
     assert "do_not_synthesize_old_active_manifest" in payload["unsafe_actions"]
     assert payload["execution_contract"] == {
         "model_invoked": False,
@@ -2685,12 +2797,12 @@ def test_cleanroom_hardening_manifest_validator_rejects_tampered_contract() -> N
         ],
         "known_blockers": [
             {
-                "chain_id": "pdf_english",
-                "status": "blocked_missing_manifest_and_smoke_artifacts",
-                "guard": "pdf_english_recovery_requires_four_branch_manifest",
-                "allowed_behavior": "fail_closed",
+                "scope": "continuous_production_worker",
+                "status": "java_orchestrator_worker_db_contract_not_implemented",
+                "guard": "external_backbone_required_for_unattended_batch_processing",
+                "allowed_behavior": "control_plane_dry_run_and_queue_only",
                 "legacy_artifact_wait_required": False,
-                "safe_rebuild_boundary": "pdf_english_rebuild_decision_requires_fresh_manifest_and_smoke_before_ready_claim",
+                "safe_boundary": "no_model_db_runtime_execution_without_explicit_worker_contract",
             }
         ],
         "checks": [
@@ -2698,7 +2810,8 @@ def test_cleanroom_hardening_manifest_validator_rejects_tampered_contract() -> N
             {"name": "all_status_reports_pass_or_expected_blocked", "ok": True},
             {"name": "final_chain_ops_covers_four_chains", "ok": True},
             {"name": "final_chain_job_records_self_and_external_validated", "ok": True},
-            {"name": "pdf_english_is_explicit_fail_closed_blocker", "ok": True},
+            {"name": "pdf_english_fresh_rebuild_candidate_is_sealed", "ok": True},
+            {"name": "pdf_english_raw_pdf_promotion_is_sealed", "ok": True},
             {"name": "no_report_declares_runtime_side_effects", "ok": True},
         ],
         "reports": {

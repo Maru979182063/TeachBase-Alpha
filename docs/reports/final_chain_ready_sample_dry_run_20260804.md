@@ -5,11 +5,12 @@ It does not execute production chain entrypoints, call models, write databases, 
 
 ## Summary
 
-- `ready_for_adapter_dry_run_count`: 3
-- `pdf_english_recovery_status`: `restore_or_rerun_required`
+- `ready_for_adapter_dry_run_count`: 4
+- `pdf_english_recovery_status`: `raw_pdf_promotion_passed_java_shell_admission`
 
 ## Rows
 
 - `doc_math` `tests/fixtures/final_chain_samples/doc_math_sample.docx`: adapter `dry_run_ready`, schedule `scheduled_ready`
 - `doc_english` `tests/fixtures/final_chain_samples/doc_english_sample.docx`: adapter `dry_run_ready`, schedule `scheduled_ready`
 - `pdf_math` `tests/fixtures/final_chain_samples/pdf_math_sample.pdf`: adapter `dry_run_ready`, schedule `scheduled_ready`
+- `pdf_english` `tests/fixtures/final_chain_samples/pdf_english_sample.pdf`: adapter `dry_run_ready`, schedule `scheduled_ready`

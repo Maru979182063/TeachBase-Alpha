@@ -16,6 +16,7 @@ from teachbase.final_chains import (
     load_final_chain_registry,
 )
 from teachbase.infrastructure.artifact_store import write_json, write_text
+from tools.build_pdf_english_raw_pdf_promotion_gate import build_report as build_pdf_english_raw_promotion_report
 from tools.validate_pdf_english_recovery_intake import build_report as build_pdf_english_recovery_intake_report
 
 REGISTRY = ROOT / "config" / "final_chain_registry.yaml"
@@ -24,8 +25,8 @@ REPORT_JSON = ROOT / "docs" / "reports" / "final_chain_ops_health_20260804.json"
 REPORT_MD = ROOT / "docs" / "reports" / "final_chain_ops_health_20260804.md"
 
 EXPECTED_CHAIN_IDS = ["doc_math", "doc_english", "pdf_math", "pdf_english"]
-EXPECTED_READY_CHAIN_IDS = ["doc_math", "doc_english", "pdf_math"]
-EXPECTED_BLOCKED_CHAIN_IDS = ["pdf_english"]
+EXPECTED_READY_CHAIN_IDS = ["doc_math", "doc_english", "pdf_math", "pdf_english"]
+EXPECTED_BLOCKED_CHAIN_IDS: list[str] = []
 REQUIRED_NPM_SCRIPTS = {
     "test:final-chain-ops",
     "test:cleanroom-hardening-status",
@@ -35,6 +36,7 @@ REQUIRED_NPM_SCRIPTS = {
     "final-chain:adapter-contracts",
     "final-chain:adapter-describe",
     "final-chain:adapter-dry-run",
+    "final-chain:adapter-execution-preflight",
     "final-chain:readiness-matrix",
     "final-chain:dashboard",
     "final-chain:contract",
@@ -46,6 +48,9 @@ REQUIRED_NPM_SCRIPTS = {
     "final-chain:job-recovery-plan",
     "final-chain:job-schedule-replacement",
     "audit:pdf-english-recovery-intake",
+    "audit:pdf-english-rebuild-smoke",
+    "audit:pdf-english-raw-pdf-promotion",
+    "audit:final-chain-execution-gap",
 }
 REQUIRED_CONTROL_COMMANDS = {
     "contract",
@@ -55,6 +60,7 @@ REQUIRED_CONTROL_COMMANDS = {
     "schedule",
     "queue",
     "adapter_dry_run",
+    "adapter_execution_preflight",
     "job_inspect",
     "job_validate",
     "job_recovery_plan",
@@ -76,7 +82,8 @@ def build_report() -> dict[str, Any]:
     dashboard = build_final_chain_control_dashboard(registry, workspace_root=ROOT)
     package_scripts = _package_scripts()
     intake = build_pdf_english_recovery_intake_report()
-    checks = _build_checks(control_contract, environment_contract, dashboard, package_scripts, intake)
+    raw_promotion = build_pdf_english_raw_promotion_report()
+    checks = _build_checks(control_contract, environment_contract, dashboard, package_scripts, intake, raw_promotion)
     return {
         "schema_version": "final_chain_ops_health.v0.1",
         "workspace_contract": "relative_git_paths_only",
@@ -89,6 +96,8 @@ def build_report() -> dict[str, Any]:
         "required_npm_scripts": sorted(REQUIRED_NPM_SCRIPTS),
         "missing_npm_scripts": sorted(REQUIRED_NPM_SCRIPTS.difference(package_scripts.keys())),
         "pdf_english_intake_status": intake.get("status"),
+        "pdf_english_raw_pdf_promotion_status": raw_promotion.get("status"),
+        "pdf_english_java_shell_admission_allowed": raw_promotion.get("java_shell_admission", {}).get("allowed"),
         "checks": checks,
         "execution_contract": NO_SIDE_EFFECT_CONTRACT,
     }
@@ -100,6 +109,7 @@ def _build_checks(
     dashboard: dict[str, Any],
     package_scripts: dict[str, str],
     intake: dict[str, Any],
+    raw_promotion: dict[str, Any],
 ) -> list[dict[str, Any]]:
     commands = control_contract.get("commands") if isinstance(control_contract.get("commands"), dict) else {}
     lifecycle = (
@@ -166,19 +176,28 @@ def _build_checks(
         },
         {
             "name": "dashboard_lanes_match_current_recovery_state",
-            "ok": dashboard.get("lane_counts") == {
-                "needs_sample_input": 3,
-                "needs_artifact_restore_or_smoke": 1,
-            },
+            "ok": dashboard.get("lane_counts") == {"needs_sample_input": 4},
             "value": dashboard.get("lane_counts"),
         },
         {
-            "name": "pdf_english_intake_gate_keeps_ready_claim_blocked",
-            "ok": intake.get("status") == "blocked_missing_or_invalid_recovery_candidate"
+            "name": "pdf_english_intake_gate_has_fresh_candidate",
+            "ok": intake.get("status") == "candidate_ready_for_quarantine_import"
             and intake.get("execution_contract") == NO_SIDE_EFFECT_CONTRACT,
             "value": {
                 "status": intake.get("status"),
                 "required_check_failures": intake.get("required_check_failures"),
+            },
+        },
+        {
+            "name": "pdf_english_raw_pdf_promotion_admits_java_shell_without_model_execution",
+            "ok": raw_promotion.get("status") == "pass"
+            and raw_promotion.get("java_shell_admission", {}).get("allowed") is True
+            and raw_promotion.get("production_model_execution_policy", {}).get("model_calls_default_enabled") is False
+            and raw_promotion.get("execution_contract") == NO_SIDE_EFFECT_CONTRACT,
+            "value": {
+                "status": raw_promotion.get("status"),
+                "java_shell_admission": raw_promotion.get("java_shell_admission"),
+                "production_model_execution_policy": raw_promotion.get("production_model_execution_policy"),
             },
         },
     ]

@@ -15,6 +15,7 @@ from .control import (
     schedule_registry_batch,
 )
 from .adapters import FinalChainAdapter, build_final_chain_adapters, describe_adapters
+from .execution import FINAL_CHAIN_JOB_STATUSES, STANDARD_EXECUTION_ARGS, build_execution_preflight
 from .environment import (
     build_adapter_contract,
     build_environment_profile,
@@ -46,6 +47,8 @@ __all__ = [
     "FinalChainDefinition",
     "FinalChainRegistry",
     "FinalChainAdapter",
+    "FINAL_CHAIN_JOB_STATUSES",
+    "STANDARD_EXECUTION_ARGS",
     "build_environment_snapshot",
     "build_chain_run_plan",
     "build_portable_plan_snapshot",
@@ -56,6 +59,7 @@ __all__ = [
     "schedule_registry_batch",
     "build_final_chain_adapters",
     "describe_adapters",
+    "build_execution_preflight",
     "build_adapter_contract",
     "build_environment_profile",
     "build_environment_interaction_contract",

@@ -38,24 +38,24 @@
       "name": "batch_queue_status_split_is_expected",
       "ok": true,
       "value": {
-        "scheduled_ready_count": 3,
-        "scheduled_blocked_count": 1,
+        "scheduled_ready_count": 4,
+        "scheduled_blocked_count": 0,
         "rejected_count": 0,
         "statuses": {
           "doc_math": "scheduled_ready",
           "doc_english": "scheduled_ready",
           "pdf_math": "scheduled_ready",
-          "pdf_english": "scheduled_blocked"
+          "pdf_english": "scheduled_ready"
         }
       }
     },
     {
-      "name": "pdf_english_fails_closed_with_blockers",
+      "name": "pdf_english_schedules_ready_after_raw_pdf_promotion",
       "ok": true,
-      "value": [
-        "input_path_present",
-        "canonical_entrypoint_present"
-      ]
+      "value": {
+        "schedule_status": "scheduled_ready",
+        "plan_status": "ready"
+      }
     },
     {
       "name": "job_record_contract_paths_are_stable_and_under_outputs",
@@ -90,8 +90,8 @@
       "ok": true,
       "value": {
         "batch_covers_four_registered_chains": true,
-        "three_ready_jobs_scheduled": true,
-        "pdf_english_is_scheduled_blocked": true,
+        "four_ready_jobs_scheduled": true,
+        "pdf_english_is_scheduled_ready_after_raw_pdf_promotion": true,
         "no_rejected_jobs": true,
         "all_job_records_validate": true,
         "all_job_records_written_under_outputs": true,

@@ -4,8 +4,8 @@ Status: `pass`
 
 ## Split
 
-- Ready: `doc_math, doc_english, pdf_math`
-- Blocked: `pdf_english`
+- Ready: `doc_math, doc_english, pdf_math, pdf_english`
+- Blocked: ``
 
 ## Checks
 
@@ -16,4 +16,5 @@ Status: `pass`
 - `pass` `job_transition_guard_is_locked_and_versioned`
 - `pass` `filesystem_and_runtime_policy_are_closed`
 - `pass` `dashboard_lanes_match_current_recovery_state`
-- `pass` `pdf_english_intake_gate_keeps_ready_claim_blocked`
+- `pass` `pdf_english_intake_gate_has_fresh_candidate`
+- `pass` `pdf_english_raw_pdf_promotion_admits_java_shell_without_model_execution`

@@ -31,12 +31,12 @@ REQUIRED_ARTIFACTS = (
         "kind": "file",
     },
     {
-        "key": "prior_smoke_zip",
+        "key": "smoke_zip",
         "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
         "kind": "file",
     },
     {
-        "key": "prior_smoke_dir",
+        "key": "smoke_dir",
         "relative_path": "outputs/english_text_first_graph_first/final_chain_smoke_20260728",
         "kind": "directory",
     },
@@ -46,9 +46,10 @@ REQUIRED_ARTIFACTS = (
 def build_report(candidate_root: Path | None = None) -> dict[str, Any]:
     candidate_root = candidate_root or ROOT
     root_state = _candidate_root_state(candidate_root)
-    artifact_states = [_artifact_state(candidate_root, artifact) for artifact in REQUIRED_ARTIFACTS]
     manifest_path = candidate_root / "config" / "english_text_first_graph_first" / "active_manifest.json"
     manifest_payload, manifest_error = _load_manifest(manifest_path)
+    required_artifacts = _required_artifacts(manifest_payload)
+    artifact_states = [_artifact_state(candidate_root, artifact) for artifact in required_artifacts]
     checks = _build_checks(root_state, artifact_states, manifest_payload, manifest_error)
     failed_required = [check["name"] for check in checks if check["required"] is True and check["ok"] is not True]
     status = "candidate_ready_for_quarantine_import" if not failed_required else "blocked_missing_or_invalid_recovery_candidate"
@@ -65,7 +66,7 @@ def build_report(candidate_root: Path | None = None) -> dict[str, Any]:
             "exists": root_state["exists"],
             "kind": root_state["kind"],
         },
-        "required_relative_artifacts": [artifact["relative_path"] for artifact in REQUIRED_ARTIFACTS],
+        "required_relative_artifacts": [artifact["relative_path"] for artifact in required_artifacts],
         "artifact_states": artifact_states,
         "checks": checks,
         "required_check_failures": failed_required,
@@ -87,8 +88,8 @@ def _build_checks(
     manifest_error: str,
 ) -> list[dict[str, Any]]:
     artifacts = {item["key"]: item for item in artifact_states}
-    smoke_zip = artifacts["prior_smoke_zip"]
-    smoke_dir = artifacts["prior_smoke_dir"]
+    smoke_zip = artifacts["smoke_zip"]
+    smoke_dir = artifacts["smoke_dir"]
     return [
         _check("candidate_root_exists", root_state["exists"] is True and root_state["kind"] == "directory"),
         _check("active_manifest_present", artifacts["active_manifest"]["exists"] is True),
@@ -113,11 +114,31 @@ def _build_checks(
             required_run_keys=list(REQUIRED_RUN_KEYS),
         ),
         _check("manifest_checker_present", artifacts["manifest_checker"]["exists"] is True),
-        _check("prior_smoke_zip_present", smoke_zip["exists"] is True),
-        _check("prior_smoke_zip_valid", smoke_zip.get("zip_testzip") is None and smoke_zip.get("zip_error") in {"", None}),
-        _check("prior_smoke_dir_present", smoke_dir["exists"] is True and smoke_dir["kind"] == "directory"),
-        _check("prior_smoke_dir_nonempty", int(smoke_dir.get("direct_child_count") or 0) > 0),
+        _check("smoke_zip_present", smoke_zip["exists"] is True),
+        _check("smoke_zip_valid", smoke_zip.get("zip_testzip") is None and smoke_zip.get("zip_error") in {"", None}),
+        _check("smoke_dir_present", smoke_dir["exists"] is True and smoke_dir["kind"] == "directory"),
+        _check("smoke_dir_nonempty", int(smoke_dir.get("direct_child_count") or 0) > 0),
     ]
+
+
+def _required_artifacts(manifest_payload: dict[str, Any] | None) -> tuple[dict[str, str], ...]:
+    artifacts = [dict(REQUIRED_ARTIFACTS[0]), dict(REQUIRED_ARTIFACTS[1])]
+    smoke_zip = "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip"
+    smoke_dir = "outputs/english_text_first_graph_first/final_chain_smoke_20260728"
+    if isinstance(manifest_payload, dict):
+        smoke = manifest_payload.get("fresh_smoke_artifacts")
+        if isinstance(smoke, dict):
+            if isinstance(smoke.get("smoke_zip"), str):
+                smoke_zip = str(smoke["smoke_zip"])
+            if isinstance(smoke.get("smoke_dir"), str):
+                smoke_dir = str(smoke["smoke_dir"])
+    artifacts.extend(
+        [
+            {"key": "smoke_zip", "relative_path": smoke_zip, "kind": "file"},
+            {"key": "smoke_dir", "relative_path": smoke_dir, "kind": "directory"},
+        ]
+    )
+    return tuple(artifacts)
 
 
 def _candidate_root_state(candidate_root: Path) -> dict[str, Any]:
@@ -167,7 +188,7 @@ def _artifact_state(candidate_root: Path, artifact: dict[str, str]) -> dict[str,
         state["sha256"] = _file_sha256(path)
     if path.is_dir():
         state["direct_child_count"] = len(list(path.iterdir()))
-    if artifact["key"] == "prior_smoke_zip":
+    if artifact["key"] == "smoke_zip":
         state.update(_zip_state(path))
     return state
 

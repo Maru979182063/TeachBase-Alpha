@@ -1,14 +1,14 @@
 # Final Chain Batch Queue 2026-08-04
 
 Status: `pass`
-Scheduled ready: `3`
-Scheduled blocked: `1`
+Scheduled ready: `4`
+Scheduled blocked: `0`
 
 ## Checks
 
 - `pass` `batch_covers_four_registered_chains`
-- `pass` `three_ready_jobs_scheduled`
-- `pass` `pdf_english_is_scheduled_blocked`
+- `pass` `four_ready_jobs_scheduled`
+- `pass` `pdf_english_is_scheduled_ready_after_raw_pdf_promotion`
 - `pass` `no_rejected_jobs`
 - `pass` `all_job_records_validate`
 - `pass` `all_job_records_written_under_outputs`
@@ -19,4 +19,4 @@ Scheduled blocked: `1`
 - `doc_math` `scheduled_ready` `outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json`
 - `doc_english` `scheduled_ready` `outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json`
 - `pdf_math` `scheduled_ready` `outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json`
-- `pdf_english` `scheduled_blocked` `outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json`
+- `pdf_english` `scheduled_ready` `outputs/final_chain_batch_queue/_control/jobs/<generated>/job_record.json`

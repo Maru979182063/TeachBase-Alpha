@@ -257,6 +257,7 @@ def build_chain_run_plan(
     add_check("environment_blocks_runtime_import", request.environment.allow_runtime_import is False)
     add_check("environment_blocks_database_writes", request.environment.allow_database_writes is False)
     add_check("environment_blocks_model_calls", request.environment.allow_model_calls is False)
+    add_check("smoke_status_not_partial", chain.smoke_status != "partial", value=chain.smoke_status)
 
     entrypoint_state = _relative_path_state(workspace_root, chain.canonical_entrypoint)
     add_check("canonical_entrypoint_present", bool(entrypoint_state["exists"]), **entrypoint_state)

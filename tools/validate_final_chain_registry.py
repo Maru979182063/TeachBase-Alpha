@@ -138,12 +138,33 @@ def validate_final_chain_registry(registry_path: Path, workspace: Path | None = 
     pdf_english = chains_by_id.get("pdf_english")
     if isinstance(pdf_english, dict):
         readiness = str(pdf_english.get("registry_readiness") or "")
-        if "needs_artifact_restore_or_smoke_rerun" not in readiness:
-            errors.append({"code": "pdf_english_missing_restore_marker"})
+        if readiness != "ready_for_java_shell_admission":
+            errors.append({"code": "pdf_english_missing_java_shell_admission_marker", "value": readiness})
         if pdf_english.get("canonical_pipeline_name") != "english_text_first_graph_first":
             errors.append({"code": "pdf_english_wrong_pipeline_name", "value": pdf_english.get("canonical_pipeline_name")})
         if pdf_english.get("canonical_entrypoint") != "config/english_text_first_graph_first/active_manifest.json":
             errors.append({"code": "pdf_english_wrong_canonical_entrypoint", "value": pdf_english.get("canonical_entrypoint")})
+        smoke_status = pdf_english.get("smoke_status") if isinstance(pdf_english.get("smoke_status"), dict) else {}
+        if smoke_status.get("status") != "pass":
+            errors.append({"code": "pdf_english_smoke_not_promoted", "value": smoke_status.get("status")})
+        admission = (
+            pdf_english.get("java_shell_admission")
+            if isinstance(pdf_english.get("java_shell_admission"), dict)
+            else {}
+        )
+        model_policy = (
+            pdf_english.get("production_model_execution_policy")
+            if isinstance(pdf_english.get("production_model_execution_policy"), dict)
+            else {}
+        )
+        if admission.get("allowed") is not True:
+            errors.append({"code": "pdf_english_java_shell_admission_not_allowed"})
+        if admission.get("not_a_model_execution_claim") is not True:
+            errors.append({"code": "pdf_english_java_shell_admission_blurs_model_execution"})
+        if not _path_exists(workspace, str(admission.get("source_report") or "")):
+            errors.append({"code": "pdf_english_raw_promotion_report_missing", "path": admission.get("source_report")})
+        if model_policy.get("model_calls_default_enabled") is not False:
+            errors.append({"code": "pdf_english_model_calls_default_enabled"})
 
     return {
         "schema_version": "final_chain_registry_validation_result.v0.1",

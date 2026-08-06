@@ -9,8 +9,8 @@ from teachbase.infrastructure.artifact_store import write_json, write_text
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "config" / "english_text_first_graph_first" / "active_manifest.json"
-SMOKE_ZIP = ROOT / "outputs" / "english_text_first_graph_first" / "final_chain_smoke_20260728.zip"
-SMOKE_DIR = ROOT / "outputs" / "english_text_first_graph_first" / "final_chain_smoke_20260728"
+LEGACY_SMOKE_ZIP = ROOT / "outputs" / "english_text_first_graph_first" / "final_chain_smoke_20260728.zip"
+LEGACY_SMOKE_DIR = ROOT / "outputs" / "english_text_first_graph_first" / "final_chain_smoke_20260728"
 REPORT_JSON = ROOT / "docs" / "reports" / "pdf_english_recovery_validation_20260804.json"
 REPORT_MD = ROOT / "docs" / "reports" / "pdf_english_recovery_validation_20260804.md"
 
@@ -19,6 +19,7 @@ REQUIRED_RUN_KEYS = ("reading", "grammar", "writing", "cloze")
 
 def build_report() -> dict[str, Any]:
     manifest_payload, manifest_error = _load_manifest()
+    smoke_zip, smoke_dir = _smoke_paths(manifest_payload)
     checks = [
         _check("active_manifest_exists", MANIFEST.is_file(), path=_relative(MANIFEST)),
         _check("active_manifest_json_object", isinstance(manifest_payload, dict), error=manifest_error),
@@ -41,8 +42,8 @@ def build_report() -> dict[str, Any]:
             _has_four_branch_runs(manifest_payload),
             required=list(REQUIRED_RUN_KEYS),
         ),
-        _check("prior_smoke_zip_present", SMOKE_ZIP.is_file(), path=_relative(SMOKE_ZIP)),
-        _check("prior_smoke_dir_present", SMOKE_DIR.is_dir(), path=_relative(SMOKE_DIR)),
+        _check("smoke_zip_present", smoke_zip.is_file(), path=_relative(smoke_zip)),
+        _check("smoke_dir_present", smoke_dir.is_dir(), path=_relative(smoke_dir)),
     ]
     missing_required = [
         check["name"]
@@ -58,7 +59,14 @@ def build_report() -> dict[str, Any]:
         }
         and not check["ok"]
     ]
-    status = "ready_for_manifest_gate" if not missing_required else "blocked_missing_or_invalid_manifest"
+    smoke_ready = smoke_zip.is_file() and smoke_dir.is_dir()
+    status = (
+        "ready_for_manifest_gate"
+        if not missing_required and smoke_ready
+        else "blocked_missing_smoke_artifacts"
+        if not missing_required
+        else "blocked_missing_or_invalid_manifest"
+    )
     return {
         "schema_version": "pdf_english_recovery_validation.v0.1",
         "workspace_contract": "relative_git_paths_only",
@@ -67,6 +75,11 @@ def build_report() -> dict[str, Any]:
         "status": status,
         "checks": checks,
         "required_manifest_check_failures": missing_required,
+        "smoke_artifacts": {
+            "smoke_zip": _relative(smoke_zip),
+            "smoke_dir": _relative(smoke_dir),
+            "source": "active_manifest_fresh_smoke_artifacts" if isinstance(manifest_payload, dict) else "legacy_default",
+        },
         "manifest_gate": "python tools/english_text_first_graph_first_manifest_check.py",
         "manifest_success_marker": "english_text_first_graph_first_manifest_valid",
         "safe_next_actions": _safe_next_actions(status),
@@ -102,6 +115,17 @@ def _has_four_branch_runs(payload: dict[str, Any] | None) -> bool:
     return any(all(key in candidate and candidate[key] for key in REQUIRED_RUN_KEYS) for candidate in candidates)
 
 
+def _smoke_paths(payload: dict[str, Any] | None) -> tuple[Path, Path]:
+    if isinstance(payload, dict):
+        smoke = payload.get("fresh_smoke_artifacts")
+        if isinstance(smoke, dict):
+            zip_value = smoke.get("smoke_zip")
+            dir_value = smoke.get("smoke_dir")
+            if isinstance(zip_value, str) and isinstance(dir_value, str):
+                return ROOT / zip_value, ROOT / dir_value
+    return LEGACY_SMOKE_ZIP, LEGACY_SMOKE_DIR
+
+
 def _check(name: str, ok: bool, **extra: Any) -> dict[str, Any]:
     return {"name": name, "ok": ok, **extra}
 
@@ -117,9 +141,9 @@ def _safe_next_actions(status: str) -> list[str]:
             "run_small_smoke_before_adapter_ready_claim",
         ]
     return [
-        "restore_active_manifest_from_original_machine_or_backup",
+        "restore_active_manifest_from_original_machine_or_backup_or_generate_fresh_rebuild_candidate",
         "restore_or_rerun_small_smoke_artifacts",
-        "do_not_create_synthetic_active_manifest",
+        "do_not_claim_legacy_20260728_smoke_without_original_artifacts",
     ]
 
 
