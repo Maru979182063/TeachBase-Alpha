@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，定义持久化端口，调用方只依赖业务所需的最小能力。
+ * 中文维护说明：本文件属于题目、修订与检索模块的业务规则与事务编排层，定义持久化端口，调用方只依赖业务所需的最小能力。
  *
  * 英文术语对照：Persistence port for atomic revision import and approved-question search.
  */

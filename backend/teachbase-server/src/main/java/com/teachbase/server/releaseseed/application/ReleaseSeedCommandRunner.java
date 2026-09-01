@@ -16,7 +16,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 
 /**
- * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承接长任务执行；修改时必须保持租约、重试、清理和幂等语义。
+ * 中文维护说明：本文件属于首发数据包导入模块的业务规则与事务编排层，承接长任务执行；修改时必须保持租约、重试、清理和幂等语义。
  *
  * 英文术语对照：Non-web command adapter that emits a UTF-8 machine report and closes Spring cleanly.
  */

@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @Component
 @ConditionalOnProperty(prefix = "teachbase.rendering", name = "enabled", havingValue = "true")
 /**
- * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承接长任务执行；修改时必须保持租约、重试、清理和幂等语义。
+ * 中文维护说明：本文件属于稳定导出与渲染队列模块的数据库或外部工具适配层，承接长任务执行；修改时必须保持租约、重试、清理和幂等语义。
  * Polling worker for durable render jobs.
  *
  * <p>The database lease is authoritative. The local atomic flag only prevents two

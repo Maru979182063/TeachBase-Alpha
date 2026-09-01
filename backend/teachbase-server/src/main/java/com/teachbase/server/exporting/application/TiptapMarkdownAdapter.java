@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 /**
- * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承载本层的稳定数据或行为合同，修改前应检查所有跨模块调用方。
+ * 中文维护说明：本文件属于稳定导出与渲染队列模块的业务规则与事务编排层，承载本层的稳定数据或行为合同，修改前应检查所有跨模块调用方。
  * Converts the backend-owned Tiptap subset into deterministic Pandoc Markdown.
  * Unsupported unresolved references fail closed instead of leaking internal IDs or
  * silently dropping teaching content from an export.

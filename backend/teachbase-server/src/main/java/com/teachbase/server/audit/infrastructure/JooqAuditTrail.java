@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 /**
- * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责落实持久化合同；并发正确性最终由事务、锁和数据库约束共同保证。
+ * 中文维护说明：本文件属于审计模块的数据库或外部工具适配层，负责落实持久化合同；并发正确性最终由事务、锁和数据库约束共同保证。
  *
  * 英文术语对照：Persists append-only audit events without exposing database records to callers.
  */

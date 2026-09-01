@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 /**
- * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承载本层的稳定数据或行为合同，修改前应检查所有跨模块调用方。
+ * 中文维护说明：本文件属于在线编辑文档模块的业务规则与事务编排层，承载本层的稳定数据或行为合同，修改前应检查所有跨模块调用方。
  * Validates and canonicalizes the frontend-owned Tiptap document contract.
  * Canonical ordering is part of hashing, making equivalent JSON produce the same
  * content identity regardless of object field insertion order.

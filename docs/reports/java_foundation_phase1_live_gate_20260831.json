@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-01T08:25:41.369Z",
+  "generatedAt": "2026-09-01T09:13:09.940Z",
   "status": "passed",
   "runtime": {
     "java": 21,
@@ -9,7 +9,7 @@
   "database": {
     "schema": "teachbase_app",
     "migration": "001",
-    "foundationTableCount": 10,
+    "foundationTableCount": 11,
     "foundationTables": [
       "app_user",
       "audit_event",
@@ -20,9 +20,10 @@
       "source_document",
       "source_region",
       "workspace",
-      "workspace_member"
+      "workspace_member",
+      "workspace_member_teaching_scope"
     ],
-    "totalApplicationTableCount": 40
+    "totalApplicationTableCount": 41
   },
   "fileRegistration": {
     "fixture": "tests/fixtures/final_chain_samples/doc_math_sample.docx",
@@ -33,6 +34,14 @@
     "persistedFileAssets": 2,
     "persistedFileVersions": 2,
     "persistedAuditEvents": 2
+  },
+  "memberTeachingScope": {
+    "migration": "007",
+    "administratorAssignment": "passed",
+    "selfServiceReplacement": "passed",
+    "duplicatePairRejected": true,
+    "unauthorizedReplacementRejected": true,
+    "persistedScopeCount": 1
   },
   "portability": {
     "absolutePathRejected": true,

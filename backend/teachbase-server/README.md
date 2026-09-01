@@ -57,6 +57,17 @@ Idempotency is defined by `(workspace_id, sha256)`. The first successful request
 
 Health is available at `GET /actuator/health`.
 
+### 成员教学范围
+
+V007 使用 `workspace_member_teaching_scope` 保存成员的教学范围。一条记录表示一个精确的
+“学科 + 学段”组合；同一成员可配置多个组合，并可选择其中一个作为主教学范围。
+
+- `GET /api/v1/workspaces/{workspaceId}/members/{userId}/teaching-scopes`
+- `PUT /api/v1/workspaces/{workspaceId}/members/{userId}/teaching-scopes`
+
+成员可以维护自己的范围，`owner` 和 `admin` 可以维护其他成员。PUT 使用整表替换语义，
+服务会锁定成员关系并在单事务中删除旧范围、写入新范围，空数组表示清空绑定。
+
 ## Editor And Export Foundation
 
 V002 adds backend-owned editor revisions, three variant definitions, optimistic concurrency, immutable preview snapshots and idempotent export requests. Formula LaTeX, mind-map trees and student blank annotations remain structured Tiptap source data.

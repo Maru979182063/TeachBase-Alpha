@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责业务校验和用例编排，不应泄漏数据库记录或传输层对象。
+ * 中文维护说明：本文件属于题篮与快照模块的业务规则与事务编排层，负责业务校验和用例编排，不应泄漏数据库记录或传输层对象。
  * Transaction boundary for basket editing. It resolves every requested revision
  * explicitly and rejects unapproved content before persistence, keeping search,
  * placement, and publication on the same review contract.

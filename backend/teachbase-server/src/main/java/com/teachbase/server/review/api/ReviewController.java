@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，只负责 HTTP 协议转换，业务不变量必须留在应用服务中。
+ * 中文维护说明：本文件属于人工审核模块的对外稳定合同层，只负责 HTTP 协议转换，业务不变量必须留在应用服务中。
  *
  * 英文术语对照：HTTP boundary for opening and deciding explicit question review cases.
  */

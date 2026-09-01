@@ -3,6 +3,7 @@ import path from "node:path";
 
 const root = path.resolve("backend/teachbase-server/src/main/java");
 const chinese = /[\u3400-\u9fff]/u;
+const genericModuleComment = "本文件属于服务进程装配模块的模块内部实现层";
 
 function walk(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -61,6 +62,7 @@ function extractComments(source) {
 const javaFiles = walk(root).filter((candidate) => candidate.endsWith(".java"));
 const missing = [];
 const untranslated = [];
+const generic = [];
 
 for (const file of javaFiles) {
   const source = fs.readFileSync(file, "utf8");
@@ -72,9 +74,12 @@ for (const file of javaFiles) {
   if (comments.some((value) => !chinese.test(value))) {
     untranslated.push(relative);
   }
+  if (source.includes(genericModuleComment) && !relative.endsWith("TeachBaseServerApplication.java")) {
+    generic.push(relative);
+  }
 }
 
-if (missing.length > 0 || untranslated.length > 0) {
+if (missing.length > 0 || untranslated.length > 0 || generic.length > 0) {
   if (missing.length > 0) {
     console.error("以下生产 Java 文件缺少中文维护注释：");
     for (const file of missing) {
@@ -87,6 +92,12 @@ if (missing.length > 0 || untranslated.length > 0) {
       console.error(`- ${file}`);
     }
   }
+  if (generic.length > 0) {
+    console.error("以下生产 Java 文件仍使用笼统模块说明：");
+    for (const file of generic) {
+      console.error(`- ${file}`);
+    }
+  }
   process.exitCode = 1;
 } else {
   console.log(JSON.stringify({
@@ -95,5 +106,6 @@ if (missing.length > 0 || untranslated.length > 0) {
     javaFileCount: javaFiles.length,
     chineseCommentCoverage: javaFiles.length,
     untranslatedCommentBlocks: 0,
+    genericModuleComments: 0,
   }, null, 2));
 }
