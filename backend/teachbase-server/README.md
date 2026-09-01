@@ -12,6 +12,15 @@ The repository build runner derives `JAVA_HOME` from the active Java 21 `javac`,
 
 ## Build And Test
 
+### 中文维护注释合同
+
+生产 Java 代码的维护注释统一使用中文。公开合同需要说明兼容边界；应用服务需要说明
+业务不变量；持久化与 worker 代码需要说明事务、锁、幂等、租约、原子写和失败清理
+语义。DTO 字段和显而易见的赋值不重复注释，避免用无信息量的文字遮住真正约束。
+
+运行 `npm run test:java-comment-contract` 可检查全部生产 Java 文件。该门禁会拒绝缺少
+中文维护说明或仍包含纯英文注释块的代码，并已纳入 `test:java-backend-foundation`。
+
 From the repository root:
 
 ```text

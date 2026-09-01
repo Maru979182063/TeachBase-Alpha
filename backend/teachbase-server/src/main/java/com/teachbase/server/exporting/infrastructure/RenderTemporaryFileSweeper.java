@@ -18,7 +18,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty(prefix = "teachbase.rendering", name = "enabled", havingValue = "true")
-/** Removes only stale renderer-owned temporary files beyond the lease safety window. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承载本层的稳定数据或行为合同，修改前应检查所有跨模块调用方。
+ *
+ * 英文术语对照：Removes only stale renderer-owned temporary files beyond the lease safety window.
+ */
 class RenderTemporaryFileSweeper {
 
     private static final Logger logger = LoggerFactory.getLogger(RenderTemporaryFileSweeper.class);

@@ -8,7 +8,11 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-/** Runs a bounded external renderer process without invoking a platform shell. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承接长任务执行；修改时必须保持租约、重试、清理和幂等语义。
+ *
+ * 英文术语对照：Runs a bounded external renderer process without invoking a platform shell.
+ */
 final class ExternalToolRunner {
 
     private static final int MAX_CAPTURE_BYTES = 16 * 1024 * 1024;

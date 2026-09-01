@@ -23,7 +23,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Imports, reviews, classifies, links, and checkpoints one question atomically. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承载本层的稳定数据或行为合同，修改前应检查所有跨模块调用方。
+ *
+ * 英文术语对照：Imports, reviews, classifies, links, and checkpoints one question atomically.
+ */
 @Service
 public class ReleaseSeedItemProcessor {
 
@@ -85,9 +89,9 @@ public class ReleaseSeedItemProcessor {
 
         UUID reviewCaseId = null;
         if (imported.reviewStatus().equals("approved")) {
-            // A different validated package may contain a byte-identical source row.
-            // Reuse the existing approved revision without manufacturing a second
-            // human decision; this package's observation still records its envelope.
+            // 不同的已校验数据包可能包含字节完全相同的来源题目。
+            // 此时复用既有已审核修订，不伪造第二次人工结论；
+            // 但仍记录本数据包的导入观察信封，保证来源可追溯。
             if (imported.createdRevision()) {
                 throw new ReleaseSeedValidationException("release_seed_created_revision_already_approved");
             }

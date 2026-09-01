@@ -24,7 +24,11 @@ import org.jooq.JSON;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
 
-/** jOOQ adapter for draft construction, atomic activation, and version-pinned links. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责落实持久化合同；并发正确性最终由事务、锁和数据库约束共同保证。
+ *
+ * 英文术语对照：jOOQ adapter for draft construction, atomic activation, and version-pinned links.
+ */
 @Repository
 class JooqTaxonomyRepository implements TaxonomyRepository {
 

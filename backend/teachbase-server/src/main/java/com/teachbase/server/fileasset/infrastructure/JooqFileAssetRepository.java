@@ -13,7 +13,11 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
 @Repository
-/** jOOQ adapter whose unique constraints arbitrate concurrent checksum registration. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责落实持久化合同；并发正确性最终由事务、锁和数据库约束共同保证。
+ *
+ * 英文术语对照：jOOQ adapter whose unique constraints arbitrate concurrent checksum registration.
+ */
 class JooqFileAssetRepository implements FileAssetRepository {
 
     private final DSLContext database;

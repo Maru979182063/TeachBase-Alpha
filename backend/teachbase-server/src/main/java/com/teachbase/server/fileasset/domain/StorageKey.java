@@ -3,7 +3,11 @@ package com.teachbase.server.fileasset.domain;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-/** Portable relative object key; absolute and traversal paths are rejected. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承载本层的稳定数据或行为合同，修改前应检查所有跨模块调用方。
+ *
+ * 英文术语对照：Portable relative object key; absolute and traversal paths are rejected.
+ */
 public record StorageKey(String value) {
 
     private static final Pattern URI_SCHEME = Pattern.compile("^[A-Za-z][A-Za-z0-9+.-]*:.*$");

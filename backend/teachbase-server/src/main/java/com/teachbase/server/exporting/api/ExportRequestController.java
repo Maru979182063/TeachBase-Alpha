@@ -16,7 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/exports")
-/** HTTP adapter for durable export admission and status polling. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，只负责 HTTP 协议转换，业务不变量必须留在应用服务中。
+ *
+ * 英文术语对照：HTTP adapter for durable export admission and status polling.
+ */
 class ExportRequestController {
 
     private final ExportRequestService service;

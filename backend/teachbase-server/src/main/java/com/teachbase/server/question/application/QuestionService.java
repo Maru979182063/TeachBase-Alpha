@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责业务校验和用例编排，不应泄漏数据库记录或传输层对象。
  * Validates pipeline packets and establishes the stable identity/immutable revision
  * boundary. Content is canonicalized before hashing so harmless JSON key ordering
  * differences do not create duplicate revisions during replayed ingestion.
@@ -119,8 +120,8 @@ public class QuestionService implements QuestionBatchImporter, QuestionHashPrevi
 
     private NormalizedQuestionRevision normalize(UUID workspaceId, UUID actorUserId, QuestionImportItem item) {
         String reviewStatus = clean(item.reviewStatus());
-        // Terminal review states are owned by the review module. Imports can stage
-        // work for review, but cannot publish or reject their own output.
+        // 终态审核结论归审核模块所有。导入流程只能把内容送入待审核，
+        // 不能自行发布或驳回自己的产物。
         if (!java.util.Set.of("unreviewed", "pending_review").contains(reviewStatus)) {
             throw new QuestionValidationException("question_review_status_invalid");
         }

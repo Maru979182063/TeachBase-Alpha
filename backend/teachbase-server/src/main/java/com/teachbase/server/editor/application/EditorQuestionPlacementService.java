@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责业务校验和用例编排，不应泄漏数据库记录或传输层对象。
  * Places many searched questions with one optimistic editor update. Hydrated Markdown
  * is saved into each reference node so snapshots never consult mutable question state.
  */

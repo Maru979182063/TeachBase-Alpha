@@ -26,7 +26,11 @@ import org.jooq.JSON;
 import org.springframework.stereotype.Repository;
 
 @Repository
-/** jOOQ implementation of the editor revision and snapshot persistence contract. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责落实持久化合同；并发正确性最终由事务、锁和数据库约束共同保证。
+ *
+ * 英文术语对照：jOOQ implementation of the editor revision and snapshot persistence contract.
+ */
 class JooqEditorDocumentRepository implements EditorDocumentRepository {
 
     private final DSLContext database;
@@ -71,8 +75,8 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
 
     @Override
     public EditorDraft update(UpdateEditorDraftCommand command, ValidatedEditorContent content) {
-        // Serialize competing saves on the aggregate root. The expected revision
-        // check turns a lost update into an explicit HTTP 409 instead of data loss.
+        // 在聚合根上串行化相互竞争的保存操作；预期修订号检查把覆盖写入
+        // 转换成明确的 HTTP 409，而不是静默丢失用户数据。
         var document = database.select(
                         EDITOR_DOCUMENT.DOCUMENT_KIND,
                         EDITOR_DOCUMENT.TITLE,
@@ -141,8 +145,8 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
 
     @Override
     public EditorSnapshot createSnapshot(CreateEditorSnapshotCommand command, ValidatedEditorContent projectedContent) {
-        // Lock again inside the snapshot transaction. A draft may have changed after
-        // the caller read it but before this persistence method is reached.
+        // 在快照事务内部重新加锁，因为草稿可能在调用方读取后、
+        // 到达本持久化方法前已经发生变化。
         var current = database.select(EDITOR_DOCUMENT.CURRENT_REVISION_NO)
                 .from(EDITOR_DOCUMENT)
                 .where(EDITOR_DOCUMENT.EDITOR_DOCUMENT_ID.eq(command.editorDocumentId()))
@@ -175,7 +179,7 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
                 .set(EDITOR_PREVIEW_CONFIRMATION.CONFIRMED_BY, command.actorUserId())
                 .set(EDITOR_PREVIEW_CONFIRMATION.CONFIRMED_AT, now)
                 .execute();
-        // Freeze the projected document, not a pointer to mutable draft JSON.
+        // 冻结的是投影后的完整文档，不是指向可变草稿 JSON 的引用。
         var frozen = objectMapper.createObjectNode();
         frozen.put("editorModel", "master-overrides-v1");
         frozen.put("schemaVersion", command.schemaVersion());

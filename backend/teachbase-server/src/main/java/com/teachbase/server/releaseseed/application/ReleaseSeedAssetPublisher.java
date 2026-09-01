@@ -14,7 +14,11 @@ import java.util.HexFormat;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
-/** Publishes validated asset bytes atomically before checksum-idempotent registration. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承载本层的稳定数据或行为合同，修改前应检查所有跨模块调用方。
+ *
+ * 英文术语对照：Publishes validated asset bytes atomically before checksum-idempotent registration.
+ */
 @Component
 public class ReleaseSeedAssetPublisher {
 

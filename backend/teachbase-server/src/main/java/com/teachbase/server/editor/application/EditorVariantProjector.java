@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 /**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承载本层的稳定数据或行为合同，修改前应检查所有跨模块调用方。
  * Projects the canonical editor document into one teaching variant without mutating
  * source JSON. Independent packs bypass layer filtering; synchronized handouts use
  * explicit overrides first and target-layer projection as the fallback.
@@ -39,9 +40,8 @@ public class EditorVariantProjector {
         if (!source.isObject()) return source.deepCopy();
         ObjectNode node = source.deepCopy();
         if ("questionReference".equals(node.path("type").asText())) {
-            // A parent reference and each selected child can target different layers.
-            // Filtering them together prevents an empty composite question leaking
-            // into a generated handout.
+            // 父引用与每个被选中的子题可以属于不同展示层。
+            // 必须一起过滤，避免空的组合题泄漏到最终生成的讲义中。
             ObjectNode attrs = node.withObject("/attrs");
             if (!targetLayers(attrs.path("targetLayers").asText()).contains(variantLabel)) return null;
             if ("children".equals(attrs.path("questionUsageMode").asText())) {

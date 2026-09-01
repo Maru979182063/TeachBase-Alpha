@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 /**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责业务校验和用例编排，不应泄漏数据库记录或传输层对象。
  * Validates portable file metadata and de-duplicates immutable bytes by workspace
  * and SHA-256. The operation is safe to retry after an uncertain client response.
  */
@@ -73,8 +74,8 @@ public class FileRegistrationService implements GeneratedFileRegistrar {
                 rawCommand.sizeBytes(),
                 sha256.value());
 
-        // Fast idempotent path. The repository unique constraint remains the final
-        // authority when concurrent callers race with the same checksum.
+        // 这里提供快速幂等路径；多个调用方用同一校验和并发竞争时，
+        // 最终仍以仓储层的唯一约束作为一致性裁决。
         var existing = files.findByWorkspaceAndSha256(command.workspaceId(), command.sha256());
         if (existing.isPresent()) {
             return existing.get();

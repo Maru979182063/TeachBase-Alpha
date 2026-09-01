@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 @Component
 @ConditionalOnProperty(prefix = "teachbase.rendering", name = "enabled", havingValue = "true")
 /**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承接长任务执行；修改时必须保持租约、重试、清理和幂等语义。
  * Polling worker for durable render jobs.
  *
  * <p>The database lease is authoritative. The local atomic flag only prevents two
@@ -50,7 +51,7 @@ class ExportWorker {
             while (coordinator.claimNext(properties.effectiveWorkerId(), properties.leaseDuration())
                     .map(this::execute)
                     .orElse(false)) {
-                // Drain the ready queue without waiting for another scheduler tick.
+                // 连续排空当前就绪队列，不必为每个任务等待下一次调度周期。
             }
         } finally {
             polling.set(false);
@@ -63,8 +64,8 @@ class ExportWorker {
             coordinator.fail(item, "editor_snapshot_not_found", false);
             return true;
         }
-        // Renew well before lease expiry. Heartbeat runs in a separate transaction so
-        // a long external renderer process does not hide ownership loss.
+        // 在租约到期前提前续约。心跳使用独立事务，避免长时间外部渲染进程
+        // 掩盖 worker 已失去任务所有权的事实。
         Duration heartbeatPeriod = properties.leaseDuration().dividedBy(3);
         long heartbeatMillis = Math.max(250, heartbeatPeriod.toMillis());
         try (ScheduledExecutorService heartbeat = Executors.newSingleThreadScheduledExecutor(
@@ -73,8 +74,8 @@ class ExportWorker {
                     () -> heartbeatSafely(item), heartbeatMillis, heartbeatMillis, TimeUnit.MILLISECONDS);
             RenderedArtifact artifact = renderer.render(item, snapshot.get());
             try {
-                // Registration and queue completion are transactional. If they fail,
-                // the unregistered local artifact must not survive as orphaned output.
+                // 文件登记与队列完成状态在同一事务中提交；若事务失败，
+                // 未登记的本地产物必须删除，不能成为孤立文件。
                 var registration = coordinator.complete(item, artifact);
                 if (!registration.storageKey().equals(artifact.storageKey())) deleteQuietly(artifact.path());
             } catch (RuntimeException exception) {

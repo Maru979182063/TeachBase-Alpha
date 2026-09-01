@@ -10,7 +10,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Processes one source document or region in an independently recoverable transaction. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承载本层的稳定数据或行为合同，修改前应检查所有跨模块调用方。
+ *
+ * 英文术语对照：Processes one source document or region in an independently recoverable transaction.
+ */
 @Service
 public class ReleaseSeedSourceProcessor {
 

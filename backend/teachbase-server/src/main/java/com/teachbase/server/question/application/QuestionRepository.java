@@ -5,7 +5,11 @@ import com.teachbase.server.question.api.QuestionSearchItem;
 import java.util.List;
 import java.util.UUID;
 
-/** Persistence port for atomic revision import and approved-question search. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，定义持久化端口，调用方只依赖业务所需的最小能力。
+ *
+ * 英文术语对照：Persistence port for atomic revision import and approved-question search.
+ */
 public interface QuestionRepository {
 
     QuestionImportResult importRevision(NormalizedQuestionRevision revision);

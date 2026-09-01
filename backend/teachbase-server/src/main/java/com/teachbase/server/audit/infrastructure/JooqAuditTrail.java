@@ -13,7 +13,11 @@ import org.jooq.JSON;
 import org.springframework.stereotype.Repository;
 
 @Repository
-/** Persists append-only audit events without exposing database records to callers. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责落实持久化合同；并发正确性最终由事务、锁和数据库约束共同保证。
+ *
+ * 英文术语对照：Persists append-only audit events without exposing database records to callers.
+ */
 class JooqAuditTrail implements AuditTrail {
 
     private final DSLContext database;

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 /**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责业务校验和用例编排，不应泄漏数据库记录或传输层对象。
  * Transaction boundary for the editor aggregate.
  *
  * <p>Every save creates an immutable revision and uses {@code expectedRevisionNo}
@@ -101,8 +102,8 @@ public class EditorDocumentService {
         if (currentDraft.revisionNo() != command.expectedRevisionNo()) {
             throw new EditorRevisionConflictException(currentDraft.revisionNo());
         }
-        // Projection happens before validation and freezing. The stored snapshot is
-        // therefore self-contained and does not need to reinterpret variant rules.
+        // 投影在校验和冻结之前完成，因此落库快照是自包含的，
+        // 下游不需要重新解释版本变体规则。
         JsonNode projectedDoc = variantProjector.project(currentDraft, variantKey);
         ArrayNode emptyOverrides = objectMapper.createArrayNode();
         emptyOverrides.add(NullNode.instance).add(NullNode.instance).add(NullNode.instance);

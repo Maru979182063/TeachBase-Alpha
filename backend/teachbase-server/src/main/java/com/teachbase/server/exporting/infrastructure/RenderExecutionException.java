@@ -1,6 +1,10 @@
 package com.teachbase.server.exporting.infrastructure;
 
-/** Structured renderer failure carrying retry policy into the durable queue. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，表达可识别的业务失败，错误码和重试语义属于对外合同。
+ *
+ * 英文术语对照：Structured renderer failure carrying retry policy into the durable queue.
+ */
 final class RenderExecutionException extends RuntimeException {
 
     private final String code;

@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 /**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责业务校验和用例编排，不应泄漏数据库记录或传输层对象。
  * Keeps queue state transitions, generated-file registration, and audit records in
  * explicit transactions. Heartbeat/failure use independent transactions so they can
  * commit even when rendering work outside the database fails.

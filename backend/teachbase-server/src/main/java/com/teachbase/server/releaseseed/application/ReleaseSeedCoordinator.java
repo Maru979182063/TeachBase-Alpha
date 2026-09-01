@@ -6,7 +6,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 
-/** Runs validate, dry-run, resumable import, and post-import verification modes. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责业务校验和用例编排，不应泄漏数据库记录或传输层对象。
+ *
+ * 英文术语对照：Runs validate, dry-run, resumable import, and post-import verification modes.
+ */
 @Service
 public class ReleaseSeedCoordinator {
 
@@ -81,8 +85,8 @@ public class ReleaseSeedCoordinator {
                 relations.process(lease, seedPackage, properties);
                 lease = checkpoints.complete(lease, seedPackage, properties);
             } catch (ReleaseSeedInjectedInterruptionException exception) {
-                // Keep status=importing and the last committed cursor. A later process
-                // must wait for lease expiry, acquire a new token, and resume.
+                // 保留 importing 状态和最后一次已提交游标。后续进程必须等待租约到期，
+                // 获取新令牌后再从该游标恢复，不能越过尚未提交的条目。
                 throw exception;
             } catch (RuntimeException exception) {
                 checkpoints.fail(lease, stableCode(exception));

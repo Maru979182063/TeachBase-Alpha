@@ -37,7 +37,11 @@ import org.jooq.JSON;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 
-/** PostgreSQL implementation of idempotent imports, indexed search, and revision lookup. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责落实持久化合同；并发正确性最终由事务、锁和数据库约束共同保证。
+ *
+ * 英文术语对照：PostgreSQL implementation of idempotent imports, indexed search, and revision lookup.
+ */
 @Repository
 class JooqQuestionRepository implements
         QuestionRepository,
@@ -73,8 +77,8 @@ class JooqQuestionRepository implements
                 .doNothing()
                 .execute();
 
-        // The conflict-safe insert creates a lockable row even when two ingestion
-        // clients discover the same source key simultaneously.
+        // 即使两个导入端同时发现同一个来源键，冲突安全插入也会先建立可加锁记录，
+        // 后续修订创建由该记录串行化，避免重复题目身份。
         var question = database.select(QUESTION.QUESTION_ID, QUESTION.CURRENT_REVISION_NO)
                 .from(QUESTION)
                 .where(QUESTION.WORKSPACE_ID.eq(input.workspaceId()))
@@ -197,9 +201,8 @@ class JooqQuestionRepository implements
                             .and(QUESTION.QUESTION_ID.gt(cursor.questionId()))));
         }
 
-        // Approved search follows the explicit production pointer even when a newer
-        // pending revision exists. Review queues intentionally inspect only the current
-        // revision so superseded attempts do not reappear as work.
+        // 已发布检索始终沿用明确的生产修订指针，即使存在更新的待审核修订也不改变结果。
+        // 审核队列只查看当前修订，防止已被替代的导入尝试重新进入待办。
         Condition revisionJoin = QUESTION_REVISION.WORKSPACE_ID.eq(QUESTION.WORKSPACE_ID);
         if (reviewStatus.equals("approved")) {
             revisionJoin = revisionJoin.and(QUESTION_REVISION.QUESTION_REVISION_ID.eq(QUESTION.APPROVED_REVISION_ID));
@@ -379,8 +382,8 @@ class JooqQuestionRepository implements
     }
 
     private Field<String> searchText() {
-        // Keep this expression aligned with V004's trigram index. Bind values are used
-        // only for the query string, never for SQL structure.
+        // 此表达式必须与 V004 的 trigram 索引保持一致。绑定值只承载查询文本，
+        // 绝不能参与 SQL 结构拼接。
         return DSL.lower(DSL.concat(
                 DSL.coalesce(QUESTION_REVISION.TITLE, ""), DSL.inline(" "),
                 DSL.coalesce(QUESTION_REVISION.SUBJECT, ""), DSL.inline(" "),

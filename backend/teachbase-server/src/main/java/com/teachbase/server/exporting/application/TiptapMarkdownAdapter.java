@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 /**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承载本层的稳定数据或行为合同，修改前应检查所有跨模块调用方。
  * Converts the backend-owned Tiptap subset into deterministic Pandoc Markdown.
  * Unsupported unresolved references fail closed instead of leaking internal IDs or
  * silently dropping teaching content from an export.
@@ -175,8 +176,8 @@ public class TiptapMarkdownAdapter {
             renderChildren(node.path("content"), audience, output, 0);
         }
         if (output.length() == before) {
-            // References must be hydrated while a snapshot is created. Rendering is
-            // deliberately too late to consult mutable question or knowledge data.
+            // 引用必须在创建快照时完成实体化。进入渲染阶段后，
+            // 已不允许再读取可变的题目或知识数据。
             String id = attrs.path(type.equals("questionReference") ? "questionId" : "moduleId").asText();
             String referenceType = type.equals("questionReference") ? "question_reference" : "knowledge_reference";
             throw new RenderSourceException(referenceType + "_not_hydrated:" + id);

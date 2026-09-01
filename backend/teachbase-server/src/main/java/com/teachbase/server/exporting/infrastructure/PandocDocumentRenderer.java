@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 @Component
 @ConditionalOnProperty(prefix = "teachbase.rendering", name = "enabled", havingValue = "true")
 /**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承载本层的稳定数据或行为合同，修改前应检查所有跨模块调用方。
  * Deterministic document renderer: frozen editor JSON becomes Markdown, then a
  * versioned Pandoc AST, and finally DOCX or PDF. Every artifact is structurally
  * validated before an atomic same-directory replacement makes it visible.
@@ -70,14 +71,14 @@ class PandocDocumentRenderer {
         Path workDirectory = null;
         try {
             Files.createDirectories(target.getParent());
-            // Same-directory unique temporary files make concurrent renders safe and
-            // keep the final move on one filesystem, which atomic replacement requires.
+            // 同目录唯一临时文件保证并发渲染互不覆盖，并让最终移动始终位于
+            // 同一文件系统，这是原子替换能够成立的前提。
             temporaryOutput = Files.createTempFile(
                     target.getParent(), "." + job.exportRequestId() + "-", ".tmp." + extension);
             workDirectory = Files.createTempDirectory(target.getParent(), ".render-work-");
             RenderSourceDocument source = adapter.adapt(snapshot.frozenContent());
-            // Persist the normalized AST envelope and its hash, not only final bytes;
-            // this makes renderer regressions reproducible and auditable.
+            // 除最终字节外，还要持久化规范化 AST 信封及其哈希，
+            // 这样渲染回归才能复现并接受审计。
             JsonNode pandocAst = parsePandocAst(source, workDirectory);
             ObjectNode envelope = objectMapper.createObjectNode();
             envelope.put("schemaVersion", 1);
@@ -223,8 +224,8 @@ class PandocDocumentRenderer {
     }
 
     private void atomicReplace(Path source, Path target) throws IOException {
-        // No non-atomic fallback: exposing a partially copied document is worse than
-        // failing explicitly on a filesystem that cannot honor the contract.
+        // 不提供非原子降级路径：明确拒绝不支持合同的文件系统，
+        // 比向用户暴露只复制了一部分的文档更安全。
         try {
             Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (AtomicMoveNotSupportedException exception) {
@@ -288,7 +289,7 @@ class PandocDocumentRenderer {
         try {
             Files.deleteIfExists(path);
         } catch (IOException ignored) {
-            // The worker records the primary failure; cleanup is retried by the temp sweep gate.
+            // worker 负责记录主失败；临时文件清扫 gate 会再次尝试清理。
         }
     }
 
@@ -297,7 +298,7 @@ class PandocDocumentRenderer {
         try (var paths = Files.walk(root)) {
             paths.sorted(java.util.Comparator.reverseOrder()).forEach(this::deleteQuietly);
         } catch (IOException ignored) {
-            // The worker records the primary failure; cleanup is retried by the temp sweep gate.
+            // worker 负责记录主失败；临时文件清扫 gate 会再次尝试清理。
         }
     }
 }

@@ -23,7 +23,11 @@ import org.jooq.JSON;
 import org.springframework.stereotype.Repository;
 
 @Repository
-/** PostgreSQL queue adapter implementing idempotency, skip-locked claims, leases, and attempts. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责落实持久化合同；并发正确性最终由事务、锁和数据库约束共同保证。
+ *
+ * 英文术语对照：PostgreSQL queue adapter implementing idempotency, skip-locked claims, leases, and attempts.
+ */
 class JooqExportRequestRepository implements ExportRequestRepository, ExportExecutionRepository {
 
     private final DSLContext database;

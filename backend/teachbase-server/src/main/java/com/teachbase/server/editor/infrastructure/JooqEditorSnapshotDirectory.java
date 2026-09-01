@@ -12,7 +12,11 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
 @Repository
-/** Workspace-scoped jOOQ read adapter for frozen editor snapshots. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责落实持久化合同；并发正确性最终由事务、锁和数据库约束共同保证。
+ *
+ * 英文术语对照：Workspace-scoped jOOQ read adapter for frozen editor snapshots.
+ */
 class JooqEditorSnapshotDirectory implements EditorSnapshotDirectory {
 
     private final DSLContext database;

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 /**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，承载本层的稳定数据或行为合同，修改前应检查所有跨模块调用方。
  * Validates and canonicalizes the frontend-owned Tiptap document contract.
  * Canonical ordering is part of hashing, making equivalent JSON produce the same
  * content identity regardless of object field insertion order.
@@ -80,8 +81,7 @@ public class EditorContentValidator {
         if (!node.isObject() || node.path("type").asText().isBlank()) {
             throw new EditorContentValidationException("editor_node_type_required");
         }
-        // Limits protect the service and downstream renderers from adversarial or
-        // accidentally recursive editor documents.
+        // 这些上限用于保护服务和下游渲染器，避免恶意输入或意外递归文档耗尽资源。
         if (depth > MAX_DOCUMENT_DEPTH || ++nodeCount[0] > MAX_DOCUMENT_NODES) {
             throw new EditorContentValidationException("editor_document_complexity_limit_exceeded");
         }
@@ -214,8 +214,8 @@ public class EditorContentValidator {
     }
 
     private JsonNode canonicalize(JsonNode node) {
-        // Array order is semantic editor order and is preserved; object key order is
-        // not semantic and is sorted for stable cross-process hashing.
+        // 数组顺序代表编辑器语义，必须保留；对象键顺序没有业务语义，
+        // 因此统一排序，以获得跨进程稳定的内容哈希。
         if (node.isObject()) {
             ObjectNode result = objectMapper.createObjectNode();
             Map<String, JsonNode> fields = new TreeMap<>();

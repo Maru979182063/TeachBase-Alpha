@@ -30,7 +30,11 @@ import org.jooq.DSLContext;
 import org.jooq.JSON;
 import org.springframework.stereotype.Repository;
 
-/** jOOQ persistence for atomic basket replacement, checkpoints, and frozen snapshots. */
+/**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责落实持久化合同；并发正确性最终由事务、锁和数据库约束共同保证。
+ *
+ * 英文术语对照：jOOQ persistence for atomic basket replacement, checkpoints, and frozen snapshots.
+ */
 @Repository
 class JooqCollectionRepository implements CollectionRepository {
 
@@ -122,8 +126,8 @@ class JooqCollectionRepository implements CollectionRepository {
         long nextVersion = currentVersion + 1;
         OffsetDateTime now = OffsetDateTime.now();
 
-        // Delete and reinsert occurs under the aggregate lock in one transaction.
-        // Readers therefore see either the old order or the complete new order.
+        // 删除和重新插入都在同一事务持有聚合根锁期间完成，
+        // 因此读取方只能看到完整的旧顺序或完整的新顺序，不会看到半成品。
         database.deleteFrom(QUESTION_COLLECTION_ITEM)
                 .where(QUESTION_COLLECTION_ITEM.QUESTION_COLLECTION_ID.eq(collectionId))
                 .execute();

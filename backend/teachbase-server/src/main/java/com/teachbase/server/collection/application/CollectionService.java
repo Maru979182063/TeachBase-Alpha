@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
+ * 中文维护说明：本文件属于服务进程装配模块的模块内部实现层，负责业务校验和用例编排，不应泄漏数据库记录或传输层对象。
  * Transaction boundary for basket editing. It resolves every requested revision
  * explicitly and rejects unapproved content before persistence, keeping search,
  * placement, and publication on the same review contract.
@@ -72,7 +73,7 @@ public class CollectionService {
         if (limit < 1 || limit > 100) {
             throw new CollectionValidationException("question_collection_checkpoint_limit_invalid");
         }
-        // Confirm aggregate visibility before exposing checkpoint history.
+        // 暴露检查点历史前先确认聚合在当前工作空间中可见，避免跨租户侧漏。
         collections.find(collectionId, workspaceId).orElseThrow(CollectionNotFoundException::new);
         return collections.listCheckpoints(collectionId, workspaceId, limit).stream()
                 .map(checkpoint -> new CollectionCheckpointResponse(
