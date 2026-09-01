@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "teachbase.release-seed.v1",
+  "batchId": "synthetic-contract-fixture-001",
+  "releaseVersion": "fixture-v1",
+  "generatedAt": "2026-09-01T00:00:00Z",
+  "questionCount": 1,
+  "approvedQuestionCount": 1,
+  "rejectedQuestionCount": 0,
+  "pendingReviewQuestionCount": 0,
+  "sourceSystems": [
+    "manual_seed"
+  ],
+  "contentSha256": "7b557ffee11abf21ca1e660e7d21991c92ed519d729088b60981b42be84be327",
+  "assetCount": 1,
+  "taggerName": "synthetic-fixture-tagger",
+  "taggerVersion": "1.0.0",
+  "taggerInputHash": "0a03b8515464558158fd36cbdd6cdff1ec8229be68215964bbe9f57b853e90ba",
+  "reviewedBy": "fixture-reviewer",
+  "reviewedAt": "2026-09-01T00:00:00Z",
+  "reviewPolicyVersion": "fixture-policy-v1"
+}

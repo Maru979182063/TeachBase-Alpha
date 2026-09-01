@@ -8,6 +8,7 @@ __pycache__/
 
 # Node dependencies
 node_modules/
+backend/teachbase-server/target/
 
 # Local temp and tool caches
 tmp/

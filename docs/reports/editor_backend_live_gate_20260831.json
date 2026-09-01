@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-01T08:26:04.789Z",
+  "status": "passed",
+  "database": {
+    "schema": "teachbase_app",
+    "migrations": [
+      "001",
+      "002",
+      "003"
+    ],
+    "editorExportTableCount": 9
+  },
+  "editor": {
+    "model": "master-overrides-v1",
+    "contentSchemaVersion": 1,
+    "formulaSource": "latex",
+    "mindMapSource": "stable-node-tree",
+    "studentBlankAnnotations": "versioned",
+    "variants": 3,
+    "revisions": 2,
+    "immutableSnapshots": 1,
+    "variantProjectionOwnedByBackend": true
+  },
+  "concurrency": {
+    "simultaneousUpdates": 2,
+    "successfulUpdates": 1,
+    "conflicts": 1,
+    "finalRevisionNo": 2
+  },
+  "export": {
+    "requests": 1,
+    "simultaneousSubmissions": 8,
+    "createdResponses": 1,
+    "idempotent": true,
+    "generatedFiles": 0
+  },
+  "rendering": {
+    "contractVersion": 1,
+    "profile": "teachbase-document-v1",
+    "concreteEngineVersion": null,
+    "status": "admission_only_worker_disabled_for_contract_gate"
+  },
+  "validation": {
+    "base64ImageRejected": true,
+    "legacyHtmlFieldsAcceptedForCompatibility": true,
+    "generatedHtmlIsCanonicalSource": false
+  },
+  "cleanup": "passed"
+}

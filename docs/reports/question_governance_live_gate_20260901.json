@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-01T08:26:53.822Z",
+  "status": "passed",
+  "hashes": {
+    "contentHash": "7d749ce411da43f0731105041b4bf24921bef22e5e2b3bd77259dbfdc2d73935",
+    "sourcePayloadHash": "edbce897b093ac5b43668ceb582ace0e48c46b2b7c7011c817a4cf535cc244d4",
+    "importEnvelopeHash": "8b73ba4be6cc68dc2de77937803a1166b17522f98171283325157041001b9b5f",
+    "semanticRevisionCount": 1,
+    "observedEnvelopes": 2
+  },
+  "review": {
+    "directApprovedImportBlocked": true,
+    "declaredContentHashMismatchBlocked": true,
+    "concurrentAttempts": 2,
+    "successfulDecisions": 1,
+    "conflicts": 1,
+    "approvedPointerSearch": "passed",
+    "appendOnlyDecisionCount": 1,
+    "structuredEvidencePreserved": true
+  },
+  "taxonomy": {
+    "versionLifecycle": "draft_to_active",
+    "activeVersionImmutable": true,
+    "aliases": 2,
+    "explicitVersionCodeResolution": "passed",
+    "explicitVersionAliasResolution": "passed",
+    "revisionPinnedAssignments": 1,
+    "difficultyPolicyChanged": false
+  },
+  "audit": {
+    "governanceEvents": 2
+  },
+  "portability": {
+    "reportUsesAbsolutePathsAsInputContract": false
+  },
+  "cleanup": "passed"
+}

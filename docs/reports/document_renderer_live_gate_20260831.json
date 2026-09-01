@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-01T08:28:08.196Z",
+  "status": "passed",
+  "database": {
+    "schema": "teachbase_app",
+    "migrations": [
+      "001",
+      "002",
+      "003"
+    ],
+    "exportExecutionTables": 3
+  },
+  "renderer": {
+    "sourceSchemaVersion": 1,
+    "adapterVersion": "tiptap-pandoc-v1",
+    "pandocVersion": "3.11",
+    "typstVersion": "0.15.1",
+    "htmlMathMlVerified": true,
+    "docxNativeMathVerified": true,
+    "pdfSignatureVerified": true,
+    "pdfParseAndTextVerified": true
+  },
+  "execution": {
+    "successfulRequests": 10,
+    "generatedFiles": 10,
+    "workerCount": 2,
+    "idempotentSubmissions": 8,
+    "idempotentCreatedResponses": 1,
+    "expiredLeaseRecovered": true,
+    "recoveredAttemptNo": 2,
+    "statusApiVerified": true
+  },
+  "failure": {
+    "unresolvedReferenceFailedClosed": true,
+    "failedRequestCreatedFile": false,
+    "temporaryArtifactsRemaining": 0
+  },
+  "storage": {
+    "portableKeysOnly": true,
+    "contentHashesVerified": true,
+    "atomicOutputContract": true
+  },
+  "cleanup": "passed"
+}

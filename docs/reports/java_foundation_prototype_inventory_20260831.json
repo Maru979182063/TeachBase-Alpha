@@ -1,0 +1,467 @@
+{
+  "reportVersion": "java-foundation-prototype-inventory-v1",
+  "generatedAt": "2026-08-31T05:33:42.705Z",
+  "source": {
+    "logicalName": "workbench-demo-local-prototype",
+    "inputContract": "TEACHBASE_PROTOTYPE_ROOT or --prototype-root",
+    "storedAbsolutePath": false,
+    "inspectedFiles": [
+      "fixtures/alpha-build-fixtures.json",
+      "alpha-page-data.js",
+      "editor-lab.js",
+      "editor-reference-repository.js",
+      "question-domain.js"
+    ]
+  },
+  "prototype": {
+    "schemaVersion": "alpha-build-fixtures-v2",
+    "effectiveQuestionCount": 85,
+    "handoutDraftCount": 2,
+    "handoutSnapshotCount": 6,
+    "exportJobCount": 8,
+    "provisionalRuleCount": 8
+  },
+  "entities": [
+    {
+      "name": "baskets",
+      "count": 2,
+      "fields": [
+        "basketId",
+        "courseNodeId",
+        "isDirty",
+        "items",
+        "knowledgePointId",
+        "lectureId",
+        "savedRevision",
+        "status"
+      ]
+    },
+    {
+      "name": "publishedBasketSnapshots",
+      "count": 2,
+      "fields": [
+        "basketId",
+        "basketSnapshotId",
+        "itemIds",
+        "items",
+        "publishedAt",
+        "sourceRevision"
+      ]
+    },
+    {
+      "name": "normalizedHandouts",
+      "count": 2,
+      "fields": [
+        "blockOrder",
+        "blocks",
+        "courseNodeId",
+        "grade",
+        "handoutId",
+        "lectureId",
+        "mappingStatus",
+        "mappingType",
+        "moduleId",
+        "readiness",
+        "source",
+        "stage",
+        "subject",
+        "term",
+        "title"
+      ]
+    },
+    {
+      "name": "handoutDrafts",
+      "count": 2,
+      "fields": [
+        "activeVersionId",
+        "basketSnapshotId",
+        "contentRevision",
+        "courseNodeId",
+        "handoutDraftId",
+        "handoutId",
+        "knowledgePointId",
+        "knowledgeVersionId",
+        "lectureId",
+        "questionAssignments",
+        "returnRecords",
+        "status",
+        "versions"
+      ]
+    },
+    {
+      "name": "previewConfirmations",
+      "count": 6,
+      "fields": [
+        "blockOrder",
+        "confirmationId",
+        "confirmedAt",
+        "contentRevision",
+        "handoutDraftId",
+        "handoutVersionId"
+      ]
+    },
+    {
+      "name": "handoutSnapshots",
+      "count": 6,
+      "fields": [
+        "audienceCapabilities",
+        "blockOrder",
+        "confirmationId",
+        "contentRevision",
+        "courseNodeId",
+        "createdAt",
+        "frozenBlocks",
+        "grade",
+        "handoutDraftId",
+        "handoutId",
+        "handoutSnapshotId",
+        "handoutVersionId",
+        "knowledgePointId",
+        "lectureId",
+        "moduleId",
+        "stage",
+        "subject",
+        "term",
+        "title",
+        "versionDisplayName"
+      ]
+    },
+    {
+      "name": "exportRequests",
+      "count": 6,
+      "fields": [
+        "audiences",
+        "exportRequestId",
+        "formats",
+        "handoutSnapshotIds",
+        "retryOfExportJobId",
+        "submittedAt"
+      ]
+    },
+    {
+      "name": "exportFiles",
+      "count": 3,
+      "fields": [
+        "audience",
+        "exportFileId",
+        "fileName",
+        "format",
+        "handoutSnapshotId",
+        "url"
+      ]
+    },
+    {
+      "name": "exportJobs",
+      "count": 8,
+      "fields": [
+        "audience",
+        "cancelledAt",
+        "completedAt",
+        "createdAt",
+        "exportFileId",
+        "exportJobId",
+        "exportRequestId",
+        "failedAt",
+        "format",
+        "handoutSnapshotId",
+        "retryOfExportJobId",
+        "status",
+        "subject"
+      ]
+    },
+    {
+      "name": "effectiveQuestions",
+      "count": 85,
+      "fields": [
+        "analysis",
+        "answer",
+        "approvedAt",
+        "approvedVersion",
+        "assets",
+        "children",
+        "content",
+        "contentStructure",
+        "difficultyStars",
+        "displayBlocks",
+        "effectiveSource",
+        "grade",
+        "images",
+        "knowledgeTreePath",
+        "lesson",
+        "lineageId",
+        "material",
+        "options",
+        "primaryKnowledgeTag",
+        "provenance",
+        "questionId",
+        "questionType",
+        "richHtmlByPartKey",
+        "secondaryKnowledgeTags",
+        "sourceDatasetId",
+        "sourceDocumentId",
+        "sourceEntityId",
+        "sourceQuestionId",
+        "sourceTaskId",
+        "stage",
+        "stem",
+        "subject",
+        "title"
+      ]
+    },
+    {
+      "name": "replacementCandidates",
+      "count": 2,
+      "fields": [
+        "courseNodeId",
+        "knowledgePointId",
+        "lectureId",
+        "replacementCandidateId",
+        "replacementQuestionId",
+        "returnQuestionId",
+        "subject"
+      ]
+    }
+  ],
+  "questionContract": {
+    "fields": [
+      "analysis",
+      "answer",
+      "approvedAt",
+      "approvedVersion",
+      "assets",
+      "children",
+      "content",
+      "contentStructure",
+      "difficultyStars",
+      "displayBlocks",
+      "effectiveSource",
+      "grade",
+      "images",
+      "knowledgeTreePath",
+      "lesson",
+      "lineageId",
+      "material",
+      "options",
+      "primaryKnowledgeTag",
+      "provenance",
+      "questionId",
+      "questionType",
+      "richHtmlByPartKey",
+      "secondaryKnowledgeTags",
+      "sourceDatasetId",
+      "sourceDocumentId",
+      "sourceEntityId",
+      "sourceQuestionId",
+      "sourceTaskId",
+      "stage",
+      "stem",
+      "subject",
+      "title"
+    ],
+    "provenanceFields": [
+      "docId",
+      "groupId",
+      "historicalWorkflow",
+      "kind",
+      "parentSourceLabel",
+      "path",
+      "projectionMode",
+      "questionId",
+      "reviewStatus",
+      "sourceBlockIds",
+      "sourceDocumentId",
+      "sourceDraftId",
+      "sourceFileName",
+      "sourceFileUrl",
+      "sourceGroupId",
+      "sourcePackage",
+      "sourcePageRange",
+      "sourcePath",
+      "sourceQuestionId",
+      "sourceType",
+      "stemStartAnchor",
+      "transcriptionConfidence",
+      "transcriptionSource",
+      "warnings"
+    ],
+    "assetFields": [
+      "contentImages",
+      "evidenceImages"
+    ],
+    "hasParentChildQuestions": true,
+    "hasStructuredContent": true,
+    "hasDisplayBlocks": true,
+    "hasRevisionPins": true
+  },
+  "editor": {
+    "model": "master-overrides-v1",
+    "canonicalFormat": "tiptap-json",
+    "referenceNodeTypes": [
+      "questionReference",
+      "knowledgeReference"
+    ],
+    "questionOverrideFields": [
+      "overrideAnalysisHtml",
+      "overrideAnalysisMarkdown",
+      "overrideAnswerHtml",
+      "overrideAnswerMarkdown",
+      "overrideBlockType",
+      "overrideContentHtml",
+      "overrideContentMarkdown",
+      "overrideDifficultyStars",
+      "overrideKnowledgeCategory",
+      "overrideKnowledgeTags",
+      "overrideKnowledgeTreePath",
+      "overrideLecturePoint",
+      "overrideOptionsHtml",
+      "overrideOptionsText",
+      "overridePrimaryKnowledgeTag",
+      "overrideQuestionPosition",
+      "overrideQuestionType",
+      "overrideStemHtml",
+      "overrideStemMarkdown",
+      "overrideSubject",
+      "overrideTitle",
+      "overrideTitleHtml"
+    ],
+    "capabilities": [
+      {
+        "name": "Tiptap JSON is read from editor.getJSON()",
+        "supported": true
+      },
+      {
+        "name": "master plus per-version overrides are persisted",
+        "supported": true
+      },
+      {
+        "name": "question references pin questionId and revisionId",
+        "supported": true
+      },
+      {
+        "name": "knowledge references pin knowledgeId and revisionId",
+        "supported": true
+      },
+      {
+        "name": "safety snapshots exist",
+        "supported": true
+      },
+      {
+        "name": "export snapshots are immutable copies in the prototype flow",
+        "supported": true
+      },
+      {
+        "name": "preview confirmation is explicit before export",
+        "supported": true
+      }
+    ]
+  },
+  "repositoryAdapters": {
+    "editorReferenceRepositoryPresent": true,
+    "questionDomainPresent": true
+  },
+  "tests": {
+    "files": [
+      "tests/alpha-page-data.test.mjs",
+      "tests/preflight-contracts.test.mjs",
+      "tests/s01-data.test.mjs",
+      "tests/s02-data.test.mjs",
+      "tests/s03-data.test.mjs"
+    ]
+  },
+  "portability": {
+    "absolutePathValueCount": 77,
+    "passesNoAbsolutePathFixtureCheck": false,
+    "absolutePathLocations": [
+      "$.effectiveQuestions[8].provenance.path",
+      "$.effectiveQuestions[9].provenance.path",
+      "$.effectiveQuestions[10].provenance.path",
+      "$.effectiveQuestions[11].provenance.path",
+      "$.effectiveQuestions[12].provenance.path",
+      "$.effectiveQuestions[13].provenance.path",
+      "$.effectiveQuestions[14].provenance.path",
+      "$.effectiveQuestions[15].provenance.path",
+      "$.effectiveQuestions[16].provenance.path",
+      "$.effectiveQuestions[17].provenance.path",
+      "$.effectiveQuestions[18].provenance.path",
+      "$.effectiveQuestions[19].provenance.path",
+      "$.effectiveQuestions[20].provenance.path",
+      "$.effectiveQuestions[21].provenance.path",
+      "$.effectiveQuestions[22].provenance.path",
+      "$.effectiveQuestions[23].provenance.path",
+      "$.effectiveQuestions[24].provenance.path",
+      "$.effectiveQuestions[25].provenance.sourcePath",
+      "$.effectiveQuestions[26].provenance.sourcePath",
+      "$.effectiveQuestions[27].provenance.sourcePath",
+      "$.effectiveQuestions[28].provenance.sourcePath",
+      "$.effectiveQuestions[29].provenance.sourcePath",
+      "$.effectiveQuestions[30].provenance.sourcePath",
+      "$.effectiveQuestions[31].provenance.sourcePath",
+      "$.effectiveQuestions[32].provenance.sourcePath",
+      "$.effectiveQuestions[33].provenance.sourcePath",
+      "$.effectiveQuestions[34].provenance.sourcePath",
+      "$.effectiveQuestions[35].provenance.sourcePath",
+      "$.effectiveQuestions[36].provenance.sourcePath",
+      "$.effectiveQuestions[37].provenance.sourcePath",
+      "$.effectiveQuestions[38].provenance.sourcePath",
+      "$.effectiveQuestions[39].provenance.sourcePath",
+      "$.effectiveQuestions[40].provenance.sourcePath",
+      "$.effectiveQuestions[41].provenance.sourcePath",
+      "$.effectiveQuestions[42].provenance.sourcePath",
+      "$.effectiveQuestions[43].provenance.sourcePath",
+      "$.effectiveQuestions[44].provenance.sourcePath",
+      "$.effectiveQuestions[45].provenance.sourcePath",
+      "$.effectiveQuestions[46].provenance.sourcePath",
+      "$.effectiveQuestions[47].provenance.sourcePath",
+      "$.effectiveQuestions[48].provenance.sourcePath",
+      "$.effectiveQuestions[49].provenance.sourcePath",
+      "$.effectiveQuestions[50].provenance.sourcePath",
+      "$.effectiveQuestions[51].provenance.sourcePath",
+      "$.effectiveQuestions[52].provenance.sourcePath",
+      "$.effectiveQuestions[53].provenance.sourcePath",
+      "$.effectiveQuestions[54].provenance.sourcePath",
+      "$.effectiveQuestions[55].provenance.sourcePath",
+      "$.effectiveQuestions[56].provenance.sourcePath",
+      "$.effectiveQuestions[57].provenance.sourcePath",
+      "$.effectiveQuestions[58].provenance.sourcePath",
+      "$.effectiveQuestions[59].provenance.sourcePath",
+      "$.effectiveQuestions[60].provenance.sourcePath",
+      "$.effectiveQuestions[61].provenance.sourcePath",
+      "$.effectiveQuestions[62].provenance.sourcePath",
+      "$.effectiveQuestions[63].provenance.sourcePath",
+      "$.effectiveQuestions[64].provenance.sourcePath",
+      "$.effectiveQuestions[65].provenance.sourcePath",
+      "$.effectiveQuestions[66].provenance.sourcePath",
+      "$.effectiveQuestions[67].provenance.sourcePath",
+      "$.effectiveQuestions[68].provenance.sourcePath",
+      "$.effectiveQuestions[69].provenance.sourcePath",
+      "$.effectiveQuestions[70].provenance.sourcePath",
+      "$.effectiveQuestions[71].provenance.sourcePath",
+      "$.effectiveQuestions[72].provenance.sourcePath",
+      "$.effectiveQuestions[73].provenance.sourcePath",
+      "$.effectiveQuestions[74].provenance.sourcePath",
+      "$.effectiveQuestions[75].provenance.sourcePath",
+      "$.effectiveQuestions[76].provenance.sourcePath",
+      "$.effectiveQuestions[77].provenance.sourcePath",
+      "$.effectiveQuestions[78].provenance.sourcePath",
+      "$.effectiveQuestions[79].provenance.sourcePath",
+      "$.effectiveQuestions[80].provenance.sourcePath",
+      "$.effectiveQuestions[81].provenance.sourcePath",
+      "$.effectiveQuestions[82].provenance.sourcePath",
+      "$.effectiveQuestions[83].provenance.sourcePath",
+      "$.effectiveQuestions[84].provenance.sourcePath"
+    ]
+  },
+  "backendImplications": [
+    "Question identity and question revision must be separate because editor references pin both values.",
+    "Human review must bind to a question revision; editing content creates an unreviewed revision.",
+    "The handout model needs a master document, three version projections or overrides, drafts, immutable revisions, confirmations, and export snapshots.",
+    "Question, knowledge, and file references need relational projections even when Tiptap JSON remains the canonical editor payload.",
+    "Published snapshots must freeze question content and assets so later question edits do not mutate an exported handout.",
+    "Source provenance needs structured file, page or block evidence; a display string alone is insufficient."
+  ],
+  "limitations": [
+    "The prototype is a high-fidelity local application, not a committed backend API contract.",
+    "Field presence demonstrates UI demand but does not establish database cardinality or authorization rules.",
+    "The inventory does not treat page identifiers such as S01-S07 as backend module boundaries."
+  ]
+}

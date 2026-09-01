@@ -246,7 +246,15 @@ export async function startEmbeddedPostgresCluster(label = "runtime_test") {
     async stop() {
       await adminPool.end();
       await pg.stop();
-      await fsp.rm(databaseDir, { recursive: true, force: true });
+      // Windows may keep a just-stopped PostgreSQL data file handle alive for a few
+      // scheduler ticks. Bounded fs.rm retries still fail the gate on a real leak,
+      // while avoiding a false failure from that documented transient EBUSY state.
+      await fsp.rm(databaseDir, {
+        recursive: true,
+        force: true,
+        maxRetries: 10,
+        retryDelay: 200,
+      });
     },
   };
 }

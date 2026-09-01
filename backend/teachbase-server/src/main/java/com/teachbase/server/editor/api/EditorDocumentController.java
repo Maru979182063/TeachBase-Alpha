@@ -1,0 +1,87 @@
+package com.teachbase.server.editor.api;
+
+import com.teachbase.server.editor.application.CreateEditorDocumentCommand;
+import com.teachbase.server.editor.application.CreateEditorSnapshotCommand;
+import com.teachbase.server.editor.application.EditorDocumentService;
+import com.teachbase.server.editor.application.EditorQuestionPlacementService;
+import com.teachbase.server.editor.application.UpdateEditorDraftCommand;
+import jakarta.validation.Valid;
+import java.net.URI;
+import java.util.UUID;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/v1/editor/documents")
+/** HTTP adapter for editor creation, optimistic saves, placement, and snapshots. */
+class EditorDocumentController {
+
+    private final EditorDocumentService service;
+    private final EditorQuestionPlacementService questionPlacement;
+
+    EditorDocumentController(EditorDocumentService service, EditorQuestionPlacementService questionPlacement) {
+        this.service = service;
+        this.questionPlacement = questionPlacement;
+    }
+
+    @PostMapping
+    ResponseEntity<EditorDraftResponse> create(@Valid @RequestBody CreateEditorDocumentRequest request) {
+        var draft = service.create(new CreateEditorDocumentCommand(
+                request.workspaceId(), request.actorUserId(), request.documentKind(), request.title(),
+                request.schemaVersion(), request.masterDoc(), request.versionOverrides()));
+        return ResponseEntity
+                .created(URI.create("/api/v1/editor/documents/" + draft.editorDocumentId()))
+                .eTag(etag(draft.revisionNo()))
+                .body(EditorDraftResponse.from(draft));
+    }
+
+    @PutMapping("/{documentId}/draft")
+    ResponseEntity<EditorDraftResponse> update(
+            @PathVariable UUID documentId,
+            @Valid @RequestBody UpdateEditorDraftRequest request) {
+        var draft = service.update(new UpdateEditorDraftCommand(
+                documentId, request.workspaceId(), request.actorUserId(), request.expectedRevisionNo(),
+                request.schemaVersion(), request.masterDoc(), request.versionOverrides()));
+        return ResponseEntity.ok().eTag(etag(draft.revisionNo())).body(EditorDraftResponse.from(draft));
+    }
+
+    @GetMapping("/{documentId}/draft")
+    ResponseEntity<EditorDraftResponse> get(
+            @PathVariable UUID documentId,
+            @RequestParam UUID workspaceId,
+            @RequestParam UUID actorUserId) {
+        var draft = service.get(documentId, workspaceId, actorUserId);
+        return ResponseEntity.ok().eTag(etag(draft.revisionNo())).body(EditorDraftResponse.from(draft));
+    }
+
+    @PostMapping("/{documentId}/snapshots")
+    ResponseEntity<EditorSnapshotResponse> createSnapshot(
+            @PathVariable UUID documentId,
+            @Valid @RequestBody CreateEditorSnapshotRequest request) {
+        var snapshot = service.createSnapshot(new CreateEditorSnapshotCommand(
+                documentId, request.workspaceId(), request.actorUserId(), request.expectedRevisionNo(),
+                request.variantKey(), request.audience(), request.schemaVersion()));
+        return ResponseEntity
+                .created(URI.create("/api/v1/editor/snapshots/" + snapshot.editorSnapshotId()))
+                .body(EditorSnapshotResponse.from(snapshot));
+    }
+
+    @PostMapping("/{documentId}/question-references")
+    ResponseEntity<EditorDraftResponse> placeQuestionReferences(
+            @PathVariable UUID documentId,
+            @Valid @RequestBody PlaceQuestionReferencesRequest request) {
+        var draft = questionPlacement.place(documentId, request);
+        return ResponseEntity.ok().eTag(etag(draft.revisionNo())).body(EditorDraftResponse.from(draft));
+    }
+
+    private String etag(long revisionNo) {
+        return "\"revision-" + revisionNo + "\"";
+    }
+}

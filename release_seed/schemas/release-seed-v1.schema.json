@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://teachbase.local/schemas/release-seed-v1.schema.json",
+  "title": "TeachBase Release Seed V1 contracts",
+  "description": "A definition bundle. Select the required definition for each package file/JSONL row.",
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "portableAssetPath": {
+      "type": "string",
+      "pattern": "^assets/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\:]+$"
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion", "batchId", "releaseVersion", "generatedAt", "questionCount",
+        "approvedQuestionCount", "rejectedQuestionCount", "pendingReviewQuestionCount",
+        "sourceSystems", "contentSha256", "assetCount", "taggerName", "taggerVersion",
+        "taggerInputHash", "reviewedBy", "reviewedAt", "reviewPolicyVersion"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "teachbase.release-seed.v1" },
+        "batchId": { "type": "string", "minLength": 1 },
+        "releaseVersion": { "type": "string", "minLength": 1 },
+        "generatedAt": { "type": "string", "format": "date-time" },
+        "questionCount": { "type": "integer", "minimum": 0, "maximum": 500 },
+        "approvedQuestionCount": { "type": "integer", "minimum": 0, "maximum": 500 },
+        "rejectedQuestionCount": { "type": "integer", "minimum": 0 },
+        "pendingReviewQuestionCount": { "type": "integer", "minimum": 0 },
+        "sourceSystems": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "contentSha256": { "$ref": "#/$defs/sha256" },
+        "assetCount": { "type": "integer", "minimum": 0 },
+        "taggerName": { "type": "string", "minLength": 1 },
+        "taggerVersion": { "type": "string", "minLength": 1 },
+        "taggerInputHash": { "$ref": "#/$defs/sha256" },
+        "reviewedBy": { "type": "string", "minLength": 1 },
+        "reviewedAt": { "type": "string", "format": "date-time" },
+        "reviewPolicyVersion": { "type": "string", "minLength": 1 }
+      }
+    },
+    "assetReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/portableAssetPath" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "mediaType": { "type": "string" },
+        "altText": { "type": "string" }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "externalKey", "sourceSystem", "sourceKey", "contentHash", "taggerInputHash",
+        "originalFileSha256", "sourceLocator", "original", "difficultyStars",
+        "primaryKnowledgeTag", "secondaryKnowledgeTags", "tagging", "review"
+      ],
+      "properties": {
+        "externalKey": { "type": "string", "minLength": 1 },
+        "sourceSystem": { "type": "string", "minLength": 1 },
+        "sourceKey": { "type": "string", "minLength": 1 },
+        "contentHash": { "$ref": "#/$defs/sha256" },
+        "taggerInputHash": { "$ref": "#/$defs/sha256" },
+        "originalFileSha256": { "$ref": "#/$defs/sha256" },
+        "sourceLocator": { "type": "object", "minProperties": 1, "additionalProperties": true },
+        "sourceDocumentKey": { "type": "string", "minLength": 1 },
+        "sourceRegionKey": { "type": "string", "minLength": 1 },
+        "original": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["prompt"],
+          "properties": {
+            "prompt": { "type": "string", "minLength": 1 },
+            "material": { "type": ["string", "null"] },
+            "options": { "type": "array", "items": { "type": "object" } },
+            "answer": {},
+            "explanation": { "type": ["string", "null"] },
+            "formulaRefs": { "type": "array", "items": { "type": "string" } },
+            "imageRefs": { "type": "array", "items": { "$ref": "#/$defs/assetReference" } }
+          }
+        },
+        "difficultyStars": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "primaryKnowledgeTag": { "type": "string", "minLength": 1 },
+        "secondaryKnowledgeTags": {
+          "type": "array", "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "tagging": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["confidence", "taggerName", "taggerVersion", "taggerInputHash", "needsHumanReview"],
+          "properties": {
+            "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+            "taggerName": { "type": "string", "minLength": 1 },
+            "taggerVersion": { "type": "string", "minLength": 1 },
+            "taggerInputHash": { "$ref": "#/$defs/sha256" },
+            "needsHumanReview": { "const": false }
+          }
+        },
+        "review": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reviewStatus", "reviewerId", "reviewedAt", "reviewPolicyVersion"],
+          "properties": {
+            "reviewStatus": { "const": "approved" },
+            "reviewerId": { "type": "string", "minLength": 1 },
+            "reviewedAt": { "type": "string", "format": "date-time" },
+            "reviewPolicyVersion": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "questionRelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fromExternalKey", "toExternalKey", "relationType"],
+      "properties": {
+        "fromExternalKey": { "type": "string", "minLength": 1 },
+        "toExternalKey": { "type": "string", "minLength": 1 },
+        "relationType": { "type": "string", "minLength": 1 },
+        "ordinal": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "sourceDocument": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["sourceDocumentKey", "sourceSystem", "originalFileSha256", "assetPath", "assetSha256"],
+      "properties": {
+        "sourceDocumentKey": { "type": "string", "minLength": 1 },
+        "sourceSystem": { "type": "string", "minLength": 1 },
+        "originalFileSha256": { "$ref": "#/$defs/sha256" },
+        "assetPath": { "$ref": "#/$defs/portableAssetPath" },
+        "assetSha256": { "$ref": "#/$defs/sha256" },
+        "mediaType": { "type": "string" }
+      }
+    },
+    "sourceRegion": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["sourceRegionKey", "sourceDocumentKey", "locator"],
+      "properties": {
+        "sourceRegionKey": { "type": "string", "minLength": 1 },
+        "sourceDocumentKey": { "type": "string", "minLength": 1 },
+        "locator": { "type": "object", "minProperties": 1, "additionalProperties": true }
+      }
+    },
+    "rejectedQuestion": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["externalKey", "sourceSystem", "sourceKey", "reviewStatus", "rejectionReasons"],
+      "properties": {
+        "externalKey": { "type": "string", "minLength": 1 },
+        "sourceSystem": { "type": "string", "minLength": 1 },
+        "sourceKey": { "type": "string", "minLength": 1 },
+        "reviewStatus": { "const": "rejected" },
+        "rejectionReasons": {
+          "type": "array", "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "validationReport": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "batchId", "releaseVersion", "packageContentSha256", "validatorName",
+        "validatorVersion", "validatedAt", "passed", "errorCount"
+      ],
+      "properties": {
+        "batchId": { "type": "string", "minLength": 1 },
+        "releaseVersion": { "type": "string", "minLength": 1 },
+        "packageContentSha256": { "$ref": "#/$defs/sha256" },
+        "validatorName": { "type": "string", "minLength": 1 },
+        "validatorVersion": { "type": "string", "minLength": 1 },
+        "validatedAt": { "type": "string", "format": "date-time" },
+        "passed": { "const": true },
+        "errorCount": { "const": 0 }
+      }
+    },
+    "reviewReport": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "batchId", "releaseVersion", "packageContentSha256", "reviewerId", "reviewedAt",
+        "reviewPolicyVersion", "reviewMode", "sampleSize", "approvedQuestionCount",
+        "rejectedQuestionCount", "issueCounts"
+      ],
+      "properties": {
+        "batchId": { "type": "string", "minLength": 1 },
+        "releaseVersion": { "type": "string", "minLength": 1 },
+        "packageContentSha256": { "$ref": "#/$defs/sha256" },
+        "reviewerId": { "type": "string", "minLength": 1 },
+        "reviewedAt": { "type": "string", "format": "date-time" },
+        "reviewPolicyVersion": { "type": "string", "minLength": 1 },
+        "reviewMode": { "enum": ["full", "sample"] },
+        "sampleSize": { "type": "integer", "minimum": 0 },
+        "approvedQuestionCount": { "type": "integer", "minimum": 0 },
+        "rejectedQuestionCount": { "type": "integer", "minimum": 0 },
+        "issueCounts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  }
+}
