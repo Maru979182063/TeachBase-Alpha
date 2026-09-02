@@ -21,9 +21,12 @@ const __dirname = path.dirname(__filename);
 
 export const workspaceRoot = path.resolve(__dirname, "..", "..");
 export const reportRoot = path.join(workspaceRoot, "outputs", "production_readiness");
-const asciiTempRoot = process.platform === "win32"
-  ? path.win32.join("C:\\", "tmp", "jiaoyan-runtime-tests")
-  : path.join(os.tmpdir(), "jiaoyan-runtime-tests");
+const configuredTempRoot = String(process.env.RUNTIME_TEST_TEMP_ROOT || "").trim();
+const asciiTempRoot = configuredTempRoot
+  ? path.resolve(configuredTempRoot)
+  : process.platform === "win32"
+    ? path.win32.join("C:\\", "tmp", "jiaoyan-runtime-tests")
+    : path.join(os.tmpdir(), "jiaoyan-runtime-tests");
 
 export function expect(condition, message) {
   if (!condition) {
@@ -88,6 +91,14 @@ export function assertTestDatabaseName(databaseName) {
   if (!/(test|ci|integration|tmp|temp)/i.test(databaseName || "")) {
     throw new Error(`unsafe_test_database_name:${databaseName}`);
   }
+}
+
+function assertLoopbackDatabaseUrl(connectionString) {
+  const url = new URL(connectionString);
+  if (!["127.0.0.1", "localhost", "::1"].includes(url.hostname)) {
+    throw new Error(`unsafe_test_database_host:${url.hostname}`);
+  }
+  return url;
 }
 
 export async function readJsonFixture(...segments) {
@@ -196,7 +207,78 @@ async function stopChildProcess(child) {
  * 为需要真实数据库行为的套件启动隔离的一次性 Postgres 集群。
  * 下面的数据库名称断言刻意严格，避免误碰开发者数据。
  */
+async function startManagedTestPostgresCluster(label, adminConnectionString) {
+  const markerDir = path.join(asciiTempRoot, makeRunId(`${label}_managed_pg`));
+  await ensureDir(markerDir);
+  const adminUrl = assertLoopbackDatabaseUrl(adminConnectionString);
+  const adminPool = new Pool({ connectionString: adminUrl.toString() });
+  const createdDatabases = new Set();
+  try {
+    const versionResult = await adminPool.query("select version() as version");
+    const version = versionResult.rows[0]?.version || "unknown";
+    return {
+      host: adminUrl.hostname,
+      port: Number(adminUrl.port || 5432),
+      user: decodeURIComponent(adminUrl.username),
+      password: decodeURIComponent(adminUrl.password),
+      version,
+      databaseDir: markerDir,
+      async createDatabase(prefix = "runtime_test") {
+        const database = `${sanitizeFileName(prefix).toLowerCase()}_${randomUUID().slice(0, 8)}`;
+        assertTestDatabaseName(database);
+        await adminPool.query(`create database "${database}"`);
+        createdDatabases.add(database);
+        const databaseUrl = new URL(adminUrl.toString());
+        databaseUrl.pathname = `/${database}`;
+        return {
+          database,
+          connectionString: databaseUrl.toString(),
+          maskedConnectionString: maskDatabaseUrl(databaseUrl.toString()),
+        };
+      },
+      async adminQuery(sql, params = []) {
+        return adminPool.query(sql, params);
+      },
+      async stop() {
+        // 托管测试服务由 runner 维护；这里只回收本套件创建的数据库，绝不停止或修改服务本身。
+        let cleanupError = null;
+        try {
+          for (const database of [...createdDatabases].reverse()) {
+            assertTestDatabaseName(database);
+            await adminPool.query(
+              "select pg_terminate_backend(pid) from pg_stat_activity where datname = $1 and pid <> pg_backend_pid()",
+              [database]
+            );
+            await adminPool.query(`drop database if exists "${database}"`);
+          }
+        } catch (error) {
+          cleanupError = error;
+        } finally {
+          await adminPool.end().catch((error) => {
+            cleanupError ||= error;
+          });
+          await fsp.rm(markerDir, { recursive: true, force: true }).catch((error) => {
+            cleanupError ||= error;
+          });
+        }
+        if (cleanupError) {
+          throw cleanupError;
+        }
+      },
+    };
+  } catch (error) {
+    await adminPool.end().catch(() => undefined);
+    await fsp.rm(markerDir, { recursive: true, force: true }).catch(() => undefined);
+    throw error;
+  }
+}
+
 export async function startEmbeddedPostgresCluster(label = "runtime_test") {
+  const managedAdminUrl = String(process.env.RUNTIME_TEST_POSTGRES_ADMIN_URL || "").trim();
+  if (managedAdminUrl) {
+    // Windows hosted runner 以管理员身份执行 job，PostgreSQL 服务则以专用普通账号安全运行。
+    return startManagedTestPostgresCluster(label, managedAdminUrl);
+  }
   await ensureDir(asciiTempRoot);
   const databaseDir = path.join(asciiTempRoot, makeRunId(`${label}_pg`));
   const port = await reservePort();

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-02T05:52:59.470Z",
+  "generatedAt": "2026-09-02T06:59:29.870Z",
   "status": "passed",
   "import": {
     "sourceSystems": [
@@ -16,7 +16,7 @@
   },
   "search": {
     "chinesePhraseResults": 40,
-    "elapsedMs": 172.41,
+    "elapsedMs": 120.92,
     "trigramIndex": "idx_question_revision_search_trgm",
     "keysetPagination": "passed",
     "humanReviewProjection": "passed",
