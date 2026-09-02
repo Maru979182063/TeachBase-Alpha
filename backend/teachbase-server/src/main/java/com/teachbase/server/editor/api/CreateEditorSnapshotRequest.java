@@ -13,7 +13,8 @@ import java.util.UUID;
 public record CreateEditorSnapshotRequest(
         @NotNull UUID workspaceId,
         @NotNull UUID actorUserId,
-        @Positive long expectedDraftVersion,
+        @Positive Long expectedDraftVersion,
+        @Positive Long expectedRevisionNo,
         @NotBlank String variantKey,
         @NotBlank String audience,
         int schemaVersion) {

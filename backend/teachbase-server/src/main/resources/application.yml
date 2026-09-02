@@ -44,7 +44,8 @@ teachbase:
       checkpoint-ttl: ${TEACHBASE_EDITOR_CHECKPOINT_TTL:72h}
       checkpoint-max-per-document: ${TEACHBASE_EDITOR_CHECKPOINT_MAX:100}
       mutation-ttl: ${TEACHBASE_EDITOR_MUTATION_TTL:7d}
-      cleanup-delay: ${TEACHBASE_EDITOR_CLEANUP_DELAY:1h}
+      cleanup-batch-size: ${TEACHBASE_EDITOR_CLEANUP_BATCH_SIZE:5000}
+      cleanup-delay: ${TEACHBASE_EDITOR_CLEANUP_DELAY:5m}
   rendering:
     enabled: ${TEACHBASE_RENDER_ENABLED:false}
     worker-id: ${TEACHBASE_RENDER_WORKER_ID:}

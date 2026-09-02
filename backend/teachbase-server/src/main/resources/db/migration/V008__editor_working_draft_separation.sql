@@ -13,6 +13,7 @@ create table teachbase_app.editor_working_draft (
   draft_version bigint not null,
   content_json jsonb not null,
   content_hash char(64) not null,
+  content_bytes integer not null,
   updated_by uuid not null,
   updated_at timestamptz not null default now(),
   constraint uq_editor_working_draft_scope unique (editor_document_id, workspace_id),
@@ -25,7 +26,8 @@ create table teachbase_app.editor_working_draft (
     references teachbase_app.workspace_member(workspace_id, user_id),
   constraint ck_editor_working_draft_version check (draft_version > 0),
   constraint ck_editor_working_draft_content check (jsonb_typeof(content_json) = 'object'),
-  constraint ck_editor_working_draft_hash check (content_hash ~ '^[0-9a-f]{64}$')
+  constraint ck_editor_working_draft_hash check (content_hash ~ '^[0-9a-f]{64}$'),
+  constraint ck_editor_working_draft_bytes check (content_bytes > 0)
 );
 
 create table teachbase_app.editor_autosave_mutation (
@@ -38,6 +40,7 @@ create table teachbase_app.editor_autosave_mutation (
   base_revision_id uuid,
   content_json jsonb not null,
   content_hash char(64) not null,
+  content_bytes integer not null,
   updated_by uuid not null,
   updated_at timestamptz not null,
   expires_at timestamptz not null,
@@ -56,11 +59,25 @@ create table teachbase_app.editor_autosave_mutation (
     expected_draft_version > 0 and resulting_draft_version = expected_draft_version + 1
   ),
   constraint ck_editor_autosave_mutation_content check (jsonb_typeof(content_json) = 'object'),
-  constraint ck_editor_autosave_mutation_hash check (content_hash ~ '^[0-9a-f]{64}$')
+  constraint ck_editor_autosave_mutation_hash check (content_hash ~ '^[0-9a-f]{64}$'),
+  constraint ck_editor_autosave_mutation_bytes check (content_bytes > 0)
 );
 
+-- PostgreSQL 存储参数不参与 jOOQ 类型生成；这里只调整大 JSON 热更新表的 vacuum 触发阈值。
+-- [jooq ignore start]
+alter table teachbase_app.editor_working_draft set (
+  fillfactor = 80,
+  autovacuum_vacuum_scale_factor = 0.02,
+  autovacuum_analyze_scale_factor = 0.05
+);
+alter table teachbase_app.editor_autosave_mutation set (
+  autovacuum_vacuum_scale_factor = 0.02,
+  autovacuum_analyze_scale_factor = 0.05
+);
+-- [jooq ignore stop]
+
 create index idx_editor_autosave_mutation_expiry
-  on teachbase_app.editor_autosave_mutation(expires_at);
+  on teachbase_app.editor_autosave_mutation(expires_at, editor_autosave_mutation_id);
 
 create table teachbase_app.editor_draft_checkpoint (
   editor_draft_checkpoint_id uuid primary key,
@@ -70,6 +87,7 @@ create table teachbase_app.editor_draft_checkpoint (
   checkpoint_kind varchar(32) not null,
   content_json jsonb not null,
   content_hash char(64) not null,
+  content_bytes integer not null,
   created_by uuid not null,
   created_at timestamptz not null default now(),
   expires_at timestamptz not null,
@@ -82,7 +100,8 @@ create table teachbase_app.editor_draft_checkpoint (
     checkpoint_kind in ('autosave', 'conflict_recovery', 'pre_transition')
   ),
   constraint ck_editor_draft_checkpoint_content check (jsonb_typeof(content_json) = 'object'),
-  constraint ck_editor_draft_checkpoint_hash check (content_hash ~ '^[0-9a-f]{64}$')
+  constraint ck_editor_draft_checkpoint_hash check (content_hash ~ '^[0-9a-f]{64}$'),
+  constraint ck_editor_draft_checkpoint_bytes check (content_bytes > 0)
 );
 
 create index idx_editor_draft_checkpoint_retention
@@ -96,21 +115,34 @@ create or replace function teachbase_app.fence_legacy_editor_draft_writer()
 returns trigger
 language plpgsql
 as $$
+declare
+  target_document_id uuid;
+  target_workspace_id uuid;
 begin
+  if tg_op = 'DELETE' then
+    target_document_id := old.editor_document_id;
+    target_workspace_id := old.workspace_id;
+  else
+    target_document_id := new.editor_document_id;
+    target_workspace_id := new.workspace_id;
+  end if;
   if exists (
     select 1
       from teachbase_app.editor_document
-     where editor_document_id = new.editor_document_id
-       and workspace_id = new.workspace_id
+     where editor_document_id = target_document_id
+       and workspace_id = target_workspace_id
        and writer_mode <> 'legacy'
   ) then
-    raise exception 'legacy_editor_writer_fenced' using errcode = '55000';
+    raise exception 'legacy_editor_writer_fenced'
+      using errcode = 'TB001',
+            detail = 'editor_draft is read-only after writer_mode switches to working_draft',
+            hint = 'materialize rollback and switch writer_mode to legacy before using the legacy writer';
   end if;
-  return new;
+  return case when tg_op = 'DELETE' then old else new end;
 end;
 $$;
 
 create trigger trg_fence_legacy_editor_draft_writer
-before insert or update on teachbase_app.editor_draft
+before insert or update or delete on teachbase_app.editor_draft
 for each row execute function teachbase_app.fence_legacy_editor_draft_writer();
 -- [jooq ignore stop]

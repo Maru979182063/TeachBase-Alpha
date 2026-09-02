@@ -3,7 +3,6 @@ package com.teachbase.server.editor.api;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
@@ -15,8 +14,9 @@ import java.util.UUID;
 public record UpdateEditorDraftRequest(
         @NotNull UUID workspaceId,
         @NotNull UUID actorUserId,
-        @Positive long expectedDraftVersion,
-        @NotBlank @Size(max = 128) String clientMutationId,
+        @Positive Long expectedDraftVersion,
+        @Positive Long expectedRevisionNo,
+        @Size(max = 128) String clientMutationId,
         int schemaVersion,
         @NotNull JsonNode masterDoc,
         @NotNull JsonNode versionOverrides) {

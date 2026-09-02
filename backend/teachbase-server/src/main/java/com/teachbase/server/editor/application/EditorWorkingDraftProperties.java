@@ -15,7 +15,8 @@ public record EditorWorkingDraftProperties(
         Duration checkpointInterval,
         Duration checkpointTtl,
         Integer checkpointMaxPerDocument,
-        Duration mutationTtl) {
+        Duration mutationTtl,
+        Integer cleanupBatchSize) {
 
     public Duration effectiveCheckpointInterval() {
         return checkpointInterval == null ? Duration.ofMinutes(2) : checkpointInterval;
@@ -31,5 +32,9 @@ public record EditorWorkingDraftProperties(
 
     public Duration effectiveMutationTtl() {
         return mutationTtl == null ? Duration.ofDays(7) : mutationTtl;
+    }
+
+    public int effectiveCleanupBatchSize() {
+        return cleanupBatchSize == null ? 5000 : cleanupBatchSize;
     }
 }

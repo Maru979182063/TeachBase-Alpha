@@ -39,7 +39,7 @@ public class EditorQuestionPlacementService {
 
     @Transactional
     public EditorDraft place(UUID documentId, PlaceQuestionReferencesRequest request) {
-        if (request.expectedDraftVersion() < 1) {
+        if (request.expectedDraftVersion() == null || request.expectedDraftVersion() < 1) {
             throw new EditorContentValidationException("expected_draft_version_must_be_positive");
         }
         List<String> layers = normalizeLayers(request.targetLayers());

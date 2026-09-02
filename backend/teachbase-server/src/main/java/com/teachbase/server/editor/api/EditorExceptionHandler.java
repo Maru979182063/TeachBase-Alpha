@@ -1,6 +1,7 @@
 package com.teachbase.server.editor.api;
 
 import com.teachbase.server.editor.application.EditorDocumentNotFoundException;
+import com.teachbase.server.editor.application.EditorClientUpgradeRequiredException;
 import com.teachbase.server.editor.application.EditorContentValidationException;
 import com.teachbase.server.editor.application.EditorRevisionConflictException;
 import com.teachbase.server.editor.application.EditorMutationConflictException;
@@ -44,6 +45,14 @@ class EditorExceptionHandler {
     @ExceptionHandler(EditorWriterFencedException.class)
     ProblemDetail writerFenced(EditorWriterFencedException exception) {
         return problem(HttpStatus.SERVICE_UNAVAILABLE, "Editor writer fenced", exception.getMessage());
+    }
+
+    @ExceptionHandler(EditorClientUpgradeRequiredException.class)
+    ProblemDetail clientUpgradeRequired(EditorClientUpgradeRequiredException exception) {
+        var problem = problem(HttpStatus.UPGRADE_REQUIRED, "Editor client upgrade required", exception.getMessage());
+        problem.setProperty("requiredContract", "editor-working-draft-v2");
+        problem.setProperty("requiredFields", new String[] {"expectedDraftVersion", "clientMutationId"});
+        return problem;
     }
 
     private ProblemDetail problem(HttpStatus status, String title, String detail) {

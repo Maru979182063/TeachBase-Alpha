@@ -48,24 +48,28 @@ async function backfillDocument(client, document) {
     masterDoc: row.master_doc_json,
     versionOverrides: row.version_overrides_json,
   };
+  const serializedContent = JSON.stringify(content);
+  const contentBytes = Buffer.byteLength(serializedContent, "utf8");
   await client.query(
     `insert into teachbase_app.editor_working_draft (
        editor_document_id, workspace_id, base_revision_id, draft_version,
-       content_json, content_hash, updated_by, updated_at
-     ) values ($1, $2, $3, 1, $4::jsonb, $5, $6, $7)
+       content_json, content_hash, content_bytes, updated_by, updated_at
+     ) values ($1, $2, $3, 1, $4::jsonb, $5, $6, $7, $8)
      on conflict (editor_document_id) do update set
        base_revision_id = excluded.base_revision_id,
        draft_version = teachbase_app.editor_working_draft.draft_version + 1,
        content_json = excluded.content_json,
        content_hash = excluded.content_hash,
+       content_bytes = excluded.content_bytes,
        updated_by = excluded.updated_by,
        updated_at = excluded.updated_at`,
     [
       document.editor_document_id,
       document.workspace_id,
       row.editor_revision_id,
-      JSON.stringify(content),
+      serializedContent,
       row.content_hash,
+      contentBytes,
       row.updated_by,
       row.updated_at,
     ],
@@ -152,10 +156,12 @@ async function rollbackDocument(client, document) {
   return "materialized_for_rollback";
 }
 
-export async function runMaintenance({ connectionString, mode, documentIds = null }) {
+export async function runMaintenance({ connectionString, mode, documentIds = null, writesDrained = false }) {
   if (!["backfill", "rollback-materialize"].includes(mode)) {
     throw new Error(`unsupported_maintenance_mode:${mode}`);
   }
+  // 旧 writer 不理解 document 行锁；维护前必须由部署编排先排空所有 editor 写流量。
+  if (!writesDrained) throw new Error("editor_write_drain_confirmation_required");
   const pool = new Pool({ connectionString: expectDatabaseUrl(connectionString), max: 2 });
   try {
     const selected = documentIds?.length
@@ -182,6 +188,7 @@ async function main() {
     connectionString: process.env.TEACHBASE_DATABASE_URL,
     mode: process.argv[2],
     documentIds: process.argv.slice(3),
+    writesDrained: process.env.TEACHBASE_EDITOR_WRITES_DRAINED === "true",
   });
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 }

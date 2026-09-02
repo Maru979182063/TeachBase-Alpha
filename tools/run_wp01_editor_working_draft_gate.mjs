@@ -186,6 +186,19 @@ async function main() {
     expect(replay.status === 200 && replay.data.draftVersion === 101, "idempotent_retry_changed_version");
     expect(replay.data.idempotentReplay === true, "idempotent_retry_not_marked");
 
+    const oldClientSave = await fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/draft`, {
+      method: "PUT",
+      body: {
+        ...primary,
+        expectedRevisionNo: 1,
+        schemaVersion: 1,
+        masterDoc: documentContent("legacy-client-must-upgrade"),
+        versionOverrides: [null, null, null],
+      },
+    });
+    expect(oldClientSave.status === 426, `old_client_save_not_explicitly_rejected:${oldClientSave.status}`);
+    expect(oldClientSave.data?.detail === "editor_client_contract_upgrade_required", "old_client_upgrade_problem_invalid");
+
     const concurrentBodies = ["winner-a", "winner-b"].map((label) => ({
       ...primary,
       expectedDraftVersion: 101,
@@ -210,15 +223,24 @@ async function main() {
     );
     expect(foreignRead.status === 404, `cross_workspace_read_not_rejected:${foreignRead.status}`);
 
-    const firstSnapshot = await fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/snapshots`, {
+    const oldClientSnapshot = await fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/snapshots`, {
       method: "POST",
-      body: { ...primary, expectedDraftVersion: 102, variantKey: "common", audience: "teacher", schemaVersion: 1 },
+      body: { ...primary, expectedRevisionNo: 1, variantKey: "common", audience: "teacher", schemaVersion: 1 },
     });
+    expect(oldClientSnapshot.status === 426, `old_client_snapshot_not_explicitly_rejected:${oldClientSnapshot.status}`);
+
+    // 两个真实并发确认必须共用文档行锁串行化，并只冻结一个内容 revision。
+    const [firstSnapshot, secondSnapshot] = await Promise.all([
+      fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/snapshots`, {
+        method: "POST",
+        body: { ...primary, expectedDraftVersion: 102, variantKey: "common", audience: "teacher", schemaVersion: 1 },
+      }),
+      fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/snapshots`, {
+        method: "POST",
+        body: { ...primary, expectedDraftVersion: 102, variantKey: "common", audience: "student", schemaVersion: 1 },
+      }),
+    ]);
     expect(firstSnapshot.status === 201, `first_snapshot_failed:${firstSnapshot.status}`);
-    const secondSnapshot = await fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/snapshots`, {
-      method: "POST",
-      body: { ...primary, expectedDraftVersion: 102, variantKey: "common", audience: "student", schemaVersion: 1 },
-    });
     expect(secondSnapshot.status === 201, `second_snapshot_failed:${secondSnapshot.status}`);
     expect(firstSnapshot.data.editorRevisionId === secondSnapshot.data.editorRevisionId, "same_content_revision_not_reused");
     const frozenRevisionCount = await pool.query(
@@ -294,9 +316,9 @@ async function main() {
     await pool.query(
       `insert into teachbase_app.editor_draft_checkpoint (
          editor_draft_checkpoint_id, editor_document_id, workspace_id, draft_version,
-         checkpoint_kind, content_json, content_hash, created_by, created_at, expires_at
+         checkpoint_kind, content_json, content_hash, content_bytes, created_by, created_at, expires_at
        ) select $2, editor_document_id, workspace_id, draft_version, 'autosave', content_json,
-                content_hash, updated_by, now() + interval '1 second', now() + interval '72 hours'
+                content_hash, content_bytes, updated_by, now() + interval '1 second', now() + interval '72 hours'
            from teachbase_app.editor_working_draft where editor_document_id = $1`,
       [documentId, crypto.randomUUID()],
     );
@@ -311,10 +333,18 @@ async function main() {
     expect(afterCleanup.rows[0].checkpoints === 1, "cleanup_did_not_preserve_latest_recovery_point");
 
     const rollbackHash = afterCleanup.rows[0].draft_hash;
+    let maintenanceFenceRejected = false;
+    try {
+      await runMaintenance({ connectionString: database.connectionString, mode: "rollback-materialize", documentIds: [documentId] });
+    } catch (error) {
+      maintenanceFenceRejected = error.message === "editor_write_drain_confirmation_required";
+    }
+    expect(maintenanceFenceRejected, "maintenance_missing_write_drain_fence");
     const rollback = await runMaintenance({
       connectionString: database.connectionString,
       mode: "rollback-materialize",
       documentIds: [documentId],
+      writesDrained: true,
     });
     expect(rollback.results[0].outcome === "materialized_for_rollback", "rollback_materialization_failed");
     const rollbackState = await pool.query(
@@ -331,6 +361,7 @@ async function main() {
       connectionString: database.connectionString,
       mode: "backfill",
       documentIds: [documentId],
+      writesDrained: true,
     });
     expect(reenabled.results[0].outcome === "migrated", "backfill_after_rollback_failed");
     const reenabledHash = await pool.query(
@@ -351,6 +382,43 @@ async function main() {
     );
     expect(forbiddenTables.rowCount === 0, `forbidden_production_tables:${JSON.stringify(forbiddenTables.rows)}`);
 
+    // 灰度切换关闭新 writer 时，旧读合同仍可用，但任何新写入口必须 fail closed。
+    await stopChild(child);
+    const fencedPort = await reservePort();
+    const fencedBaseUrl = `http://127.0.0.1:${fencedPort}`;
+    const fencedLogs = { stdout: [], stderr: [] };
+    child = spawn("java", ["-jar", jarPath], {
+      cwd: serverRoot,
+      env: {
+        ...process.env,
+        TEACHBASE_DATABASE_URL: `jdbc:postgresql://127.0.0.1:${cluster.port}/${database.database}`,
+        TEACHBASE_DATABASE_USER: decodeURIComponent(databaseUrl.username),
+        TEACHBASE_DATABASE_PASSWORD: decodeURIComponent(databaseUrl.password),
+        TEACHBASE_DATABASE_POOL_SIZE: "8",
+        TEACHBASE_SERVER_PORT: String(fencedPort),
+        TEACHBASE_RENDER_ENABLED: "false",
+        TEACHBASE_EDITOR_WORKING_DRAFT_ENABLED: "false",
+        TEACHBASE_EDITOR_LAZY_MIGRATION_ENABLED: "false",
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    child.stdout.on("data", (chunk) => fencedLogs.stdout.push(String(chunk)));
+    child.stderr.on("data", (chunk) => fencedLogs.stderr.push(String(chunk)));
+    await waitForHealth(fencedBaseUrl, child, fencedLogs);
+    const fencedWrite = await fetchJson(`${fencedBaseUrl}/api/v1/editor/documents`, {
+      method: "POST",
+      body: {
+        ...primary,
+        documentKind: "synchronized_handout",
+        title: "must remain fenced",
+        schemaVersion: 1,
+        masterDoc: documentContent("fenced"),
+        versionOverrides: [null, null, null],
+      },
+    });
+    expect(fencedWrite.status === 503 && fencedWrite.data?.detail === "editor_writer_fenced",
+      `feature_flag_writer_not_fenced:${fencedWrite.status}`);
+
     const checks = {
       autosave100CreatesZeroRevisions: true,
       sameMutationDoesNotAdvanceVersion: true,
@@ -362,6 +430,7 @@ async function main() {
       repeatedBackfillIsIdempotent: true,
       backfillAndSaveRacePreservesLastSuccess: true,
       dirtyPreviewCreatesExactlyOneRevision: true,
+      concurrentPreviewCreatesExactlyOneRevision: true,
       unchangedPreviewReusesRevision: true,
       snapshotPinsExactRevisionId: true,
       oldSnapshotHashRemainsFrozen: true,
@@ -369,6 +438,9 @@ async function main() {
       crossWorkspaceReadFails: true,
       forbiddenProductionTablesAbsent: true,
       legacyWriterIsDatabaseFenced: true,
+      oldClientReceivesExplicitUpgradeResponse: true,
+      disabledFeatureFlagFencesWriter: true,
+      maintenanceRequiresWriteDrainConfirmation: true,
     };
     report = {
       schemaVersion: 1,

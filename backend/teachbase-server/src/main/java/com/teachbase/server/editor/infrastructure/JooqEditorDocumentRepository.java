@@ -82,12 +82,14 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
         insertVariant(documentId, command.workspaceId(), EditorVariantContract.ADVANCED, (short) 1, now);
         insertVariant(documentId, command.workspaceId(), EditorVariantContract.COMMON, (short) 2, now);
         JsonNode envelope = contentEnvelope(content);
+        int contentBytes = contentBytes(envelope);
         database.insertInto(EDITOR_WORKING_DRAFT)
                 .set(EDITOR_WORKING_DRAFT.EDITOR_DOCUMENT_ID, documentId)
                 .set(EDITOR_WORKING_DRAFT.WORKSPACE_ID, command.workspaceId())
                 .set(EDITOR_WORKING_DRAFT.DRAFT_VERSION, 1L)
                 .set(EDITOR_WORKING_DRAFT.CONTENT_JSON, json(envelope))
                 .set(EDITOR_WORKING_DRAFT.CONTENT_HASH, content.contentHash())
+                .set(EDITOR_WORKING_DRAFT.CONTENT_BYTES, contentBytes)
                 .set(EDITOR_WORKING_DRAFT.UPDATED_BY, command.actorUserId())
                 .set(EDITOR_WORKING_DRAFT.UPDATED_AT, now)
                 .execute();
@@ -99,6 +101,7 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
     @Override
     public EditorDraft update(UpdateEditorDraftCommand command, ValidatedEditorContent content) {
         JsonNode envelope = contentEnvelope(content);
+        int contentBytes = contentBytes(envelope);
         Optional<EditorDraft> replay = findMutation(command, content.contentHash());
         if (replay.isPresent()) return replay.get();
 
@@ -114,6 +117,7 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
                 .set(EDITOR_WORKING_DRAFT.DRAFT_VERSION, nextVersion)
                 .set(EDITOR_WORKING_DRAFT.CONTENT_JSON, json(envelope))
                 .set(EDITOR_WORKING_DRAFT.CONTENT_HASH, content.contentHash())
+                .set(EDITOR_WORKING_DRAFT.CONTENT_BYTES, contentBytes)
                 .set(EDITOR_WORKING_DRAFT.UPDATED_BY, command.actorUserId())
                 .set(EDITOR_WORKING_DRAFT.UPDATED_AT, now)
                 .where(EDITOR_WORKING_DRAFT.EDITOR_DOCUMENT_ID.eq(command.editorDocumentId()))
@@ -146,11 +150,12 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
                 .set(EDITOR_AUTOSAVE_MUTATION.BASE_REVISION_ID, baseRevisionId)
                 .set(EDITOR_AUTOSAVE_MUTATION.CONTENT_JSON, json(envelope))
                 .set(EDITOR_AUTOSAVE_MUTATION.CONTENT_HASH, content.contentHash())
+                .set(EDITOR_AUTOSAVE_MUTATION.CONTENT_BYTES, contentBytes)
                 .set(EDITOR_AUTOSAVE_MUTATION.UPDATED_BY, command.actorUserId())
                 .set(EDITOR_AUTOSAVE_MUTATION.UPDATED_AT, now)
                 .set(EDITOR_AUTOSAVE_MUTATION.EXPIRES_AT, now.plus(properties.effectiveMutationTtl()))
                 .execute();
-        maybeCheckpoint(command, nextVersion, envelope, content.contentHash(), now);
+        maybeCheckpoint(command, nextVersion, envelope, content.contentHash(), contentBytes, now);
         database.update(EDITOR_DOCUMENT)
                 .set(EDITOR_DOCUMENT.UPDATED_BY, command.actorUserId())
                 .set(EDITOR_DOCUMENT.UPDATED_AT, now)
@@ -193,6 +198,7 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
                 legacy.get(EDITOR_REVISION.SCHEMA_VERSION),
                 parse(legacy.get(EDITOR_REVISION.MASTER_DOC_JSON)),
                 parse(legacy.get(EDITOR_REVISION.VERSION_OVERRIDES_JSON)));
+        int contentBytes = contentBytes(envelope);
         Long existingVersion = database.select(EDITOR_WORKING_DRAFT.DRAFT_VERSION)
                 .from(EDITOR_WORKING_DRAFT)
                 .where(EDITOR_WORKING_DRAFT.EDITOR_DOCUMENT_ID.eq(editorDocumentId))
@@ -206,6 +212,7 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
                     .set(EDITOR_WORKING_DRAFT.DRAFT_VERSION, migratedVersion)
                     .set(EDITOR_WORKING_DRAFT.CONTENT_JSON, json(envelope))
                     .set(EDITOR_WORKING_DRAFT.CONTENT_HASH, legacy.get(EDITOR_REVISION.CONTENT_HASH))
+                    .set(EDITOR_WORKING_DRAFT.CONTENT_BYTES, contentBytes)
                     .set(EDITOR_WORKING_DRAFT.UPDATED_BY, legacy.get(EDITOR_DRAFT.UPDATED_BY))
                     .set(EDITOR_WORKING_DRAFT.UPDATED_AT, legacy.get(EDITOR_DRAFT.UPDATED_AT))
                     .execute();
@@ -216,6 +223,7 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
                     .set(EDITOR_WORKING_DRAFT.DRAFT_VERSION, migratedVersion)
                     .set(EDITOR_WORKING_DRAFT.CONTENT_JSON, json(envelope))
                     .set(EDITOR_WORKING_DRAFT.CONTENT_HASH, legacy.get(EDITOR_REVISION.CONTENT_HASH))
+                    .set(EDITOR_WORKING_DRAFT.CONTENT_BYTES, contentBytes)
                     .set(EDITOR_WORKING_DRAFT.UPDATED_BY, legacy.get(EDITOR_DRAFT.UPDATED_BY))
                     .set(EDITOR_WORKING_DRAFT.UPDATED_AT, legacy.get(EDITOR_DRAFT.UPDATED_AT))
                     .where(EDITOR_WORKING_DRAFT.EDITOR_DOCUMENT_ID.eq(editorDocumentId))
@@ -331,9 +339,11 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
 
     @Override
     public int cleanExpiredRecoveryState() {
-        int mutations = database.deleteFrom(EDITOR_AUTOSAVE_MUTATION)
-                .where(EDITOR_AUTOSAVE_MUTATION.EXPIRES_AT.lt(OffsetDateTime.now()))
-                .execute();
+        int mutations = database.execute(
+                "delete from teachbase_app.editor_autosave_mutation where editor_autosave_mutation_id in ("
+                        + "select editor_autosave_mutation_id from teachbase_app.editor_autosave_mutation "
+                        + "where expires_at < now() order by expires_at, editor_autosave_mutation_id limit ?)",
+                properties.effectiveCleanupBatchSize());
         int checkpoints = database.execute(
                 "delete from teachbase_app.editor_draft_checkpoint where editor_draft_checkpoint_id in ("
                         + "select editor_draft_checkpoint_id from ("
@@ -425,6 +435,7 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
             long draftVersion,
             JsonNode content,
             String contentHash,
+            int contentBytes,
             OffsetDateTime now) {
         OffsetDateTime threshold = now.minus(properties.effectiveCheckpointInterval());
         boolean recentExists = database.fetchExists(
@@ -442,6 +453,7 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
                 .set(EDITOR_DRAFT_CHECKPOINT.CHECKPOINT_KIND, "autosave")
                 .set(EDITOR_DRAFT_CHECKPOINT.CONTENT_JSON, json(content))
                 .set(EDITOR_DRAFT_CHECKPOINT.CONTENT_HASH, contentHash)
+                .set(EDITOR_DRAFT_CHECKPOINT.CONTENT_BYTES, contentBytes)
                 .set(EDITOR_DRAFT_CHECKPOINT.CREATED_BY, command.actorUserId())
                 .set(EDITOR_DRAFT_CHECKPOINT.CREATED_AT, now)
                 .set(EDITOR_DRAFT_CHECKPOINT.EXPIRES_AT, now.plus(properties.effectiveCheckpointTtl()))
@@ -569,6 +581,14 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
     private JSON json(JsonNode value) {
         try {
             return JSON.valueOf(objectMapper.writeValueAsString(value));
+        } catch (JsonProcessingException exception) {
+            throw new IllegalStateException("editor_json_not_serializable", exception);
+        }
+    }
+
+    private int contentBytes(JsonNode value) {
+        try {
+            return objectMapper.writeValueAsBytes(value).length;
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("editor_json_not_serializable", exception);
         }
