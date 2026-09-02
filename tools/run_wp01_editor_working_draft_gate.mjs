@@ -489,6 +489,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  process.stderr.write(`${error.stack || error.message}\n`);
+  const detail = error instanceof Error ? error.stack || error.message : `non_error_rejection:${String(error)}`;
+  process.stderr.write(`${detail}\n`);
   process.exitCode = 1;
 });

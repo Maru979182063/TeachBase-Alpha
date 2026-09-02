@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import net from "node:net";
+import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -20,7 +21,9 @@ const __dirname = path.dirname(__filename);
 
 export const workspaceRoot = path.resolve(__dirname, "..", "..");
 export const reportRoot = path.join(workspaceRoot, "outputs", "production_readiness");
-const asciiTempRoot = path.win32.join("C:\\", "tmp", "jiaoyan-runtime-tests");
+const asciiTempRoot = process.platform === "win32"
+  ? path.win32.join("C:\\", "tmp", "jiaoyan-runtime-tests")
+  : path.join(os.tmpdir(), "jiaoyan-runtime-tests");
 
 export function expect(condition, message) {
   if (!condition) {
@@ -195,10 +198,15 @@ async function stopChildProcess(child) {
  */
 export async function startEmbeddedPostgresCluster(label = "runtime_test") {
   await ensureDir(asciiTempRoot);
-  const databaseDir = path.win32.join(asciiTempRoot, makeRunId(`${label}_pg`));
+  const databaseDir = path.join(asciiTempRoot, makeRunId(`${label}_pg`));
   const port = await reservePort();
   const user = "postgres";
   const password = `pw_${randomUUID().slice(0, 10)}`;
+  const diagnostics = [];
+  const recordDiagnostic = (value) => {
+    const message = value instanceof Error ? value.stack || value.message : String(value ?? "<undefined>");
+    diagnostics.push(message);
+  };
   const pg = new EmbeddedPostgres({
     databaseDir,
     port,
@@ -206,11 +214,17 @@ export async function startEmbeddedPostgresCluster(label = "runtime_test") {
     password,
     persistent: false,
     initdbFlags: ["--locale=C"],
-    onLog: () => undefined,
-    onError: () => undefined,
+    onLog: recordDiagnostic,
+    onError: recordDiagnostic,
   });
-  await pg.initialise();
-  await pg.start();
+  try {
+    await pg.initialise();
+    await pg.start();
+  } catch (error) {
+    // CI 启动失败时必须保留 initdb/postgres 的真实诊断，不能再抛出无信息的 undefined。
+    const reason = error instanceof Error ? error.stack || error.message : String(error ?? "<undefined>");
+    throw new Error(`embedded_postgres_start_failed:${reason}\n${diagnostics.slice(-20).join("\n")}`);
+  }
 
   const adminPool = new Pool({
     host: "127.0.0.1",
