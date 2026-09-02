@@ -11,7 +11,6 @@ import com.teachbase.server.question.api.QuestionRevisionDirectory;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -25,8 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class EditorQuestionPlacementService {
 
-    private static final Map<String, String> LAYER_LABELS = Map.of(
-            "basic", "基础版", "advanced", "进阶版", "common", "常规版");
     private final EditorDocumentService documents;
     private final QuestionRevisionDirectory revisions;
     private final EditorQuestionReferenceRepository referenceIndex;
@@ -104,7 +101,7 @@ public class EditorQuestionPlacementService {
         attrs.put("displayMode", mode);
         attrs.put("showAnswer", settings.showAnswer());
         attrs.put("showAnalysis", settings.showAnalysis());
-        attrs.put("targetLayers", String.join(",", layers.stream().map(LAYER_LABELS::get).toList()));
+        attrs.put("targetLayers", String.join(",", layers));
         attrs.put("studentMarkdown", markdown(question, false, false, false));
         attrs.put("teacherMarkdown", markdown(
                 question, true, settings.showAnswer(), settings.showAnalysis()));
@@ -142,7 +139,7 @@ public class EditorQuestionPlacementService {
 
     private List<String> normalizeLayers(List<String> requested) {
         var result = requested.stream().map(String::trim).distinct().toList();
-        if (result.isEmpty() || result.stream().anyMatch(layer -> !LAYER_LABELS.containsKey(layer))) {
+        if (result.isEmpty() || result.stream().anyMatch(layer -> !EditorVariantContract.isKey(layer))) {
             throw new EditorContentValidationException("question_target_layers_invalid");
         }
         return result;

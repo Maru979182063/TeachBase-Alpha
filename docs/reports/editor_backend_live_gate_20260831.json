@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-01T08:26:04.789Z",
+  "generatedAt": "2026-09-02T04:02:34.054Z",
   "status": "passed",
   "database": {
     "schema": "teachbase_app",
@@ -20,7 +20,13 @@
     "variants": 3,
     "revisions": 2,
     "immutableSnapshots": 1,
-    "variantProjectionOwnedByBackend": true
+    "variantProjectionOwnedByBackend": true,
+    "canonicalVariantKeysPersisted": true,
+    "commonDisplayName": "常用版",
+    "legacyCommonLabelsReadable": [
+      "常用版",
+      "常规版"
+    ]
   },
   "concurrency": {
     "simultaneousUpdates": 2,

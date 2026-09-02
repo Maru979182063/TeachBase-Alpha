@@ -78,6 +78,7 @@ function editorDocument(label) {
       },
       { type: "questionReference", attrs: { questionId: "basic-only", revisionId: "revision-1", targetLayers: "基础版" } },
       { type: "questionReference", attrs: { questionId: "common-only", revisionId: "revision-1", targetLayers: "常规版" } },
+      { type: "questionReference", attrs: { questionId: "common-standard", revisionId: "revision-1", targetLayers: "常用版" } },
       { type: "questionReference", attrs: { questionId: "all-variants", revisionId: "revision-1", targetLayers: "基础版,进阶版,常规版" } },
     ],
   };
@@ -168,6 +169,19 @@ async function main() {
     );
     expect(loaded.status === 200 && loaded.data?.revisionNo === 2, "saved_draft_not_readable");
     expect(loaded.headers.etag === '"revision-2"', "saved_draft_etag_invalid");
+    const persistedLayerValues = loaded.data.masterDoc.content
+      .filter((node) => node.type === "questionReference")
+      .map((node) => node.attrs.targetLayers);
+    expect(
+      JSON.stringify(persistedLayerValues) === JSON.stringify(["basic", "common", "common", "basic,advanced,common"]),
+      `new_target_layers_not_canonical_keys:${JSON.stringify(persistedLayerValues)}`,
+    );
+
+    // 模拟尚未迁移的历史 revision，确认 projector 能同时读取“常用版”和旧称“常规版”。
+    await pool.query(
+      `update teachbase_app.editor_revision set master_doc_json = $1::jsonb where editor_revision_id = $2`,
+      [JSON.stringify(editorDocument("revision-2:")), loaded.data.editorRevisionId],
+    );
 
     const snapshot = await fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/snapshots`, {
       method: "POST",
@@ -187,7 +201,7 @@ async function main() {
       .filter((node) => node.type === "questionReference")
       .map((node) => node.attrs.questionId);
     expect(
-      JSON.stringify(projectedQuestionIds) === JSON.stringify(["common-only", "all-variants"]),
+      JSON.stringify(projectedQuestionIds) === JSON.stringify(["common-only", "common-standard", "all-variants"]),
       `backend_variant_projection_invalid:${JSON.stringify(projectedQuestionIds)}`,
     );
 
@@ -262,6 +276,11 @@ async function main() {
     expect(counts.rows[0].snapshots === 1, "editor_snapshot_count_invalid");
     expect(counts.rows[0].exports === 1, "export_request_count_invalid");
     expect(counts.rows[0].audits === 2, "editor_document_audit_count_invalid");
+    const commonVariant = await pool.query(
+      `select display_name from teachbase_app.editor_variant where editor_document_id = $1 and variant_key = 'common'`,
+      [documentId],
+    );
+    expect(commonVariant.rows[0]?.display_name === "常用版", "common_display_name_not_standardized");
     const aggregateAudits = await pool.query(
       `select aggregate_type, count(*)::int as count
          from teachbase_app.audit_event
@@ -287,6 +306,9 @@ async function main() {
         revisions: counts.rows[0].revisions,
         immutableSnapshots: counts.rows[0].snapshots,
         variantProjectionOwnedByBackend: true,
+        canonicalVariantKeysPersisted: true,
+        commonDisplayName: commonVariant.rows[0].display_name,
+        legacyCommonLabelsReadable: ["常用版", "常规版"],
       },
       concurrency: { simultaneousUpdates: 2, successfulUpdates: 1, conflicts: 1, finalRevisionNo: 2 },
       export: {

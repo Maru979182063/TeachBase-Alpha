@@ -338,6 +338,10 @@ async function main() {
     const placedNodes = placed.data.masterDoc.content.filter((node) => node.type === "questionReference");
     expect(placedNodes.length === 2, "editor_placement_node_count");
     expect(placedNodes.every((node) => node.attrs.teacherMarkdown && node.attrs.studentMarkdown), "editor_reference_not_hydrated");
+    expect(
+      placedNodes.every((node) => node.attrs.targetLayers === "basic,advanced,common"),
+      "editor_reference_target_layers_not_keys",
+    );
 
     const editorSnapshot = await fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/snapshots`, {
       method: "POST",
@@ -401,6 +405,7 @@ async function main() {
         editorRevisionsCreated: 1,
         hydratedTeacherAndStudentContent: "passed",
         frozenSnapshotContainsQuestionContent: "passed",
+        targetLayersPersistStableKeys: "passed",
       },
       portability: {
         reportUsesAbsolutePathsAsInputContract: false,

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-02T04:02:01.523Z",
+  "status": "passed",
+  "isolation": {
+    "schema": "teachbase_phase0_spike",
+    "productionMigrationsChanged": false
+  },
+  "workingDraft": {
+    "concurrentSaves": 2,
+    "successfulSaves": 1,
+    "permanentRevisionsAfterAutosave": 1,
+    "checkpointRetentionHours": 72
+  },
+  "knowledgeDocument": {
+    "lessonKey": "math.g8.term1.lesson_012",
+    "revisions": 2,
+    "stableMovedSectionIdentity": true,
+    "splitLineageEdges": 2,
+    "oldRevisionUnchanged": true
+  },
+  "questionGroup": {
+    "compositionItems": 3,
+    "exactQuestionRevisionsPinned": true,
+    "concurrentNextRevisionWinners": 1
+  },
+  "cleanup": "passed"
+}

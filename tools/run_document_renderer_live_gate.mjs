@@ -121,12 +121,12 @@ function editorDocument({ hydrated = true } = {}) {
         attrs: {
           questionId: "question-1",
           revisionId: "revision-1",
-          targetLayers: "常规版",
+          targetLayers: "common",
           teacherMarkdown: "**原题**：若 $x=2$，求 $f(x)$。\n\n**答案**：$\\frac{5}{3}$。",
           studentMarkdown: "**原题**：若 $x=2$，求 $f(x)$。",
         },
       }
-    : { type: "questionReference", attrs: { questionId: "unresolved", targetLayers: "常规版" } });
+    : { type: "questionReference", attrs: { questionId: "unresolved", targetLayers: "common" } });
   return { type: "doc", content };
 }
 
@@ -399,6 +399,7 @@ async function main() {
       renderer: {
         sourceSchemaVersion: 1,
         adapterVersion: "tiptap-pandoc-v1",
+        variantKeyContract: "common",
         pandocVersion: "3.11",
         typstVersion: "0.15.1",
         htmlMathMlVerified: true,

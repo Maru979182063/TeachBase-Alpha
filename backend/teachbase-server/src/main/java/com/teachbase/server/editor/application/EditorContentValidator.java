@@ -38,16 +38,18 @@ public class EditorContentValidator {
         if (schemaVersion != 1) {
             throw new EditorContentValidationException("unsupported_editor_schema_version");
         }
-        validateDocument(masterDoc);
+        JsonNode normalizedMaster = normalizeTargetLayers(masterDoc);
+        validateDocument(normalizedMaster);
         if (versionOverrides == null || !versionOverrides.isArray() || versionOverrides.size() != 3) {
             throw new EditorContentValidationException("version_overrides_must_have_three_entries");
         }
-        for (JsonNode override : versionOverrides) {
+        JsonNode normalizedOverrides = normalizeTargetLayers(versionOverrides);
+        for (JsonNode override : normalizedOverrides) {
             if (!override.isNull()) validateDocument(override);
         }
 
-        JsonNode canonicalMaster = canonicalize(masterDoc);
-        JsonNode canonicalOverrides = canonicalize(versionOverrides);
+        JsonNode canonicalMaster = canonicalize(normalizedMaster);
+        JsonNode canonicalOverrides = canonicalize(normalizedOverrides);
         try {
             String masterJson = objectMapper.writeValueAsString(canonicalMaster);
             String overridesJson = objectMapper.writeValueAsString(canonicalOverrides);
@@ -96,6 +98,9 @@ public class EditorContentValidator {
         if (type.equals("mindMap")) validateMindMap(attrs);
         if (type.equals("image")) validateImageSource(attrs.path("src").asText());
         if (type.equals("knowledgeReference")) validateKnowledgeBlankRanges(attrs.get("studentBlankRanges"));
+        if (type.equals("questionReference") && attrs.has("targetLayers") && !attrs.path("targetLayers").isTextual()) {
+            throw new EditorContentValidationException("question_target_layers_invalid");
+        }
         validateMarks(node.path("marks"));
         if (attrs.isObject()) {
             attrs.fields().forEachRemaining(entry -> {
@@ -211,6 +216,29 @@ public class EditorContentValidator {
         if (markdown.length() > 2_000_000 || markdown.indexOf('\0') >= 0) {
             throw new EditorContentValidationException("markdown_source_invalid");
         }
+    }
+
+    private JsonNode normalizeTargetLayers(JsonNode node) {
+        // 历史文档可能保存中文展示名；新 revision 在校验阶段统一写回稳定 key，
+        // projector 仍保留对未迁移旧 revision 的读取兼容。
+        if (node == null) return objectMapper.nullNode();
+        if (node.isObject()) {
+            ObjectNode result = objectMapper.createObjectNode();
+            node.fields().forEachRemaining(entry -> {
+                if (entry.getKey().equals("targetLayers") && entry.getValue().isTextual()) {
+                    result.put(entry.getKey(), EditorVariantContract.canonicalTargetLayers(entry.getValue().asText()));
+                } else {
+                    result.set(entry.getKey(), normalizeTargetLayers(entry.getValue()));
+                }
+            });
+            return result;
+        }
+        if (node.isArray()) {
+            ArrayNode result = objectMapper.createArrayNode();
+            node.forEach(item -> result.add(normalizeTargetLayers(item)));
+            return result;
+        }
+        return node.deepCopy();
     }
 
     private JsonNode canonicalize(JsonNode node) {

@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.ArrayList;
-import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -28,22 +26,24 @@ public class EditorVariantProjector {
         if (draft.documentKind().equals("independent_question_pack")) {
             return draft.masterDoc().deepCopy();
         }
-        int index = variantIndex(variantKey);
+        int index = EditorVariantContract.overrideIndex(variantKey);
         JsonNode override = draft.versionOverrides().get(index);
         if (override != null && !override.isNull()) return override.deepCopy();
-        JsonNode projected = projectNode(draft.masterDoc(), variantLabel(variantKey));
+        JsonNode projected = projectNode(draft.masterDoc(), variantKey);
         if (projected == null) throw new EditorContentValidationException("variant_projection_empty");
         return projected;
     }
 
-    private JsonNode projectNode(JsonNode source, String variantLabel) {
+    private JsonNode projectNode(JsonNode source, String variantKey) {
         if (!source.isObject()) return source.deepCopy();
         ObjectNode node = source.deepCopy();
         if ("questionReference".equals(node.path("type").asText())) {
             // 父引用与每个被选中的子题可以属于不同展示层。
             // 必须一起过滤，避免空的组合题泄漏到最终生成的讲义中。
             ObjectNode attrs = node.withObject("/attrs");
-            if (!targetLayers(attrs.path("targetLayers").asText()).contains(variantLabel)) return null;
+            if (!EditorVariantContract.targetLayerKeys(attrs.path("targetLayers").asText()).contains(variantKey)) {
+                return null;
+            }
             if ("children".equals(attrs.path("questionUsageMode").asText())) {
                 JsonNode selectedSource = parseJsonAttribute(attrs.get("selectedChildIds"), objectMapper.createArrayNode());
                 JsonNode configs = parseJsonAttribute(attrs.get("childConfigs"), objectMapper.createObjectNode());
@@ -52,7 +52,7 @@ public class EditorVariantProjector {
                     String id = childId.asText();
                     String childLayers = configs.path(id).path("targetLayers")
                             .asText(attrs.path("targetLayers").asText());
-                    if (targetLayers(childLayers).contains(variantLabel)) selected.add(id);
+                    if (EditorVariantContract.targetLayerKeys(childLayers).contains(variantKey)) selected.add(id);
                 }
                 if (selected.isEmpty()) return null;
                 if (attrs.path("selectedChildIds").isTextual()) {
@@ -70,7 +70,7 @@ public class EditorVariantProjector {
         if (content != null && content.isArray()) {
             ArrayNode projectedChildren = objectMapper.createArrayNode();
             for (JsonNode child : content) {
-                JsonNode projectedChild = projectNode(child, variantLabel);
+                JsonNode projectedChild = projectNode(child, variantKey);
                 if (projectedChild != null) projectedChildren.add(projectedChild);
             }
             node.set("content", projectedChildren);
@@ -88,30 +88,4 @@ public class EditorVariantProjector {
         }
     }
 
-    private List<String> targetLayers(String value) {
-        String source = value == null || value.isBlank() ? "基础版,进阶版,常规版" : value;
-        List<String> result = new ArrayList<>();
-        for (String item : source.split(",")) {
-            if (!item.trim().isBlank()) result.add(item.trim());
-        }
-        return result;
-    }
-
-    private int variantIndex(String key) {
-        return switch (key) {
-            case "basic" -> 0;
-            case "advanced" -> 1;
-            case "common" -> 2;
-            default -> throw new EditorContentValidationException("unsupported_editor_variant");
-        };
-    }
-
-    private String variantLabel(String key) {
-        return switch (key) {
-            case "basic" -> "基础版";
-            case "advanced" -> "进阶版";
-            case "common" -> "常规版";
-            default -> throw new EditorContentValidationException("unsupported_editor_variant");
-        };
-    }
 }

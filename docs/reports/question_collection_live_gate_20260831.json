@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-01T08:26:30.248Z",
+  "generatedAt": "2026-09-02T04:03:05.441Z",
   "status": "passed",
   "import": {
     "sourceSystems": [
@@ -16,7 +16,7 @@
   },
   "search": {
     "chinesePhraseResults": 40,
-    "elapsedMs": 150.65,
+    "elapsedMs": 176.02,
     "trigramIndex": "idx_question_revision_search_trgm",
     "keysetPagination": "passed",
     "humanReviewProjection": "passed",
@@ -37,7 +37,8 @@
     "batchQuestions": 2,
     "editorRevisionsCreated": 1,
     "hydratedTeacherAndStudentContent": "passed",
-    "frozenSnapshotContainsQuestionContent": "passed"
+    "frozenSnapshotContainsQuestionContent": "passed",
+    "targetLayersPersistStableKeys": "passed"
   },
   "portability": {
     "reportUsesAbsolutePathsAsInputContract": false

@@ -16,6 +16,7 @@ import com.teachbase.server.editor.application.EditorDocumentRepository;
 import com.teachbase.server.editor.application.EditorDraft;
 import com.teachbase.server.editor.application.EditorRevisionConflictException;
 import com.teachbase.server.editor.application.EditorSnapshot;
+import com.teachbase.server.editor.application.EditorVariantContract;
 import com.teachbase.server.editor.application.UpdateEditorDraftCommand;
 import com.teachbase.server.editor.application.ValidatedEditorContent;
 import java.time.OffsetDateTime;
@@ -58,9 +59,9 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
                 .set(EDITOR_DOCUMENT.CREATED_AT, now)
                 .set(EDITOR_DOCUMENT.UPDATED_AT, now)
                 .execute();
-        insertVariant(documentId, command.workspaceId(), "basic", "基础版", (short) 0, now);
-        insertVariant(documentId, command.workspaceId(), "advanced", "进阶版", (short) 1, now);
-        insertVariant(documentId, command.workspaceId(), "common", "常用版", (short) 2, now);
+        insertVariant(documentId, command.workspaceId(), EditorVariantContract.BASIC, (short) 0, now);
+        insertVariant(documentId, command.workspaceId(), EditorVariantContract.ADVANCED, (short) 1, now);
+        insertVariant(documentId, command.workspaceId(), EditorVariantContract.COMMON, (short) 2, now);
         insertRevision(documentId, command.workspaceId(), revisionId, 1L, command.actorUserId(), content, now);
         database.insertInto(EDITOR_DRAFT)
                 .set(EDITOR_DRAFT.EDITOR_DOCUMENT_ID, documentId)
@@ -211,12 +212,12 @@ class JooqEditorDocumentRepository implements EditorDocumentRepository {
                 command.audience(), command.schemaVersion(), frozen, projectedContent.contentHash());
     }
 
-    private void insertVariant(UUID documentId, UUID workspaceId, String key, String name, short order, OffsetDateTime now) {
+    private void insertVariant(UUID documentId, UUID workspaceId, String key, short order, OffsetDateTime now) {
         database.insertInto(EDITOR_VARIANT)
                 .set(EDITOR_VARIANT.EDITOR_DOCUMENT_ID, documentId)
                 .set(EDITOR_VARIANT.WORKSPACE_ID, workspaceId)
                 .set(EDITOR_VARIANT.VARIANT_KEY, key)
-                .set(EDITOR_VARIANT.DISPLAY_NAME, name)
+                .set(EDITOR_VARIANT.DISPLAY_NAME, EditorVariantContract.displayName(key))
                 .set(EDITOR_VARIANT.SORT_ORDER, order)
                 .set(EDITOR_VARIANT.CREATED_AT, now)
                 .execute();

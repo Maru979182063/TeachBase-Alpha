@@ -13,12 +13,14 @@ class EditorVariantProjectorTest {
     private final EditorVariantProjector projector = new EditorVariantProjector(objectMapper);
 
     @Test
-    void preservesPrototypeVariantOrderAndUsesFullOverride() throws Exception {
+    void projectsCanonicalKeysAndBothLegacyCommonLabels() throws Exception {
         JsonNode master = objectMapper.readTree("""
                 {"type":"doc","content":[
-                  {"type":"questionReference","attrs":{"questionId":"basic","targetLayers":"基础版"}},
-                  {"type":"questionReference","attrs":{"questionId":"common","targetLayers":"常规版"}},
-                  {"type":"questionReference","attrs":{"questionId":"all","targetLayers":"基础版,进阶版,常规版"}}
+                  {"type":"questionReference","attrs":{"questionId":"basic","targetLayers":"basic"}},
+                  {"type":"questionReference","attrs":{"questionId":"common-key","targetLayers":"common"}},
+                  {"type":"questionReference","attrs":{"questionId":"common-standard-label","targetLayers":"常用版"}},
+                  {"type":"questionReference","attrs":{"questionId":"common-legacy-label","targetLayers":"常规版"}},
+                  {"type":"questionReference","attrs":{"questionId":"all","targetLayers":"basic,advanced,common"}}
                 ]}
                 """);
         JsonNode overrides = objectMapper.readTree("""
@@ -34,7 +36,8 @@ class EditorVariantProjectorTest {
 
         assertThat(questionIds(basic)).containsExactly("basic", "all");
         assertThat(advanced.at("/content/0/content/0/text").asText()).isEqualTo("advanced override");
-        assertThat(questionIds(common)).containsExactly("common", "all");
+        assertThat(questionIds(common)).containsExactly(
+                "common-key", "common-standard-label", "common-legacy-label", "all");
     }
 
     private java.util.List<String> questionIds(JsonNode document) {

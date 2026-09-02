@@ -53,6 +53,7 @@
     "test:release-seed-loader-live": "node tools/run_release_seed_loader_live_gate.mjs",
     "test:release-seed-loader": "npm run build:java-foundation && npm run test:release-seed-loader-live",
     "test:java-backend-foundation": "npm run test:java-comment-contract && npm run build:java-foundation && npm run test:java-foundation-survey && npm run test:java-foundation-phase1-live && npm run test:editor-backend-live && npm run test:question-collection-live && npm run test:question-governance-live && npm run test:release-seed-loader-live && npm run setup:document-renderer && npm run test:document-renderer-live",
+    "test:phase0-schema-spike": "node tools/run_phase0_schema_spike_gate.mjs",
     "final-chain:list": "python tools/final_chain_control.py list",
     "final-chain:plan": "python tools/final_chain_control.py plan",
     "final-chain:env-check": "python tools/final_chain_control.py env-check",

@@ -90,7 +90,7 @@ public class EditorDocumentService {
     public EditorSnapshot createSnapshot(CreateEditorSnapshotCommand command) {
         validateWorkspaceActor(command.workspaceId(), command.actorUserId());
         String variantKey = command.variantKey() == null ? "" : command.variantKey().trim();
-        if (!variantKey.equals("basic") && !variantKey.equals("common") && !variantKey.equals("advanced")) {
+        if (!EditorVariantContract.isKey(variantKey)) {
             throw new EditorContentValidationException("unsupported_editor_variant");
         }
         String audience = command.audience() == null ? "" : command.audience().trim();

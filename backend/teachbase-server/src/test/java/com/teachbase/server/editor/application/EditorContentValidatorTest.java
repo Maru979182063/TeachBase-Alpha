@@ -49,6 +49,42 @@ class EditorContentValidatorTest {
     }
 
     @Test
+    void rewritesLegacyTargetLayerLabelsToStableKeys() throws Exception {
+        JsonNode document = objectMapper.readTree("""
+                {"type":"doc","content":[
+                  {"type":"questionReference","attrs":{"questionId":"q1","targetLayers":"常用版,常规版,基础版"}}
+                ]}
+                """);
+
+        var result = validator.validate(1, document, objectMapper.readTree("[null,null,null]"));
+
+        assertThat(result.masterDoc().at("/content/0/attrs/targetLayers").asText())
+                .isEqualTo("common,basic");
+    }
+
+    @Test
+    void rejectsUnknownOrNonTextTargetLayers() throws Exception {
+        JsonNode unknown = objectMapper.readTree("""
+                {"type":"doc","content":[
+                  {"type":"questionReference","attrs":{"questionId":"q1","targetLayers":"standard"}}
+                ]}
+                """);
+        JsonNode nonText = objectMapper.readTree("""
+                {"type":"doc","content":[
+                  {"type":"questionReference","attrs":{"questionId":"q1","targetLayers":["common"]}}
+                ]}
+                """);
+        JsonNode overrides = objectMapper.readTree("[null,null,null]");
+
+        assertThatThrownBy(() -> validator.validate(1, unknown, overrides))
+                .isInstanceOf(EditorContentValidationException.class)
+                .hasMessage("question_target_layers_invalid");
+        assertThatThrownBy(() -> validator.validate(1, nonText, overrides))
+                .isInstanceOf(EditorContentValidationException.class)
+                .hasMessage("question_target_layers_invalid");
+    }
+
+    @Test
     void rejectsBase64ImagesAndBlankMindMapRoot() throws Exception {
         JsonNode image = objectMapper.readTree("""
                 {"type":"doc","content":[{"type":"image","attrs":{"src":"data:image/png;base64,AAAA"}}]}
