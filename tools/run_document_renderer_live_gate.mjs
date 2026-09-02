@@ -205,6 +205,14 @@ async function run(command, args, options = {}) {
   return Buffer.concat(stdout);
 }
 
+async function readZipEntry(archivePath, entryPath) {
+  // Windows 自带 bsdtar 可读取 ZIP；Ubuntu 的 GNU tar 不支持 DOCX，必须改用 unzip。
+  if (process.platform === "win32") {
+    return run("tar", ["-xOf", archivePath, entryPath]);
+  }
+  return run("unzip", ["-p", archivePath, entryPath]);
+}
+
 async function main() {
   await fs.access(jarPath);
   const tools = await rendererTools();
@@ -361,7 +369,7 @@ async function main() {
         expect(bytes.subarray(0, 5).toString("ascii") === "%PDF-", "pdf_signature_invalid");
         pdfSignatureVerified = true;
       } else if (!docxMathVerified) {
-        const xml = (await run("tar", ["-xOf", artifact, "word/document.xml"])).toString("utf8");
+        const xml = (await readZipEntry(artifact, "word/document.xml")).toString("utf8");
         expect(xml.includes("<m:oMath") || xml.includes("<m:oMathPara"), "docx_native_math_missing");
         expect(!xml.includes("\\frac{"), "docx_contains_raw_latex_formula");
         expect(xml.includes("函数") && xml.includes("原题"), "docx_expected_chinese_content_missing");
@@ -446,5 +454,6 @@ async function* walk(root) {
 
 main().catch((error) => {
   process.stderr.write(`${error.stack || error.message}\n`);
-  process.exitCode = 1;
+  // main 的 finally 已完成数据库、进程和文件清理，此处必须立即把门禁失败传给 CI。
+  process.exit(1);
 });
