@@ -142,33 +142,38 @@ async function main() {
       },
     });
     expect(create.status === 201, `create_status:${create.status}:${JSON.stringify(create.data)}`);
-    expect(create.data?.revisionNo === 1, "initial_revision_not_one");
-    expect(create.headers.etag === '"revision-1"', `initial_etag:${create.headers.etag}`);
+    expect(create.data?.draftVersion === 1, "initial_draft_version_not_one");
+    expect(create.data?.baseRevisionNo === 0, "new_document_created_permanent_revision");
+    expect(create.headers.etag === '"draft-1"', `initial_etag:${create.headers.etag}`);
     const documentId = create.data.editorDocumentId;
 
     const updateBody = {
       workspaceId,
       actorUserId,
-      expectedRevisionNo: 1,
+      expectedDraftVersion: 1,
       schemaVersion: 1,
       masterDoc: editorDocument("revision-2:"),
       versionOverrides: [null, null, null],
     };
     const concurrent = await Promise.all([
-      fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/draft`, { method: "PUT", body: updateBody }),
-      fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/draft`, { method: "PUT", body: updateBody }),
+      fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/draft`, {
+        method: "PUT", body: { ...updateBody, clientMutationId: "editor-live-concurrent-a" },
+      }),
+      fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/draft`, {
+        method: "PUT", body: { ...updateBody, clientMutationId: "editor-live-concurrent-b" },
+      }),
     ]);
     expect(concurrent.filter((response) => response.status === 200).length === 1, "optimistic_update_winner_count_invalid");
     expect(concurrent.filter((response) => response.status === 409).length === 1, "optimistic_update_conflict_count_invalid");
     const conflict = concurrent.find((response) => response.status === 409);
-    expect(conflict.data?.detail === "editor_revision_conflict", "revision_conflict_contract_changed");
-    expect(conflict.data?.currentRevisionNo === 2, "revision_conflict_current_revision_missing");
+    expect(conflict.data?.detail === "editor_draft_version_conflict", "draft_conflict_contract_changed");
+    expect(conflict.data?.currentDraftVersion === 2, "draft_conflict_current_version_missing");
 
     const loaded = await fetchJson(
       `${baseUrl}/api/v1/editor/documents/${documentId}/draft?workspaceId=${workspaceId}&actorUserId=${actorUserId}`,
     );
-    expect(loaded.status === 200 && loaded.data?.revisionNo === 2, "saved_draft_not_readable");
-    expect(loaded.headers.etag === '"revision-2"', "saved_draft_etag_invalid");
+    expect(loaded.status === 200 && loaded.data?.draftVersion === 2, "saved_draft_not_readable");
+    expect(loaded.headers.etag === '"draft-2"', "saved_draft_etag_invalid");
     const persistedLayerValues = loaded.data.masterDoc.content
       .filter((node) => node.type === "questionReference")
       .map((node) => node.attrs.targetLayers);
@@ -177,25 +182,19 @@ async function main() {
       `new_target_layers_not_canonical_keys:${JSON.stringify(persistedLayerValues)}`,
     );
 
-    // 模拟尚未迁移的历史 revision，确认 projector 能同时读取“常用版”和旧称“常规版”。
-    await pool.query(
-      `update teachbase_app.editor_revision set master_doc_json = $1::jsonb where editor_revision_id = $2`,
-      [JSON.stringify(editorDocument("revision-2:")), loaded.data.editorRevisionId],
-    );
-
     const snapshot = await fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/snapshots`, {
       method: "POST",
       body: {
         workspaceId,
         actorUserId,
-        expectedRevisionNo: 2,
+        expectedDraftVersion: 2,
         variantKey: "common",
         audience: "student",
         schemaVersion: 1,
       },
     });
     expect(snapshot.status === 201, `snapshot_status:${snapshot.status}:${JSON.stringify(snapshot.data)}`);
-    expect(snapshot.data?.revisionNo === 2, "snapshot_revision_not_pinned");
+    expect(snapshot.data?.revisionNo === 1, "snapshot_revision_not_pinned");
     expect(snapshot.data?.frozenContent?.audience === "student", "snapshot_audience_not_frozen");
     const projectedQuestionIds = snapshot.data.frozenContent.projectedDoc.content
       .filter((node) => node.type === "questionReference")
@@ -210,7 +209,7 @@ async function main() {
       body: {
         workspaceId,
         actorUserId,
-        expectedRevisionNo: 1,
+        expectedDraftVersion: 1,
         variantKey: "common",
         audience: "teacher",
         schemaVersion: 1,
@@ -262,7 +261,10 @@ async function main() {
          (select count(*)::int from teachbase_app.editor_document) as documents,
          (select count(*)::int from teachbase_app.editor_variant) as variants,
          (select count(*)::int from teachbase_app.editor_revision) as revisions,
-         (select count(*)::int from teachbase_app.editor_draft) as drafts,
+         (select count(*)::int from teachbase_app.editor_draft) as legacy_drafts,
+         (select count(*)::int from teachbase_app.editor_working_draft) as working_drafts,
+         (select count(*)::int from teachbase_app.editor_autosave_mutation) as mutations,
+         (select count(*)::int from teachbase_app.editor_draft_checkpoint) as checkpoints,
          (select count(*)::int from teachbase_app.editor_preview_confirmation) as confirmations,
          (select count(*)::int from teachbase_app.editor_snapshot) as snapshots,
          (select count(*)::int from teachbase_app.export_request) as exports,
@@ -270,8 +272,11 @@ async function main() {
     );
     expect(counts.rows[0].documents === 1, "editor_document_count_invalid");
     expect(counts.rows[0].variants === 3, "editor_variant_count_invalid");
-    expect(counts.rows[0].revisions === 2, "editor_revision_count_invalid");
-    expect(counts.rows[0].drafts === 1, "editor_draft_count_invalid");
+    expect(counts.rows[0].revisions === 1, "editor_revision_count_invalid");
+    expect(counts.rows[0].legacy_drafts === 0, "legacy_editor_draft_should_not_be_created");
+    expect(counts.rows[0].working_drafts === 1, "editor_working_draft_count_invalid");
+    expect(counts.rows[0].mutations === 1, "editor_mutation_count_invalid");
+    expect(counts.rows[0].checkpoints === 1, "editor_checkpoint_throttle_invalid");
     expect(counts.rows[0].confirmations === 1, "editor_confirmation_count_invalid");
     expect(counts.rows[0].snapshots === 1, "editor_snapshot_count_invalid");
     expect(counts.rows[0].exports === 1, "export_request_count_invalid");
@@ -295,7 +300,7 @@ async function main() {
       schemaVersion: 1,
       generatedAt: new Date().toISOString(),
       status: "passed",
-      database: { schema: "teachbase_app", migrations: ["001", "002", "003"], editorExportTableCount: 9 },
+      database: { schema: "teachbase_app", flywayThrough: "V008", editorWorkingDraftTables: 3 },
       editor: {
         model: "master-overrides-v1",
         contentSchemaVersion: 1,
@@ -310,7 +315,7 @@ async function main() {
         commonDisplayName: commonVariant.rows[0].display_name,
         legacyCommonLabelsReadable: ["常用版", "常规版"],
       },
-      concurrency: { simultaneousUpdates: 2, successfulUpdates: 1, conflicts: 1, finalRevisionNo: 2 },
+      concurrency: { simultaneousUpdates: 2, successfulUpdates: 1, conflicts: 1, finalDraftVersion: 2 },
       export: {
         requests: counts.rows[0].exports,
         simultaneousSubmissions: exports.length,

@@ -28,7 +28,7 @@ class EditorVariantProjectorTest {
                 """);
         EditorDraft draft = new EditorDraft(
                 UUID.randomUUID(), UUID.randomUUID(), "synchronized_handout", "test", UUID.randomUUID(),
-                1, 1, master, overrides, "a".repeat(64));
+                1, 1, 1, master, overrides, "a".repeat(64), false);
 
         JsonNode basic = projector.project(draft, "basic");
         JsonNode advanced = projector.project(draft, "advanced");

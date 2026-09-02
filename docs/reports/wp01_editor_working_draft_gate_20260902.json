@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-02T05:26:15.704Z",
+  "status": "passed",
+  "database": {
+    "engine": "PostgreSQL",
+    "version": "18.4",
+    "schema": "teachbase_app",
+    "flywayThrough": "V008"
+  },
+  "policy": {
+    "checkpointInterval": "2m",
+    "checkpointTtl": "72h",
+    "checkpointMaxPerDocument": 100,
+    "mutationTtl": "7d"
+  },
+  "acceptance": {
+    "passed": 17,
+    "total": 17,
+    "checks": {
+      "autosave100CreatesZeroRevisions": true,
+      "sameMutationDoesNotAdvanceVersion": true,
+      "sameExpectedVersionHasOneWinner": true,
+      "conflictDoesNotOverwriteWinner": true,
+      "checkpointsAreThrottled": true,
+      "cleanupPreservesWorkingDraftAndLatestCheckpoint": true,
+      "legacyFirstOpenMigratesSafely": true,
+      "repeatedBackfillIsIdempotent": true,
+      "backfillAndSaveRacePreservesLastSuccess": true,
+      "dirtyPreviewCreatesExactlyOneRevision": true,
+      "unchangedPreviewReusesRevision": true,
+      "snapshotPinsExactRevisionId": true,
+      "oldSnapshotHashRemainsFrozen": true,
+      "rollbackPreservesNewDraftContent": true,
+      "crossWorkspaceReadFails": true,
+      "forbiddenProductionTablesAbsent": true,
+      "legacyWriterIsDatabaseFenced": true
+    }
+  },
+  "counters": {
+    "autosaves": 100,
+    "draftVersionAfterAutosaves": 101,
+    "revisionsAfterAutosaves": 0,
+    "checkpointsAfterAutosaves": 1,
+    "concurrentRequests": 2,
+    "concurrentSuccesses": 1,
+    "concurrentConflicts": 1
+  },
+  "maintenance": {
+    "writerFence": "passed",
+    "lazyMigration": "passed",
+    "repeatedBackfill": "passed",
+    "rollbackMaterialization": "materialized_for_rollback",
+    "reenableBackfill": "migrated"
+  },
+  "cleanup": "passed"
+}

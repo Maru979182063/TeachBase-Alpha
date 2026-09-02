@@ -18,32 +18,29 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 中文维护说明：本文件属于在线编辑文档模块的业务规则与事务编排层，负责业务校验和用例编排，不应泄漏数据库记录或传输层对象。
- * Places many searched questions with one optimistic editor update. Hydrated Markdown
- * is saved into each reference node so snapshots never consult mutable question state.
+ * 中文维护说明：一次乐观锁草稿更新可落位多道检索题；每个引用节点保存已展开 Markdown，
+ * 因而 snapshot 不需要读取可变题目状态。
  */
 @Service
 public class EditorQuestionPlacementService {
 
     private final EditorDocumentService documents;
     private final QuestionRevisionDirectory revisions;
-    private final EditorQuestionReferenceRepository referenceIndex;
     private final ObjectMapper objectMapper;
 
     public EditorQuestionPlacementService(
             EditorDocumentService documents,
             QuestionRevisionDirectory revisions,
-            EditorQuestionReferenceRepository referenceIndex,
             ObjectMapper objectMapper) {
         this.documents = documents;
         this.revisions = revisions;
-        this.referenceIndex = referenceIndex;
         this.objectMapper = objectMapper;
     }
 
     @Transactional
     public EditorDraft place(UUID documentId, PlaceQuestionReferencesRequest request) {
-        if (request.expectedRevisionNo() < 1) {
-            throw new EditorContentValidationException("expected_revision_must_be_positive");
+        if (request.expectedDraftVersion() < 1) {
+            throw new EditorContentValidationException("expected_draft_version_must_be_positive");
         }
         List<String> layers = normalizeLayers(request.targetLayers());
         List<UUID> revisionIds = request.questions().stream().map(QuestionPlacementItem::questionRevisionId).toList();
@@ -59,8 +56,8 @@ public class EditorQuestionPlacementService {
         }
 
         EditorDraft current = documents.get(documentId, request.workspaceId(), request.actorUserId());
-        if (current.revisionNo() != request.expectedRevisionNo()) {
-            throw new EditorRevisionConflictException(current.revisionNo());
+        if (current.draftVersion() != request.expectedDraftVersion()) {
+            throw new EditorRevisionConflictException(current.draftVersion());
         }
         ObjectNode master = current.masterDoc().deepCopy();
         ArrayNode content = master.withArray("content");
@@ -77,13 +74,10 @@ public class EditorQuestionPlacementService {
         master.set("content", updated);
 
         EditorDraft saved = documents.update(new UpdateEditorDraftCommand(
-                documentId, request.workspaceId(), request.actorUserId(), request.expectedRevisionNo(),
-                current.schemaVersion(), master, current.versionOverrides()));
-        ArrayNode layerJson = objectMapper.createArrayNode();
-        layers.forEach(layerJson::add);
-        referenceIndex.index(
-                saved.editorRevisionId(), documentId, request.workspaceId(), request.actorUserId(),
-                insertionIndex, resolved, layerJson);
+                documentId, request.workspaceId(), request.actorUserId(), request.expectedDraftVersion(),
+                request.clientMutationId(), current.schemaVersion(), master, current.versionOverrides()));
+        // 正式引用索引绑定 immutable revision；autosave 阶段只把精确题目 revision
+        // 写入 working draft，待 preview confirmation 冻结 revision 时再建立索引。
         return saved;
     }
 

@@ -10,7 +10,10 @@
 - `knowledge_document` 以一个讲次为基本单位；稳定 ID 不因正文修订变化。
 - Phase 0 用工作区内唯一 `lesson_key` 绑定讲次，例如 `math.g8.term1.lesson_012`。未来若建立独立 lesson registry，只追加 `lesson_id` 并回填，不改变 document ID。
 - `knowledge_document_revision` 是完整 section 树的一次不可变版本。
-- `knowledge_section` 是跨文档版本稳定的 section identity；标题、位置和内容属于 revision。
+- `knowledge_section` 是跨文档版本稳定的 section identity，只保存所属 knowledge document、稳定 ID、创建/退役时间等身份事实。
+- section 在某个 knowledge document revision 中的 `parent_section_id`、`sort_order`、`title`、结构化 `content_json` 和精确 references 全部保存在 revision-scoped section occurrence/item 中。
+- parent、order、title、content 和 references 不得作为可变字段直接挂在 stable section 根对象上。
+- 每个 knowledge document revision 拥有完整、不可变的 section 树；新版移动、拆分、合并或改名不能更新旧 revision 的 occurrence/item。
 
 ## Section 版本语义
 

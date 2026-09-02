@@ -76,19 +76,22 @@
 ## 风险状态转换
 
 ```text
-artifact accepted
-  -> identity matched/created
-  -> revision deduplicated/created
-  -> append-only risk decision
-       low     -> auditable auto-approval -> approved revision pointer
-       high    -> pending_review -> S02 case
-       unknown -> pending_review -> S02 case (reason = risk_unknown)
+Ingestion Batch
+  -> Question Identity
+  -> Immutable Question Revision
+  -> Append-only Risk Assessment
+       -> low: Audited Auto-Promotion Decision
+               -> approved/production pointer
+       -> high: S02 Review Case
+       -> unknown: fail closed -> S02 Review Case
 ```
 
 - 低危不是“绕过记录”，而是写入 `decision_source=risk_auto`、policy version、evidence hash、occurred_at 和 actor/service identity。
 - 高危与未知不能由 manifest 直接自报后成为可信结论；Java 只接受已登记 risk evaluator/profile 的签名或在 Java 侧运行确定性校验。
 - auto-approval 和 review approval 都必须以 expected content hash 为前置，避免审核/判定后内容被换掉。
 - 同一 revision 的相同 policy decision 重放幂等；policy version 变化可追加新 assessment，但不会静默撤销既有生产 revision，撤销另走治理事件。
+- Review Case 与 Auto-Promotion Decision 都必须引用精确 `question_revision_id`。
+- Risk Assessment、Review Case 和 Auto-Promotion Decision 只能追加判定事实，不得创建或修改 revision 内容。
 
 ## 题组导入
 

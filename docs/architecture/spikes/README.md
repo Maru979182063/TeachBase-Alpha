@@ -53,6 +53,14 @@ spike 只替换“当前可变编辑态”和短期恢复点，不创建第二�
 
 只复用内容 schema 和 validator。新增根对象负责 lesson binding；section identity/revision/lineage 是现有 editor 没有的业务事实。讲义仍在 editor 模块，知识文档不生成 teacher/student snapshot。
 
+### Stable identity 与 revision 边界
+
+- `knowledge_section` 根对象只保存稳定 section ID、所属 knowledge document 与身份生命周期，不保存当前标题、位置或正文。
+- 每次 `knowledge_document_revision` 下的 `knowledge_section_revision` 保存该版 section 的 parent、order、title、content 和 references。
+- 这些字段必须由 `(knowledge_document_revision_id, knowledge_section_id)` 精确寻址，不能通过 stable 根对象上的可变“当前值”读取。
+- 新版移动、拆分、合并、改名只追加新版 occurrence 与 lineage；旧 knowledge document revision 的完整 section 树保持原值。
+- 当前 spike 表名中的 `knowledge_section_revision` 表达 revision-scoped occurrence，不代表 stable 根对象自身可变。
+
 ### 迁移与回滚
 
 - 初期只创建新知识文档，不批量转换旧讲义。

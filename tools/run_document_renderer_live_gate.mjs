@@ -152,7 +152,7 @@ async function createDocumentAndSnapshots(baseUrl, workspaceId, actorUserId, hyd
       body: {
         workspaceId,
         actorUserId,
-        expectedRevisionNo: 1,
+        expectedDraftVersion: 1,
         variantKey: "common",
         audience,
         schemaVersion: 1,
@@ -395,7 +395,7 @@ async function main() {
       schemaVersion: 1,
       generatedAt: new Date().toISOString(),
       status: "passed",
-      database: { schema: "teachbase_app", migrations: ["001", "002", "003"], exportExecutionTables: 3 },
+      database: { schema: "teachbase_app", flywayThrough: "V008", exportExecutionTables: 3 },
       renderer: {
         sourceSchemaVersion: 1,
         adapterVersion: "tiptap-pandoc-v1",

@@ -325,7 +325,8 @@ async function main() {
       body: {
         workspaceId,
         actorUserId,
-        expectedRevisionNo: 1,
+        expectedDraftVersion: 1,
+        clientMutationId: "question-placement-live-gate",
         insertionIndex: 1,
         targetLayers: ["basic", "advanced", "common"],
         questions: [
@@ -334,7 +335,7 @@ async function main() {
         ],
       },
     });
-    expect(placed.status === 200 && placed.data.revisionNo === 2, `editor_placement_status:${placed.status}`);
+    expect(placed.status === 200 && placed.data.draftVersion === 2, `editor_placement_status:${placed.status}`);
     const placedNodes = placed.data.masterDoc.content.filter((node) => node.type === "questionReference");
     expect(placedNodes.length === 2, "editor_placement_node_count");
     expect(placedNodes.every((node) => node.attrs.teacherMarkdown && node.attrs.studentMarkdown), "editor_reference_not_hydrated");
@@ -345,7 +346,7 @@ async function main() {
 
     const editorSnapshot = await fetchJson(`${baseUrl}/api/v1/editor/documents/${documentId}/snapshots`, {
       method: "POST",
-      body: { workspaceId, actorUserId, expectedRevisionNo: 2, variantKey: "common", audience: "teacher", schemaVersion: 1 },
+      body: { workspaceId, actorUserId, expectedDraftVersion: 2, variantKey: "common", audience: "teacher", schemaVersion: 1 },
     });
     expect(editorSnapshot.status === 201, `editor_snapshot_after_placement:${editorSnapshot.status}`);
     expect(JSON.stringify(editorSnapshot.data.frozenContent).includes("三角形"), "editor_snapshot_missing_question_content");

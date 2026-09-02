@@ -14,7 +14,9 @@ public interface EditorDocumentRepository {
 
     EditorDraft update(UpdateEditorDraftCommand command, ValidatedEditorContent content);
 
-    Optional<EditorDraft> findDraft(UUID editorDocumentId, UUID workspaceId);
+    Optional<EditorDraft> findOrMigrateDraft(UUID editorDocumentId, UUID workspaceId, boolean migrationAllowed);
 
     EditorSnapshot createSnapshot(CreateEditorSnapshotCommand command, ValidatedEditorContent projectedContent);
+
+    int cleanExpiredRecoveryState();
 }

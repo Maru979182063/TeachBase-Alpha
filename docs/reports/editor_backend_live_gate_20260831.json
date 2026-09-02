@@ -1,15 +1,11 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-02T04:02:34.054Z",
+  "generatedAt": "2026-09-02T05:26:38.722Z",
   "status": "passed",
   "database": {
     "schema": "teachbase_app",
-    "migrations": [
-      "001",
-      "002",
-      "003"
-    ],
-    "editorExportTableCount": 9
+    "flywayThrough": "V008",
+    "editorWorkingDraftTables": 3
   },
   "editor": {
     "model": "master-overrides-v1",
@@ -18,7 +14,7 @@
     "mindMapSource": "stable-node-tree",
     "studentBlankAnnotations": "versioned",
     "variants": 3,
-    "revisions": 2,
+    "revisions": 1,
     "immutableSnapshots": 1,
     "variantProjectionOwnedByBackend": true,
     "canonicalVariantKeysPersisted": true,
@@ -32,7 +28,7 @@
     "simultaneousUpdates": 2,
     "successfulUpdates": 1,
     "conflicts": 1,
-    "finalRevisionNo": 2
+    "finalDraftVersion": 2
   },
   "export": {
     "requests": 1,

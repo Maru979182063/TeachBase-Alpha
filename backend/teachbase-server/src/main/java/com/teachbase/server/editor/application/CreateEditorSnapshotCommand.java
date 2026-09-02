@@ -11,7 +11,7 @@ public record CreateEditorSnapshotCommand(
         UUID editorDocumentId,
         UUID workspaceId,
         UUID actorUserId,
-        long expectedRevisionNo,
+        long expectedDraftVersion,
         String variantKey,
         String audience,
         int schemaVersion) {

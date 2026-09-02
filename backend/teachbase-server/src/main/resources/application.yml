@@ -36,6 +36,15 @@ springdoc:
     enabled: false
 
 teachbase:
+  editor:
+    working-draft:
+      enabled: ${TEACHBASE_EDITOR_WORKING_DRAFT_ENABLED:true}
+      lazy-migration-enabled: ${TEACHBASE_EDITOR_LAZY_MIGRATION_ENABLED:true}
+      checkpoint-interval: ${TEACHBASE_EDITOR_CHECKPOINT_INTERVAL:2m}
+      checkpoint-ttl: ${TEACHBASE_EDITOR_CHECKPOINT_TTL:72h}
+      checkpoint-max-per-document: ${TEACHBASE_EDITOR_CHECKPOINT_MAX:100}
+      mutation-ttl: ${TEACHBASE_EDITOR_MUTATION_TTL:7d}
+      cleanup-delay: ${TEACHBASE_EDITOR_CLEANUP_DELAY:1h}
   rendering:
     enabled: ${TEACHBASE_RENDER_ENABLED:false}
     worker-id: ${TEACHBASE_RENDER_WORKER_ID:}

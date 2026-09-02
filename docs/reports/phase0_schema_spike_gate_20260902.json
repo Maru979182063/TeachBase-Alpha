@@ -1,10 +1,15 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-02T04:02:01.523Z",
+  "generatedAt": "2026-09-02T05:23:18.326Z",
   "status": "passed",
+  "database": {
+    "engine": "PostgreSQL",
+    "version": "18.4",
+    "startup": "embedded_ephemeral_cluster"
+  },
   "isolation": {
     "schema": "teachbase_phase0_spike",
-    "productionMigrationsChanged": false
+    "spikeAppliedOutsideFlyway": true
   },
   "workingDraft": {
     "concurrentSaves": 2,

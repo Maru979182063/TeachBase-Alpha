@@ -1,6 +1,6 @@
 # TeachBase Phase 0 Contract Package
 
-> 状态：Ready
+> 状态：Phase 0 核心合同部分就绪；当前正式工作包为 WP-01
 >
 > 日期：2026-09-02
 >
@@ -61,12 +61,16 @@ flowchart LR
   HR -->|preview confirmation| SN[Immutable Snapshot]
   SN --> EX[Server Export]
   P[Four Pipeline Artifact Manifest] --> IB[Java Ingestion Batch]
-  IB --> S
   IB --> Q
-  IB --> RD{Risk Decision}
-  RD -->|low + audited auto decision| QR
-  RD -->|high or unknown| S02[S02 Review]
+  Q --> QR
+  QR --> RA[Append-only Risk Assessment]
+  RA -->|low| AP[Audited Auto-Promotion Decision]
+  AP --> PP[approved / production pointer]
+  RA -->|high| S02[S02 Review Case]
+  RA -->|unknown: fail closed| S02
 ```
+
+Review Case 与 Auto-Promotion Decision 均引用精确 `question_revision_id`。风险评估和风险决定只能追加状态事实，不得创建或修改 revision 内容。
 
 standard module 和统一搜索只保留未来连接位置，本轮没有建表或实现。
 
@@ -96,6 +100,13 @@ standard module 和统一搜索只保留未来连接位置，本轮没有建表�
 | spike 约束可运行 | CLOSED，隔离 PostgreSQL gate 通过 |
 
 结论：第一个正式工作包可以启动。OIDC 供应商、完整容量压测和模型日志政策不属于这一类 Gate。
+
+### BLOCKS_TAG_SCHEMA_AND_SEARCH
+
+- 二审 P0-06 尚未关闭：同一 `question_revision` 在同一 taxonomy 维度最多一个 primary。
+- 本 Gate 不阻塞 WP-01。
+- 它阻塞后续标签维护、standard module taxonomy link 和统一搜索正式 schema。
+- “副标签升级为主标签后，旧主标签降级还是删除”仍是待定产品决定，本轮不擅自选择。
 
 ### BLOCKS_MULTI_USER_TRIAL
 
@@ -131,6 +142,6 @@ standard module 和统一搜索只保留未来连接位置，本轮没有建表�
 
 ## 8. 状态
 
-本轮产品事实已接收，common 缺陷已修，四份核心合同已冻结，三个隔离 spike 可执行。剩余事项分别进入 multi-user 或 production Gate，不再阻挡 WP-01。
+本轮产品事实已接收，common 缺陷已修，四份核心合同已冻结，三个隔离 spike 可执行；这些证据只允许启动 WP-01，不代表标签、认证、模块 schema、搜索 schema 或生产容量全部关闭。
 
-`PHASE0_CONTRACT_READY`
+`PHASE0_CORE_CONTRACT_PARTIAL_READY`

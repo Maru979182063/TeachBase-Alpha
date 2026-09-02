@@ -42,7 +42,7 @@ class EditorDocumentController {
                 request.schemaVersion(), request.masterDoc(), request.versionOverrides()));
         return ResponseEntity
                 .created(URI.create("/api/v1/editor/documents/" + draft.editorDocumentId()))
-                .eTag(etag(draft.revisionNo()))
+                .eTag(etag(draft.draftVersion()))
                 .body(EditorDraftResponse.from(draft));
     }
 
@@ -51,9 +51,9 @@ class EditorDocumentController {
             @PathVariable UUID documentId,
             @Valid @RequestBody UpdateEditorDraftRequest request) {
         var draft = service.update(new UpdateEditorDraftCommand(
-                documentId, request.workspaceId(), request.actorUserId(), request.expectedRevisionNo(),
-                request.schemaVersion(), request.masterDoc(), request.versionOverrides()));
-        return ResponseEntity.ok().eTag(etag(draft.revisionNo())).body(EditorDraftResponse.from(draft));
+                documentId, request.workspaceId(), request.actorUserId(), request.expectedDraftVersion(),
+                request.clientMutationId(), request.schemaVersion(), request.masterDoc(), request.versionOverrides()));
+        return ResponseEntity.ok().eTag(etag(draft.draftVersion())).body(EditorDraftResponse.from(draft));
     }
 
     @GetMapping("/{documentId}/draft")
@@ -62,7 +62,7 @@ class EditorDocumentController {
             @RequestParam UUID workspaceId,
             @RequestParam UUID actorUserId) {
         var draft = service.get(documentId, workspaceId, actorUserId);
-        return ResponseEntity.ok().eTag(etag(draft.revisionNo())).body(EditorDraftResponse.from(draft));
+        return ResponseEntity.ok().eTag(etag(draft.draftVersion())).body(EditorDraftResponse.from(draft));
     }
 
     @PostMapping("/{documentId}/snapshots")
@@ -70,7 +70,7 @@ class EditorDocumentController {
             @PathVariable UUID documentId,
             @Valid @RequestBody CreateEditorSnapshotRequest request) {
         var snapshot = service.createSnapshot(new CreateEditorSnapshotCommand(
-                documentId, request.workspaceId(), request.actorUserId(), request.expectedRevisionNo(),
+                documentId, request.workspaceId(), request.actorUserId(), request.expectedDraftVersion(),
                 request.variantKey(), request.audience(), request.schemaVersion()));
         return ResponseEntity
                 .created(URI.create("/api/v1/editor/snapshots/" + snapshot.editorSnapshotId()))
@@ -82,10 +82,10 @@ class EditorDocumentController {
             @PathVariable UUID documentId,
             @Valid @RequestBody PlaceQuestionReferencesRequest request) {
         var draft = questionPlacement.place(documentId, request);
-        return ResponseEntity.ok().eTag(etag(draft.revisionNo())).body(EditorDraftResponse.from(draft));
+        return ResponseEntity.ok().eTag(etag(draft.draftVersion())).body(EditorDraftResponse.from(draft));
     }
 
-    private String etag(long revisionNo) {
-        return "\"revision-" + revisionNo + "\"";
+    private String etag(long draftVersion) {
+        return "\"draft-" + draftVersion + "\"";
     }
 }

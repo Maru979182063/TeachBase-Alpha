@@ -1,98 +1,136 @@
 # ADR-01 Working Draft / Revision / Snapshot
 
-- 状态：Accepted for Phase 0
+- 状态：Accepted，WP-01 已实现
 - 日期：2026-09-02
-- 范围：现有 `editor_document` 的编辑、恢复、预览和导出合同
+- 范围：在线讲义编辑态、恢复点、正式版本、预览确认与导出快照
 
 ## 背景
 
-当前 `editor_draft` 只是最新 `editor_revision` 的指针；每次 PUT 都插入永久 revision。它通过行锁和 expected revision 避免静默覆盖，但不适合高频自动保存。正式 revision、恢复点和导出快照也因此在概念上混在一起。
+旧 `editor_draft` 只是指向最新 `editor_revision` 的可变游标，每次 PUT 都先创建永久 revision。它能阻止静默覆盖，但把高频自动保存、恢复点和正式历史混成了一层。WP-01 将浏览器编辑态分离为每文档唯一的 working draft，既有 revision、snapshot 和 export 继续作为不可变交付边界。
 
-## 决定
-
-### 四类对象
+## 三类对象
 
 | 对象 | 可变 | 用途 | 保留 |
 | --- | --- | --- | --- |
-| working draft | 是 | 当前编辑真相、自动保存 | 文档存续期间 |
-| checkpoint | 否 | 短期恢复和冲突救援 | 按类型清理 |
-| editor revision | 否 | 正式版本点、审核或发布依据 | 永久 |
-| snapshot | 否 | 已确认的某 variant/audience 交付内容 | 永久或按交付政策 |
+| working draft | 是 | 当前浏览器编辑真相 | 文档存在期间保留 |
+| checkpoint | 否 | 短期恢复 | 按类型 TTL 和数量策略清理 |
+| immutable revision | 否 | 明确业务事件形成的正式历史 | 永久或按归档政策 |
+| snapshot | 否 | 已确认 variant/audience 的导出输入 | 永久或按交付政策 |
 
-### Working draft
-
-- 每个 `editor_document` 最多一个 working draft。
-- 保存命令必须携带 `expectedDraftVersion`；成功后原子递增 `draftVersion`。
-- draft 保存 master document、三个 override、schema version、content hash 和 `basedOnEditorRevisionId`。
-- API 返回 ETag `draft-{draftVersion}`。版本不匹配返回 HTTP 409、当前 version 和当前 content hash，不自动覆盖。
-- 新文档可以先只有 working draft；兼容阶段允许沿用已有 revision 作为 `basedOnEditorRevisionId`。
-- 自动保存仅更新 working draft，不创建 `editor_revision`。
-
-### 自动保存与 checkpoint
-
-- 前端脏数据 debounce 2 秒；持续输入时最多每 15 秒发送一次 autosave。
-- 服务端每次 autosave 都更新 working draft；同一文档每 2 分钟最多生成一个 `autosave` checkpoint。
-- `autosave` checkpoint 保留 72 小时，且每文档最多保留最近 100 个。
-- 发生 409 时，客户端尚未合并的内容可写入 `conflict_recovery` checkpoint，保留 7 天。
-- 提交审核、建立手动版本点或预览确认前建立 `pre_transition` checkpoint，保留 30 天。
-- 清理 checkpoint 是独立幂等任务；永远不能删除 working draft、revision 或 snapshot。
-
-### 创建 immutable revision 的事件
-
-只允许以下事件创建 `editor_revision`：
-
-1. 用户执行“保存版本”；
-2. 提交审核；
-3. 发布或激活；
-4. preview confirmation 时 working draft 尚未对应精确 revision；
-5. 受控导入明确要求建立版本；
-6. 从历史 revision 恢复后，用户显式保存版本。
-
-内容 hash 与当前正式 revision 相同且元数据合同未变化时，不创建重复 revision。
-
-### Preview confirmation 与 snapshot
-
-- preview confirmation 必须引用精确 `editor_revision_id`、variant key 和 audience。
-- 若用户从未将当前 draft 建成 revision，确认操作在同一事务中先冻结一个 revision，再创建 confirmation。
-- snapshot 保存投影后的完整内容、source revision、variant key、audience、schema version 和 hash。
-- 导出只读取 snapshot，不读取 working draft、latest 或 approved pointer。
-- 已存在 snapshot 永不因后续 draft/revision 修改而变化。
-
-## 兼容迁移
-
-1. 追加 working draft/checkpoint 新表，不删除现有表。
-2. 对每个现有 `editor_draft`，读取其指向的 `editor_revision`，复制内容到新 working draft；`draft_version=1`，`based_on_editor_revision_id` 指向原 revision。
-3. 迁移期间旧 revision 仍是历史真相。双读只用于发布窗口：优先新 working draft，不存在时读取旧 pointer 并懒迁移。
-4. 新写入启用后停止移动旧 `editor_draft` 指针；至少一个发布周期后再决定是否只读保留。
-5. 不重写、不合并、不删除既有 `editor_revision` 和 snapshot。
-
-## 并发与恢复
+每个 editor document 最多有一行 working draft：
 
 ```text
-UPDATE working_draft
-SET draft_version = draft_version + 1, ...
-WHERE editor_document_id = :id
-  AND workspace_id = :workspace
-  AND draft_version = :expected
+document_id
+base_revision_id
+draft_version
+content_json
+content_hash
+updated_by
+updated_at
 ```
 
-- affected rows 为 0 即冲突，不做 last-write-wins。
-- 同一 expected version 的两个并发保存只能一个成功。
-- revision 冻结事务先锁 working draft，再比较 expected draft version 和 content hash。
-- checkpoint 恢复只生成新的 working draft version，不修改历史 revision。
-- 服务器崩溃后以已提交 working draft 为准；客户端未提交内容由客户端草稿或 conflict checkpoint 恢复。
+`content_json` 保存 `editorModel`、`schemaVersion`、`masterDoc` 和 `versionOverrides`。`base_revision_id` 可为空，或精确指向当前草稿最近一次复用/冻结的 revision；它不是 latest 指针。
 
-## 验收测试
+## Autosave 与并发
 
-- 100 次 autosave 后 `editor_revision` 数量不变，draft version 增加 100。
-- 两个并发 expected version 保存恰好一个成功，另一个 409。
-- 2 分钟 checkpoint 节流、72 小时/100 个清理上限正确。
-- 从 checkpoint 恢复产生新 draft version，原 checkpoint 不变。
-- preview confirmation 固定精确 revision；后续 autosave 不改变 snapshot hash。
-- 旧 `editor_draft` 可懒迁移，旧 snapshot 仍可导出。
+所有修改使用 compare-and-set：
 
-## 不采用的方案
+```sql
+update editor_working_draft
+   set draft_version = draft_version + 1, ...
+ where editor_document_id = :documentId
+   and workspace_id = :workspaceId
+   and draft_version = :expectedDraftVersion;
+```
 
-- 不再接受“每次 autosave 都创建永久 revision”。
+- affected rows 为 0 返回 HTTP 409，响应包含 `currentDraftVersion`；不得覆盖当前内容。
+- 每个 autosave 必须携带最多 128 字符的 `clientMutationId`。
+- 幂等作用域是 `(workspace_id, editor_document_id, client_mutation_id)`，数据库唯一约束负责最终裁决。
+- 幂等记录保留 7 天，并保存原请求 expected version、首次成功结果的 draft version、content、hash 和 base revision。
+- 相同 key、expected version 和 content hash 的重试返回首次成功结果，不增加 draft version，不建 checkpoint/revision，也不产生虚假 409。
+- 相同 key 被不同请求复用返回 409 `editor_client_mutation_conflict`。
+
+普通 autosave 绝不创建 `editor_revision`。
+
+## Checkpoint 策略
+
+- 前端建议脏数据 debounce 2 秒，持续输入最多每 15 秒发送一次 autosave。
+- 服务端每文档每 2 分钟最多创建一个 `autosave` checkpoint。
+- `autosave` checkpoint TTL 为 72 小时，每文档最多保留最近 100 个。
+- `conflict_recovery` 保留 7 天；`pre_transition` 保留 30 天。
+- 初期保存完整 JSON，不使用增量 diff。
+- checkpoint 只用于恢复，不进入正式版本历史。
+- 清理任务可重复运行；过期或超量 checkpoint 可删除，但每文档最新恢复点、working draft、revision 和 snapshot 永远不删除。
+
+## Immutable Revision 事件
+
+只有以下显式事件可以创建 immutable revision：
+
+1. 用户手动创建版本点；
+2. 提交审核；
+3. preview confirmation；
+4. 正式发布所需冻结。
+
+受控导入走 ingestion 的独立 revision 合同，不伪装成 autosave。普通 autosave 和 checkpoint 不得创建 revision。
+
+## Preview Confirmation
+
+规则固定为：
+
+```text
+若 working draft content_hash 与可复用 immutable revision 相同
+  -> 复用该 revision
+否则
+  -> 创建 exactly one immutable revision
+```
+
+随后 confirmation 与 snapshot 都固定精确 `editor_revision_id`。snapshot 保存投影后的完整内容、revision、variant key、audience、schema version 和 hash；导出只读取 snapshot。相同内容重复确认可以创建不同 audience/variant snapshot，但不得无限创建相同 revision。
+
+## 迁移与 Writer Fencing
+
+执行顺序固定为：
+
+```text
+expand
+-> backfill
+-> dual-read compatibility
+-> writer fencing
+-> new writer switch
+-> verification
+-> contract later
+```
+
+V008 仅执行 expand：增加 working draft、mutation、checkpoint、`writer_mode` 和数据库 writer-fence trigger，不删除或回填旧表。
+
+1. 先部署理解 `writer_mode` 的版本，保持新 writer 开关关闭，并排空更老实例。
+2. backfill 或首次打开在文档行锁内读取当时的 `editor_draft -> editor_revision`，写 working draft 后切换 `writer_mode=working_draft`。
+3. 旧 writer 与 backfill 都锁 `editor_document`；切换后数据库 trigger 拒绝任何旧 `editor_draft` INSERT/UPDATE，旧事务整体回滚。
+4. 未迁移文档首次打开可懒迁移；重复 backfill 对已切换文档无动作。
+5. rollout 进程重启后根据持久化 `writer_mode` 继续，不依赖进程内状态；批量工具按文档提交，可断点续跑。
+6. feature flag `TEACHBASE_EDITOR_WORKING_DRAFT_ENABLED` 控制新 writer，`TEACHBASE_EDITOR_LAZY_MIGRATION_ENABLED` 控制按需迁移。不得让旧 writer 与新 writer 长期并写。
+
+## 回滚
+
+回滚不能只停写新表。切回旧应用前必须运行：
+
+```bash
+node tools/editor_working_draft_maintenance.mjs rollback-materialize [document-id...]
+```
+
+工具对每个文档开启独立事务并加行锁：按 content hash 复用 revision，或创建 exactly one 兼容 revision；随后先切 `writer_mode=legacy`，再更新/创建旧 `editor_draft` pointer。由此只存在于 working draft 的最后成功内容会进入旧 writer 可读结构。工具可重复执行，已处于 legacy 的文档直接跳过。
+
+再次启用前可运行 `backfill`；若 working draft 行仍存在，则用 legacy writer 最后成功内容覆盖并增加 draft version，避免恢复陈旧草稿。
+
+## 恢复与观测
+
+- 服务崩溃后以数据库已提交 working draft 为准。
+- checkpoint 恢复必须形成新的 CAS draft version，不能改历史 checkpoint。
+- audit 事件记录 `editor_working_draft.autosaved`、draft version、mutation ID 和 content hash；幂等重试不重复记一次业务保存。
+- HTTP 409 区分 draft version 冲突与 mutation key 冲突；writer fence 返回 503，便于 rollout 告警。
+- 运行 gate 报告 autosave、冲突、checkpoint、迁移、fence 和 rollback 结果，不把本机绝对路径当合同。
+
+## 不采用
+
+- 不再接受每次 autosave 创建永久 revision。
 - 不用 snapshot 充当恢复点。
-- 不在 Phase 0 删除旧 editor 表或批量压缩旧 revision。
+- 不在 WP-01 删除旧 editor 表、压缩旧 revision 或改写历史 snapshot。

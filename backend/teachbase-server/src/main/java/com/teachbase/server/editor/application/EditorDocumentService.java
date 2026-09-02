@@ -11,17 +11,15 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 /**
  * 中文维护说明：本文件属于在线编辑文档模块的业务规则与事务编排层，负责业务校验和用例编排，不应泄漏数据库记录或传输层对象。
- * Transaction boundary for the editor aggregate.
- *
- * <p>Every save creates an immutable revision and uses {@code expectedRevisionNo}
- * as an optimistic lock. Snapshots are made only from the current revision, so an
- * export can never accidentally freeze stale browser state.</p>
+ * 中文维护说明：本类也是 editor 聚合的事务边界。自动保存只通过 compare-and-set 修改唯一 working draft；
+ * 只有显式转换事件可以冻结 immutable revision，snapshot 必须固定其中一个精确 revision。
  */
 public class EditorDocumentService {
 
@@ -31,6 +29,7 @@ public class EditorDocumentService {
     private final AuditTrail auditTrail;
     private final ObjectMapper objectMapper;
     private final EditorVariantProjector variantProjector;
+    private final EditorWorkingDraftProperties workingDraftProperties;
 
     public EditorDocumentService(
             WorkspaceDirectory workspaces,
@@ -38,17 +37,20 @@ public class EditorDocumentService {
             EditorDocumentRepository documents,
             AuditTrail auditTrail,
             ObjectMapper objectMapper,
-            EditorVariantProjector variantProjector) {
+            EditorVariantProjector variantProjector,
+            EditorWorkingDraftProperties workingDraftProperties) {
         this.workspaces = workspaces;
         this.validator = validator;
         this.documents = documents;
         this.auditTrail = auditTrail;
         this.objectMapper = objectMapper;
         this.variantProjector = variantProjector;
+        this.workingDraftProperties = workingDraftProperties;
     }
 
     @Transactional
     public EditorDraft create(CreateEditorDocumentCommand command) {
+        requireWorkingDraftWriter();
         validateWorkspaceActor(command.workspaceId(), command.actorUserId());
         String kind = command.documentKind() == null ? "" : command.documentKind().trim();
         if (!kind.equals("synchronized_handout") && !kind.equals("independent_question_pack")) {
@@ -62,28 +64,41 @@ public class EditorDocumentService {
         var draft = documents.create(command, content);
         auditTrail.record(new AuditCommand(
                 command.workspaceId(), command.actorUserId(), "editor_document.created", "editor_document",
-                draft.editorDocumentId(), Map.of("revisionNo", draft.revisionNo(), "contentHash", draft.contentHash())));
+                draft.editorDocumentId(), Map.of("draftVersion", draft.draftVersion(), "contentHash", draft.contentHash())));
         return draft;
     }
 
     @Transactional
     public EditorDraft update(UpdateEditorDraftCommand command) {
         validateWorkspaceActor(command.workspaceId(), command.actorUserId());
-        if (command.expectedRevisionNo() < 1) {
-            throw new EditorContentValidationException("expected_revision_must_be_positive");
+        requireWorkingDraftWriter();
+        if (command.expectedDraftVersion() < 1) {
+            throw new EditorContentValidationException("expected_draft_version_must_be_positive");
+        }
+        if (command.clientMutationId() == null || command.clientMutationId().isBlank()
+                || command.clientMutationId().trim().length() > 128) {
+            throw new EditorContentValidationException("client_mutation_id_invalid");
         }
         var content = validator.validate(command.schemaVersion(), command.masterDoc(), command.versionOverrides());
         var draft = documents.update(command, content);
-        auditTrail.record(new AuditCommand(
-                command.workspaceId(), command.actorUserId(), "editor_draft.saved", "editor_document",
-                draft.editorDocumentId(), Map.of("revisionNo", draft.revisionNo(), "contentHash", draft.contentHash())));
+        if (!draft.idempotentReplay()) {
+            auditTrail.record(new AuditCommand(
+                    command.workspaceId(), command.actorUserId(), "editor_working_draft.autosaved", "editor_document",
+                    draft.editorDocumentId(), Map.of(
+                            "draftVersion", draft.draftVersion(),
+                            "clientMutationId", command.clientMutationId().trim(),
+                            "contentHash", draft.contentHash())));
+        }
         return draft;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public EditorDraft get(UUID editorDocumentId, UUID workspaceId, UUID actorUserId) {
         validateWorkspaceActor(workspaceId, actorUserId);
-        return documents.findDraft(editorDocumentId, workspaceId).orElseThrow(EditorDocumentNotFoundException::new);
+        return documents.findOrMigrateDraft(
+                editorDocumentId, workspaceId,
+                workingDraftProperties.enabled() && workingDraftProperties.lazyMigrationEnabled())
+                .orElseThrow(EditorDocumentNotFoundException::new);
     }
 
     @Transactional
@@ -97,10 +112,12 @@ public class EditorDocumentService {
         if (!audience.equals("teacher") && !audience.equals("student")) {
             throw new EditorContentValidationException("unsupported_editor_audience");
         }
-        var currentDraft = documents.findDraft(command.editorDocumentId(), command.workspaceId())
+        requireWorkingDraftWriter();
+        var currentDraft = documents.findOrMigrateDraft(
+                        command.editorDocumentId(), command.workspaceId(), workingDraftProperties.lazyMigrationEnabled())
                 .orElseThrow(EditorDocumentNotFoundException::new);
-        if (currentDraft.revisionNo() != command.expectedRevisionNo()) {
-            throw new EditorRevisionConflictException(currentDraft.revisionNo());
+        if (currentDraft.draftVersion() != command.expectedDraftVersion()) {
+            throw new EditorRevisionConflictException(currentDraft.draftVersion());
         }
         // 投影在校验和冻结之前完成，因此落库快照是自包含的，
         // 下游不需要重新解释版本变体规则。
@@ -118,6 +135,16 @@ public class EditorDocumentService {
                         "audience", snapshot.audience(),
                         "contentHash", snapshot.contentHash())));
         return snapshot;
+    }
+
+    @Scheduled(fixedDelayString = "${teachbase.editor.working-draft.cleanup-delay:1h}")
+    @Transactional
+    public void cleanExpiredRecoveryState() {
+        if (workingDraftProperties.enabled()) documents.cleanExpiredRecoveryState();
+    }
+
+    private void requireWorkingDraftWriter() {
+        if (!workingDraftProperties.enabled()) throw new EditorWriterFencedException();
     }
 
     private void validateWorkspaceActor(UUID workspaceId, UUID actorUserId) {

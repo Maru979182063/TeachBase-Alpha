@@ -3,6 +3,8 @@ package com.teachbase.server.editor.api;
 import com.teachbase.server.editor.application.EditorDocumentNotFoundException;
 import com.teachbase.server.editor.application.EditorContentValidationException;
 import com.teachbase.server.editor.application.EditorRevisionConflictException;
+import com.teachbase.server.editor.application.EditorMutationConflictException;
+import com.teachbase.server.editor.application.EditorWriterFencedException;
 import java.net.URI;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -30,8 +32,18 @@ class EditorExceptionHandler {
     @ExceptionHandler(EditorRevisionConflictException.class)
     ProblemDetail revisionConflict(EditorRevisionConflictException exception) {
         var problem = problem(HttpStatus.CONFLICT, "Editor revision conflict", exception.getMessage());
-        problem.setProperty("currentRevisionNo", exception.currentRevisionNo());
+        problem.setProperty("currentDraftVersion", exception.currentDraftVersion());
         return problem;
+    }
+
+    @ExceptionHandler(EditorMutationConflictException.class)
+    ProblemDetail mutationConflict(EditorMutationConflictException exception) {
+        return problem(HttpStatus.CONFLICT, "Editor mutation conflict", exception.getMessage());
+    }
+
+    @ExceptionHandler(EditorWriterFencedException.class)
+    ProblemDetail writerFenced(EditorWriterFencedException exception) {
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, "Editor writer fenced", exception.getMessage());
     }
 
     private ProblemDetail problem(HttpStatus status, String title, String detail) {

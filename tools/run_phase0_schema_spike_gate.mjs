@@ -61,6 +61,7 @@ async function main() {
   try {
     const database = await cluster.createDatabase("phase0_schema_spike_test");
     pool = new Pool({ connectionString: database.connectionString, max: 8 });
+    const postgresVersion = (await pool.query("show server_version")).rows[0].server_version;
     const migrations = (await fs.readdir(migrationRoot))
       .filter((name) => /^V\d+__.*\.sql$/.test(name))
       .sort((left, right) => left.localeCompare(right));
@@ -260,7 +261,8 @@ async function main() {
       schemaVersion: 1,
       generatedAt: new Date().toISOString(),
       status: "passed",
-      isolation: { schema: "teachbase_phase0_spike", productionMigrationsChanged: false },
+      database: { engine: "PostgreSQL", version: postgresVersion, startup: "embedded_ephemeral_cluster" },
+      isolation: { schema: "teachbase_phase0_spike", spikeAppliedOutsideFlyway: true },
       workingDraft: {
         concurrentSaves: 2,
         successfulSaves: concurrentDraftSaves.filter((result) => result.rowCount === 1).length,

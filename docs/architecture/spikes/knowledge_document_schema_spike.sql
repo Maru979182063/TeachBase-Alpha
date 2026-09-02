@@ -66,6 +66,8 @@ create table teachbase_phase0_spike.knowledge_section_identity (
   constraint ck_spike_section_key check (length(trim(section_key)) > 0)
 );
 
+-- parent、order、title、content 和 references 属于一次完整 document revision，
+-- 不能作为“当前值”可变地挂在上面的 stable identity 根对象上。
 create table teachbase_phase0_spike.knowledge_section_revision (
   knowledge_document_revision_id uuid not null,
   knowledge_document_id uuid not null,
