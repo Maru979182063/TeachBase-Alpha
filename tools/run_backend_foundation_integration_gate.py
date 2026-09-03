@@ -49,7 +49,7 @@ def run_gate(base: str) -> dict[str, Any]:
             "legacy_editor_draft_contract_drop",
         ],
         "baseline_debt": {
-            "test_release_gate": "expected_68_of_71_until_separate_debt_work",
+            "test_release_gate": "compare_base_and_head_in_the_same_ci_environment",
             "must_not_regress_from_base": True,
         },
         "execution_contract": {
