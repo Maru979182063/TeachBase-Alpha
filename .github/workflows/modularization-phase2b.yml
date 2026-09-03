@@ -1,0 +1,49 @@
+name: Modularization Phase 2B
+
+on:
+  push:
+    branches:
+      - "refactor/pipeline-modularization-phase2b-*"
+  pull_request:
+    branches:
+      - "integration/repository-scope-clean-20260715"
+  workflow_dispatch:
+
+concurrency:
+  group: modularization-phase2b-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  phase2b-gate:
+    name: Phase 2B gate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      - name: Install Python package
+        run: python -m pip install -e ".[dev]"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Run Phase 2B gate
+        run: npm run test:modularization-phase2b

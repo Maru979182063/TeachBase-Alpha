@@ -1,0 +1,1187 @@
+{
+  "schema_version": "teachbase_final_chain_inventory.v0.1",
+  "created_date": "2026-07-31",
+  "baseline": {
+    "branch": "integration/repository-scope-clean-20260715",
+    "commit": "b96a400daadd11fd496ecc47152861f3d5496dae"
+  },
+  "inventory_branch": "audit/final-chain-inventory-20260731",
+  "scope_note": "This inventory describes final product chains, not only entries in config/pipeline_registry.yaml.",
+  "confirmation_status": "user_product_taxonomy_confirmed_by_conversation_pending_code_registry",
+  "confirmation_note": "The four final chains are the product-owner taxonomy stated in conversation and cross-checked against prior Codex task summaries: DOCX math, DOCX English, PDF math, and PDF English. The repository does not yet encode this taxonomy as a canonical final-chain registry, so code paths below are evidence and candidates rather than a single source of truth.",
+  "conversation_evidence": [
+    {
+      "thread_id": "019f7efe-e35c-74d3-863a-d7d0b46a07dd",
+      "thread_title": "three-pipeline handoff",
+      "evidence_type": "historical_taxonomy",
+      "summary": "Older handoff grouped the work as three pipelines: DOCX, PDF math, and English image-PDF. This predates the later split of DOCX into math and English final chains."
+    },
+    {
+      "thread_id": "019f5f13-313e-71e3-a055-79f35c8909a3",
+      "thread_title": "DOCX native-first audit",
+      "evidence_type": "docx_math_origin",
+      "summary": "DOCX native-first should preserve Word-native assets, OMML/formula structure, and document XML order; it should not default to rendering DOCX pages and reusing PDF visual crop logic."
+    },
+    {
+      "thread_id": "019faba8-a1f4-7cc1-bfb1-9638b4cc647c",
+      "thread_title": "English DOCX chain discussion",
+      "evidence_type": "doc_english_chain_definition",
+      "summary": "English DOCX work is a distinct chain, with a protected downstream segment around group repair, field normalization, and parent-child projection. Thread evidence references old-local tools/config not present in this cleanroom baseline."
+    },
+    {
+      "thread_id": "019f5f10-28f6-7721-af28-72ab9d382e6e",
+      "thread_title": "English image-PDF audit",
+      "evidence_type": "pdf_english_chain_definition",
+      "summary": "English PDF is image-PDF text-first, not plain PDF text extraction and not generic visual-first splitting. Reading, grammar, writing, and cloze are family branches inside this one final chain."
+    }
+  ],
+  "selection_rules": [
+    {
+      "rule_id": "final_chain_vs_technical_pipeline",
+      "rule": "Final chains are product-facing source/subject lanes. Technical pipeline registry entries can support one or more final chains but do not replace the final-chain taxonomy."
+    },
+    {
+      "rule_id": "backup_and_probe_exclusion",
+      "rule": "Directories or scripts marked backup, archive, probe, candidate, smoke, headcheck, chaincheck, legacy, or do_not_use_as_final are evidence only unless a final-chain manifest explicitly promotes them."
+    },
+    {
+      "rule_id": "docx_format_boundary",
+      "rule": "DOCX math and DOCX English must stay DOCX-native-first. Page rendering or PDF-style visual crop logic is fallback evidence, not the default path."
+    },
+    {
+      "rule_id": "pdf_english_family_boundary",
+      "rule": "Reading, grammar, writing, and cloze are subfamilies of pdf_english, not four separate final chains."
+    }
+  ],
+  "observed_artifact_time_audit": {
+    "observed_date": "2026-08-03",
+    "observed_project_root_label": "old_full_local_project",
+    "path_note": "All artifact paths in this section are relative to the observed local project root and are evidence only. They are not reproducible input contracts.",
+    "chain_observations": [
+      {
+        "chain_id": "doc_english",
+        "strongest_local_artifact_time": "2026-08-03 18:03:35",
+        "strongest_local_artifacts": [
+          "outputs/delivery_packs/english_docx_doc4_seven_choice_parentraw_translation_review_20260803_v03.zip",
+          "outputs/delivery_packs/english_docx_reading_full_scope_translation_business_review_20260803_v02.zip",
+          "outputs/delivery_packs/english_docx_four_type_business_review_20260803_v07.zip",
+          "outputs/english_docx_reading_child_enhancer_v0_1/doc2_full_reading_child_enhanced_20260803_v01/summary.json",
+          "outputs/english_docx_grammar_child_formatter_v0_1/doc1_grammar_full_20260803_v06/summary.json",
+          "outputs/english_docx_seven_choice_child_formatter_v0_1/doc4_seven_full_fillprev_20260803_v01/summary.json",
+          "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v10.zip",
+          "outputs/delivery_packs/english_docx_doc1_optimized_review_20260731_v01.zip",
+          "outputs/delivery_packs/english_docx_doc2_optimized_review_20260731_v01.zip",
+          "outputs/delivery_packs/english_docx_doc3_optimized_review_20260731_v01.zip",
+          "outputs/delivery_packs/english_docx_doc4_optimized_review_20260731_v01.zip",
+          "outputs/delivery_packs/english_docx_doc5_optimized_review_20260731_v01.zip",
+          "outputs/delivery_packs/english_docx_doc6_optimized_review_20260731_v01.zip",
+          "outputs/english_docx_integrated_chain_v0_1/protected_doc5_doc6_20260731_v01/doc5_continuation_writing/run_summary.json",
+          "outputs/english_docx_integrated_chain_v0_1/protected_doc5_doc6_20260731_v01/doc6_practical_writing/run_summary.json",
+          "outputs/english_docx_group_repair_gate_v0_1/protected_doc5_doc6_20260731_v01_repair/doc5_continuation_writing/summary.json",
+          "outputs/english_docx_group_repair_gate_v0_1/protected_doc5_doc6_20260731_v01_repair/doc6_practical_writing/summary.json"
+        ],
+        "result_summary": {
+          "runner_status": "ok for doc5_continuation_writing and doc6_practical_writing",
+          "fallback_events": 0,
+          "doc5_group_count": 5,
+          "doc5_projection_warnings": 0,
+          "doc6_group_count": 5,
+          "doc6_projection_warnings": 0,
+          "repair_selected_mode": "repaired for both doc5 and doc6",
+          "latest_doc3_delivery": "v10 has 20 groups, 300 children, 300 model-relevant contexts, 0 missing options, 0 missing tags, 0 prior-numbered-blank violations, and zip testzip=None",
+          "latest_review_surface": "2026-08-03 four-type business review v07 has zip testzip=None and combines cloze, grammar, reading, and seven-choice child-enrichment evidence",
+          "four_type_business_review": {
+            "package_path": "outputs/delivery_packs/english_docx_four_type_business_review_20260803_v07.zip",
+            "zip_testzip": null,
+            "zip_entries": 5,
+            "sha256": "1628b177c4529977653befce08baa742d25b9ee905a0c72f8bfb553d2f33ad12"
+          },
+          "late_reading_and_seven_choice_upgrade": {
+            "reading_package_path": "outputs/delivery_packs/english_docx_reading_full_scope_translation_business_review_20260803_v02.zip",
+            "reading_sha256": "84ec070a7f02b93f21aea5854bf3b46c96d65df3598681d2fedf2a9c0f44ae6d",
+            "seven_choice_package_path": "outputs/delivery_packs/english_docx_doc4_seven_choice_parentraw_translation_review_20260803_v03.zip",
+            "seven_choice_sha256": "0cc2fae7edb8ec504afdbb0bf6a1df8b237696ddc9b590b73a636d0fb40b248c"
+          }
+        },
+        "caution": "The latest 2026-08-03 packages are protected child-enrichment/business-review surfaces. Do not replace the canonical raw-DOCX entrypoint with formatter, enhancer, or review-renderer nodes."
+      },
+      {
+        "chain_id": "doc_math",
+        "strongest_local_artifact_time": "2026-07-28 14:34:52",
+        "strongest_local_artifacts": [
+          "config/docx_math_pipeline_final_active_manifest.json",
+          "docs/docx_math_pipeline_final_repro.md"
+        ],
+        "result_summary": {
+          "manifest_status": "experimental_final_candidate",
+          "entrypoint": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+          "runtime_import_enabled": false,
+          "database_write_enabled": false
+        },
+        "caution": "The observed local active output roots for DOCX math are empty in the old full local project. Prior task evidence says confusing outputs were removed and a clean branch was pushed, so local artifact time is weaker than manifest/code/thread evidence."
+      },
+      {
+        "chain_id": "pdf_english",
+        "strongest_local_artifact_time": "2026-07-24 18:12:27",
+        "strongest_local_artifacts": [
+          "outputs/en_full3docs_v20_pkg_20260724.zip"
+        ],
+        "result_summary": {
+          "package_record_count": 136,
+          "page_asset_count": 82,
+          "reading_records": 40,
+          "grammar_records": 58,
+          "writing_records": 38,
+          "runtime_import_enabled": false,
+          "database_write_enabled": false
+        },
+        "caution": "Conversation and docs mention 2026-07-28 graph-first and cloze manifest work, but the observed local graph-first output/config directories are empty or incomplete. Treat 2026-07-24 package as strongest retained local artifact, and 2026-07-28 as thread/document lineage evidence."
+      },
+      {
+        "chain_id": "pdf_math",
+        "strongest_local_artifact_time": "2026-07-21 16:51:40",
+        "strongest_local_artifacts": [
+          "outputs/review_packages/s_math47_overlap24_final2_colleague_review_20260721_165138.zip",
+          "outputs/review_packages/s_math47_overlap24_final2_colleague_review_20260721_165138/07_asset_package_audit/asset_package_audit_summary.json"
+        ],
+        "result_summary": {
+          "question_count": 47,
+          "status_counts": {
+            "pass": 45,
+            "needs_review": 2
+          },
+          "fail_question_ids": [],
+          "unified_ingest_summary_time": "2026-07-21 14:57:28",
+          "unified_ingest_status": "complete",
+          "format_normalize_backfill": "skipped_already_normalized",
+          "image_need_gate": {
+            "question_count": 47,
+            "needs_figure_detection_count": 5,
+            "no_figure_count": 42
+          },
+          "asset_reconcile_refine": {
+            "quality_action_count": 5,
+            "quality_action_counts": {
+              "refined_by_model": 5
+            },
+            "visual_anchor_action_count": 47,
+            "visual_anchor_action_counts": {
+              "no_selected_assets": 42,
+              "visual_insert_anchor_review_applied": 5
+            }
+          }
+        },
+        "caution": "MinerU fallback artifacts from 2026-07-20 are real evidence for an implemented explicit fallback capability in the PDF math asset-preparation path. The 2026-07-21 47-question run passed --enable-mineru-fallback, but prepared-job records show mineru_fallback=null and the _mineru_fallback output directory is empty. Describe this as a gated fallback capability allowed by that run, not as the primary/default detector path."
+      }
+    ],
+    "pdf_math_current_node_selection": {
+      "selection_rule": "Use no-suffix primary tools that are invoked by the 2026-07-21 47-question state/log lineage and that feed the final2 review package. Exclude backup, .bak, smoke, probe, demo, and regression-only files unless they are explicitly cited as regression evidence.",
+      "selected_primary_nodes": [
+        {
+          "stage": "orchestrator",
+          "path": "tools/run_question_ingest_skill.py",
+          "observed_mtime": "2026-07-21 16:10:08",
+          "evidence": "2026-07-21 state/runtime_summary and stage logs"
+        },
+        {
+          "stage": "image_need_gate",
+          "path": "tools/model_image_need_gate.py",
+          "observed_mtime": "2026-07-01 20:58:01",
+          "evidence": "01_model_gate.log in the 47-question run"
+        },
+        {
+          "stage": "candidate_split",
+          "path": "tools/build_figure_candidate_source.py",
+          "observed_mtime": "2026-07-01 16:41:00",
+          "evidence": "02_build_candidates.log in the 47-question run"
+        },
+        {
+          "stage": "visual_transcription",
+          "path": "tools/teacher_handout_visual_transcribe_doubao.py",
+          "observed_mtime": "2026-07-21 18:26:57",
+          "evidence": "03_transcription_shard logs and visual transcription outputs"
+        },
+        {
+          "stage": "format_normalize_and_formula_patch",
+          "path": "tools/apply_format_normalize_existing_results.py; tools/math_formula_library_gate.py; tools/katex_validate_math.cjs",
+          "observed_mtime": "2026-07-21 18:35:51; 2026-07-21 18:33:01",
+          "evidence": "Runner has a format-normalize backfill stage; 47-question run skipped it because records were already normalized; formula patch regression validates the Markdown/LaTeX library gate."
+        },
+        {
+          "stage": "figure_detection_and_visual_source_preparation",
+          "path": "tools/prepare_option_visual_source.py",
+          "observed_mtime": "2026-07-20 13:26:43",
+          "evidence": "05_figure_detection_parallel logs in the 47-question run"
+        },
+        {
+          "stage": "prepared_source_merge",
+          "path": "tools/merge_candidate_prepared_sources.py",
+          "observed_mtime": "2026-07-01 16:41:26",
+          "evidence": "run_question_ingest_skill.py calls this when candidate prepared sources need merging; the 47-question run emitted prepared_merged.json"
+        },
+        {
+          "stage": "assetize",
+          "path": "tools/assetize_question_images.py",
+          "observed_mtime": "2026-07-21 15:01:08",
+          "evidence": "07_assetize.log in the 47-question run"
+        },
+        {
+          "stage": "asset_visual_consolidation",
+          "path": "tools/consolidate_visual_assets.py",
+          "observed_mtime": "2026-07-09 13:34:51",
+          "evidence": "08_asset_visual_consolidation.log in the 47-question run"
+        },
+        {
+          "stage": "asset_reconcile_refine",
+          "path": "tools/reconcile_and_refine_visual_assets.py",
+          "observed_mtime": "2026-07-21 16:09:40",
+          "evidence": "08_5_asset_reconcile_refine.log in the 47-question run and final2 artifacts"
+        },
+        {
+          "stage": "asset_package_audit",
+          "path": "tools/audit_question_asset_package.py",
+          "observed_mtime": "2026-07-20 13:29:45",
+          "evidence": "09_asset_package_audit.log and final2 review package"
+        }
+      ],
+      "explicitly_excluded_patterns": [
+        "*backup*",
+        "*.bak*",
+        "*smoke*",
+        "*probe*",
+        "*demo*",
+        "regression-only output roots unless used as regression evidence"
+      ]
+    },
+    "pdf_math_local_probe_20260731": {
+      "purpose": "Small local execution probe using retained real 47-question PDF math artifacts after machine move.",
+      "environment": {
+        "python": "3.12.10",
+        "venv_label": "teachbase_pdf_audit_20260731",
+        "api_key_available": false,
+        "mineru_exe_available": false
+      },
+      "load_checks": {
+        "run_question_ingest_skill_help": "pass",
+        "audit_question_asset_package_help": "pass",
+        "reconcile_and_refine_visual_assets_help": "pass",
+        "math_formula_library_gate_stdin_probe": "pass_detected_split_macros"
+      },
+      "offline_reassembly_probe": {
+        "input_label": "2026-07-21 s_math47_overlap24_unified prepared_merged.json plus visual_transcription_results.json",
+        "stages_run": [
+          "assetize_question_images",
+          "consolidate_visual_assets",
+          "reconcile_and_refine_visual_assets with model steps skipped",
+          "audit_question_asset_package"
+        ],
+        "script_execution": "pass",
+        "assetize_result": {
+          "question_count": 47,
+          "asset_count": 5,
+          "questions_with_missing_assets": 47
+        },
+        "audit_result": {
+          "status_counts": {
+            "fail": 47
+          },
+          "issue_counts": {
+            "materialized_source_missing": 47,
+            "analysis_requires_image_no_asset": 5,
+            "analysis_scope_no_analysis_asset": 5,
+            "figure_detection_zero_assets": 5
+          }
+        },
+        "interpretation": "This is a portability/intermediate-artifact problem: moved-machine source records still point at old absolute paths, so reassembly from intermediate prepared sources cannot fully materialize assets."
+      },
+      "original_final2_audit_rerun": {
+        "input_label": "2026-07-21 s_math47_overlap24_final2 reconciled_refined_manifest.json",
+        "script_execution": "pass",
+        "question_count": 47,
+        "status_counts": {
+          "pass": 45,
+          "needs_review": 2
+        },
+        "issue_counts": {},
+        "warning_counts": {
+          "headless_crop_risk": 2,
+          "refine_shrink_rejected_kept_coarse": 1
+        },
+        "fail_question_ids": [],
+        "needs_review_question_ids": [
+          "tq_017",
+          "tq_028"
+        ],
+        "interpretation": "The retained final2 package remains stable on the moved local project."
+      },
+      "format_normalize_probe": {
+        "runner_skip_logic": "The unified runner detects already-normalized records before calling the backfill script.",
+        "standalone_script_result_without_api_key": "missing_api_key",
+        "interpretation": "Do not treat standalone --skip-if-already-normalized as an offline gate yet; package hardening should make this entrypoint friendlier or keep it runner-owned."
+      }
+    },
+    "pdf_math_node_lineage_observed": [
+      {
+        "node": "source_split",
+        "evidence": "outputs/ingress_splitter_v0.1/senior_math_full_split_pad48_overlap24_20260721/teacher_visual_question_transcription_v0.1.json",
+        "role": "PDF math question crop/source split with pad48/overlap24."
+      },
+      {
+        "node": "unified_ingest_runner",
+        "evidence": "tools/run_question_ingest_skill.py; outputs/ingress_splitter_v0.1/s_math47_overlap24_unified_20260721/runtime_summary.json",
+        "role": "Orchestrates planner, candidate extraction, visual transcription, format-normalize backfill, figure detection, asset packaging, reconcile/refine, and audit."
+      },
+      {
+        "node": "format_normalize_backfill",
+        "evidence": "tools/apply_format_normalize_existing_results.py; outputs/ingress_splitter_v0.1/s_math47_overlap24_unified_20260721/03_5_format_normalize_backfill/format_normalize_only_summary.json",
+        "role": "Ensures visual transcription records have the format_normalize model node and Markdown fields before downstream packaging."
+      },
+      {
+        "node": "formula_library_gate_and_latex_patch",
+        "evidence": "tools/math_formula_library_gate.py; tools/katex_validate_math.cjs; outputs/ingress_splitter_v0.1/formula_patch_regression_tq030_035_046_20260721/katex_gate_regression_20260721/katex_gate_summary.json",
+        "role": "Checks Markdown/LaTeX spans through KaTeX and detects split macro anomalies such as \\in fty and \\leq slant, with deterministic or model patch support."
+      },
+      {
+        "node": "figure_detection_with_mineru_fallback",
+        "evidence": "tools/prepare_option_visual_source.py; outputs/pdf_to_pack_mineru_fallback_regression_055_20260720/fallback3_case055_summary.json",
+        "role": "Uses MinerU only when explicitly enabled and normal figure detection yields zero staged assets for option-image cases."
+      },
+      {
+        "node": "assetize_consolidate_reconcile_refine_audit",
+        "evidence": "tools/assetize_question_images.py; tools/consolidate_visual_assets.py; tools/reconcile_and_refine_visual_assets.py; tools/audit_question_asset_package.py",
+        "role": "Materializes assets, consolidates visual references, applies image quality/model refinement and visual insert anchor review, then audits the package."
+      }
+    ],
+    "non_pdf_math_protection_candidates_20260731": {
+      "doc_math": {
+        "confidence": "high",
+        "protect_as": "user-named final DOCX math pipeline with clean-branch handoff, unique entrypoint, active config, and 47-file inventory; do not use the dirty local worktree as the clean baseline",
+        "product_owner_correction_20260731": "User states DOCX math had already been stable and explicitly named as the final chain.",
+        "handoff_package_evidence_20260731": {
+          "handoff_dir_label": "docx_math_final_pipeline_handoff_20260731",
+          "files": [
+            "HANDOFF.md",
+            "final_chain_file_inventory.json"
+          ],
+          "inventory_file_count": 47,
+          "inventory_missing_count": 0,
+          "declared_unique_entrypoint": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+          "declared_config_files": [
+            "config/docx_math_pipeline_final_v01.yaml",
+            "config/docx_math_pipeline_final_active_manifest.json"
+          ],
+          "declared_clean_branch": "origin/codex/docx-math-final-pipeline-clean-v01",
+          "declared_clean_commit": "fabc70f Add isolated DOCX math final pipeline",
+          "dirty_local_worktree_warning": "Current old local worktree is dirty and mixed with English-line and staged files; prefer the clean remote branch as baseline."
+        },
+        "canonical_definition_evidence": [
+          "config/docx_math_pipeline_final_active_manifest.json",
+          "config/docx_math_pipeline_final_v01.yaml"
+        ],
+        "manifest_claims": {
+          "active_pipeline_id": "docx_math_pipeline_final_v01",
+          "active_pipeline_name": "DOCX Math Native Final Pipeline",
+          "status": "experimental_final_candidate",
+          "entrypoint": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+          "owned_output_root": "outputs/docx_math_pipeline_final_v0_1",
+          "runtime_import_enabled": false,
+          "database_write_enabled": false,
+          "last_updated": "2026-07-27"
+        },
+        "protected_node_candidates": [
+          "tools/docx_native_stage0_router_v01.py",
+          "tools/docx_native_block_tagger_v01.py",
+          "tools/docx_asset_role_visual_tagger_v01.py",
+          "tools/docx_question_boundary_cutter_v01.py",
+          "tools/docx_math_pipeline_final_orchestrator_v01.py",
+          "tools/docx_question_complexity_router_v01.py",
+          "tools/docx_question_part_normalizer_v01.py",
+          "tools/docx_question_part_long_normalizer_v01.py",
+          "tools/docx_question_part_twostage_probe_v01.py",
+          "tools/docx_math_source_backed_draft_builder_v01.py",
+          "tools/docx_math_fullchain_orchestrator_v01.py",
+          "tools/docx_math_build_side_by_side_review_v01.py",
+          "tools/docx_native_formula_token_stream_v01.py",
+          "tools/docx_run_math_normalizer_v01.py",
+          "tools/docx_math_question_refiner_v01.py",
+          "tools/docx_math_long_composite_refiner_v01.py",
+          "tools/docx_math_long_packet_assembler_v01.py",
+          "tools/docx_math_refine_gate_repair_orchestrator_v01.py",
+          "tools/docx_native_transcription_package_builder_v01.py"
+        ],
+        "do_not_promote_as_final": [
+          "tools/docx_math_pipeline_orchestrator_v01.py",
+          "tools/docx_question_grouper_v01.py",
+          "outputs/docx_question_grouper_v0_1",
+          "outputs/docx_math_pipeline_orchestrator_v0_1",
+          "outputs/docx_native_pipeline_v0_1",
+          "outputs/docx_native_model_segment_v0_1",
+          "outputs/docx_native_text_repair_model_v0_1",
+          "outputs/docx_native_boundary_resolver_v0_1"
+        ],
+        "caution": "Protect this as a high-confidence named final-chain implementation. For implementation work, do not treat the dirty old local worktree as the clean baseline; use the declared clean branch/commit or the 47-file handoff inventory if network access is unavailable."
+      },
+      "doc_english": {
+        "confidence": "high",
+        "protect_as": "same-day active stage0 isolated environment plus protected doc5/doc6 downstream runner segment",
+        "product_owner_correction_20260731": "User states DOCX English was run on the morning of 2026-07-31 and is therefore comparatively easy to confirm.",
+        "canonical_definition_evidence": [
+          "config/english_docx_native_md/active_manifest.json",
+          "config/english_docx_native_md/group_repair_gate_v01.json"
+        ],
+        "manifest_claims": {
+          "pipeline_id": "english_docx_native_md_v01",
+          "name": "English DOCX Native Markdown Isolated Environment",
+          "status": "stage0_isolated_candidate",
+          "entrypoint": "tools/english_docx_native_md_v01.py",
+          "owned_output_root": "outputs/english_docx_native_md_v0_1",
+          "runtime_import_enabled": false,
+          "database_write_enabled": false,
+          "last_updated": "2026-07-31"
+        },
+        "protected_node_candidates": [
+          "tools/english_docx_native_md_v01.py",
+          "tools/english_docx_group_boundary_cutter_v01.py",
+          "tools/english_docx_group_itemizer_v01.py",
+          "tools/english_docx_child_skill_tagger_v01.py",
+          "tools/english_docx_group_repair_gate_v01.py",
+          "tools/english_docx_group_field_normalizer_v01.py",
+          "tools/english_docx_parent_child_projection_v02.py",
+          "tools/english_docx_reading_child_enhancer_v01.py",
+          "tools/english_docx_cloze_child_skill_tagger_v01.py",
+          "tools/english_docx_grammar_child_formatter_v01.py",
+          "tools/english_docx_seven_choice_child_formatter_v01.py",
+          "tools/english_docx_parent_only_review_pack_v01.py",
+          "tools/english_docx_optimized_review_renderer_v01.py",
+          "tools/english_docx_integrated_chain_runner_v01.py"
+        ],
+        "latest_protected_run_evidence": {
+          "run_root": "outputs/english_docx_integrated_chain_v0_1/protected_doc5_doc6_20260731_v01",
+          "latest_mtime": "2026-07-31 11:53:10",
+          "covered_docs": [
+            "doc5_continuation_writing",
+            "doc6_practical_writing"
+          ],
+          "runner_status": "ok for both docs",
+          "fallback_events": 0,
+          "projection_warning_count": 0,
+          "repair_selected_mode": "repaired for both docs"
+        },
+        "latest_doc3_delivery_evidence": {
+          "run_id": "english_docx_doc3_tagged_final_20260731_v10",
+          "mtime": "2026-07-31 15:23:58",
+          "doc_id": "doc3_cloze_20_answers",
+          "package_path": "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v10.zip",
+          "source_projection": "outputs/english_docx_parent_child_projection_v0_2/doc3_cloze_20_answers_20260731_v10/parent_child_projection.json",
+          "group_count": 20,
+          "child_count": 300,
+          "model_relevant_context_count": 300,
+          "missing_option_count": 0,
+          "missing_tag_count": 0,
+          "explanation_previous_numbered_blank_violation_count": 0,
+          "html_child_option_heading_count": 300,
+          "html_literal_blank_token_count": 0,
+          "html_has_mojibake_marker": false,
+          "zip_testzip": null,
+          "registry_action": "added_as_latest_protected_delivery_evidence; v04 remains protected predecessor evidence"
+        },
+        "same_batch_protected_review_surfaces": {
+          "role": "protected review and delivery surfaces, not replacement canonical entrypoints",
+          "parent_only_review_packs": {
+            "doc1": {
+              "package_path": "outputs/delivery_packs/english_docx_doc1_parent_only_20260731_v01.zip",
+              "group_count": 17,
+              "unknown_parent_field_count": 0,
+              "warning_count": 0
+            },
+            "doc2": {
+              "package_path": "outputs/delivery_packs/english_docx_doc2_parent_only_20260731_v01.zip",
+              "group_count": 21,
+              "unknown_parent_field_count": 0,
+              "warning_count": 0
+            },
+            "doc4": {
+              "package_path": "outputs/delivery_packs/english_docx_doc4_parent_only_20260731_v01.zip",
+              "group_count": 13,
+              "unknown_parent_field_count": 0,
+              "warning_count": 1
+            }
+          },
+          "unknownfix_projection_packs": {
+            "doc5": {
+              "package_path": "outputs/delivery_packs/english_docx_doc5_unknownfix_20260731_v01.zip",
+              "projection_path": "outputs/english_docx_parent_child_projection_v0_2/doc5_unknown_quarantine_20260731_v01/parent_child_projection.json",
+              "group_count": 5,
+              "child_count": 0,
+              "parent_only_count": 5,
+              "warning_count": 0
+            },
+            "doc6": {
+              "package_path": "outputs/delivery_packs/english_docx_doc6_unknownfix_20260731_v01.zip",
+              "projection_path": "outputs/english_docx_parent_child_projection_v0_2/doc6_unknown_quarantine_20260731_v01/parent_child_projection.json",
+              "group_count": 5,
+              "child_count": 0,
+              "parent_only_count": 5,
+              "warning_count": 0
+            }
+          },
+          "optimized_review_packs": {
+            "docs": [
+              "doc1",
+              "doc2",
+              "doc3",
+              "doc4",
+              "doc5",
+              "doc6"
+            ],
+            "zip_testzip": null
+          }
+        },
+        "four_type_child_enrichment_evidence_20260803": {
+          "role": "protected post-projection child-enrichment and four-type business review evidence, not replacement canonical entrypoint",
+          "business_review_package": {
+            "run_id": "english_docx_four_type_business_review_20260803_v07",
+            "package_path": "outputs/delivery_packs/english_docx_four_type_business_review_20260803_v07.zip",
+            "mtime": "2026-08-03 13:44:27",
+            "zip_testzip": null,
+            "zip_entries": 5,
+            "sha256": "1628b177c4529977653befce08baa742d25b9ee905a0c72f8bfb553d2f33ad12"
+          },
+          "component_runs": {
+            "cloze": {
+              "source_run_id": "english_docx_doc3_tagged_final_20260731_v10",
+              "doc_id": "doc3_cloze_20_answers",
+              "group_count": 20,
+              "child_count": 300
+            },
+            "grammar": {
+              "source_run_id": "doc1_grammar_full_20260803_v06",
+              "doc_id": "doc1_zhuanlian1",
+              "group_count": 17,
+              "child_count": 156,
+              "status_counts": {"ok": 17},
+              "issue_count": 0,
+              "prompt_version": "english_docx_grammar_child_formatter_v0.1_20260803"
+            },
+            "reading": {
+              "source_run_id": "doc2_full_reading_child_enhanced_20260803_v01",
+              "doc_id": "doc2_zhuanlian2",
+              "group_count": 19,
+              "child_count": 58,
+              "status_counts": {"ok": 19},
+              "issue_count": 0,
+              "prompt_version": "english_docx_reading_child_enhancer_v0.5_20260803"
+            },
+            "seven_choice": {
+              "source_run_id": "doc4_seven_full_fillprev_20260803_v01",
+              "doc_id": "doc4_seven_choice",
+              "group_count": 13,
+              "child_count": 61,
+              "status_counts": {"ok": 13},
+              "issue_count": 0,
+              "prompt_version": "english_docx_seven_choice_child_formatter_v0.1_20260803",
+              "delivery_zip_testzip": null
+            }
+          }
+        },
+        "late_reading_and_seven_choice_upgrade_20260803": {
+          "role": "protected late business-review upgrade for reading and seven-choice, not replacement canonical entrypoint",
+          "reading": {
+            "run_id": "doc2_reading_full_scope_translation_20260803_v01",
+            "doc_id": "doc2_reading",
+            "package_path": "outputs/delivery_packs/english_docx_reading_full_scope_translation_business_review_20260803_v02.zip",
+            "source_run_root": "outputs/english_docx_reading_child_enhancer_v0_1/doc2_reading_full_scope_translation_20260803_v01",
+            "group_count": 19,
+            "child_count": 58,
+            "status_counts": {"ok": 19},
+            "issue_count": 0,
+            "prompt_version": "english_docx_reading_child_enhancer_v0.6_20260803",
+            "zip_testzip": null,
+            "zip_entries": 3,
+            "sha256": "84ec070a7f02b93f21aea5854bf3b46c96d65df3598681d2fedf2a9c0f44ae6d"
+          },
+          "seven_choice": {
+            "run_id": "doc4_seven_parentraw_translation_reconciled_20260803_v03",
+            "doc_id": "doc4_seven_choice",
+            "package_path": "outputs/delivery_packs/english_docx_doc4_seven_choice_parentraw_translation_review_20260803_v03.zip",
+            "group_count": 13,
+            "child_count": 61,
+            "status_counts": {"ok": 13},
+            "issue_count": 0,
+            "prompt_version": "english_docx_seven_choice_child_formatter_v0.6_parent_raw_translation_20260803",
+            "fallback_rounds_configured": 1,
+            "zip_testzip": null,
+            "zip_entries": 4,
+            "sha256": "0cc2fae7edb8ec504afdbb0bf6a1df8b237696ddc9b590b73a636d0fb40b248c"
+          },
+          "not_promoted_reason": "Earlier same-afternoon seven-choice sample, paragraph-context, and needs_review runs are iteration evidence. The promoted late seven-choice evidence is v03 because it is full-doc, reconciled, packaged, and has zero issues."
+        },
+        "delivery_package_evidence": {
+          "path": "outputs/delivery_packs/english_docx_docs1_6_final_20260731_v01.zip",
+          "mtime": "2026-07-31 10:12:29",
+          "scope": "docs1-6 delivery packaging evidence; predates later protected doc5/doc6 runner evidence"
+        },
+        "caution": "The same-day local run evidence is strong for the protected segment. Still avoid calling it a complete raw-DOCX-entry production chain unless the upstream raw-entry run artifacts are added to the registry evidence."
+      },
+      "pdf_english": {
+        "confidence": "medium_high",
+        "confidence_breakdown": {
+          "final_chain_identity_and_entry_contract": "high",
+          "retained_artifact_completeness_in_moved_local_copy": "medium"
+        },
+        "protect_as": "final-chain identity and entry contract for english_text_first_graph_first, plus retained v20 package and 2026-07-28 v02/graph-first/cloze lineage; graph-first 2026-07-28 should be protected from deletion but not promoted as fully verified final package from the moved local copy alone",
+        "product_owner_correction_20260731": "User confirms the last batch of PDF English results was indeed produced on 2026-07-28.",
+        "handoff_package_evidence_20260731": {
+          "package_label": "english_text_first_graph_first_handoff",
+          "zip_test": "pass",
+          "files": [
+            "README_HANDOFF.md",
+            "PIPELINE_CONTRACT.md",
+            "RUNBOOK.md",
+            "HANDOFF_CHECKLIST.md"
+          ],
+          "declared_pipeline_name": "english_text_first_graph_first",
+          "declared_unique_entry": "config/english_text_first_graph_first/active_manifest.json",
+          "declared_manifest_gate": "python tools/english_text_first_graph_first_manifest_check.py",
+          "declared_success_marker": "english_text_first_graph_first_manifest_valid",
+          "declared_previous_smoke_artifacts": [
+            "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
+            "outputs/english_text_first_graph_first/final_chain_smoke_20260728/"
+          ],
+          "declared_smoke_scope": {
+            "node1_node1b": "reading, grammar, writing, cloze each 1 page; parsed=1 and valid=1",
+            "node2_to_node6b": "reading p001-p002, grammar p001, writing p001, cloze p001",
+            "runtime_import_enabled": false,
+            "database_write_enabled": false
+          },
+          "declared_forbidden_selection": [
+            "timestamp latest guessing",
+            "backup directories",
+            "probe directories",
+            "smoke directories as final production",
+            "plain_full directories",
+            "badcase directories"
+          ]
+        },
+        "strongest_retained_package": {
+          "path": "outputs/en_full3docs_v20_pkg_20260724.zip",
+          "mtime": "2026-07-24 18:12:27",
+          "record_count": 136,
+          "page_asset_count": 82,
+          "reading_records": 40,
+          "grammar_records": 58,
+          "writing_records": 38,
+          "runtime_import_enabled": false,
+          "database_write_enabled": false
+        },
+        "cleanroom_isolated_gate": [
+          "config/english_text_first_v05.yaml",
+          "tools/english_text_first_v05_pipeline.py",
+          "tools/english_text_first_sidecar_graph_v01.py",
+          "tools/english_text_first_v05_model_gate.py",
+          "tests/test_english_text_first_v05_pipeline.py",
+          "tests/test_english_text_first_sidecar_graph_v01.py"
+        ],
+        "old_local_long_lineage_evidence": [
+          "docs/english_text_first_graph_first_environment.md",
+          "config/english_text_first_v02.yaml",
+          "tools/english_text_first_graph_first_manifest_check.py"
+        ],
+        "protected_node_candidates": [
+          "tools/english_text_first_controlled_node1_vlm_transcriber.py",
+          "tools/english_text_first_controlled_node1b_attribute_tagger.py",
+          "tools/english_text_first_sliding_window_composer_v01.py",
+          "tools/english_text_first_group_normalizer_v01.py",
+          "tools/english_text_first_group_relation_resolver_v01.py",
+          "tools/english_text_first_group_ownership_reconciler_v01.py",
+          "tools/english_text_first_source_backed_draft_builder_v01.py",
+          "tools/english_text_first_node4b_field_role_resolver_v01.py",
+          "tools/english_text_first_question_packet_builder_v01.py",
+          "tools/english_text_first_question_packet_refiner_v01.py",
+          "tools/english_text_first_runtime_projection_planner_v01.py",
+          "tools/english_text_first_question_render_normalizer_v01.py",
+          "tools/english_text_first_render_verifier_repair_v01.py",
+          "tools/english_text_first_render_gate_point_repair_v01.py",
+          "tools/english_text_first_question_candidate_auditor_v01.py",
+          "tools/english_text_first_graph_first_manifest_check.py"
+        ],
+        "graph_first_20260728_status": {
+          "docs_claim_active_manifest_path": "config/english_text_first_graph_first/active_manifest.json",
+          "observed_manifest_status": "missing_or_not_retained_in_current_old_local_project",
+          "observed_output_roots": "empty_or_incomplete",
+          "handoff_declared_smoke_artifacts_observed_in_current_old_local_copy": "missing",
+          "observed_same_day_code_config_prompt_evidence": [
+            "tools/english_text_first_full_chain_runner_v01.py",
+            "tools/english_text_first_question_packet_refiner_v01.py",
+            "tools/english_text_first_question_render_normalizer_v01.py",
+            "tools/english_text_first_review_pack_renderer_v01.py",
+            "config/english_text_first_v02.yaml",
+            "docs/english_text_first_graph_first_environment.md",
+            "prompts/english_question_packet_refiner_cloze_system_v0.1.md",
+            "prompts/english_question_packet_refiner_cloze_user_v0.1.md"
+          ],
+          "cloze_scope": "pages 1-8 review-candidate only, not full-PDF production confirmation",
+          "node6d_status": "defined in v02 config but not pinned active final gate by the graph-first environment doc"
+        },
+        "caution": "Do not use split_v03 legacy English support as the protected English Text-first final chain. The handoff confirms the final-chain identity and entry contract, but the moved local copy still needs active_manifest.json and final_chain_smoke_20260728 artifacts restored or re-created before artifact-complete promotion."
+      }
+    },
+      "registry_readiness_smoke_20260731": {
+      "registry_path": "config/final_chain_registry.yaml",
+      "registry_test_path": "tests/test_final_chain_registry.py",
+      "registry_validator_path": "tools/validate_final_chain_registry.py",
+      "surface_classifier_path": "tools/classify_final_chain_surface.py",
+      "surface_classifier_test_path": "tests/test_final_chain_surface_classifier.py",
+      "npm_script": "npm run test:final-chain-registry",
+      "surface_classification_reports": [
+        "docs/reports/final_chain_surface_classification_old_local_20260731.json",
+        "docs/reports/final_chain_surface_classification_old_local_20260731.md",
+        "docs/reports/final_chain_surface_classification_cleanroom_20260731.json",
+        "docs/reports/final_chain_surface_classification_cleanroom_20260731.md"
+      ],
+      "cleanup_candidate_reports": [
+        "docs/reports/cleanup_candidates_old_local_20260731.json",
+        "docs/reports/cleanup_candidates_old_local_20260731.md",
+        "docs/reports/cleanup_candidates_cleanroom_20260731.json",
+        "docs/reports/cleanup_candidates_cleanroom_20260731.md"
+      ],
+      "doc_math": {
+        "status": "pass",
+        "checks": [
+          "handoff inventory has 47 files and missing=0",
+          "observed old-local file hash check has observed_missing_count=0 and sha256_mismatch_count=0",
+          "tools/docx_math_pipeline_final_orchestrator_v01.py --help loads",
+          "active manifest parses with active_pipeline_id=docx_math_pipeline_final_v01",
+          "runtime_import_enabled=false and database_write_enabled=false"
+        ]
+      },
+      "doc_english": {
+        "status": "pass",
+        "checks": [
+          "active manifest parses with pipeline_id=english_docx_native_md_v01",
+          "tools/english_docx_integrated_chain_runner_v01.py --help loads",
+          "doc5 and doc6 protected run summaries are status=ok",
+          "fallback_events_count=0",
+          "field normalizer issue_count=0",
+          "projection warning_count=0",
+          "runtime_import_enabled=false and database_write_enabled=false"
+        ]
+      },
+      "pdf_math": {
+        "status": "pass",
+        "checks": [
+          "tools/audit_question_asset_package.py --help loads",
+          "retained final2 zip testzip=None",
+          "retained final2 zip contains asset audit summary",
+          "audit rerun on final2 reconciled_refined_manifest returns 47 questions, 45 pass, 2 needs_review, 0 fail"
+        ],
+        "audit_rerun_out_dir_label": "pdf_math_final2_smoke_20260731_142421"
+      },
+      "pdf_english": {
+        "status": "partial",
+        "checks_passed": [
+          "english_text_first_graph_first_handoff.zip testzip=None",
+          "handoff declares unique active_manifest entry and manifest gate",
+          "tools/english_text_first_graph_first_manifest_check.py --help loads in old local copy",
+          "2026-07-28 config, graph-first doc, and full-chain runner exist",
+          "cleanroom english_text_first_v05 portable regression passes: 7 passed"
+        ],
+        "blocking_checks": [
+          "config/english_text_first_graph_first/active_manifest.json missing in moved old-local copy",
+          "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip missing in moved old-local copy",
+          "outputs/english_text_first_graph_first/final_chain_smoke_20260728/ missing in moved old-local copy"
+        ],
+        "registry_readiness": "protected_definition_ready_needs_artifact_restore_or_smoke_rerun"
+      },
+      "cleanroom_tests": [
+        {
+          "name": "final_chain_registry_validator",
+          "result": "ok=true, chain_count=4, error_count=0, warning_count=7",
+          "warning_interpretation": "Warnings identify final-chain files intentionally not yet imported into this cleanroom copy; they are non-blocking registry smoke warnings."
+        },
+        {
+          "name": "final_chain_registry",
+          "result": "7 passed"
+        },
+        {
+          "name": "npm_final_chain_registry",
+          "result": "passed via npm.cmd run test:final-chain-registry with cleanroom .venv on PATH"
+        },
+        {
+          "name": "final_chain_surface_classifier",
+          "result": "classifier tests passed; old-local and cleanroom non-destructive reports generated"
+        },
+        {
+          "name": "cleanup_candidate_report",
+          "result": "candidate report tests passed; old-local and cleanroom non-destructive cleanup candidate reports generated"
+        },
+        {
+          "name": "english_text_first_v05_portable",
+          "result": "7 passed"
+        },
+        {
+          "name": "docx_native_repair_portable",
+          "result": "10 passed"
+        },
+        {
+          "name": "architecture_boundaries",
+          "result": "7 passed"
+        }
+      ]
+    },
+    "doc_english_late_update_20260731": {
+      "status": "accepted_into_protected_registry_evidence_and_superseded_by_20260803_review_surface",
+      "evidence": "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v10.zip",
+      "summary": {
+        "doc_id": "doc3_cloze_20_answers",
+        "group_count": 20,
+        "child_count": 300,
+        "model_relevant_context_count": 300,
+        "missing_option_count": 0,
+        "missing_tag_count": 0,
+        "explanation_previous_numbered_blank_violation_count": 0,
+        "html_child_option_heading_count": 300,
+        "html_literal_blank_token_count": 0,
+        "html_has_mojibake_marker": false,
+        "zip_testzip": null
+      },
+      "same_batch_protected_review_surfaces": [
+        "outputs/delivery_packs/english_docx_doc1_parent_only_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc2_parent_only_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc4_parent_only_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc5_unknownfix_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc6_unknownfix_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc1_optimized_review_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc2_optimized_review_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc3_optimized_review_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc4_optimized_review_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc5_optimized_review_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc6_optimized_review_20260731_v01.zip"
+      ],
+      "not_promoted": [
+        "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v03.zip",
+        "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v08.zip",
+        "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v09.zip"
+      ],
+      "not_promoted_reason": "v10 supersedes the same-day doc3 iterations because it points at the latest v10 projection and carries stronger blank/render checks. v04 remains protected predecessor evidence, not a deletion candidate."
+    },
+    "doc_english_four_type_update_20260803": {
+      "status": "accepted_into_protected_registry_evidence",
+      "evidence": "outputs/delivery_packs/english_docx_four_type_business_review_20260803_v07.zip",
+      "summary": {
+        "zip_testzip": null,
+        "zip_entries": 5,
+        "sha256": "1628b177c4529977653befce08baa742d25b9ee905a0c72f8bfb553d2f33ad12",
+        "covered_types": [
+          "cloze",
+          "grammar",
+          "reading",
+          "seven_choice"
+        ],
+        "component_runs": {
+          "cloze": {
+            "run_id": "english_docx_doc3_tagged_final_20260731_v10",
+            "group_count": 20,
+            "child_count": 300
+          },
+          "grammar": {
+            "run_id": "doc1_grammar_full_20260803_v06",
+            "group_count": 17,
+            "child_count": 156,
+            "status_counts": {"ok": 17},
+            "issue_count": 0
+          },
+          "reading": {
+            "run_id": "doc2_full_reading_child_enhanced_20260803_v01",
+            "group_count": 19,
+            "child_count": 58,
+            "status_counts": {"ok": 19},
+            "issue_count": 0
+          },
+          "seven_choice": {
+            "run_id": "doc4_seven_full_fillprev_20260803_v01",
+            "group_count": 13,
+            "child_count": 61,
+            "status_counts": {"ok": 13},
+            "issue_count": 0
+          }
+        }
+      },
+      "registry_action": "registered as protected child-enrichment and business-review surface; canonical raw DOCX entrypoint remains unchanged"
+    },
+    "doc_english_late_reading_seven_choice_update_20260803": {
+      "status": "accepted_into_protected_registry_evidence",
+      "evidence": [
+        "outputs/delivery_packs/english_docx_reading_full_scope_translation_business_review_20260803_v02.zip",
+        "outputs/delivery_packs/english_docx_doc4_seven_choice_parentraw_translation_review_20260803_v03.zip"
+      ],
+      "summary": {
+        "reading": {
+          "run_id": "doc2_reading_full_scope_translation_20260803_v01",
+          "doc_id": "doc2_reading",
+          "group_count": 19,
+          "child_count": 58,
+          "status_counts": {"ok": 19},
+          "issue_count": 0,
+          "prompt_version": "english_docx_reading_child_enhancer_v0.6_20260803",
+          "zip_testzip": null,
+          "zip_entries": 3,
+          "sha256": "84ec070a7f02b93f21aea5854bf3b46c96d65df3598681d2fedf2a9c0f44ae6d"
+        },
+        "seven_choice": {
+          "run_id": "doc4_seven_parentraw_translation_reconciled_20260803_v03",
+          "doc_id": "doc4_seven_choice",
+          "group_count": 13,
+          "child_count": 61,
+          "status_counts": {"ok": 13},
+          "issue_count": 0,
+          "prompt_version": "english_docx_seven_choice_child_formatter_v0.6_parent_raw_translation_20260803",
+          "fallback_rounds_configured": 1,
+          "zip_testzip": null,
+          "zip_entries": 4,
+          "sha256": "0cc2fae7edb8ec504afdbb0bf6a1df8b237696ddc9b590b73a636d0fb40b248c"
+        }
+      },
+      "registry_action": "registered as protected late child-enrichment/business-review upgrade; canonical raw DOCX entrypoint remains unchanged"
+    },
+    "cleanup_candidate_summary_20260731": {
+      "policy": "Non-destructive. Reports classify archive/review candidates only; they do not authorize deletion.",
+      "old_full_local_project": {
+        "candidate_count": 1070,
+        "counts_by_action": {
+          "archive_candidate": 548,
+          "needs_review_contains_protected_surface": 2,
+          "needs_review_finalish_name": 25,
+          "needs_review_historical_code_or_test": 175,
+          "needs_review_referenced": 320
+        },
+        "interpretation": "Only archive_candidate is low-risk for a later archive move. Referenced, finalish, historical code/test, and protected-containing parent surfaces require review."
+      },
+      "cleanroom_partial_project": {
+        "candidate_count": 43,
+        "counts_by_action": {
+          "archive_candidate": 5,
+          "needs_review_finalish_name": 9,
+          "needs_review_historical_code_or_test": 29
+        },
+        "interpretation": "Cleanroom candidates are mostly naming-review items. Code/test entries are not deletion candidates."
+      }
+    },
+    "empty_or_incomplete_local_roots": [
+      "outputs/docx_math_pipeline_final_v0_1",
+      "outputs/docx_math_fullchain_orchestrator_v0_1",
+      "outputs/docx_math_delivery_packages_20260728",
+      "outputs/english_text_first_graph_first",
+      "outputs/english_text_first_pipeline_v02_spec_20260715",
+      "outputs/en_downstream_fixed_packages_20260728"
+    ]
+  },
+  "final_chain_count": 4,
+  "final_chains": [
+    {
+      "chain_id": "doc_math",
+      "input_format": "docx",
+      "subject": "math",
+      "current_status": "partial_isolated_tested_not_registered",
+      "current_registry_pipeline_ids": [],
+      "primary_entrypoints": [
+        "tools/docx_native_formula_token_stream_v01.py",
+        "tools/docx_native_text_repair_model_node_v01.py"
+      ],
+      "supporting_entrypoints": [
+        "tools/docx_native_formula_providers.py",
+        "tools/docx_flow_visual_review_v01.py",
+        "tools/docx_pair_question_binder_v01.py"
+      ],
+      "tests": [
+        "tests/test_docx_native_formula_providers.py",
+        "tests/test_docx_native_formula_token_stream_v01.py",
+        "tests/test_docx_native_text_repair_model_node_v01.py"
+      ],
+      "fixtures": [
+        "tests/fixtures/docx_native_repair_v01/question_packets_formula_tokens.json",
+        "tests/fixtures/docx_native_repair_v01/recorded_text_repair_response.json"
+      ],
+      "model_policy_observed": {
+        "live_model_possible": true,
+        "live_model_gate": "ARK_API_KEY / --api-key in tools/docx_native_text_repair_model_node_v01.py",
+        "portable_tests_call_model": false
+      },
+      "runtime_policy_observed": {
+        "runtime_import_default": false,
+        "database_write_default": false,
+        "evidence": [
+          "tests/test_docx_native_formula_token_stream_v01.py asserts no_runtime_import and no_database_write"
+        ]
+      },
+      "main_gaps": [
+        "No final chain registry entry exists for doc_math.",
+        "DOCX native code is still tools-level, not packaged under src/teachbase.",
+        "Tests cover formula/token/repair unit behavior and recorded/mock repair paths, not full production ingestion.",
+        "Live repair node can call a model when explicitly given credentials."
+      ]
+    },
+    {
+      "chain_id": "doc_english",
+      "input_format": "docx",
+      "subject": "english",
+      "current_status": "conversation_confirmed_experimental_old_local_not_registered_in_cleanroom",
+      "current_registry_pipeline_ids": [],
+      "primary_entrypoints": [
+        "old-local:tools/english_docx_group_repair_gate_v01.py",
+        "old-local:tools/english_docx_integrated_chain_runner_v01.py"
+      ],
+      "supporting_entrypoints": [
+        "old-local:config/english_docx_native_md/active_manifest.json",
+        "tools/mock_workbench_export_bundle.py",
+        "tools/run_staging_validation.mjs",
+        "tools/runtime_manifest_to_lesson_bundle_adapter.mjs"
+      ],
+      "tests": [
+        "tests/api/runtime_api_e2e.mjs",
+        "tests/business/runtime_business_checks.mjs",
+        "tests/postgres-sole-source/runtime_postgres_sole_source.mjs",
+        "tests/postgres-sole-source/runtime_postgres_sole_source_full.mjs"
+      ],
+      "fixtures": [
+        "tests/fixtures/english/minimal_bundle.json",
+        "tests/fixtures/three_track/english_senior_bundle.json"
+      ],
+      "model_policy_observed": {
+        "live_model_possible": false,
+        "live_model_gate": "",
+        "portable_tests_call_model": false
+      },
+      "runtime_policy_observed": {
+        "runtime_import_default": "runtime-gate-dependent",
+        "database_write_default": "runtime-gate-dependent",
+        "evidence": [
+          "Conversation thread 019faba8 describes a protected downstream runner: repair gate -> field normalizer -> parent/child projection, with selected_assembled_groups fallback.",
+          "Runtime tests validate English LessonDraftBundle/runtime manifest behavior.",
+          "This is downstream Runtime validation, not an isolated DOCX English ingest chain."
+        ]
+      },
+      "main_gaps": [
+        "No dedicated DOCX English ingest entrypoint was found in this cleanroom baseline.",
+        "Old-local thread evidence shows an experimental protected downstream segment, but it is not present as tracked code in the cleanroom branch.",
+        "No final chain registry entry exists for doc_english.",
+        "Current cleanroom English evidence is mostly runtime manifest/export validation, not DOCX-source parsing.",
+        "This chain needs explicit ownership and promotion rules before implementation work starts."
+      ]
+    },
+    {
+      "chain_id": "pdf_math",
+      "input_format": "pdf",
+      "subject": "math",
+      "current_status": "registered_validation_generic_pdf_chain",
+      "current_registry_pipeline_ids": [
+        "split_v03"
+      ],
+      "primary_entrypoints": [
+        "tools/run_split_v03_full_doc.py"
+      ],
+      "supporting_entrypoints": [
+        "tools/split_pipeline_v03.py",
+        "tools/split_v03_refine_review_nodes.py",
+        "tools/teacher_pdf_visual_question_split_v02.py",
+        "tools/teacher_handout_visual_transcribe_doubao.py"
+      ],
+      "tests": [
+        "tests/test_split_v03_contract.py",
+        "tests/test_split_v03_coordinate_integrity.py",
+        "tests/test_split_v03_golden_cases.py",
+        "tests/test_split_v03_continuation_finder.py"
+      ],
+      "fixtures": [
+        "tests/fixtures/split_v03_golden_cases.yml",
+        "tests/fixtures/teacher_handout_visual_transcription_testset_10q.json"
+      ],
+      "model_policy_observed": {
+        "live_model_possible": true,
+        "live_model_gate": "tools/run_split_v03_full_doc.py requires api key when --provider visual",
+        "portable_tests_call_model": false
+      },
+      "runtime_policy_observed": {
+        "runtime_import_default": false,
+        "database_write_default": false,
+        "evidence": [
+          "config/pipeline_registry.yaml declares split_v03 database_write_policy.default_enabled=false",
+          "config/pipeline_registry.yaml declares split_v03 runtime_import_policy.default_enabled=false"
+        ]
+      },
+      "main_gaps": [
+        "Registry entry is generic split_v03, not final-chain-specific pdf_math.",
+        "Some older math tooling in split_builder has hardcoded local paths and should stay outside package-safe gates.",
+        "Model-backed visual provider is explicit but must not be used in safe CI."
+      ]
+    },
+    {
+      "chain_id": "pdf_english",
+      "input_format": "pdf",
+      "subject": "english",
+      "current_status": "experimental_isolated_registered_plus_legacy_split_support",
+      "current_registry_pipeline_ids": [
+        "english_text_first_v05",
+        "split_v03"
+      ],
+      "primary_entrypoints": [
+        "tools/english_text_first_v05_pipeline.py",
+        "tools/english_text_first_sidecar_graph_v01.py"
+      ],
+      "supporting_entrypoints": [
+        "tools/english_text_first_v05_model_gate.py",
+        "tools/english_text_first_verifier_projector_v02.py",
+        "tools/run_split_v03_full_doc.py"
+      ],
+      "tests": [
+        "tests/test_english_text_first_v05_pipeline.py",
+        "tests/test_english_text_first_sidecar_graph_v01.py",
+        "tests/test_split_v03_golden_cases.py"
+      ],
+      "fixtures": [
+        "tests/fixtures/english_text_first_v05/english_text_first_v05.fixture_config.json",
+        "tests/fixtures/english_text_first_v05/unit_and_v04c",
+        "tests/fixtures/english_text_first_v05/vlm_transcriber",
+        "tests/fixtures/english_text_first_v05/human_acceptance_review/human_acceptance_review.json"
+      ],
+      "model_policy_observed": {
+        "live_model_possible": true,
+        "live_model_gate": "Future/model-gate scripts can use ARK_API_KEY; portable v05 tests use recorded fixtures and assert zero model calls.",
+        "portable_tests_call_model": false
+      },
+      "runtime_policy_observed": {
+        "runtime_import_default": false,
+        "database_write_default": false,
+        "evidence": [
+          "tests/test_english_text_first_v05_pipeline.py asserts model_calls_this_run=0 and runtime_import_enabled=false",
+          "config/english_text_first_v05.yaml sets runtime_import_enabled=false and database_write_enabled=false",
+          "config/pipeline_registry.yaml declares english_text_first_v05 database/runtime default false"
+        ]
+      },
+      "main_gaps": [
+        "English Text-first remains tools-level and experimental.",
+        "No final-chain-specific pdf_english registry abstraction exists.",
+        "Current output is candidate/review artifacts, not Runtime import.",
+        "Thread evidence mentions graph-first active manifests and smoke/headcheck outputs from old local work; those are not the same as the cleanroom baseline registry entry.",
+        "The split_v03 English path exists as legacy/generic PDF support and should not be confused with English Text-first final ownership."
+      ]
+    }
+  ],
+  "cross_cutting_pipelines": [
+    {
+      "pipeline_id": "runtime_backend",
+      "role": "downstream runtime validation and export surface, not one of the four source-ingest final chains"
+    },
+    {
+      "pipeline_id": "semantic_role_shadow",
+      "role": "sidecar/evaluation support pipeline, not one of the four source-ingest final chains"
+    }
+  ],
+  "next_recommended_work": [
+    "Introduce a final-chain inventory/registry concept separate from low-level technical pipeline registry entries.",
+    "Package semantic profile config as a canonical src/teachbase implementation and keep tools wrapper compatibility.",
+    "Harden src/teachbase/infrastructure/artifact_store.py against concurrent writes.",
+    "Package pipeline registry validation while keeping tools/validate_pipeline_registry.py as a wrapper.",
+    "Only after the above, migrate DOCX native and English Text-first in separate final-chain slices."
+  ]
+}

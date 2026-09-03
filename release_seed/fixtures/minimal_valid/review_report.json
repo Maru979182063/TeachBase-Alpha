@@ -1,0 +1,13 @@
+{
+  "batchId": "synthetic-contract-fixture-001",
+  "releaseVersion": "fixture-v1",
+  "packageContentSha256": "7b557ffee11abf21ca1e660e7d21991c92ed519d729088b60981b42be84be327",
+  "reviewerId": "fixture-reviewer",
+  "reviewedAt": "2026-09-01T00:00:00Z",
+  "reviewPolicyVersion": "fixture-policy-v1",
+  "reviewMode": "full",
+  "sampleSize": 1,
+  "approvedQuestionCount": 1,
+  "rejectedQuestionCount": 0,
+  "issueCounts": {}
+}

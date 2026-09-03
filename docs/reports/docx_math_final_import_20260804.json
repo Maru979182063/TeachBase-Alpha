@@ -1,0 +1,488 @@
+{
+  "schema_version": "docx_math_final_import_report.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "inventory_file_count": 47,
+  "counts": {
+    "cleanroom_matches_handoff_inventory": 45,
+    "cleanroom_hash_conflict_not_overwritten": 2
+  },
+  "rows": [
+    {
+      "relative_path": "config/docx_math_pipeline_final_active_manifest.json",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "cb336031c400a46c376cf6c36dbafb39bb901b2677014f695d81f8ee2788a528",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "cb336031c400a46c376cf6c36dbafb39bb901b2677014f695d81f8ee2788a528"
+    },
+    {
+      "relative_path": "config/docx_math_pipeline_final_v01.yaml",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "36336f7c5e5cfe63fce7542b7451340e98f8492a3921795b13098e4d790ad943",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "36336f7c5e5cfe63fce7542b7451340e98f8492a3921795b13098e4d790ad943"
+    },
+    {
+      "relative_path": "config/docx_asset_role_visual_tagger_v01.yaml",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "7147e0de2de094176892700d054150889e2940a1443e602741789234b166c526",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "7147e0de2de094176892700d054150889e2940a1443e602741789234b166c526"
+    },
+    {
+      "relative_path": "config/docx_math_long_packet_assembler_v01.yaml",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "0846042a7a9422302fa14864922e77c99d4815e988576842e2a920d23104c69f",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "0846042a7a9422302fa14864922e77c99d4815e988576842e2a920d23104c69f"
+    },
+    {
+      "relative_path": "config/docx_native_block_tagger_v01.yaml",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "1dddb2a275561c0fd4bd0bad2f20fbc8a465c483f177e261406a86bf2c370174",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "1dddb2a275561c0fd4bd0bad2f20fbc8a465c483f177e261406a86bf2c370174"
+    },
+    {
+      "relative_path": "config/docx_native_stage0_router_v01.yaml",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "9cbcb65e7a0d272be7ed98e99ade37fba138cdef39f3f9f8c4bbf126b8e2fe48",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "9cbcb65e7a0d272be7ed98e99ade37fba138cdef39f3f9f8c4bbf126b8e2fe48"
+    },
+    {
+      "relative_path": "config/docx_question_boundary_cutter_v01.yaml",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "c641580c6bb257fac75e24965c0f33f4fd5f3065421bfae1080c41d77d67aeb6",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "c641580c6bb257fac75e24965c0f33f4fd5f3065421bfae1080c41d77d67aeb6"
+    },
+    {
+      "relative_path": "config/docx_question_complexity_router_v01.yaml",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "c56e7ca57572428b78aaa78a92ffbf6dc4202178bebbf2daf868a621edd1aa98",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "c56e7ca57572428b78aaa78a92ffbf6dc4202178bebbf2daf868a621edd1aa98"
+    },
+    {
+      "relative_path": "config/docx_question_part_long_normalizer_v01.yaml",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "c5c795190938de853d25d949f3076ac0ce2e41fdb4c3f58b84bf3c98de078c57",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "c5c795190938de853d25d949f3076ac0ce2e41fdb4c3f58b84bf3c98de078c57"
+    },
+    {
+      "relative_path": "config/docx_question_part_normalizer_v01.yaml",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "15fb122a1d99b1e6eb47bce1fb334ccfbd59deac6726227d59d6a8d9ab30ba17",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "15fb122a1d99b1e6eb47bce1fb334ccfbd59deac6726227d59d6a8d9ab30ba17"
+    },
+    {
+      "relative_path": "config/docx_question_part_twostage_probe_v01.yaml",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "0dbf39b24c27afc8ad027cfc1c7a01c805421262673dde76fce4485ea3651f05",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "0dbf39b24c27afc8ad027cfc1c7a01c805421262673dde76fce4485ea3651f05"
+    },
+    {
+      "relative_path": "docs/docx_math_pipeline_final_repro.md",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "9437076185ca160a0a4c05cf4f461976e2b9fa6d9a09ef08a1495efe8bc705b8",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "9437076185ca160a0a4c05cf4f461976e2b9fa6d9a09ef08a1495efe8bc705b8"
+    },
+    {
+      "relative_path": "prompts/docx_asset_role_visual_tagger_v01.system.md",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "8c42e58cb8c49702d1b02d153467dab679311a3ddaa117826afc9aa8c7ef43f8",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "8c42e58cb8c49702d1b02d153467dab679311a3ddaa117826afc9aa8c7ef43f8"
+    },
+    {
+      "relative_path": "prompts/docx_math_long_packet_assembler_system_v0.1.md",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "e1294595d61a88a8fc7be19b5c47d717d9a85882d4d5066db95adf78efc4ae01",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "e1294595d61a88a8fc7be19b5c47d717d9a85882d4d5066db95adf78efc4ae01"
+    },
+    {
+      "relative_path": "prompts/docx_math_long_packet_assembler_user_v0.1.md",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "c7202bc461782e6fc72c3af156750506a241e5650628d96c4ec3e3af1777855e",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "c7202bc461782e6fc72c3af156750506a241e5650628d96c4ec3e3af1777855e"
+    },
+    {
+      "relative_path": "prompts/docx_question_boundary_cutter_v01.system.md",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "dfe5954e979b8c5d097881ce5f9acd14fdbf7bf42fce0516ee3686d99190d690",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "dfe5954e979b8c5d097881ce5f9acd14fdbf7bf42fce0516ee3686d99190d690"
+    },
+    {
+      "relative_path": "prompts/docx_question_boundary_cutter_v01.user.md",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "8433c9856d1554504a45be25b06cea146f07fb41793671315c74d966d9b4e76d",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "8433c9856d1554504a45be25b06cea146f07fb41793671315c74d966d9b4e76d"
+    },
+    {
+      "relative_path": "prompts/docx_question_part_twostage_problem_system_v0.1.md",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "c601151a93cd4d1e592e2e507cc379809776d24672c7df4caaf0c285bda0e1a6",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "c601151a93cd4d1e592e2e507cc379809776d24672c7df4caaf0c285bda0e1a6"
+    },
+    {
+      "relative_path": "prompts/docx_question_part_twostage_problem_user_v0.1.md",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "5274a9b229c0d3ea3df67a145751e39e1785f0ac1f519692be38db33bf6a7147",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "5274a9b229c0d3ea3df67a145751e39e1785f0ac1f519692be38db33bf6a7147"
+    },
+    {
+      "relative_path": "prompts/docx_question_part_twostage_zone_system_v0.1.md",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "cf7b4c2af911e9a6faa58f16ff9e762e622a0c0b748b3540d11eaa793deea7e2",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "cf7b4c2af911e9a6faa58f16ff9e762e622a0c0b748b3540d11eaa793deea7e2"
+    },
+    {
+      "relative_path": "prompts/docx_question_part_twostage_zone_user_v0.1.md",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "38592ed589dd8bcca64ffc889d96d76ad9e29eef53e537fb1911e7ebe7bca262",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "38592ed589dd8bcca64ffc889d96d76ad9e29eef53e537fb1911e7ebe7bca262"
+    },
+    {
+      "relative_path": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "d77939c9a111f37609db12c88b469ebd29b93574463261c5a4ffddfee4c9009f",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "d77939c9a111f37609db12c88b469ebd29b93574463261c5a4ffddfee4c9009f"
+    },
+    {
+      "relative_path": "tools/docx_native_stage0_router_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "bccc2ebeeb94653a5af81b6adb4d49ef607fa3ec9bcdffd6f042ac0a0d7d2e48",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "bccc2ebeeb94653a5af81b6adb4d49ef607fa3ec9bcdffd6f042ac0a0d7d2e48"
+    },
+    {
+      "relative_path": "tools/docx_native_block_tagger_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "350fd6682f3b96e5cd5cedd0283daa7d6a2898f1eb192f4a33ab156f628f236c",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "350fd6682f3b96e5cd5cedd0283daa7d6a2898f1eb192f4a33ab156f628f236c"
+    },
+    {
+      "relative_path": "tools/docx_asset_role_visual_tagger_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "468c4986efb766f17e4a611bf4d996bcef6ff0df58580a18898834bc46669535",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "468c4986efb766f17e4a611bf4d996bcef6ff0df58580a18898834bc46669535"
+    },
+    {
+      "relative_path": "tools/docx_question_boundary_cutter_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "e078647d62c6483c550e2dc5f23bad385e1ccac4c0fa7f23ad22c7f6f41343e0",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "e078647d62c6483c550e2dc5f23bad385e1ccac4c0fa7f23ad22c7f6f41343e0"
+    },
+    {
+      "relative_path": "tools/docx_question_complexity_router_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "4832ff98c17bfd5b5b44d7bc752ad007949a4cb5bd7cb4cb0dbee4d6ccb0fe41",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "4832ff98c17bfd5b5b44d7bc752ad007949a4cb5bd7cb4cb0dbee4d6ccb0fe41"
+    },
+    {
+      "relative_path": "tools/docx_question_part_normalizer_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "ec74bff8eaf1605baf934e7a1e2f2bb4ce6b6569fbd8d7267c365cb34cd688ee",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "ec74bff8eaf1605baf934e7a1e2f2bb4ce6b6569fbd8d7267c365cb34cd688ee"
+    },
+    {
+      "relative_path": "tools/docx_question_part_long_normalizer_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "171ddb45572c657dc42760ed8061a65edd4acead6ba8cba4660fda5556e94689",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "171ddb45572c657dc42760ed8061a65edd4acead6ba8cba4660fda5556e94689"
+    },
+    {
+      "relative_path": "tools/docx_question_part_twostage_probe_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "2a18aed3c8982e0df5cbf2c6d8c35ff867b9a2ab25b4a9836f47cd8875233fc4",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "2a18aed3c8982e0df5cbf2c6d8c35ff867b9a2ab25b4a9836f47cd8875233fc4"
+    },
+    {
+      "relative_path": "tools/docx_math_source_backed_draft_builder_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "63ce4e112662e8b2ff88f8c9c8993cdea2b7e891e6296a6b4db5a703769c791b",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "63ce4e112662e8b2ff88f8c9c8993cdea2b7e891e6296a6b4db5a703769c791b"
+    },
+    {
+      "relative_path": "tools/docx_math_fullchain_orchestrator_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "4f77936a2caeae2605a10b8af0d6c27bfe3e926cac5ae288babf4c8350bfdfe1",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "4f77936a2caeae2605a10b8af0d6c27bfe3e926cac5ae288babf4c8350bfdfe1"
+    },
+    {
+      "relative_path": "tools/docx_math_question_refiner_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "4c4efdd55c67b8bfe0d0d7cdb606acfd1dcf40d2706154a1bb2e768314d115b0",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "4c4efdd55c67b8bfe0d0d7cdb606acfd1dcf40d2706154a1bb2e768314d115b0"
+    },
+    {
+      "relative_path": "tools/docx_math_refine_gate_repair_orchestrator_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "282796910b90fa3c9ad94c8cf3fe9fd6273533343368cfb42b74986e61e9d2f0",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "282796910b90fa3c9ad94c8cf3fe9fd6273533343368cfb42b74986e61e9d2f0"
+    },
+    {
+      "relative_path": "tools/docx_math_long_composite_refiner_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "90f63fd0d31280aa22e92f144bdfa864f402effbf31ffb5260e46fc8969d2936",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "90f63fd0d31280aa22e92f144bdfa864f402effbf31ffb5260e46fc8969d2936"
+    },
+    {
+      "relative_path": "tools/docx_math_long_packet_assembler_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "3b57acb721a1b651f557dc1663ca91de1f02b6bd84527ca4c481c6563dcc1e65",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "3b57acb721a1b651f557dc1663ca91de1f02b6bd84527ca4c481c6563dcc1e65"
+    },
+    {
+      "relative_path": "tools/docx_math_build_side_by_side_review_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "15686799461a44d9b21a2af4e353101ff0857e2a044d8d0d0d92ce59ae8a91cd",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "15686799461a44d9b21a2af4e353101ff0857e2a044d8d0d0d92ce59ae8a91cd"
+    },
+    {
+      "relative_path": "tools/docx_native_transcription_package_builder_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "a46c2ad4bc568cb43497e7787298f4136732065b71b5ee32a71443816ca29e3b",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "a46c2ad4bc568cb43497e7787298f4136732065b71b5ee32a71443816ca29e3b"
+    },
+    {
+      "relative_path": "tools/docx_run_math_normalizer_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "ef11d7cb063208f0b4079833ebfc24a4139aad3695adf72131f4f5ae7bf89756",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "ef11d7cb063208f0b4079833ebfc24a4139aad3695adf72131f4f5ae7bf89756"
+    },
+    {
+      "relative_path": "tools/docx_legacy_formula_recovery_v01.py",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "9aff1beee23e1c470f062eaf41f239c35f9978d5bcb640baaca6e099c1cd63f6",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "9aff1beee23e1c470f062eaf41f239c35f9978d5bcb640baaca6e099c1cd63f6"
+    },
+    {
+      "relative_path": "tools/docx_native_formula_token_stream_v01.py",
+      "status": "cleanroom_hash_conflict_not_overwritten",
+      "expected_sha256": "efd618d75b6b96854835fe0508f9ef576b44efe488601d73102704bff1018f89",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": false,
+      "cleanroom_sha256": "10a4c58aca8935957ae3d533693bf44811ca0e7c1b6e78ce95b0d1d59e990428"
+    },
+    {
+      "relative_path": "tools/docx_native_formula_providers.py",
+      "status": "cleanroom_hash_conflict_not_overwritten",
+      "expected_sha256": "3da68de304a1fa63b8eda70f8cb33f4f43c23525ac59d681728dc9b410befb5d",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": false,
+      "cleanroom_sha256": "92b3a236b18b56b6f64ab57d589ffd57c3d77dc653da73a29efd3b10d5f5ae28"
+    },
+    {
+      "relative_path": "tools/katex_validate_math.cjs",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "f2bb4cab0bc00bd69874be807e93fbc5335b36fa8ff7991c41f723ea19f5bef9",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "f2bb4cab0bc00bd69874be807e93fbc5335b36fa8ff7991c41f723ea19f5bef9"
+    },
+    {
+      "relative_path": "tools/mathml_to_latex_batch.cjs",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "00b551f55930ab611ea39ab49163b2a4769708957beab51024f3dbadaf1879a5",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "00b551f55930ab611ea39ab49163b2a4769708957beab51024f3dbadaf1879a5"
+    },
+    {
+      "relative_path": "tools/ruby_mtef_to_mathml_batch.rb",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "241cb8b77dc2de2472068afdaff785bea097f60d46d4b94b2216e97a9a82db23",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "241cb8b77dc2de2472068afdaff785bea097f60d46d4b94b2216e97a9a82db23"
+    },
+    {
+      "relative_path": "schemas/docx_math_source_backed_draft_items.schema.json",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "07b3a695b2a509e69d890e2bd37bfa2dd70bf20173c45426b7e32422e7353c9a",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "07b3a695b2a509e69d890e2bd37bfa2dd70bf20173c45426b7e32422e7353c9a"
+    },
+    {
+      "relative_path": "schemas/docx_math_refined_question_packet.schema.json",
+      "status": "cleanroom_matches_handoff_inventory",
+      "expected_sha256": "6d314ae3d838182c418382e85c31a846d7308f758383e8b9197f570100f7f3d9",
+      "source_exists": true,
+      "source_matches_inventory": true,
+      "cleanroom_exists": true,
+      "cleanroom_matches_inventory": true,
+      "cleanroom_sha256": "6d314ae3d838182c418382e85c31a846d7308f758383e8b9197f570100f7f3d9"
+    }
+  ],
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}

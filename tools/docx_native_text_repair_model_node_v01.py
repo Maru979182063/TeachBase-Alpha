@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import hashlib
 import html
 import json
 import os
@@ -11,6 +12,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
+
+from teachbase.infrastructure.artifact_store import write_json as atomic_write_json
+from teachbase.infrastructure.model_call_guard import ModelRetryPolicy, run_model_call_with_retry
 
 
 API_URL = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
@@ -78,8 +82,7 @@ def read_json(path: Path) -> Any:
 
 
 def write_json(path: Path, payload: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    atomic_write_json(path, payload)
 
 
 def slug_for(path: Path) -> str:
@@ -109,7 +112,12 @@ def strip_json_content(content: str) -> str:
     return text
 
 
-def call_model(api_key: str, model: str, prompt: str) -> dict[str, Any]:
+def model_operation_id(label: str, model: str, prompt: str) -> str:
+    prompt_hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:16]
+    return f"{label}:{model}:{prompt_hash}"
+
+
+def _call_model_once(api_key: str, model: str, prompt: str) -> dict[str, Any]:
     system_prompt = load_prompt_text(SYSTEM_PROMPT_PATH, DEFAULT_SYSTEM_PROMPT)
     body = {
         "model": model,
@@ -122,30 +130,33 @@ def call_model(api_key: str, model: str, prompt: str) -> dict[str, Any]:
     }
     data = json.dumps(body, ensure_ascii=False).encode("utf-8")
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
-    last_error: Exception | None = None
-    for attempt in range(3):
-        request = urllib.request.Request(API_URL, data=data, headers=headers, method="POST")
-        try:
-            with urllib.request.urlopen(request, timeout=180) as response:
-                raw = response.read().decode("utf-8")
-            payload = json.loads(raw)
-            content = payload["choices"][0]["message"]["content"]
-            return {
-                "raw_response": payload,
-                "raw_content": content,
-                "usage": payload.get("usage", {}) or {},
-            }
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="replace")
-            last_error = RuntimeError(f"http_{exc.code}: {detail}")
-            if exc.code not in {408, 409, 425, 429, 500, 502, 503, 504} or attempt >= 2:
-                raise last_error from exc
-        except urllib.error.URLError as exc:
-            last_error = exc
-            if attempt >= 2:
-                raise RuntimeError(f"network_error: {exc}") from exc
-        time.sleep(1.0 + attempt * 1.5)
-    raise RuntimeError(f"network_error: {last_error}")
+    request = urllib.request.Request(API_URL, data=data, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(request, timeout=180) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"http_{exc.code}: {detail}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"network_error: {exc}") from exc
+    payload = json.loads(raw)
+    content = payload["choices"][0]["message"]["content"]
+    return {
+        "raw_response": payload,
+        "raw_content": content,
+        "usage": payload.get("usage", {}) or {},
+    }
+
+
+def call_model(api_key: str, model: str, prompt: str, *, checkpoint_path: Path | None = None) -> dict[str, Any]:
+    return run_model_call_with_retry(
+        lambda: _call_model_once(api_key, model, prompt),
+        operation_id=model_operation_id("docx_text_repair_model_node", model, prompt),
+        checkpoint_path=checkpoint_path,
+        policy=ModelRetryPolicy(max_attempts=3, initial_delay_seconds=1.0, backoff_multiplier=2.5, max_delay_seconds=2.5),
+        sleep=time.sleep,
+        metadata={"node": "docx_text_repair_model_node", "model": model},
+    )
 
 
 def build_prompt(question: dict[str, Any]) -> str:
@@ -320,7 +331,12 @@ def main() -> int:
                     retry_prompt_path.write_text(active_prompt, encoding="utf-8")
                 raw_response_path = raw_dir / f"{qid}{suffix}.response.json"
                 raw_content_path = raw_dir / f"{qid}{suffix}.content.txt"
-                result = call_model(args.api_key.strip(), args.model, active_prompt)
+                result = call_model(
+                    args.api_key.strip(),
+                    args.model,
+                    active_prompt,
+                    checkpoint_path=raw_dir / f"{qid}{suffix}.model_call_checkpoint.json",
+                )
                 write_json(raw_response_path, result.get("raw_response", {}))
                 raw_content = str(result.get("raw_content") or "")
                 raw_content_path.write_text(raw_content, encoding="utf-8")

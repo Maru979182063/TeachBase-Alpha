@@ -1,0 +1,24 @@
+schema_version: english_docx_grammar_child_formatter_v01.config
+pipeline_id: english_docx_grammar_child_formatter_v01
+status: experimental_child_post_projection_node
+model_provider: volcengine_ark
+default_model_alias: doubao2.0mini
+default_model_endpoint_id: doubao-seed-2-0-mini-260428
+api_key_env: ARK_API_KEY
+owned_output_root: outputs/english_docx_grammar_child_formatter_v0_1
+prompt_version: english_docx_grammar_child_formatter_v0.1_20260803
+system_prompt_path: prompts/english_docx_grammar_child_formatter_v01.system.md
+user_prompt_path: prompts/english_docx_grammar_child_formatter_v01.user.md
+runner:
+  max_group_attempts: 3
+  max_workers: 1
+  per_group_timeout_seconds: 240
+max_passage_chars: 9000
+max_child_text_chars: 1800
+required_sections:
+  - 判断考点
+  - 答案
+  - 翻译
+  - 解析
+runtime_import_enabled: false
+database_write_enabled: false

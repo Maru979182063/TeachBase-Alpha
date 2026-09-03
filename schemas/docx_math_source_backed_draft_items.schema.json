@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "docx_math_source_backed_draft_items.schema.json",
+  "type": "object",
+  "required": [
+    "schema",
+    "doc_id",
+    "builder_version",
+    "source_artifacts",
+    "draft_items",
+    "summary"
+  ],
+  "properties": {
+    "schema": {"const": "docx_math_source_backed_draft_items_v0.1"},
+    "doc_id": {"type": "string"},
+    "builder_version": {"type": "string"},
+    "source_artifacts": {"type": "object"},
+    "draft_items": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/draft_item"}
+    },
+    "summary": {"type": "object"}
+  },
+  "$defs": {
+    "ref_array": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "asset_ref": {
+      "type": "object",
+      "required": ["asset_id", "storage_key", "format", "width_px", "height_px"],
+      "properties": {
+        "asset_id": {"type": "string"},
+        "storage_key": {"type": "string"},
+        "format": {"type": "string"},
+        "width_px": {"type": ["integer", "null"]},
+        "height_px": {"type": ["integer", "null"]},
+        "bytes": {"type": ["integer", "null"]},
+        "sha256": {"type": "string"},
+        "mode": {"type": "string"},
+        "source_block_id": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "text_field": {
+      "type": "object",
+      "required": [
+        "block_ids",
+        "text",
+        "markdown",
+        "block_markdowns",
+        "missing_block_ids",
+        "formula_count",
+        "asset_refs"
+      ],
+      "properties": {
+        "block_ids": {"$ref": "#/$defs/ref_array"},
+        "text": {"type": "string"},
+        "markdown": {"type": "string"},
+        "block_markdowns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["block_id", "markdown"],
+            "properties": {
+              "block_id": {"type": "string"},
+              "markdown": {"type": "string"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "missing_block_ids": {"$ref": "#/$defs/ref_array"},
+        "formula_count": {"type": "integer"},
+        "asset_refs": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/asset_ref"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "draft_item": {
+      "type": "object",
+      "required": [
+        "draft_id",
+        "doc_id",
+        "source_group_id",
+        "builder_status",
+        "solution_policy",
+        "record_kind",
+        "fields",
+        "source_refs",
+        "source_group_block_ids",
+        "formula_count",
+        "asset_refs",
+        "warnings",
+        "open_issues"
+      ],
+      "properties": {
+        "draft_id": {"type": "string"},
+        "doc_id": {"type": "string"},
+        "source_group_id": {"type": "string"},
+        "builder_status": {"enum": ["draft_ready", "draft_with_warnings", "not_projectable"]},
+        "solution_policy": {"type": "string"},
+        "record_kind": {"type": "string"},
+        "fields": {
+          "type": "object",
+          "required": [
+            "stem",
+            "subquestions",
+            "options",
+            "answer",
+            "explanation",
+            "teaching_note",
+            "context",
+            "assets",
+            "other_evidence"
+          ],
+          "properties": {
+            "stem": {"$ref": "#/$defs/text_field"},
+            "subquestions": {"$ref": "#/$defs/text_field"},
+            "options": {"$ref": "#/$defs/text_field"},
+            "answer": {"$ref": "#/$defs/text_field"},
+            "explanation": {"$ref": "#/$defs/text_field"},
+            "teaching_note": {"$ref": "#/$defs/text_field"},
+            "context": {"$ref": "#/$defs/text_field"},
+            "assets": {"$ref": "#/$defs/text_field"},
+            "other_evidence": {"$ref": "#/$defs/text_field"}
+          },
+          "additionalProperties": false
+        },
+        "source_refs": {"$ref": "#/$defs/ref_array"},
+        "source_group_block_ids": {"$ref": "#/$defs/ref_array"},
+        "formula_count": {"type": "integer"},
+        "asset_refs": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/asset_ref"}
+        },
+        "warnings": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "open_issues": {
+          "type": "array",
+          "items": {"type": "object"}
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

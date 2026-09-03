@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 from typing import Any, Callable
@@ -20,6 +19,10 @@ from teachbase.semantic_role.contracts import (
     schema_path,
 )
 from teachbase.semantic_role.metrics import compute_metrics, dataset_coverage
+from teachbase.semantic_role.profile_config import (
+    load_workspace_semantic_profile_configs,
+    semantic_enums,
+)
 from teachbase.semantic_role.review_pack import write_review_pack
 
 PredictCase = Callable[[dict[str, Any], str, Path], dict[str, Any]]
@@ -32,40 +35,8 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
     return payload
 
 
-def _read_json_yaml(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding="utf-8-sig"))
-
-
 def load_semantic_profile_configs(workspace_root: Path) -> dict[str, Any]:
-    config_dir = workspace_root / "config" / "semantic_profiles"
-    required = [
-        "common.yaml",
-        "content_blocks.yaml",
-        "document_types.yaml",
-        "route_availability.yaml",
-        "thresholds.yaml",
-        "math.yaml",
-        "english.yaml",
-        "biology.yaml",
-    ]
-    configs: dict[str, Any] = {}
-    for name in required:
-        path = config_dir / name
-        if not path.exists():
-            raise ValueError(f"missing_semantic_profile_config:{path}")
-        configs[name] = _read_json_yaml(path)
-    return configs
-
-
-def semantic_enums(configs: dict[str, Any]) -> dict[str, set[str]]:
-    content = configs["content_blocks.yaml"]
-    return {
-        "semantic_roles": set((content.get("semantic_roles") or {}).keys()),
-        "presentation_kinds": set((content.get("presentation_kinds") or {}).keys()),
-        "dispositions": set((content.get("dispositions") or {}).keys()),
-        "relation_types": set((content.get("relation_types") or {}).keys()),
-        "routes": set((content.get("routes") or {}).keys()),
-    }
+    return load_workspace_semantic_profile_configs(workspace_root, wrap_json_errors=False)
 
 
 def validate_cases(cases: list[dict[str, Any]], workspace_root: Path) -> list[str]:

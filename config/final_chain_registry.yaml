@@ -1,0 +1,546 @@
+{
+  "schema_version": "final_chain_registry.v0.1",
+  "created_date": "2026-07-31",
+  "purpose": "Product-facing protected final-chain registry. This is separate from config/pipeline_registry.yaml, which tracks lower-level technical pipelines.",
+  "selection_policy": {
+    "do_not_guess_latest_directory": true,
+    "exclude_name_patterns_as_final": [
+      "backup",
+      "probe",
+      "smoke",
+      "plain_full",
+      "badcase",
+      "demo",
+      ".bak"
+    ],
+    "runtime_import_default_enabled": false,
+    "database_write_default_enabled": false
+  },
+  "chains": [
+    {
+      "chain_id": "doc_math",
+      "display_name": "DOCX Math Final Pipeline",
+      "input_format": "docx",
+      "subject": "math",
+      "protection_status": "protected",
+      "registry_readiness": "ready",
+      "confidence": "high",
+      "source_state": "clean_branch_handoff_confirmed_pending_cleanroom_import",
+      "canonical_entrypoint": "tools/docx_math_pipeline_final_orchestrator_v01.py",
+      "canonical_config_paths": [
+        "config/docx_math_pipeline_final_v01.yaml",
+        "config/docx_math_pipeline_final_active_manifest.json"
+      ],
+      "supporting_clean_branch": "origin/codex/docx-math-final-pipeline-clean-v01",
+      "supporting_clean_commit": "fabc70f Add isolated DOCX math final pipeline",
+      "handoff_evidence": {
+        "label": "docx_math_final_pipeline_handoff_20260731",
+        "inventory_file_count": 47,
+        "inventory_missing_count": 0,
+        "sha256_mismatch_count": 0
+      },
+      "protected_path_sources": [
+        "handoff_inventory"
+      ],
+      "smoke_status": {
+        "status": "pass",
+        "checks": [
+          "handoff inventory has 47 files and 0 missing",
+          "observed old-local critical files exist",
+          "handoff inventory SHA-256 values match observed old-local files",
+          "canonical entrypoint --help loads",
+          "active manifest parses and points to docx_math_pipeline_final_v01"
+        ]
+      },
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "forbidden until separately promoted"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "forbidden"
+      },
+      "do_not_use_as_final": [
+        "tools/docx_math_pipeline_orchestrator_v01.py",
+        "tools/docx_question_grouper_v01.py",
+        "outputs/docx_question_grouper_v0_1",
+        "outputs/docx_math_pipeline_orchestrator_v0_1",
+        "outputs/docx_native_pipeline_v0_1",
+        "outputs/docx_native_model_segment_v0_1",
+        "outputs/docx_native_text_repair_model_v0_1",
+        "outputs/docx_native_boundary_resolver_v0_1"
+      ]
+    },
+    {
+      "chain_id": "doc_english",
+      "display_name": "DOCX English Native Markdown Protected Chain",
+      "input_format": "docx",
+      "subject": "english",
+      "protection_status": "protected",
+      "registry_readiness": "ready_for_protected_segment",
+      "confidence": "high",
+      "source_state": "old_local_same_day_run_confirmed_pending_cleanroom_import",
+      "canonical_entrypoint": "tools/english_docx_native_md_v01.py",
+      "protected_segment_entrypoint": "tools/english_docx_integrated_chain_runner_v01.py",
+      "canonical_config_paths": [
+        "config/english_docx_native_md/active_manifest.json",
+        "config/english_docx_native_md/group_repair_gate_v01.json"
+      ],
+      "protected_paths": [
+        "tools/english_docx_native_md_v01.py",
+        "tools/english_docx_group_boundary_cutter_v01.py",
+        "tools/english_docx_group_itemizer_v01.py",
+        "tools/english_docx_child_skill_tagger_v01.py",
+        "tools/english_docx_group_repair_gate_v01.py",
+        "tools/english_docx_group_field_normalizer_v01.py",
+        "tools/english_docx_parent_child_projection_v02.py",
+        "tools/english_docx_reading_child_enhancer_v01.py",
+        "tools/english_docx_cloze_child_skill_tagger_v01.py",
+        "tools/english_docx_grammar_child_formatter_v01.py",
+        "tools/english_docx_seven_choice_child_formatter_v01.py",
+        "tools/english_docx_parent_only_review_pack_v01.py",
+        "tools/english_docx_optimized_review_renderer_v01.py",
+        "tools/english_docx_integrated_chain_runner_v01.py",
+        "config/english_docx_native_md/active_manifest.json",
+        "config/english_docx_native_md/group_repair_gate_v01.json",
+        "config/english_docx_native_md/asset_role_visual_tagger_v01.json",
+        "config/english_docx_native_md/child_skill_tagger_v01.json",
+        "config/english_docx_native_md/group_boundary_cutter_v01.json",
+        "config/english_docx_native_md/group_field_normalizer_v01.json",
+        "config/english_docx_native_md/group_itemizer_v01.json",
+        "config/english_docx_native_md/group_local_number_normalizer_v01.json",
+        "config/english_docx_native_md/reading_child_enhancer_v01.yaml",
+        "config/english_docx_native_md/grammar_child_formatter_v01.yaml",
+        "config/english_docx_native_md/seven_choice_child_formatter_v01.yaml",
+        "config/english_docx_native_md/cloze_child_skill_tagger_v01.json",
+        "prompts/english_docx_reading_child_enhancer_v01.system.md",
+        "prompts/english_docx_reading_child_enhancer_v01.user.md",
+        "prompts/english_docx_grammar_child_formatter_v01.system.md",
+        "prompts/english_docx_grammar_child_formatter_v01.user.md",
+        "prompts/english_docx_seven_choice_child_formatter_v01.system.md",
+        "prompts/english_docx_seven_choice_child_formatter_v01.user.md",
+        "prompts/english_docx_cloze_child_skill_tagger_v01.system.md",
+        "prompts/english_docx_cloze_child_skill_tagger_v01.user.md",
+        "outputs/english_docx_integrated_chain_v0_1/protected_doc5_doc6_20260731_v01",
+        "outputs/english_docx_group_repair_gate_v0_1/protected_doc5_doc6_20260731_v01_repair",
+        "outputs/delivery_packs/english_docx_docs1_6_final_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v04.zip",
+        "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v04",
+        "outputs/english_docx_parent_child_projection_v0_2/doc3_cloze_20_answers_20260731_v04",
+        "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v10.zip",
+        "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v10",
+        "outputs/english_docx_parent_child_projection_v0_2/doc3_cloze_20_answers_20260731_v10",
+        "outputs/delivery_packs/english_docx_doc1_parent_only_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc1_parent_only_20260731_v01",
+        "outputs/delivery_packs/english_docx_doc2_parent_only_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc2_parent_only_20260731_v01",
+        "outputs/delivery_packs/english_docx_doc4_parent_only_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc4_parent_only_20260731_v01",
+        "outputs/delivery_packs/english_docx_doc5_unknownfix_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc5_unknownfix_20260731_v01",
+        "outputs/english_docx_parent_child_projection_v0_2/doc5_unknown_quarantine_20260731_v01",
+        "outputs/delivery_packs/english_docx_doc6_unknownfix_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc6_unknownfix_20260731_v01",
+        "outputs/english_docx_parent_child_projection_v0_2/doc6_unknown_quarantine_20260731_v01",
+        "outputs/delivery_packs/english_docx_doc1_optimized_review_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc1_optimized_review_20260731_v01",
+        "outputs/delivery_packs/english_docx_doc2_optimized_review_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc2_optimized_review_20260731_v01",
+        "outputs/delivery_packs/english_docx_doc3_optimized_review_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc3_optimized_review_20260731_v01",
+        "outputs/delivery_packs/english_docx_doc4_optimized_review_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc4_optimized_review_20260731_v01",
+        "outputs/delivery_packs/english_docx_doc5_optimized_review_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc5_optimized_review_20260731_v01",
+        "outputs/delivery_packs/english_docx_doc6_optimized_review_20260731_v01.zip",
+        "outputs/delivery_packs/english_docx_doc6_optimized_review_20260731_v01",
+        "outputs/english_docx_reading_child_enhancer_v0_1/doc2_full_reading_child_enhanced_20260803_v01",
+        "outputs/english_docx_reading_child_enhancer_v0_1/doc2_full_reading_child_enhanced_20260803_v01_inspection_bundle",
+        "outputs/english_docx_grammar_child_formatter_v0_1/doc1_grammar_full_20260803_v06",
+        "outputs/english_docx_seven_choice_child_formatter_v0_1/doc4_seven_full_fillprev_20260803_v01",
+        "outputs/english_docx_seven_choice_child_formatter_v0_1/doc4_seven_full_fillprev_20260803_v01_delivery.zip",
+        "outputs/delivery_packs/english_docx_four_type_business_review_20260803_v07.zip",
+        "outputs/delivery_packs/english_docx_four_type_business_review_20260803_v07",
+        "outputs/english_docx_reading_child_enhancer_v0_1/doc2_reading_full_scope_translation_20260803_v01",
+        "outputs/delivery_packs/english_docx_reading_full_scope_translation_business_review_20260803_v02.zip",
+        "outputs/delivery_packs/english_docx_reading_full_scope_translation_business_review_20260803_v02",
+        "outputs/delivery_packs/english_docx_doc4_seven_choice_parentraw_translation_review_20260803_v03.zip",
+        "outputs/delivery_packs/english_docx_doc4_seven_choice_parentraw_translation_review_20260803_v03"
+      ],
+      "latest_protected_run": {
+        "run_id": "protected_doc5_doc6_20260731_v01",
+        "covered_docs": [
+          "doc5_continuation_writing",
+          "doc6_practical_writing"
+        ],
+        "status": "ok",
+        "fallback_events_count": 0,
+        "field_issue_count": 0,
+        "projection_warning_count": 0
+      },
+      "protected_delivery_evidence": [
+        {
+          "run_id": "english_docx_doc3_tagged_final_20260731_v04",
+          "doc_id": "doc3_cloze_20_answers",
+          "package_path": "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v04.zip",
+          "source_projection": "outputs/english_docx_parent_child_projection_v0_2/doc3_cloze_20_answers_20260731_v04/parent_child_projection.json",
+          "group_count": 20,
+          "child_count": 300,
+          "missing_option_count": 0,
+          "missing_tag_count": 0,
+          "html_option_heading_count": 300,
+          "html_has_mojibake_marker": false,
+          "zip_testzip": null
+        },
+        {
+          "run_id": "english_docx_doc3_tagged_final_20260731_v10",
+          "doc_id": "doc3_cloze_20_answers",
+          "package_path": "outputs/delivery_packs/english_docx_doc3_tagged_final_20260731_v10.zip",
+          "source_projection": "outputs/english_docx_parent_child_projection_v0_2/doc3_cloze_20_answers_20260731_v10/parent_child_projection.json",
+          "group_count": 20,
+          "child_count": 300,
+          "model_relevant_context_count": 300,
+          "missing_option_count": 0,
+          "missing_tag_count": 0,
+          "explanation_previous_numbered_blank_violation_count": 0,
+          "html_child_option_heading_count": 300,
+          "html_literal_blank_token_count": 0,
+          "html_has_mojibake_marker": false,
+          "zip_testzip": null
+        },
+        {
+          "run_id": "english_docx_parent_only_and_optimized_review_20260731_v01",
+          "package_paths": [
+            "outputs/delivery_packs/english_docx_doc1_parent_only_20260731_v01.zip",
+            "outputs/delivery_packs/english_docx_doc2_parent_only_20260731_v01.zip",
+            "outputs/delivery_packs/english_docx_doc4_parent_only_20260731_v01.zip",
+            "outputs/delivery_packs/english_docx_doc5_unknownfix_20260731_v01.zip",
+            "outputs/delivery_packs/english_docx_doc6_unknownfix_20260731_v01.zip",
+            "outputs/delivery_packs/english_docx_doc1_optimized_review_20260731_v01.zip",
+            "outputs/delivery_packs/english_docx_doc2_optimized_review_20260731_v01.zip",
+            "outputs/delivery_packs/english_docx_doc3_optimized_review_20260731_v01.zip",
+            "outputs/delivery_packs/english_docx_doc4_optimized_review_20260731_v01.zip",
+            "outputs/delivery_packs/english_docx_doc5_optimized_review_20260731_v01.zip",
+            "outputs/delivery_packs/english_docx_doc6_optimized_review_20260731_v01.zip"
+          ],
+          "role": "protected review and delivery surface, not a replacement canonical entrypoint",
+          "zip_testzip": null,
+          "summary": {
+            "parent_only_docs": {
+              "doc1": {"group_count": 17, "unknown_parent_field_count": 0, "warning_count": 0},
+              "doc2": {"group_count": 21, "unknown_parent_field_count": 0, "warning_count": 0},
+              "doc4": {"group_count": 13, "unknown_parent_field_count": 0, "warning_count": 1}
+            },
+            "unknownfix_docs": {
+              "doc5": {"group_count": 5, "child_count": 0, "parent_only_count": 5, "warning_count": 0},
+              "doc6": {"group_count": 5, "child_count": 0, "parent_only_count": 5, "warning_count": 0}
+            },
+            "optimized_review_docs": {
+              "doc1": {"group_count": 17, "child_count": 0},
+              "doc2": {"group_count": 21, "child_count": 0},
+              "doc3": {"group_count": 20, "child_count": 300},
+              "doc4": {"group_count": 13, "child_count": 0},
+              "doc5": {"group_count": 5, "child_count": 0},
+              "doc6": {"group_count": 5, "child_count": 0}
+            }
+          }
+        },
+        {
+          "run_id": "english_docx_four_type_business_review_20260803_v07",
+          "role": "protected four-type business review surface, not a replacement canonical entrypoint",
+          "package_path": "outputs/delivery_packs/english_docx_four_type_business_review_20260803_v07.zip",
+          "zip_testzip": null,
+          "zip_entries": 5,
+          "sha256": "1628b177c4529977653befce08baa742d25b9ee905a0c72f8bfb553d2f33ad12",
+          "covered_types": [
+            "cloze",
+            "grammar",
+            "reading",
+            "seven_choice"
+          ],
+          "component_evidence": {
+            "cloze": {
+              "source_run_id": "english_docx_doc3_tagged_final_20260731_v10",
+              "doc_id": "doc3_cloze_20_answers",
+              "group_count": 20,
+              "child_count": 300
+            },
+            "grammar": {
+              "source_run_id": "doc1_grammar_full_20260803_v06",
+              "doc_id": "doc1_zhuanlian1",
+              "group_count": 17,
+              "child_count": 156,
+              "status_counts": {"ok": 17},
+              "issue_count": 0
+            },
+            "reading": {
+              "source_run_id": "doc2_full_reading_child_enhanced_20260803_v01",
+              "doc_id": "doc2_zhuanlian2",
+              "group_count": 19,
+              "child_count": 58,
+              "status_counts": {"ok": 19},
+              "issue_count": 0
+            },
+            "seven_choice": {
+              "source_run_id": "doc4_seven_full_fillprev_20260803_v01",
+              "doc_id": "doc4_seven_choice",
+              "group_count": 13,
+              "child_count": 61,
+              "status_counts": {"ok": 13},
+              "issue_count": 0
+            }
+          },
+          "runtime_import_enabled": false,
+          "database_write_enabled": false
+        },
+        {
+          "run_id": "english_docx_reading_and_seven_choice_business_review_20260803_late",
+          "role": "protected late business-review upgrades for reading and seven-choice, not replacement canonical entrypoints",
+          "reading": {
+            "run_id": "doc2_reading_full_scope_translation_20260803_v01",
+            "doc_id": "doc2_reading",
+            "package_path": "outputs/delivery_packs/english_docx_reading_full_scope_translation_business_review_20260803_v02.zip",
+            "source_run_root": "outputs/english_docx_reading_child_enhancer_v0_1/doc2_reading_full_scope_translation_20260803_v01",
+            "group_count": 19,
+            "child_count": 58,
+            "status_counts": {"ok": 19},
+            "issue_count": 0,
+            "prompt_version": "english_docx_reading_child_enhancer_v0.6_20260803",
+            "zip_testzip": null,
+            "zip_entries": 3,
+            "sha256": "84ec070a7f02b93f21aea5854bf3b46c96d65df3598681d2fedf2a9c0f44ae6d"
+          },
+          "seven_choice": {
+            "run_id": "doc4_seven_parentraw_translation_reconciled_20260803_v03",
+            "doc_id": "doc4_seven_choice",
+            "package_path": "outputs/delivery_packs/english_docx_doc4_seven_choice_parentraw_translation_review_20260803_v03.zip",
+            "group_count": 13,
+            "child_count": 61,
+            "status_counts": {"ok": 13},
+            "issue_count": 0,
+            "prompt_version": "english_docx_seven_choice_child_formatter_v0.6_parent_raw_translation_20260803",
+            "fallback_rounds_configured": 1,
+            "zip_testzip": null,
+            "zip_entries": 4,
+            "sha256": "0cc2fae7edb8ec504afdbb0bf6a1df8b237696ddc9b590b73a636d0fb40b248c"
+          },
+          "runtime_import_enabled": false,
+          "database_write_enabled": false
+        }
+      ],
+      "smoke_status": {
+        "status": "pass",
+        "checks": [
+          "active manifest parses",
+          "protected runner --help loads",
+          "doc5 and doc6 run summaries are ok",
+          "fallback_events_count is 0",
+          "field normalizer status is ok with issue_count 0",
+          "projection warning_count is 0"
+        ]
+      },
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "forbidden until separately promoted"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "forbidden"
+      },
+      "caution": "The latest protected evidence covers doc5/doc6 and starts from existing artifacts; raw-DOCX full-entry evidence should be added before declaring a complete production ingest chain."
+    },
+    {
+      "chain_id": "pdf_math",
+      "display_name": "PDF Math Visual Ingest Asset Package Chain",
+      "input_format": "pdf",
+      "subject": "math",
+      "protection_status": "protected",
+      "registry_readiness": "ready",
+      "confidence": "high",
+      "source_state": "retained_final2_package_confirmed",
+      "canonical_entrypoint": "tools/run_question_ingest_skill.py",
+      "supporting_entrypoints": [
+        "tools/model_image_need_gate.py",
+        "tools/build_figure_candidate_source.py",
+        "tools/teacher_handout_visual_transcribe_doubao.py",
+        "tools/apply_format_normalize_existing_results.py",
+        "tools/math_formula_library_gate.py",
+        "tools/katex_validate_math.cjs",
+        "tools/prepare_option_visual_source.py",
+        "tools/merge_candidate_prepared_sources.py",
+        "tools/assetize_question_images.py",
+        "tools/consolidate_visual_assets.py",
+        "tools/reconcile_and_refine_visual_assets.py",
+        "tools/audit_question_asset_package.py"
+      ],
+      "protected_paths": [
+        "tools/run_question_ingest_skill.py",
+        "tools/model_image_need_gate.py",
+        "tools/build_figure_candidate_source.py",
+        "tools/teacher_handout_visual_transcribe_doubao.py",
+        "tools/apply_format_normalize_existing_results.py",
+        "tools/math_formula_library_gate.py",
+        "tools/katex_validate_math.cjs",
+        "tools/prepare_option_visual_source.py",
+        "tools/merge_candidate_prepared_sources.py",
+        "tools/assetize_question_images.py",
+        "tools/consolidate_visual_assets.py",
+        "tools/reconcile_and_refine_visual_assets.py",
+        "tools/audit_question_asset_package.py",
+        "outputs/review_packages/s_math47_overlap24_final2_colleague_review_20260721_165138.zip",
+        "outputs/review_packages/s_math47_overlap24_final2_colleague_review_20260721_165138"
+      ],
+      "strongest_retained_package": {
+        "path": "outputs/review_packages/s_math47_overlap24_final2_colleague_review_20260721_165138.zip",
+        "question_count": 47,
+        "status_counts": {
+          "pass": 45,
+          "needs_review": 2
+        },
+        "fail_question_ids": [],
+        "needs_review_question_ids": [
+          "tq_017",
+          "tq_028"
+        ]
+      },
+      "smoke_status": {
+        "status": "pass",
+        "checks": [
+          "audit_question_asset_package.py --help loads",
+          "retained final2 zip testzip is None",
+          "retained final2 zip has audit summary",
+          "audit script rerun returns 47 questions, 45 pass, 2 needs_review, 0 fail"
+        ]
+      },
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "forbidden until separately promoted"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "forbidden"
+      },
+      "fallback_note": "MinerU is a gated fallback capability, not the primary detector path in the retained 47-question run."
+    },
+    {
+      "chain_id": "pdf_english",
+      "display_name": "English Text First Graph First",
+      "input_format": "pdf",
+      "subject": "english",
+      "protection_status": "protected",
+      "registry_readiness": "ready_for_java_shell_admission",
+      "confidence": "high",
+      "source_state": "fresh_rebuild_candidate_and_raw_pdf_promotion_passed",
+      "canonical_pipeline_name": "english_text_first_graph_first",
+      "canonical_entrypoint": "config/english_text_first_graph_first/active_manifest.json",
+      "manifest_gate": "python tools/english_text_first_graph_first_manifest_check.py",
+      "manifest_success_marker": "english_text_first_graph_first_manifest_valid",
+      "supporting_cleanroom_pipeline": "english_text_first_v05",
+      "declared_prior_smoke_artifacts": [
+        "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
+        "outputs/english_text_first_graph_first/final_chain_smoke_20260728/"
+      ],
+      "declared_node_order": [
+        "node1_vlm_transcriber",
+        "node1b_block_attribute_tagger",
+        "node2_sliding_window_composer",
+        "node2d_document_group_deduper",
+        "node3_group_normalizer",
+        "node3b_group_relation_resolver",
+        "node3c_group_ownership_reconciler",
+        "node4_source_backed_draft_builder",
+        "node5_packet_builder",
+        "node5a_continuation_repair",
+        "node5b_refiner",
+        "node6a_projection_planner",
+        "node6b_render_normalizer"
+      ],
+      "protected_paths": [
+        "config/english_text_first_graph_first/active_manifest.json",
+        "config/english_text_first_v05.yaml",
+        "config/english_text_first_v02.yaml",
+        "docs/english_text_first_graph_first_environment.md",
+        "tools/english_text_first_graph_first_manifest_check.py",
+        "tools/english_text_first_v05_pipeline.py",
+        "tools/english_text_first_sidecar_graph_v01.py",
+        "tools/english_text_first_v05_model_gate.py",
+        "tools/english_text_first_verifier_projector_v02.py",
+        "tools/english_text_first_full_chain_runner_v01.py",
+        "tools/english_text_first_controlled_node1_vlm_transcriber.py",
+        "tools/english_text_first_controlled_node1b_attribute_tagger.py",
+        "tools/english_text_first_sliding_window_composer_v01.py",
+        "tools/english_text_first_group_normalizer_v01.py",
+        "tools/english_text_first_group_relation_resolver_v01.py",
+        "tools/english_text_first_group_ownership_reconciler_v01.py",
+        "tools/english_text_first_source_backed_draft_builder_v01.py",
+        "tools/english_text_first_node4b_field_role_resolver_v01.py",
+        "tools/english_text_first_question_packet_builder_v01.py",
+        "tools/english_text_first_question_packet_refiner_v01.py",
+        "tools/english_text_first_runtime_projection_planner_v01.py",
+        "tools/english_text_first_question_render_normalizer_v01.py",
+        "tools/english_text_first_render_verifier_repair_v01.py",
+        "tools/english_text_first_render_gate_point_repair_v01.py",
+        "tools/english_text_first_question_candidate_auditor_v01.py",
+        "tools/english_text_first_review_pack_renderer_v01.py",
+        "prompts/english_question_packet_refiner_cloze_system_v0.1.md",
+        "prompts/english_question_packet_refiner_cloze_user_v0.1.md",
+        "prompts/english_render_instruction_planner_cloze_system_v0.1.md",
+        "prompts/english_group_relation_resolver_cloze_user_v0.1.md",
+        "prompts/english_group_relation_resolver_cloze_system_v0.1.md",
+        "outputs/english_text_first_graph_first/final_chain_smoke_20260728.zip",
+        "outputs/english_text_first_graph_first/final_chain_smoke_20260728",
+        "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01.zip",
+        "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01",
+        "tools/build_pdf_english_graph_first_rebuild_smoke.py",
+        "tools/build_pdf_english_raw_pdf_promotion_gate.py",
+        "docs/reports/pdf_english_graph_first_rebuild_smoke_20260806.json",
+        "docs/reports/pdf_english_graph_first_rebuild_smoke_20260806.md",
+        "docs/reports/pdf_english_raw_pdf_promotion_20260806.json",
+        "docs/reports/pdf_english_raw_pdf_promotion_20260806.md",
+        "tests/fixtures/final_chain_samples/pdf_english_sample.pdf",
+        "tests/test_english_text_first_v05_pipeline.py",
+        "tests/test_english_text_first_sidecar_graph_v01.py",
+        "tests/fixtures/english_text_first_v05"
+      ],
+      "handoff_evidence": {
+        "label": "english_text_first_graph_first_handoff",
+        "zip_testzip": null,
+        "files": [
+          "README_HANDOFF.md",
+          "PIPELINE_CONTRACT.md",
+          "RUNBOOK.md",
+          "HANDOFF_CHECKLIST.md"
+        ]
+      },
+      "smoke_status": {
+        "status": "pass",
+        "checks": [
+          "fresh rebuild active manifest exists and graph-first manifest check passes",
+          "fresh rebuild graph-first smoke zip testzip is None",
+          "raw PDF promotion sample exists and preflight accepts the English PDF profile",
+          "raw PDF promotion renders pages and extracts text blocks into a page manifest",
+          "raw PDF promotion declares no model, database, Runtime import, or business secret side effects"
+        ]
+      },
+      "java_shell_admission": {
+        "allowed": true,
+        "scope": "adapter_preflight_and_queue_contract",
+        "source_report": "docs/reports/pdf_english_raw_pdf_promotion_20260806.json",
+        "not_a_model_execution_claim": true
+      },
+      "production_model_execution_policy": {
+        "model_calls_default_enabled": false,
+        "requires_explicit_runtime_authorization": true
+      },
+      "runtime_import_policy": {
+        "default_enabled": false,
+        "policy": "forbidden until separately promoted"
+      },
+      "database_write_policy": {
+        "default_enabled": false,
+        "policy": "forbidden"
+      },
+      "caution": "Raw-PDF graph-first promotion is sufficient for Java shell queue/dry-run admission. Do not treat this as automatic model execution, Runtime import, database write, or unattended continuous-production readiness."
+    }
+  ]
+}

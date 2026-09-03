@@ -7,6 +7,7 @@ param(
   [string]$TranscribeOutName = "",
   [string]$Model = "doubao-seed-2-0-lite-260428",
   [string]$ApiKey = "",
+  [string]$Python = "",
   [double]$SleepSeconds = 0.3,
   [int]$Limit = 0,
   [int]$MaxPages = 0,
@@ -18,7 +19,12 @@ $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = Split-Path -Parent $scriptDir
-$py = "C:\Users\EDY\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
+# 允许调用方固定解释器；未指定时使用当前环境中的 Python。
+if (-not $Python.Trim()) {
+  $pythonCommand = Get-Command python -ErrorAction Stop
+  $Python = $pythonCommand.Source
+}
+$py = (Resolve-Path -LiteralPath $Python).Path
 $entry = Join-Path $scriptDir "run_teacher_handout_full_flow.py"
 
 if (-not (Test-Path $py)) {

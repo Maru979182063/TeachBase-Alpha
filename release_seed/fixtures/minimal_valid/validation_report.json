@@ -1,0 +1,10 @@
+{
+  "batchId": "synthetic-contract-fixture-001",
+  "releaseVersion": "fixture-v1",
+  "packageContentSha256": "7b557ffee11abf21ca1e660e7d21991c92ed519d729088b60981b42be84be327",
+  "validatorName": "fixture-builder",
+  "validatorVersion": "1.0.0",
+  "validatedAt": "2026-09-01T00:00:00Z",
+  "passed": true,
+  "errorCount": 0
+}

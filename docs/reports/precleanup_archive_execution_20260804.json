@@ -1,0 +1,49 @@
+{
+  "schema_version": "precleanup_archive_execution.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "source_audit_report": "docs/reports/precleanup_deep_audit_20260804.json",
+  "ok": true,
+  "dry_run": false,
+  "error": "",
+  "moves": [
+    {
+      "source": "docs/backup_restore_runbook.md",
+      "target": "_archive/precleanup_20260804/docs/backup_restore_runbook.md",
+      "dry_run": false,
+      "validation_errors": [],
+      "before": {
+        "kind": "file",
+        "file_count": 1,
+        "total_bytes": 2881,
+        "sha256": "8cc94debacdd9856ec17ba1f488c17d4cebbde301d45c6f033ab7138857d58f5"
+      },
+      "after": {
+        "kind": "file",
+        "file_count": 1,
+        "total_bytes": 2881,
+        "sha256": "8cc94debacdd9856ec17ba1f488c17d4cebbde301d45c6f033ab7138857d58f5"
+      },
+      "status": "moved"
+    },
+    {
+      "source": "docs/reports/visual_pipeline_and_manual_transcription_demo_v0.1_20260624.md",
+      "target": "_archive/precleanup_20260804/docs/reports/visual_pipeline_and_manual_transcription_demo_v0.1_20260624.md",
+      "dry_run": false,
+      "validation_errors": [],
+      "before": {
+        "kind": "file",
+        "file_count": 1,
+        "total_bytes": 8385,
+        "sha256": "3b3efd6c3ba5a70bf6d26423d9c0adb8c7e694a4cc6cdc8d308fc725d2c932c5"
+      },
+      "after": {
+        "kind": "file",
+        "file_count": 1,
+        "total_bytes": 8385,
+        "sha256": "3b3efd6c3ba5a70bf6d26423d9c0adb8c7e694a4cc6cdc8d308fc725d2c932c5"
+      },
+      "status": "moved"
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "schema_version": "english_docx_native_md.active_manifest.v0.1",
+  "pipeline_id": "english_docx_native_md_v01",
+  "pipeline_name": "English DOCX Native Markdown Isolated Environment",
+  "status": "stage0_isolated_candidate",
+  "purpose": "Convert English DOCX native body content into source-preserving Markdown and block stream artifacts before sliding-window splitting.",
+  "entrypoint": "tools/english_docx_native_md_v01.py",
+  "owned_output_root": "outputs/english_docx_native_md_v0_1",
+  "runtime_import_enabled": false,
+  "database_write_enabled": false,
+  "environment_boundary": {
+    "does_not_depend_on": [
+      "config/english_text_first_graph_first/active_manifest.json",
+      "config/docx_math_pipeline_final_active_manifest.json"
+    ],
+    "does_not_write": [
+      "outputs/english_text_first_graph_first",
+      "outputs/english_text_first_pipeline_v02_spec_20260715",
+      "outputs/docx_math_pipeline_final_v0_1"
+    ]
+  },
+  "artifacts": {
+    "block_stream": "outputs/english_docx_native_md_v0_1/<run_id>/<doc_slug>/block_stream.json",
+    "document_markdown": "outputs/english_docx_native_md_v0_1/<run_id>/<doc_slug>/document.md",
+    "asset_manifest": "outputs/english_docx_native_md_v0_1/<run_id>/<doc_slug>/asset_manifest.json",
+    "summary": "outputs/english_docx_native_md_v0_1/<run_id>/<doc_slug>/summary.json",
+    "preview_html": "outputs/english_docx_native_md_v0_1/<run_id>/<doc_slug>/index.html"
+  },
+  "downstream_isolated_nodes": {
+    "group_boundary_cutter": {
+      "entrypoint": "tools/english_docx_group_boundary_cutter_v01.py",
+      "config_path": "config/english_docx_native_md/group_boundary_cutter_v01.json",
+      "owned_output_root": "outputs/english_docx_group_boundary_cutter_v0_1",
+      "model_node": true,
+      "role": "model-owned sliding-window group start/end boundary events; no fixed question-count assumptions"
+    },
+    "group_repair_gate": {
+      "entrypoint": "tools/english_docx_group_repair_gate_v01.py",
+      "config_path": "config/english_docx_native_md/group_repair_gate_v01.json",
+      "owned_output_root": "outputs/english_docx_group_repair_gate_v0_1",
+      "model_node": true,
+      "role": "post-boundary structural audit and repair gate before field normalization; model assigns group/uncovered structural roles, program applies traceable attach/merge actions"
+    },
+    "group_field_normalizer": {
+      "entrypoint": "tools/english_docx_group_field_normalizer_v01.py",
+      "config_path": "config/english_docx_native_md/group_field_normalizer_v01.json",
+      "owned_output_root": "outputs/english_docx_group_field_normalizer_v0_1",
+      "model_node": true,
+      "role": "normalize repaired groups into source-backed fields"
+    },
+    "integrated_chain_runner": {
+      "entrypoint": "tools/english_docx_integrated_chain_runner_v01.py",
+      "owned_output_root": "outputs/english_docx_integrated_chain_v0_1",
+      "model_node": false,
+      "role": "checkpointed runner for repair gate -> field normalizer -> parent/child projection, using selected_assembled_groups and fallback to original assembled groups when downstream validation blocks"
+    }
+  },
+  "content_contract": {
+    "canonical_markdown_field": "display_markdown",
+    "plain_text_field": "plain_text_lossy",
+    "asset_refs_field": "asset_refs",
+    "blank_refs_field": "blank_refs",
+    "response_area_refs_field": "response_area_refs",
+    "loss_flags_field": "content_loss_flags"
+  },
+  "normalizations": [
+    "Word underline blank runs such as underlined '    1    ' become [[BLANK_1]] tokens with source_text preserved.",
+    "Long underscore answer-writing areas become [[RESPONSE_AREA_NNN chars=N]] tokens with source_text preserved.",
+    "Non-blank underlined text becomes inline HTML <u>...</u> in Markdown with source_text preserved.",
+    "Only DOCX body images referenced from word/document.xml are copied into the run-local word_media_native directory and referenced as asset:// tokens; header/footer logos are ignored."
+  ],
+  "known_not_implemented": [
+    "No model boundary cutting.",
+    "No sliding-window composition.",
+    "No full DOCX-entry orchestrator; protected downstream runner starts from existing block_stream, assembled_groups, and itemized_groups artifacts.",
+    "No render/refine/runtime import/database write."
+  ],
+  "last_updated": "2026-07-31"
+}

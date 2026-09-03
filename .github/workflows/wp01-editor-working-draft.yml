@@ -1,0 +1,87 @@
+name: WP-01 Editor Working Draft
+
+on:
+  pull_request:
+    branches:
+      - integration/repository-scope-clean-20260715
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wp01-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  wp01-gate:
+    name: WP-01 gate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v7
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Set up Temurin 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Start isolated PostgreSQL service on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $service = Get-Service -Name "postgresql*" | Select-Object -First 1
+          if (-not $service) { throw "postgresql_service_not_found" }
+          Set-Service -Name $service.Name -StartupType Manual
+          Start-Service -Name $service.Name
+          $service.WaitForStatus("Running", [TimeSpan]::FromMinutes(2))
+          $testRoot = Join-Path $env:RUNNER_TEMP "wp01-runtime-tests"
+          New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
+          "RUNTIME_TEST_POSTGRES_ADMIN_URL=postgresql://postgres:root@127.0.0.1:5432/postgres" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "RUNTIME_TEST_TEMP_ROOT=$testRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      # 完整门禁包含中文注释、迁移、Java 构建、编辑器、题篮和三种导出回归。
+      - name: Run complete WP-01 gate
+        run: npm run test:wp01-editor-working-draft-gate
+
+      - name: Re-run V001-V008 and V007-V008 migration gate
+        run: npm run test:wp01-v008-migration
+
+      - name: Re-run Java foundation build
+        run: npm run build:java-foundation
+
+      - name: Re-run WP-01 concurrency and recovery acceptance
+        run: npm run test:wp01-editor-working-draft
+
+      - name: Upload WP-01 evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: wp01-evidence-${{ matrix.os }}
+          if-no-files-found: warn
+          path: |
+            docs/reports/wp01_v008_migration_gate_20260902.json
+            docs/reports/wp01_editor_working_draft_gate_20260902.json
+            docs/reports/editor_backend_live_gate_20260831.json
+            docs/reports/question_collection_live_gate_20260831.json
+            docs/reports/document_renderer_live_gate_20260831.json
+            backend/teachbase-server/target/surefire-reports/

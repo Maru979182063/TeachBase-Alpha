@@ -1,0 +1,199 @@
+{
+  "schema_version": "pdf_english_user_zip_intake.v0.1",
+  "workspace_contract": "relative_git_paths_only",
+  "absolute_paths_as_inputs": false,
+  "chain_id": "pdf_english",
+  "canonical_pipeline_name": "english_text_first_graph_first",
+  "status": "downstream_review_evidence_received",
+  "input_recording": "filename_label_and_hash_only",
+  "received_branch_evidence": [
+    "cloze",
+    "grammar",
+    "reading",
+    "writing"
+  ],
+  "non_pdf_english_zip_count": 1,
+  "canonical_recovery_artifacts_present": false,
+  "legacy_artifact_recovery_ready": false,
+  "rebuild_evidence_available": true,
+  "ready_claim_allowed": false,
+  "old_identity_claim_allowed": false,
+  "records": [
+    {
+      "input_label": "en_reading_downstream_fixed_20260728.zip",
+      "exists": true,
+      "classification": "pdf_english_downstream_review",
+      "branch": "reading",
+      "size_bytes": 22668472,
+      "sha256": "57a3088da9688a6c0ec2a1928675de249a86c0b854acde786ad9dfe73757d764",
+      "zip_valid": true,
+      "zip_testzip": null,
+      "entry_count": 42,
+      "html_count": 4,
+      "json_count": 0,
+      "png_count": 38,
+      "docx_count": 0,
+      "has_active_manifest": false,
+      "has_manifest_check_tool": false,
+      "has_final_chain_smoke": false,
+      "html_titles": [
+        "English_reading_downstream_fixed"
+      ]
+    },
+    {
+      "input_label": "en_writing_downstream_fixed_20260728.zip",
+      "exists": true,
+      "classification": "pdf_english_downstream_review",
+      "branch": "writing",
+      "size_bytes": 7429432,
+      "sha256": "b58055ca0624ac998678209ca9b2253012014572da134011227ae3e84a7bcdf6",
+      "zip_valid": true,
+      "zip_testzip": null,
+      "entry_count": 25,
+      "html_count": 4,
+      "json_count": 0,
+      "png_count": 21,
+      "docx_count": 0,
+      "has_active_manifest": false,
+      "has_manifest_check_tool": false,
+      "has_final_chain_smoke": false,
+      "html_titles": [
+        "English_writing_downstream_fixed"
+      ]
+    },
+    {
+      "input_label": "en_grammar_downstream_fixed_20260728.zip",
+      "exists": true,
+      "classification": "pdf_english_downstream_review",
+      "branch": "grammar",
+      "size_bytes": 11938779,
+      "sha256": "c11c3fa1a06c40ecbd590d8e37baf90ad12c65416cce626de4d2b32c7599ca4a",
+      "zip_valid": true,
+      "zip_testzip": null,
+      "entry_count": 28,
+      "html_count": 4,
+      "json_count": 0,
+      "png_count": 24,
+      "docx_count": 0,
+      "has_active_manifest": false,
+      "has_manifest_check_tool": false,
+      "has_final_chain_smoke": false,
+      "html_titles": [
+        "English_grammar_downstream_fixed"
+      ]
+    },
+    {
+      "input_label": "doc1_triangles__gatefix_full_doc1_20260727_v02__side_by_side_filtered_v02.zip",
+      "exists": true,
+      "classification": "doc_math_review",
+      "branch": "",
+      "size_bytes": 19061791,
+      "sha256": "f35bc270cd9bbdc956d54ef83871cf901f8c1752c6fb5e6242cf14437cbfa3dc",
+      "zip_valid": true,
+      "zip_testzip": null,
+      "entry_count": 192,
+      "html_count": 1,
+      "json_count": 3,
+      "png_count": 170,
+      "docx_count": 1,
+      "has_active_manifest": false,
+      "has_manifest_check_tool": false,
+      "has_final_chain_smoke": false,
+      "html_titles": [
+        "DOCX math side-by-side review"
+      ]
+    },
+    {
+      "input_label": "en_cloze_gloss_end_3cases_20260728_review_v2.zip",
+      "exists": true,
+      "classification": "pdf_english_downstream_review",
+      "branch": "cloze",
+      "size_bytes": 1757420,
+      "sha256": "62f74bda77e996398f113d077c7dc16bbe03b484d5761d85103c4818b0aed921",
+      "zip_valid": true,
+      "zip_testzip": null,
+      "entry_count": 5,
+      "html_count": 1,
+      "json_count": 0,
+      "png_count": 4,
+      "docx_count": 0,
+      "has_active_manifest": false,
+      "has_manifest_check_tool": false,
+      "has_final_chain_smoke": false,
+      "html_titles": [
+        "完形填空选项释义后置 3题回归"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "name": "all_input_zips_exist",
+      "ok": true,
+      "value": []
+    },
+    {
+      "name": "all_input_zips_valid",
+      "ok": true,
+      "value": []
+    },
+    {
+      "name": "four_pdf_english_branch_review_packages_present",
+      "ok": true,
+      "value": [
+        "cloze",
+        "grammar",
+        "reading",
+        "writing"
+      ],
+      "expected": [
+        "cloze",
+        "grammar",
+        "reading",
+        "writing"
+      ]
+    },
+    {
+      "name": "no_zip_contains_canonical_active_manifest",
+      "ok": true,
+      "value": []
+    },
+    {
+      "name": "no_zip_contains_manifest_checker",
+      "ok": true,
+      "value": []
+    },
+    {
+      "name": "no_zip_contains_final_chain_smoke",
+      "ok": true,
+      "value": []
+    },
+    {
+      "name": "non_pdf_english_packages_are_excluded_from_pdf_english_recovery_identity",
+      "ok": true,
+      "value": [
+        {
+          "input_label": "doc1_triangles__gatefix_full_doc1_20260727_v02__side_by_side_filtered_v02.zip",
+          "classification": "doc_math_review"
+        }
+      ]
+    }
+  ],
+  "safe_next_actions": [
+    "keep_these_zips_as_downstream_review_evidence",
+    "do_not_treat_user_zips_as_active_manifest_or_final_smoke",
+    "use_four_branch_evidence_to_support_a_fresh_pdf_english_rebuild_candidate",
+    "generate_new_active_manifest_and_new_smoke_before_marking_pdf_english_ready"
+  ],
+  "unsafe_actions": [
+    "do_not_import_review_html_as_canonical_pipeline_config",
+    "do_not_claim_20260728_final_chain_smoke_recovered_from_these_zips",
+    "do_not_use_doc_math_review_zip_as_pdf_english_evidence",
+    "do_not_record_local_cache_paths_as_reproducible_contract"
+  ],
+  "execution_contract": {
+    "model_invoked": false,
+    "database_written": false,
+    "runtime_imported": false,
+    "business_secrets_read": false
+  }
+}

@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: teachbase-server
+  datasource:
+    url: ${TEACHBASE_DATABASE_URL:jdbc:postgresql://127.0.0.1:5432/teachbase}
+    username: ${TEACHBASE_DATABASE_USER:teachbase_app}
+    password: ${TEACHBASE_DATABASE_PASSWORD:}
+    hikari:
+      maximum-pool-size: ${TEACHBASE_DATABASE_POOL_SIZE:10}
+      minimum-idle: 1
+  flyway:
+    enabled: true
+    create-schemas: true
+    default-schema: teachbase_app
+    schemas: teachbase_app
+    locations: classpath:db/migration
+  jooq:
+    sql-dialect: POSTGRES
+
+server:
+  port: ${TEACHBASE_SERVER_PORT:8080}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  api-docs:
+    enabled: false
+
+teachbase:
+  editor:
+    working-draft:
+      enabled: ${TEACHBASE_EDITOR_WORKING_DRAFT_ENABLED:true}
+      lazy-migration-enabled: ${TEACHBASE_EDITOR_LAZY_MIGRATION_ENABLED:true}
+      checkpoint-interval: ${TEACHBASE_EDITOR_CHECKPOINT_INTERVAL:2m}
+      checkpoint-ttl: ${TEACHBASE_EDITOR_CHECKPOINT_TTL:72h}
+      checkpoint-max-per-document: ${TEACHBASE_EDITOR_CHECKPOINT_MAX:100}
+      mutation-ttl: ${TEACHBASE_EDITOR_MUTATION_TTL:7d}
+      cleanup-batch-size: ${TEACHBASE_EDITOR_CLEANUP_BATCH_SIZE:5000}
+      cleanup-delay: ${TEACHBASE_EDITOR_CLEANUP_DELAY:5m}
+  rendering:
+    enabled: ${TEACHBASE_RENDER_ENABLED:false}
+    worker-id: ${TEACHBASE_RENDER_WORKER_ID:}
+    pandoc-path: ${TEACHBASE_RENDER_PANDOC_PATH:pandoc}
+    typst-path: ${TEACHBASE_RENDER_TYPST_PATH:typst}
+    storage-root: ${TEACHBASE_STORAGE_ROOT:./var/storage}
+    poll-delay: ${TEACHBASE_RENDER_POLL_DELAY:1s}
+    temp-sweep-delay: ${TEACHBASE_RENDER_TEMP_SWEEP_DELAY:10m}
+    lease-duration: ${TEACHBASE_RENDER_LEASE_DURATION:2m}
+    process-timeout: ${TEACHBASE_RENDER_PROCESS_TIMEOUT:90s}

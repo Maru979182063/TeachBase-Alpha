@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "evidenceScope": "phase0_common_contract_and_isolated_spikes",
+  "capturedAt": "2026-09-02T13:28:00+08:00",
+  "repository": {
+    "branchAtCapture": "backend/java-modulith-foundation-survey",
+    "headAtCapture": "572c8e29cf5413f0cb68cd325c75d672077084f7",
+    "statusAtCapture": "clean",
+    "phase0DiffBase": "7509759",
+    "phase0DiffTarget": "572c8e29cf5413f0cb68cd325c75d672077084f7",
+    "phase0StartDefinition": "parent commit immediately before the common-contract-and-spike implementation",
+    "uncommittedFilesAtCapture": [],
+    "unrelatedFilesAtCapture": []
+  },
+  "phase0NameStatus": [
+    {"status": "M", "path": "backend/teachbase-server/src/main/java/com/teachbase/server/editor/application/EditorContentValidator.java"},
+    {"status": "M", "path": "backend/teachbase-server/src/main/java/com/teachbase/server/editor/application/EditorDocumentService.java"},
+    {"status": "M", "path": "backend/teachbase-server/src/main/java/com/teachbase/server/editor/application/EditorQuestionPlacementService.java"},
+    {"status": "A", "path": "backend/teachbase-server/src/main/java/com/teachbase/server/editor/application/EditorVariantContract.java"},
+    {"status": "M", "path": "backend/teachbase-server/src/main/java/com/teachbase/server/editor/application/EditorVariantProjector.java"},
+    {"status": "M", "path": "backend/teachbase-server/src/main/java/com/teachbase/server/editor/infrastructure/JooqEditorDocumentRepository.java"},
+    {"status": "M", "path": "backend/teachbase-server/src/test/java/com/teachbase/server/editor/application/EditorContentValidatorTest.java"},
+    {"status": "M", "path": "backend/teachbase-server/src/test/java/com/teachbase/server/editor/application/EditorVariantProjectorTest.java"},
+    {"status": "A", "path": "docs/architecture/adr/ADR-01-working-draft-revision-snapshot.md"},
+    {"status": "A", "path": "docs/architecture/adr/ADR-02-knowledge-document-section-handout-reference.md"},
+    {"status": "A", "path": "docs/architecture/adr/ADR-03-question-group-revision-composition.md"},
+    {"status": "A", "path": "docs/architecture/adr/ADR-04-ingestion-identity-idempotency-revision-dedup.md"},
+    {"status": "A", "path": "docs/architecture/phase0_contract_package.md"},
+    {"status": "A", "path": "docs/architecture/spikes/README.md"},
+    {"status": "A", "path": "docs/architecture/spikes/knowledge_document_schema_spike.sql"},
+    {"status": "A", "path": "docs/architecture/spikes/question_group_composition_schema_spike.sql"},
+    {"status": "A", "path": "docs/architecture/spikes/working_draft_schema_spike.sql"},
+    {"status": "M", "path": "docs/reports/document_renderer_live_gate_20260831.json"},
+    {"status": "M", "path": "docs/reports/editor_backend_live_gate_20260831.json"},
+    {"status": "A", "path": "docs/reports/phase0_schema_spike_gate_20260902.json"},
+    {"status": "M", "path": "docs/reports/question_collection_live_gate_20260831.json"},
+    {"status": "M", "path": "package.json"},
+    {"status": "M", "path": "tools/run_document_renderer_live_gate.mjs"},
+    {"status": "M", "path": "tools/run_editor_backend_live_gate.mjs"},
+    {"status": "A", "path": "tools/run_phase0_schema_spike_gate.mjs"},
+    {"status": "M", "path": "tools/run_question_collection_live_gate.mjs"}
+  ],
+  "commonNameFix": {
+    "canonicalContract": "backend/teachbase-server/src/main/java/com/teachbase/server/editor/application/EditorVariantContract.java",
+    "code": [
+      "backend/teachbase-server/src/main/java/com/teachbase/server/editor/application/EditorContentValidator.java",
+      "backend/teachbase-server/src/main/java/com/teachbase/server/editor/application/EditorDocumentService.java",
+      "backend/teachbase-server/src/main/java/com/teachbase/server/editor/application/EditorQuestionPlacementService.java",
+      "backend/teachbase-server/src/main/java/com/teachbase/server/editor/application/EditorVariantContract.java",
+      "backend/teachbase-server/src/main/java/com/teachbase/server/editor/application/EditorVariantProjector.java",
+      "backend/teachbase-server/src/main/java/com/teachbase/server/editor/infrastructure/JooqEditorDocumentRepository.java"
+    ],
+    "productionMigrations": [],
+    "tests": [
+      "backend/teachbase-server/src/test/java/com/teachbase/server/editor/application/EditorContentValidatorTest.java",
+      "backend/teachbase-server/src/test/java/com/teachbase/server/editor/application/EditorVariantProjectorTest.java",
+      "tools/run_editor_backend_live_gate.mjs",
+      "tools/run_question_collection_live_gate.mjs",
+      "tools/run_document_renderer_live_gate.mjs"
+    ]
+  },
+  "adrs": [
+    "docs/architecture/adr/ADR-01-working-draft-revision-snapshot.md",
+    "docs/architecture/adr/ADR-02-knowledge-document-section-handout-reference.md",
+    "docs/architecture/adr/ADR-03-question-group-revision-composition.md",
+    "docs/architecture/adr/ADR-04-ingestion-identity-idempotency-revision-dedup.md"
+  ],
+  "schemaSpikes": [
+    "docs/architecture/spikes/working_draft_schema_spike.sql",
+    "docs/architecture/spikes/knowledge_document_schema_spike.sql",
+    "docs/architecture/spikes/question_group_composition_schema_spike.sql"
+  ],
+  "testRuns": [
+    {
+      "command": "npm run build:java-foundation",
+      "exitCode": 0,
+      "passed": {"mavenTestCases": 14, "build": 1},
+      "reportPaths": ["backend/teachbase-server/target/surefire-reports"]
+    },
+    {
+      "command": "npm run test:java-comment-contract",
+      "exitCode": 0,
+      "passed": {"javaFilesWithChineseMaintenanceComments": 208},
+      "reportPaths": []
+    },
+    {
+      "command": "npm run test:java-foundation-survey",
+      "exitCode": 0,
+      "passed": {"legacyTablesMapped": 43, "legacyTablesTotal": 43},
+      "reportPaths": [
+        "docs/reports/java_foundation_environment_20260831.json",
+        "docs/reports/java_foundation_legacy_mapping_20260831.json",
+        "docs/reports/java_foundation_prototype_inventory_20260831.json"
+      ]
+    },
+    {
+      "command": "npm run test:phase0-schema-spike",
+      "exitCode": 0,
+      "passed": {"executableAssertions": 5, "spikeDomains": 3},
+      "reportPaths": ["docs/reports/phase0_schema_spike_gate_20260902.json"]
+    },
+    {
+      "command": "npm run test:editor-backend-live",
+      "exitCode": 0,
+      "passed": {"liveAssertions": 38, "status": 1},
+      "reportPaths": ["docs/reports/editor_backend_live_gate_20260831.json"]
+    },
+    {
+      "command": "npm run test:question-collection-live",
+      "exitCode": 0,
+      "passed": {"liveAssertions": 39, "status": 1},
+      "reportPaths": ["docs/reports/question_collection_live_gate_20260831.json"]
+    },
+    {
+      "command": "npm run setup:document-renderer",
+      "exitCode": 0,
+      "passed": {"toolInstallationsVerified": 2},
+      "reportPaths": []
+    },
+    {
+      "command": "npm run test:document-renderer-live",
+      "exitCode": 0,
+      "passed": {"liveAssertions": 31, "generatedFiles": 10},
+      "reportPaths": ["docs/reports/document_renderer_live_gate_20260831.json"]
+    }
+  ],
+  "postgresqlSpikeGate": {
+    "startup": "tests/helpers/runtime_testkit.mjs starts a disposable embedded PostgreSQL cluster and creates a test-only database",
+    "databaseVersionAtLatestRerun": "18.4",
+    "command": "npm run test:phase0-schema-spike",
+    "exitCode": 0,
+    "result": "passed",
+    "productionFlywayAppliedThroughAtLatestRerun": "V008",
+    "spikeSchema": "teachbase_phase0_spike",
+    "spikeAppliedOutsideFlyway": true,
+    "reportPath": "docs/reports/phase0_schema_spike_gate_20260902.json"
+  },
+  "status": "PHASE0_CORE_CONTRACT_PARTIAL_READY",
+  "portableContracts": true
+}

@@ -1,0 +1,67 @@
+{
+  "schema_version": "english_docx_group_boundary_cutter_v01.config",
+  "pipeline_id": "english_docx_group_boundary_cutter_v01",
+  "status": "stage1_isolated_candidate",
+  "model_provider": "volcengine_ark",
+  "default_model_alias": "doubao2.0mini",
+  "default_model_endpoint_id": "doubao-seed-2-0-mini-260428",
+  "api_key_env": "ARK_API_KEY",
+  "owned_output_root": "outputs/english_docx_group_boundary_cutter_v0_1",
+  "runtime_import_enabled": false,
+  "database_write_enabled": false,
+  "prompt_version": "english_docx_group_boundary_cutter_v0.6_exercise_label_opening_anchor_20260729",
+  "system_prompt_path": "prompts/english_docx_group_boundary_cutter_v01.system.md",
+  "user_prompt_path": "prompts/english_docx_group_boundary_cutter_v01.user.md",
+  "window_policy": {
+    "core_blocks": 26,
+    "stride_blocks": 16,
+    "previous_tail_blocks": 8,
+    "next_head_blocks": 10,
+    "max_block_preview_chars": 900
+  },
+  "runner": {
+    "max_window_attempts": 3
+  },
+  "aggregation_policy": {
+    "min_start_votes": 1,
+    "min_end_votes": 1,
+    "allow_missing_end": true,
+    "missing_end_status": "needs_resolution_missing_model_end",
+    "adjudication_enabled": true,
+    "opening_boundary_roles": [
+      "opening_anchor"
+    ],
+    "veto_boundary_roles": [
+      "region_context",
+      "document_context",
+      "support_anchor",
+      "spacer",
+      "waste"
+    ],
+    "fallback_opening_roles": [
+      "group_heading",
+      "passage",
+      "question_items",
+      "instruction"
+    ],
+    "fallback_veto_roles": [
+      "document_title",
+      "section_heading",
+      "answer_marker",
+      "answer",
+      "guide",
+      "analysis",
+      "response_area",
+      "waste"
+    ],
+    "veto_belongs_to": [
+      "context_only",
+      "previous_group",
+      "waste"
+    ],
+    "opening_belongs_to": [
+      "new_group_in_current",
+      "visible_group_start"
+    ]
+  }
+}
