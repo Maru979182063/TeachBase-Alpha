@@ -45,10 +45,18 @@ COMMANDS = [
     [sys.executable, "tools/run_precleanup_safety_gate.py"],
     [
         sys.executable,
+        "tools/import_pdf_english_rebuild_sources.py",
+        "--source-root",
+        ".",
+    ],
+    [
+        sys.executable,
         "tools/build_pdf_english_rebuild_decision.py",
         "--source-root",
         "repository_head=.",
     ],
+    [sys.executable, "tools/build_cleanroom_hardening_manifest.py"],
+    [sys.executable, "tools/validate_cleanroom_hardening_manifest.py"],
     [sys.executable, "tools/validate_final_chain_registry.py", "--json"],
     [
         sys.executable,

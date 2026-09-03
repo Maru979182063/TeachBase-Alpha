@@ -2,12 +2,13 @@
   "schema_version": "pdf_english_foundation_rebuild_sources.v0.1",
   "source_kind": "repository_controlled_foundation_fixture",
   "scope": "final_chain_foundation_integration_only",
+  "hash_mode": "portable_text_lf_v1",
   "generated_at": "2026-09-03T00:00:00Z",
   "fixture_root": "tests/fixtures/english_text_first_v05",
-  "fixture_tree_sha256": "12813da38784fd443010fdadbb5031c444c494615c3763d796b585517f67b494",
+  "fixture_tree_sha256": "554c6997f608c51127379441a243404d79b652147462712300d654907618ceb8",
   "v05_config": {
     "path": "tests/fixtures/english_text_first_v05/english_text_first_v05.fixture_config.json",
-    "sha256": "7a4a3665f77c41ff38f3bc6d023ce3b760439cb7e9a34814874bae3efb0e1ed5"
+    "sha256": "4f41a48a9b5a5a548ab238ff77c67389607b3ab3d8ca9bbfdc1236241a0c698a"
   },
   "branches": {
     "reading": {

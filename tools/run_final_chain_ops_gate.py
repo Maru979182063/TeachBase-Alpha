@@ -17,7 +17,22 @@ from teachbase.final_chains import (
 )
 from teachbase.infrastructure.artifact_store import write_json, write_text
 
-from tools.build_final_chain_ready_sample_report import build_report as build_ready_sample_report
+from tools.build_final_chain_ready_sample_report import (
+    REPORT_JSON as READY_SAMPLE_REPORT_JSON,
+    REPORT_MD as READY_SAMPLE_REPORT_MD,
+    build_report as build_ready_sample_report,
+    render_markdown as render_ready_sample_markdown,
+)
+from tools.build_final_chain_control_contract import (
+    REPORT_JSON as CONTROL_CONTRACT_JSON,
+    REPORT_MD as CONTROL_CONTRACT_MD,
+    render_markdown as render_control_contract_markdown,
+)
+from tools.build_final_chain_environment_contract import (
+    REPORT_JSON as ENVIRONMENT_CONTRACT_JSON,
+    REPORT_MD as ENVIRONMENT_CONTRACT_MD,
+    render_markdown as render_environment_contract_markdown,
+)
 from tools.build_final_chain_batch_queue_report import (
     REPORT_JSON as BATCH_QUEUE_REPORT_JSON,
     REPORT_MD as BATCH_QUEUE_REPORT_MD,
@@ -31,8 +46,11 @@ from tools.build_pdf_english_graph_first_rebuild_smoke import (
     render_markdown as render_pdf_english_rebuild_smoke_markdown,
 )
 from tools.build_pdf_english_recovery_source_audit import (
+    REPORT_JSON as PDF_ENGLISH_SOURCE_AUDIT_JSON,
+    REPORT_MD as PDF_ENGLISH_SOURCE_AUDIT_MD,
     SourceRoot as PdfEnglishSourceRoot,
     build_report as build_pdf_english_source_audit_report,
+    render_markdown as render_pdf_english_source_audit_markdown,
 )
 from tools.build_pdf_english_raw_pdf_promotion_gate import (
     REPORT_JSON as PDF_ENGLISH_RAW_PROMOTION_JSON,
@@ -70,7 +88,12 @@ from tools.validate_final_chain_orchestrator_handshake import (
     build_validation_report as build_orchestrator_handshake_validation_report,
     render_markdown as render_orchestrator_handshake_validation_markdown,
 )
-from tools.validate_pdf_english_recovery import build_report as build_pdf_english_recovery_report
+from tools.validate_pdf_english_recovery import (
+    REPORT_JSON as PDF_ENGLISH_RECOVERY_JSON,
+    REPORT_MD as PDF_ENGLISH_RECOVERY_MD,
+    build_report as build_pdf_english_recovery_report,
+    render_markdown as render_pdf_english_recovery_markdown,
+)
 
 REGISTRY = ROOT / "config" / "final_chain_registry.yaml"
 REPORT_JSON = ROOT / "docs" / "reports" / "final_chain_ops_gate_20260804.json"
@@ -91,8 +114,14 @@ def build_gate_report() -> dict[str, Any]:
     registry = load_final_chain_registry(REGISTRY)
     dashboard = build_final_chain_control_dashboard(registry, workspace_root=ROOT)
     control_contract = build_final_chain_control_contract(registry)
+    write_json(CONTROL_CONTRACT_JSON, control_contract)
+    write_text(CONTROL_CONTRACT_MD, render_control_contract_markdown(control_contract))
     environment_contract = build_environment_interaction_contract(registry, workspace_root=ROOT)
+    write_json(ENVIRONMENT_CONTRACT_JSON, environment_contract)
+    write_text(ENVIRONMENT_CONTRACT_MD, render_environment_contract_markdown(environment_contract))
     ready_samples = build_ready_sample_report()
+    write_json(READY_SAMPLE_REPORT_JSON, ready_samples)
+    write_text(READY_SAMPLE_REPORT_MD, render_ready_sample_markdown(ready_samples))
     batch_queue = build_batch_queue_report()
     write_json(BATCH_QUEUE_REPORT_JSON, batch_queue)
     write_text(BATCH_QUEUE_REPORT_MD, render_batch_queue_markdown(batch_queue))
@@ -108,7 +137,11 @@ def build_gate_report() -> dict[str, Any]:
     pdf_english_blocker = build_pdf_english_source_audit_report(
         (PdfEnglishSourceRoot("repository_head", ROOT),)
     )
+    write_json(PDF_ENGLISH_SOURCE_AUDIT_JSON, pdf_english_blocker)
+    write_text(PDF_ENGLISH_SOURCE_AUDIT_MD, render_pdf_english_source_audit_markdown(pdf_english_blocker))
     pdf_english_recovery = build_pdf_english_recovery_report()
+    write_json(PDF_ENGLISH_RECOVERY_JSON, pdf_english_recovery)
+    write_text(PDF_ENGLISH_RECOVERY_MD, render_pdf_english_recovery_markdown(pdf_english_recovery))
     pdf_english_recovery_intake = build_pdf_english_recovery_intake_report()
     write_json(PDF_ENGLISH_INTAKE_JSON, pdf_english_recovery_intake)
     write_text(PDF_ENGLISH_INTAKE_MD, render_pdf_english_recovery_intake_markdown(pdf_english_recovery_intake))

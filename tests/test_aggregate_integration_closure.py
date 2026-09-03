@@ -79,8 +79,13 @@ def test_final_chain_ops_precedes_precleanup_reference_audit() -> None:
     commands = [" ".join(command) for command in FOUNDATION_COMMANDS]
     ops_index = commands.index(next(command for command in commands if "run_final_chain_ops_gate.py" in command))
     audit_index = commands.index(next(command for command in commands if "build_precleanup_deep_audit.py" in command))
+    import_index = commands.index(next(command for command in commands if "import_pdf_english_rebuild_sources.py" in command))
+    decision_index = commands.index(next(command for command in commands if "build_pdf_english_rebuild_decision.py" in command))
+    manifest_index = commands.index(next(command for command in commands if "build_cleanroom_hardening_manifest.py" in command))
+    pytest_index = commands.index(next(command for command in commands if "pytest" in command))
 
     assert ops_index < audit_index
+    assert import_index < decision_index < manifest_index < pytest_index
 
 
 def test_release_baseline_comparison_is_environment_relative(tmp_path: Path) -> None:

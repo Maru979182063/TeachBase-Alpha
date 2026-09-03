@@ -24,7 +24,8 @@
   },
   "foundation_rebuild_source": {
     "manifest": "config/english_text_first_graph_first/foundation_rebuild_sources.json",
-    "sha256": "d81db2e242342145c6753086a6b9033a1858963cfd39a68bcc592b81a059ad48",
+    "sha256": "76ef5ebcf0e4b7ceecb523260f0fe357930352b95b4773714099c501f740e535",
+    "hash_mode": "portable_text_lf_v1",
     "source_kind": "repository_controlled_foundation_fixture",
     "production_evidence": false
   },

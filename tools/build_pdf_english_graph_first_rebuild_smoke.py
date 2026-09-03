@@ -24,6 +24,7 @@ ACTIVE_MANIFEST = ROOT / "config" / "english_text_first_graph_first" / "active_m
 REPORT_JSON = ROOT / "docs" / "reports" / "pdf_english_graph_first_rebuild_smoke_20260806.json"
 REPORT_MD = ROOT / "docs" / "reports" / "pdf_english_graph_first_rebuild_smoke_20260806.md"
 REQUIRED_BRANCHES = ("reading", "writing", "grammar", "cloze")
+PORTABLE_TEXT_SUFFIXES = {".json", ".md", ".txt", ".yaml", ".yml", ".py", ".toml"}
 
 
 def rel(path: Path) -> str:
@@ -200,7 +201,8 @@ def build_manifest(
         },
         "foundation_rebuild_source": {
             "manifest": rel(source_manifest),
-            "sha256": file_sha256(source_manifest),
+            "sha256": _portable_file_sha256(source_manifest),
+            "hash_mode": "portable_text_lf_v1",
             "source_kind": source_payload["source_kind"],
             "production_evidence": False,
         },
@@ -364,9 +366,21 @@ def _fixture_tree_sha256(root: Path) -> str:
     for path in sorted(item for item in root.rglob("*") if item.is_file()):
         digest.update(path.relative_to(root).as_posix().encode("utf-8"))
         digest.update(b"\0")
-        digest.update(path.read_bytes())
+        digest.update(_portable_file_bytes(path))
         digest.update(b"\0")
     return digest.hexdigest()
+
+
+def _portable_file_sha256(path: Path) -> str:
+    """文本按 LF 计算受控输入哈希，二进制仍按原始字节计算。"""
+    return hashlib.sha256(_portable_file_bytes(path)).hexdigest()
+
+
+def _portable_file_bytes(path: Path) -> bytes:
+    payload = path.read_bytes()
+    if path.suffix.lower() in PORTABLE_TEXT_SUFFIXES:
+        return payload.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return payload
 
 
 def _load_and_validate_source_manifest(path: Path) -> tuple[dict[str, Any], list[str]]:
@@ -381,6 +395,8 @@ def _load_and_validate_source_manifest(path: Path) -> tuple[dict[str, Any], list
         errors.append("source_manifest_schema_invalid")
     if payload.get("scope") != "final_chain_foundation_integration_only":
         errors.append("source_manifest_scope_invalid")
+    if payload.get("hash_mode") != "portable_text_lf_v1":
+        errors.append("source_manifest_hash_mode_invalid")
     if payload.get("production_evidence") is not False:
         errors.append("source_manifest_must_not_claim_production_evidence")
     try:
@@ -389,7 +405,7 @@ def _load_and_validate_source_manifest(path: Path) -> tuple[dict[str, Any], list
             errors.append("fixture_tree_hash_mismatch")
         config_record = payload.get("v05_config") or {}
         config_path = _repository_path(str(config_record.get("path") or ""))
-        if not config_path.is_file() or file_sha256(config_path) != config_record.get("sha256"):
+        if not config_path.is_file() or _portable_file_sha256(config_path) != config_record.get("sha256"):
             errors.append("v05_config_hash_mismatch")
         branches = payload.get("branches") or {}
         if sorted(branches) != sorted(REQUIRED_BRANCHES):
@@ -400,7 +416,7 @@ def _load_and_validate_source_manifest(path: Path) -> tuple[dict[str, Any], list
                 errors.append(f"branch_page_source_missing:{branch}")
             for record in page_files:
                 source = _repository_path(str(record.get("path") or ""))
-                if not source.is_file() or file_sha256(source) != record.get("sha256"):
+                if not source.is_file() or _portable_file_sha256(source) != record.get("sha256"):
                     errors.append(f"branch_page_hash_mismatch:{branch}")
     except (OSError, ValueError) as exc:
         errors.append(str(exc))

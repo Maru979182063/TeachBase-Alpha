@@ -146,3 +146,23 @@ def test_post_archive_report_fails_if_source_still_exists(tmp_path: Path, monkey
 
     assert report["ok"] is False
     assert report["move_inspections"][0]["checks"]["source_missing_after_archive"] is False
+
+
+def test_post_archive_report_accepts_git_equivalent_platform_line_endings(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(post_archive, "ROOT", tmp_path)
+    monkeypatch.setattr(post_archive, "tracked_file_matches_head", lambda _path: True)
+    target = tmp_path / "_archive" / "precleanup_20260804" / "docs" / "old.md"
+    target.parent.mkdir(parents=True)
+    target.write_bytes(b"line one\nline two\n")
+    move = {
+        "source": "docs/old.md",
+        "target": "_archive/precleanup_20260804/docs/old.md",
+        "status": "moved",
+        "before": {"kind": "file", "file_count": 1, "total_bytes": 20, "sha256": "windows-crlf-hash"},
+        "after": {"kind": "file", "file_count": 1, "total_bytes": 20, "sha256": "windows-crlf-hash"},
+    }
+
+    inspection = post_archive.inspect_move(move, "_archive/precleanup_20260804")
+
+    assert inspection["ok"] is True
+    assert inspection["target_inventory_match_mode"] == "git_tracked_content_with_platform_line_endings"

@@ -2790,13 +2790,29 @@ def test_pdf_english_recovery_tools_fail_closed_without_explicit_input(
 def test_pdf_english_foundation_source_manifest_is_hash_controlled_and_non_production() -> None:
     path = ROOT / "config/english_text_first_graph_first/foundation_rebuild_sources.json"
     payload = json.loads(path.read_text(encoding="utf-8"))
+    active = json.loads(
+        (ROOT / "config/english_text_first_graph_first/active_manifest.json").read_text(encoding="utf-8")
+    )
 
     assert payload["source_kind"] == "repository_controlled_foundation_fixture"
     assert payload["scope"] == "final_chain_foundation_integration_only"
+    assert payload["hash_mode"] == "portable_text_lf_v1"
     assert payload["production_evidence"] is False
     assert payload["production_readiness_status"] == "BLOCKED"
     assert set(payload["branches"]) == {"reading", "writing", "grammar", "cloze"}
     assert all(record["sha256"] for branch in payload["branches"].values() for record in branch["page_files"])
+    assert active["foundation_rebuild_source"]["hash_mode"] == "portable_text_lf_v1"
+
+
+def test_pdf_english_foundation_text_hash_is_line_ending_portable(tmp_path: Path) -> None:
+    from tools.build_pdf_english_graph_first_rebuild_smoke import _portable_file_sha256
+
+    lf = tmp_path / "lf.json"
+    crlf = tmp_path / "crlf.json"
+    lf.write_bytes(b'{"value": 1}\n')
+    crlf.write_bytes(b'{"value": 1}\r\n')
+
+    assert _portable_file_sha256(lf) == _portable_file_sha256(crlf)
 
 
 def test_pdf_english_user_zip_intake_classifies_downstream_review_evidence(tmp_path: Path) -> None:

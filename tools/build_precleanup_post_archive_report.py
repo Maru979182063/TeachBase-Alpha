@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,7 @@ DEFAULT_EXECUTION_REPORT = ROOT / "docs" / "reports" / "precleanup_archive_execu
 DEFAULT_DEEP_AUDIT_REPORT = ROOT / "docs" / "reports" / "precleanup_deep_audit_20260804.json"
 DEFAULT_REPORT_JSON = ROOT / "docs" / "reports" / "precleanup_post_archive_state_20260804.json"
 DEFAULT_REPORT_MD = ROOT / "docs" / "reports" / "precleanup_post_archive_state_20260804.md"
+PORTABLE_TEXT_SUFFIXES = {".md", ".txt"}
 
 
 def norm_path(path: str | Path) -> str:
@@ -65,6 +67,31 @@ def comparable_inventory(item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def tracked_file_matches_head(path: Path) -> bool:
+    """让 Git 的文本换行过滤器判定 LF/CRLF 是否仍为同一受控内容。"""
+    try:
+        relative = path.resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        return False
+    tracked = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", "--", relative],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if tracked.returncode != 0:
+        return False
+    comparison = subprocess.run(
+        ["git", "diff", "--quiet", "HEAD", "--", relative],
+        cwd=ROOT,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return comparison.returncode == 0
+
+
 def archive_files(archive_root: Path) -> list[str]:
     if not archive_root.exists():
         return []
@@ -81,13 +108,19 @@ def inspect_move(move: dict[str, Any], archive_root: str) -> dict[str, Any]:
     target_state = inventory(target)
     expected = comparable_inventory(move.get("after", {}))
     actual = comparable_inventory(target_state)
+    exact_inventory_match = actual == expected
+    tracked_content_match = (
+        target.is_file()
+        and target.suffix.lower() in PORTABLE_TEXT_SUFFIXES
+        and tracked_file_matches_head(target)
+    )
     checks = {
         "move_record_status_moved": move.get("status") == "moved",
         "source_missing_after_archive": source_state["exists"] is False,
         "target_exists_after_archive": target_state["exists"] is True,
         "target_inside_archive_root": is_inside(target, archive_root_path),
         "execution_record_before_after_match": move.get("before") == move.get("after"),
-        "target_inventory_matches_execution": actual == expected,
+        "target_inventory_matches_execution": exact_inventory_match or tracked_content_match,
     }
     return {
         "source": source_rel,
@@ -97,6 +130,13 @@ def inspect_move(move: dict[str, Any], archive_root: str) -> dict[str, Any]:
         "source_state": source_state,
         "target_state": target_state,
         "expected_target_state": expected,
+        "target_inventory_match_mode": (
+            "exact_execution_bytes"
+            if exact_inventory_match
+            else "git_tracked_content_with_platform_line_endings"
+            if tracked_content_match
+            else "mismatch"
+        ),
     }
 
 
