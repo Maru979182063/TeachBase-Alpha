@@ -267,7 +267,8 @@ async function runCommand({ database, cluster, mode, packageRoot, reportPath, st
       child.kill();
       reject(new Error(`release_seed_command_timeout:${mode}`));
     }, 60_000);
-    child.once("exit", (code) => {
+    // close 在进程退出且 stdout/stderr 管道关闭后触发，避免 Windows 清理竞态。
+    child.once("close", (code) => {
       clearTimeout(timer);
       resolve(code);
     });
@@ -448,7 +449,8 @@ async function main() {
   } finally {
     if (pool) await pool.end();
     await cluster.stop();
-    await fs.rm(runRoot, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+    // 杀毒软件或刚关闭的子进程可能短暂占用目录；有界重试后仍失败则保留红灯。
+    await fs.rm(runRoot, { recursive: true, force: true, maxRetries: 30, retryDelay: 200 });
   }
   finalReport.cleanup = "passed";
   await fs.mkdir(path.dirname(finalReportPath), { recursive: true });
