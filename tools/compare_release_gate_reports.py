@@ -18,6 +18,11 @@ def build_report(base_report_path: Path, head_report_path: Path) -> dict[str, An
     head_failures = _failure_ids(head)
     checks = [
         {
+            "name": "base_and_head_cover_same_test_count",
+            "ok": int(head["summary"]["total"]) == int(base["summary"]["total"]),
+            "value": {"base": base["summary"]["total"], "head": head["summary"]["total"]},
+        },
+        {
             "name": "head_pass_count_not_lower",
             "ok": int(head["summary"]["passed"]) >= int(base["summary"]["passed"]),
             "value": {"base": base["summary"]["passed"], "head": head["summary"]["passed"]},
@@ -29,7 +34,7 @@ def build_report(base_report_path: Path, head_report_path: Path) -> dict[str, An
         },
         {
             "name": "baseline_debt_is_explicit",
-            "ok": int(base["summary"]["passed"]) == 68 and int(base["summary"]["total"]) == 71,
+            "ok": int(base["summary"]["failed"]) > 0 and base["summary"].get("verdict") == "NO-GO",
             "value": base["summary"],
         },
     ]

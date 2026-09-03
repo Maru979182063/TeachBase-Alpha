@@ -9,6 +9,7 @@ from typing import Any
 from teachbase.infrastructure.artifact_store import read_json, write_json, write_text
 
 ROOT = Path(__file__).resolve().parents[1]
+_TEXT_INDEX_CACHE: dict[tuple[str, tuple[str, ...]], list[tuple[Path, list[str]]]] = {}
 DEFAULT_REPORT_JSON = ROOT / "docs" / "reports" / "precleanup_deep_audit_20260804.json"
 DEFAULT_REPORT_MD = ROOT / "docs" / "reports" / "precleanup_deep_audit_20260804.md"
 DEFAULT_EXECUTION_REPORT = ROOT / "docs" / "reports" / "precleanup_archive_execution_20260804.json"
@@ -57,10 +58,12 @@ def run_rg(pattern: str, scan_roots: list[str], max_hits: int) -> list[str]:
             stderr=subprocess.DEVNULL,
             timeout=20,
         )
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except FileNotFoundError:
+        return _python_fixed_string_search(pattern, existing_roots, max_hits)
+    except subprocess.TimeoutExpired:
         return []
     if proc.returncode not in {0, 1}:
-        return []
+        return _python_fixed_string_search(pattern, existing_roots, max_hits)
     hits: list[str] = []
     for line in proc.stdout.splitlines():
         normalized = line.replace("\\", "/")
@@ -68,6 +71,40 @@ def run_rg(pattern: str, scan_roots: list[str], max_hits: int) -> list[str]:
             hits.append(normalized)
         if len(hits) >= max_hits:
             break
+    return hits
+
+
+def _python_fixed_string_search(pattern: str, scan_roots: list[str], max_hits: int) -> list[str]:
+    """在没有 ripgrep 的 Windows runner 上执行等价的只读引用扫描。"""
+    cache_key = (str(ROOT.resolve()), tuple(scan_roots))
+    indexed_files = _TEXT_INDEX_CACHE.get(cache_key)
+    if indexed_files is None:
+        indexed_files = []
+        _TEXT_INDEX_CACHE[cache_key] = indexed_files
+
+    paths: list[Path] = []
+    if not indexed_files:
+        for relative in scan_roots:
+            root = ROOT / relative
+            if root.is_file():
+                paths.append(root)
+            elif root.is_dir():
+                paths.extend(path for path in root.rglob("*") if path.is_file())
+        for path in sorted(set(paths)):
+            try:
+                text = path.read_text(encoding="utf-8-sig", errors="replace")
+            except OSError:
+                continue
+            if "\x00" not in text:
+                indexed_files.append((path, text.splitlines()))
+
+    hits: list[str] = []
+    for path, lines in indexed_files:
+        for line_number, line in enumerate(lines, start=1):
+            if pattern in line:
+                hits.append(f"{path.relative_to(ROOT).as_posix()}:{line_number}:{line}")
+                if len(hits) >= max_hits:
+                    return hits
     return hits
 
 

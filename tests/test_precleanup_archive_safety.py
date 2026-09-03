@@ -102,6 +102,24 @@ def test_deep_audit_blocks_regular_repository_references(tmp_path: Path, monkeyp
     assert item["blockers"] == ["referenced_by_repo"]
 
 
+def test_deep_audit_keeps_reference_detection_without_ripgrep(tmp_path: Path, monkeypatch) -> None:
+    """跨平台回退必须与 rg 一样保持 fail-closed。"""
+    monkeypatch.setattr(deep_audit, "ROOT", tmp_path)
+    deep_audit._TEXT_INDEX_CACHE.clear()
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "old_note.md").write_text("old content\n", encoding="utf-8")
+    (tmp_path / "docs" / "live.md").write_text("keep docs/old_note.md wired\n", encoding="utf-8")
+
+    def missing_rg(*_args, **_kwargs):
+        raise FileNotFoundError("rg")
+
+    monkeypatch.setattr(deep_audit.subprocess, "run", missing_rg)
+    item = deep_audit.audit_candidate(_candidate("docs/old_note.md"), [], ["docs"], 5)
+
+    assert item["decision"] == "blocked_needs_review"
+    assert item["blocking_reference_count_capped"] == 1
+
+
 def test_archive_prevalidation_blocks_all_moves_before_filesystem_changes(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(archive, "ROOT", tmp_path)
     (tmp_path / "docs").mkdir()

@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from tools.build_cleanup_candidate_report import build_report
+from tools import build_cleanup_candidate_report as cleanup_report
+
+build_report = cleanup_report.build_report
 
 
 class Args:
@@ -97,3 +99,20 @@ def test_cleanup_candidates_treat_finalish_names_as_review(tmp_path: Path) -> No
 
     assert report["candidate_count"] == 1
     assert report["counts_by_action"]["needs_review_finalish_name"] == 1
+
+
+def test_cleanup_candidates_keep_reference_detection_without_ripgrep(tmp_path: Path, monkeypatch) -> None:
+    """Windows runner 没有 rg 时也不能把仍被引用的文件误判为可归档。"""
+    cleanup_report._TEXT_INDEX_CACHE.clear()
+    (tmp_path / "tools").mkdir()
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "tools" / "old_probe.py").write_text("print('x')", encoding="utf-8")
+    (tmp_path / "docs" / "live.md").write_text("keep tools/old_probe.py wired\n", encoding="utf-8")
+
+    def missing_rg(*_args, **_kwargs):
+        raise FileNotFoundError("rg")
+
+    monkeypatch.setattr(cleanup_report.subprocess, "run", missing_rg)
+    hits = cleanup_report.run_rg(tmp_path, "tools/old_probe.py", ["docs"], 5)
+
+    assert hits == ["docs/live.md:1:keep tools/old_probe.py wired"]

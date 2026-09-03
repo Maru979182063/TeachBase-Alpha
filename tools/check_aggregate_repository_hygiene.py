@@ -26,6 +26,9 @@ FINAL_CHAIN_DB_WRITE_FILES = (
     "tools/build_final_chain_ops_health.py",
     "tools/build_pdf_english_graph_first_rebuild_smoke.py",
 )
+TRACKED_TEMP_FIXTURES = {
+    "outputs/pipeline_isolation_safety_20260714/late_business_files_final_repollution/tools/english_text_first_write_probe.tmp",
+}
 
 
 def build_report(base: str) -> dict[str, Any]:
@@ -141,7 +144,10 @@ def _temporary_residue() -> list[str]:
         findings.extend(
             path.relative_to(ROOT).as_posix()
             for path in root.rglob("*")
-            if path.is_file() and (path.name.endswith(".tmp") or path.name.startswith(".tmp"))
+            if path.is_file()
+            and (path.name.endswith(".tmp") or path.name.startswith(".tmp"))
+            # 该受版本控制文件专门验证污染检测，不是运行残留。
+            and path.relative_to(ROOT).as_posix() not in TRACKED_TEMP_FIXTURES
         )
     return sorted(findings)
 

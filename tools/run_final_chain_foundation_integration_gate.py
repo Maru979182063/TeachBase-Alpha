@@ -14,6 +14,7 @@ REPORT_JSON = ROOT / "artifacts" / "ci" / "final_chain_foundation_integration.js
 
 COMMANDS = [
     [sys.executable, "tools/run_foundation_hardening_gate.py"],
+    [sys.executable, "tools/run_final_chain_ops_gate.py"],
     # 按依赖顺序生成 safety gate 的审计输入，避免依赖仓库中的历史报告缓存。
     [
         sys.executable,
@@ -42,7 +43,6 @@ COMMANDS = [
     ],
     [sys.executable, "tools/build_precleanup_deep_audit.py"],
     [sys.executable, "tools/run_precleanup_safety_gate.py"],
-    [sys.executable, "tools/run_final_chain_ops_gate.py"],
     [
         sys.executable,
         "tools/build_pdf_english_rebuild_decision.py",

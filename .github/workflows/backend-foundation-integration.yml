@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: backend-foundation-integration-${{ github.workflow }}-${{ github.ref }}
+  group: backend-foundation-integration-${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 permissions:

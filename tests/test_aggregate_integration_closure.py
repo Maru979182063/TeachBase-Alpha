@@ -7,6 +7,8 @@ from zipfile import ZipFile
 from tools.build_final_chain_production_readiness_gate import BLOCKERS, build_report as build_production_report
 from tools.check_active_absolute_paths import build_report as build_path_report
 from tools.check_generated_material_policy import build_report as build_material_report
+from tools.compare_release_gate_reports import build_report as compare_release_reports
+from tools.run_final_chain_foundation_integration_gate import COMMANDS as FOUNDATION_COMMANDS
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = "b96a400daadd11fd496ecc47152861f3d5496dae"
@@ -59,6 +61,7 @@ def test_aggregate_workflow_is_cross_platform_and_uses_current_action_runtimes()
     assert "actions/setup-python@v7" in workflow
     assert "actions/setup-java@v6" in workflow
     assert "actions/upload-artifact@v7" in workflow
+    assert "github.event.pull_request.head.ref || github.ref_name" in workflow
     assert "secrets." not in workflow
 
 
@@ -70,3 +73,28 @@ def test_pdf_english_source_contract_is_foundation_only() -> None:
     assert payload["production_evidence"] is False
     assert payload["production_readiness_status"] == "BLOCKED"
     assert set(payload["production_readiness_blockers"]) == set(BLOCKERS)
+
+
+def test_final_chain_ops_precedes_precleanup_reference_audit() -> None:
+    commands = [" ".join(command) for command in FOUNDATION_COMMANDS]
+    ops_index = commands.index(next(command for command in commands if "run_final_chain_ops_gate.py" in command))
+    audit_index = commands.index(next(command for command in commands if "build_precleanup_deep_audit.py" in command))
+
+    assert ops_index < audit_index
+
+
+def test_release_baseline_comparison_is_environment_relative(tmp_path: Path) -> None:
+    base = {
+        "summary": {"total": 71, "passed": 63, "failed": 8, "verdict": "NO-GO"},
+        "results": [{"id": f"failure-{index}", "status": "failed"} for index in range(8)],
+    }
+    head = json.loads(json.dumps(base))
+    base_path = tmp_path / "base.json"
+    head_path = tmp_path / "head.json"
+    base_path.write_text(json.dumps(base), encoding="utf-8")
+    head_path.write_text(json.dumps(head), encoding="utf-8")
+
+    report = compare_release_reports(base_path, head_path)
+
+    assert report["status"] == "pass"
+    assert all(check["ok"] for check in report["checks"])

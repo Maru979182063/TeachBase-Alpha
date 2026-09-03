@@ -20,6 +20,7 @@ NEVER_DELETE_CATEGORIES = {
     "unclassified_non_chain_surface",
 }
 DEFAULT_SCAN_ROOTS = ["tools", "config", "prompts", "schemas", "docs", "tests", "package.json"]
+_TEXT_INDEX_CACHE: dict[tuple[str, tuple[str, ...]], list[tuple[Path, list[str]]]] = {}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -83,16 +84,52 @@ def run_rg(target_root: Path, pattern: str, scan_roots: list[str], max_hits: int
             stderr=subprocess.DEVNULL,
             timeout=20,
         )
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except FileNotFoundError:
+        return _python_fixed_string_search(target_root, pattern, scan_roots, max_hits)
+    except subprocess.TimeoutExpired:
         return []
     if proc.returncode not in {0, 1}:
-        return []
+        return _python_fixed_string_search(target_root, pattern, scan_roots, max_hits)
     hits: list[str] = []
     for line in proc.stdout.splitlines():
         if line not in hits:
             hits.append(line)
         if len(hits) >= max_hits:
             break
+    return hits
+
+
+def _python_fixed_string_search(target_root: Path, pattern: str, scan_roots: list[str], max_hits: int) -> list[str]:
+    """在 CI 未安装 ripgrep 时保持同样的固定字符串引用检查。"""
+    cache_key = (str(target_root.resolve()), tuple(scan_roots))
+    indexed_files = _TEXT_INDEX_CACHE.get(cache_key)
+    if indexed_files is None:
+        indexed_files = []
+        _TEXT_INDEX_CACHE[cache_key] = indexed_files
+
+    paths: list[Path] = []
+    if not indexed_files:
+        for relative in scan_roots:
+            root = target_root / relative
+            if root.is_file():
+                paths.append(root)
+            elif root.is_dir():
+                paths.extend(path for path in root.rglob("*") if path.is_file())
+        for path in sorted(set(paths)):
+            try:
+                text = path.read_text(encoding="utf-8-sig", errors="replace")
+            except OSError:
+                continue
+            if "\x00" not in text:
+                indexed_files.append((path, text.splitlines()))
+
+    hits: list[str] = []
+    for path, lines in indexed_files:
+        for line_number, line in enumerate(lines, start=1):
+            if pattern in line:
+                hits.append(f"{path.relative_to(target_root).as_posix()}:{line_number}:{line}")
+                if len(hits) >= max_hits:
+                    return hits
     return hits
 
 

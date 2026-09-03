@@ -20,7 +20,6 @@ def run_gate(base: str) -> dict[str, Any]:
         ["npm", "run", "test:repository-rescue-phase1"],
         ["npm", "run", "test:modularization-phase2a"],
         ["npm", "run", "test:modularization-phase2b"],
-        ["npm", "run", "test:precleanup-safety"],
         ["npm", "run", "test:final-chain-foundation-integration"],
         ["npm", "run", "test:java-shell-contract"],
         ["npm", "run", "test:java-backend-foundation"],
