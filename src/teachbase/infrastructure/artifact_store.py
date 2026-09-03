@@ -3,9 +3,13 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import threading
 import time
 from pathlib import Path
 from typing import Any, Callable
+
+
+_REPLACE_LOCK = threading.Lock()
 
 
 def read_json(path: Path) -> Any:
@@ -35,7 +39,9 @@ def _atomic_write_text(path: Path, content: str, *, replace: Callable[[Path, Pat
         ) as temp_file:
             temp_file.write(content)
             temp_path = Path(temp_file.name)
-        _replace_with_transient_retry(temp_path, path, replace=replace_fn)
+        # Windows 上防病毒或索引器可能短暂占用目标文件；进程内串行替换并保留有限重试。
+        with _REPLACE_LOCK:
+            _replace_with_transient_retry(temp_path, path, replace=replace_fn)
         temp_path = None
     finally:
         if temp_path is not None:
