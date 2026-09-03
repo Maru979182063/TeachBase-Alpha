@@ -62,6 +62,9 @@ def test_aggregate_workflow_is_cross_platform_and_uses_current_action_runtimes()
     assert "actions/setup-java@v6" in workflow
     assert "actions/upload-artifact@v7" in workflow
     assert "github.event.pull_request.head.ref || github.ref_name" in workflow
+    assert "if: runner.os == 'Windows'" in workflow
+    assert "RUNTIME_TEST_POSTGRES_ADMIN_URL=" in workflow
+    assert "backend-foundation-runtime-tests" in workflow
     assert "secrets." not in workflow
 
 
