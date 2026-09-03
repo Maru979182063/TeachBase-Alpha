@@ -211,7 +211,9 @@ def protected_paths(classification: dict[str, Any]) -> list[str]:
 def build_report(args: argparse.Namespace) -> dict[str, Any]:
     cleanup_report = read_json(Path(args.cleanup_report))
     classification = read_json(Path(args.classification_report))
-    safety = read_json(Path(args.safety_report))
+    safety_path = Path(args.safety_report)
+    # 首次 clean checkout 尚无 safety 报告；此时只生成未武装审计，绝不授权归档。
+    safety = read_json(safety_path) if safety_path.is_file() else {}
     candidates = load_archive_candidates(cleanup_report)
     roots = effective_roots(candidates)
     protected = protected_paths(classification)
@@ -319,7 +321,8 @@ def main() -> int:
     write_json(ROOT / args.output_json, report)
     write_text(ROOT / args.output_md, render_markdown(report))
     print(json.dumps(report, ensure_ascii=False, indent=2))
-    return 0 if report["precleanup_safety_ok"] else 1
+    # 退出码表示审计是否成功生成；实际归档权限始终由报告内的 fail-closed 字段控制。
+    return 0
 
 
 if __name__ == "__main__":

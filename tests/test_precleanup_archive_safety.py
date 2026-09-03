@@ -66,6 +66,29 @@ def test_deep_audit_marks_authorization_snapshot_and_capped_reference_counts(tmp
     assert item["generated_report_reference_count_capped"] == 1
 
 
+def test_deep_audit_without_safety_report_remains_fail_closed(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(deep_audit, "ROOT", tmp_path)
+    cleanup = tmp_path / "cleanup.json"
+    classification = tmp_path / "classification.json"
+    _missing_safety = tmp_path / "missing-safety.json"
+    cleanup.write_text(json.dumps({"samples_by_action": {}, "counts_by_risk": {}}), encoding="utf-8")
+    classification.write_text(json.dumps({"records": []}), encoding="utf-8")
+
+    args = SimpleNamespace(
+        cleanup_report=str(cleanup),
+        classification_report=str(classification),
+        safety_report=str(_missing_safety),
+        scan_roots=[],
+        max_reference_hits=1,
+    )
+
+    report = deep_audit.build_report(args)
+
+    assert report["precleanup_safety_ok"] is False
+    assert report["ok_to_execute_allowed_archive_roots"] is False
+    assert report["allowed_archive_roots"] == []
+
+
 def test_deep_audit_blocks_regular_repository_references(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(deep_audit, "ROOT", tmp_path)
     (tmp_path / "docs").mkdir(parents=True)
