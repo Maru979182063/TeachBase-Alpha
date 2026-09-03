@@ -11,6 +11,7 @@ from teachbase.infrastructure.artifact_store import read_json, write_json, write
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REPORT_JSON = ROOT / "docs" / "reports" / "precleanup_deep_audit_20260804.json"
 DEFAULT_REPORT_MD = ROOT / "docs" / "reports" / "precleanup_deep_audit_20260804.md"
+DEFAULT_EXECUTION_REPORT = ROOT / "docs" / "reports" / "precleanup_archive_execution_20260804.json"
 DEFAULT_ARCHIVE_ROOT = "_archive/precleanup_20260804"
 DEFAULT_SCAN_ROOTS = ["tools", "config", "docs", "tests", "package.json"]
 GENERATED_REPORT_REFERENCE_PREFIXES = (
@@ -218,6 +219,32 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     roots = effective_roots(candidates)
     protected = protected_paths(classification)
     audited = [audit_candidate(item, protected, args.scan_roots, args.max_reference_hits) for item in roots]
+    execution_path = Path(
+        getattr(args, "execution_report", "docs/reports/precleanup_archive_execution_20260804.json")
+    )
+    execution = read_json(execution_path) if execution_path.is_file() else {}
+    guard_paths = {
+        norm_path(str(move.get("source") or ""))
+        for move in execution.get("moves", [])
+        if isinstance(move, dict) and move.get("source")
+    }
+    guard_paths.add("outputs/pipeline_baseline_snapshot")
+    audited_paths = {item["path"] for item in audited}
+    # 历史归档源与仍在使用的 baseline 必须持续接受 fail-closed 复核。
+    for path in sorted(guard_paths - audited_paths):
+        audited.append(
+            audit_candidate(
+                {
+                    "path": path,
+                    "kind": "directory" if path == "outputs/pipeline_baseline_snapshot" else "file",
+                    "category": "historical_or_probe_surface",
+                    "reason": "post-archive reproducibility guard",
+                },
+                protected,
+                args.scan_roots,
+                args.max_reference_hits,
+            )
+        )
     allowed = [item for item in audited if item["decision"] == "archive_allowed"]
     blocked = [item for item in audited if item["decision"] != "archive_allowed"]
     report = {
@@ -230,6 +257,7 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             "cleanup_report": norm_path(args.cleanup_report),
             "classification_report": norm_path(args.classification_report),
             "safety_report": norm_path(args.safety_report),
+            "execution_report": norm_path(execution_path),
         },
         "precleanup_safety_ok": bool(safety.get("ok") is True),
         "candidate_summary": {
@@ -312,6 +340,7 @@ def main() -> int:
     parser.add_argument("--cleanup-report", default="docs/reports/cleanup_candidates_cleanroom_20260731.json")
     parser.add_argument("--classification-report", default="docs/reports/final_chain_surface_classification_cleanroom_20260731.json")
     parser.add_argument("--safety-report", default="docs/reports/precleanup_safety_gate_20260804.json")
+    parser.add_argument("--execution-report", default=str(DEFAULT_EXECUTION_REPORT.relative_to(ROOT)))
     parser.add_argument("--scan-roots", nargs="*", default=DEFAULT_SCAN_ROOTS)
     parser.add_argument("--max-reference-hits", type=int, default=20)
     parser.add_argument("--output-json", default=str(DEFAULT_REPORT_JSON.relative_to(ROOT)))
