@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -62,8 +63,10 @@ def run_gate(base: str) -> dict[str, Any]:
 
 
 def _run(command: list[str]) -> dict[str, Any]:
+    # Windows 上 npm 实际为 npm.cmd；先解析可执行文件，同时保留报告中的可移植命令。
+    executable = shutil.which(command[0]) or command[0]
     completed = subprocess.run(
-        command,
+        [executable, *command[1:]],
         cwd=ROOT,
         text=True,
         encoding="utf-8",
