@@ -22,6 +22,9 @@ STABLE_EVIDENCE_STEMS = {
     "docs/reports/pdf_english_user_zip_intake_20260804",
     "docs/reports/phase0_evidence_manifest_20260902",
     "docs/reports/precleanup_archive_execution_20260804",
+    "docs/reports/java_foundation_environment_20260831",
+    "docs/reports/java_foundation_legacy_mapping_20260831",
+    "docs/reports/java_foundation_prototype_inventory_20260831",
 }
 HISTORICAL_EVIDENCE_STEMS = {
     "docs/reports/cleanup_candidates_old_local_20260731",
