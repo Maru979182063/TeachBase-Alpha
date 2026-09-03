@@ -14,6 +14,33 @@ REPORT_JSON = ROOT / "artifacts" / "ci" / "final_chain_foundation_integration.js
 
 COMMANDS = [
     [sys.executable, "tools/run_foundation_hardening_gate.py"],
+    # 按依赖顺序生成 safety gate 的审计输入，避免依赖仓库中的历史报告缓存。
+    [
+        sys.executable,
+        "tools/classify_final_chain_surface.py",
+        "--target-root",
+        ".",
+        "--target-root-label",
+        "cleanroom_partial_project",
+        "--output-json",
+        "docs/reports/final_chain_surface_classification_cleanroom_20260731.json",
+        "--output-md",
+        "docs/reports/final_chain_surface_classification_cleanroom_20260731.md",
+    ],
+    [
+        sys.executable,
+        "tools/build_cleanup_candidate_report.py",
+        "--classification",
+        "docs/reports/final_chain_surface_classification_cleanroom_20260731.json",
+        "--target-root",
+        ".",
+        "--scan-references",
+        "--output-json",
+        "docs/reports/cleanup_candidates_cleanroom_20260731.json",
+        "--output-md",
+        "docs/reports/cleanup_candidates_cleanroom_20260731.md",
+    ],
+    [sys.executable, "tools/build_precleanup_deep_audit.py"],
     [sys.executable, "tools/run_precleanup_safety_gate.py"],
     [sys.executable, "tools/run_final_chain_ops_gate.py"],
     [
