@@ -14,8 +14,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from teachbase.infrastructure.artifact_store import write_json, write_text
 
-DEFAULT_SOURCE_ROOT = Path("D:/Projects") / "\u6559\u7814\u57fa\u5efa"
-SOURCE_LABEL = "old_local_d_projects_jiaoyan"
+SOURCE_LABEL = "explicit_controlled_source"
 REPORT_JSON = ROOT / "docs" / "reports" / "pdf_english_rebuild_source_import_20260804.json"
 REPORT_MD = ROOT / "docs" / "reports" / "pdf_english_rebuild_source_import_20260804.md"
 
@@ -195,7 +194,11 @@ def render_markdown(report: dict[str, Any]) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Import surviving PDF English graph-first rebuild sources.")
-    parser.add_argument("--source-root", default=str(DEFAULT_SOURCE_ROOT))
+    parser.add_argument(
+        "--source-root",
+        required=True,
+        help="Explicit source checkout; this tool never scans developer directories.",
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()

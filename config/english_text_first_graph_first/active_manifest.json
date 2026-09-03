@@ -3,7 +3,7 @@
   "pipeline_name": "english_text_first_graph_first",
   "active_version": "pdf_english_rebuild_20260806_v01",
   "manifest_kind": "fresh_rebuild_candidate",
-  "generated_at": "2026-08-06T17:08:30",
+  "generated_at": "2026-09-03T00:00:00Z",
   "allow_only_manifest_runs": true,
   "forbid_timestamp_latest_selection": true,
   "selection_policy": {
@@ -22,56 +22,62 @@
     "smoke_zip": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01.zip",
     "zip_testzip": null
   },
+  "foundation_rebuild_source": {
+    "manifest": "config/english_text_first_graph_first/foundation_rebuild_sources.json",
+    "sha256": "d81db2e242342145c6753086a6b9033a1858963cfd39a68bcc592b81a059ad48",
+    "source_kind": "repository_controlled_foundation_fixture",
+    "production_evidence": false
+  },
   "branch_runs": {
     "reading": {
       "run_id": "pdf_english_rebuild_20260806_v01_reading",
-      "source": "fresh_rebuild_smoke_from_user_zip_evidence",
+      "source": "repository_controlled_foundation_fixture",
       "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/reading/branch_summary.json",
       "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/reading/page_manifest.json",
-      "page_count": 38
+      "page_count": 1
     },
     "writing": {
       "run_id": "pdf_english_rebuild_20260806_v01_writing",
-      "source": "fresh_rebuild_smoke_from_user_zip_evidence",
+      "source": "repository_controlled_foundation_fixture",
       "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/writing/branch_summary.json",
       "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/writing/page_manifest.json",
-      "page_count": 21
+      "page_count": 1
     },
     "grammar": {
       "run_id": "pdf_english_rebuild_20260806_v01_grammar",
-      "source": "fresh_rebuild_smoke_from_user_zip_evidence",
+      "source": "repository_controlled_foundation_fixture",
       "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/grammar/branch_summary.json",
       "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/grammar/page_manifest.json",
-      "page_count": 24
+      "page_count": 1
     },
     "cloze": {
       "run_id": "pdf_english_rebuild_20260806_v01_cloze",
-      "source": "fresh_rebuild_smoke_from_user_zip_evidence",
+      "source": "repository_controlled_foundation_fixture",
       "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/cloze/branch_summary.json",
       "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/cloze/page_manifest.json",
-      "page_count": 4
+      "page_count": 1
     }
   },
   "source_page_images": {
     "reading": {
       "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/source_page_images/reading",
-      "expected_page_count": 38,
-      "source": "user_supplied_downstream_review_zip_pages"
+      "expected_page_count": 1,
+      "source": "repository_controlled_foundation_fixture"
     },
     "writing": {
       "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/source_page_images/writing",
-      "expected_page_count": 21,
-      "source": "user_supplied_downstream_review_zip_pages"
+      "expected_page_count": 1,
+      "source": "repository_controlled_foundation_fixture"
     },
     "grammar": {
       "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/source_page_images/grammar",
-      "expected_page_count": 24,
-      "source": "user_supplied_downstream_review_zip_pages"
+      "expected_page_count": 1,
+      "source": "repository_controlled_foundation_fixture"
     },
     "cloze": {
       "path": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/source_page_images/cloze",
-      "expected_page_count": 4,
-      "source": "user_supplied_downstream_review_zip_pages"
+      "expected_page_count": 1,
+      "source": "repository_controlled_foundation_fixture"
     }
   },
   "documents": {
@@ -83,7 +89,7 @@
           "expected_doc_id": "reading",
           "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/reading/branch_summary.json",
           "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/reading/page_manifest.json",
-          "expected_count": 38
+          "expected_count": 1
         },
         "v05_packet_candidates": {
           "run_id": "pdf_english_rebuild_20260806_v01_reading_v05_packet_candidates",
@@ -111,7 +117,7 @@
           "expected_doc_id": "writing",
           "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/writing/branch_summary.json",
           "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/writing/page_manifest.json",
-          "expected_count": 21
+          "expected_count": 1
         },
         "v05_packet_candidates": {
           "run_id": "pdf_english_rebuild_20260806_v01_writing_v05_packet_candidates",
@@ -139,7 +145,7 @@
           "expected_doc_id": "grammar",
           "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/grammar/branch_summary.json",
           "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/grammar/page_manifest.json",
-          "expected_count": 24
+          "expected_count": 1
         }
       }
     },
@@ -151,14 +157,22 @@
           "expected_doc_id": "cloze",
           "summary_json": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/cloze/branch_summary.json",
           "primary_artifact": "outputs/english_text_first_graph_first/final_chain_smoke_20260806_rebuild_v01/branch_evidence/cloze/page_manifest.json",
-          "expected_count": 4
+          "expected_count": 1
         }
       }
     }
   },
   "ready_claim_policy": {
     "ready_claim_allowed": false,
-    "reason": "Fresh smoke validates manifest and branch evidence; production ready still requires full raw-PDF graph-first promotion."
+    "reason": "Foundation smoke is reproducible from HEAD but is not production execution evidence.",
+    "production_readiness_status": "BLOCKED",
+    "blockers": [
+      "missing_standard_cli",
+      "missing_result_emission",
+      "missing_checkpoint_resume",
+      "missing_durable_worker_runtime",
+      "missing_java_ingestion_boundary"
+    ]
   },
   "execution_contract": {
     "model_invoked": false,

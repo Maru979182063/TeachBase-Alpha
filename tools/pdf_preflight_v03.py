@@ -10,7 +10,7 @@ VENDOR_DIR = THIS_DIR / "vendor"
 if VENDOR_DIR.exists():
     sys.path.insert(0, str(VENDOR_DIR))
 
-import fitz
+import pymupdf as fitz
 
 
 @dataclass

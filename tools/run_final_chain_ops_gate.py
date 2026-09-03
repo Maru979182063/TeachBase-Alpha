@@ -24,7 +24,16 @@ from tools.build_final_chain_batch_queue_report import (
     build_report as build_batch_queue_report,
     render_markdown as render_batch_queue_markdown,
 )
-from tools.build_pdf_english_recovery_source_audit import build_report as build_pdf_english_source_audit_report
+from tools.build_pdf_english_graph_first_rebuild_smoke import (
+    REPORT_JSON as PDF_ENGLISH_REBUILD_SMOKE_JSON,
+    REPORT_MD as PDF_ENGLISH_REBUILD_SMOKE_MD,
+    build_report as build_pdf_english_rebuild_smoke_report,
+    render_markdown as render_pdf_english_rebuild_smoke_markdown,
+)
+from tools.build_pdf_english_recovery_source_audit import (
+    SourceRoot as PdfEnglishSourceRoot,
+    build_report as build_pdf_english_source_audit_report,
+)
 from tools.build_pdf_english_raw_pdf_promotion_gate import (
     REPORT_JSON as PDF_ENGLISH_RAW_PROMOTION_JSON,
     REPORT_MD as PDF_ENGLISH_RAW_PROMOTION_MD,
@@ -66,9 +75,19 @@ from tools.validate_pdf_english_recovery import build_report as build_pdf_englis
 REGISTRY = ROOT / "config" / "final_chain_registry.yaml"
 REPORT_JSON = ROOT / "docs" / "reports" / "final_chain_ops_gate_20260804.json"
 REPORT_MD = ROOT / "docs" / "reports" / "final_chain_ops_gate_20260804.md"
+PDF_ENGLISH_FOUNDATION_SOURCE_MANIFEST = (
+    ROOT / "config" / "english_text_first_graph_first" / "foundation_rebuild_sources.json"
+)
 
 
 def build_gate_report() -> dict[str, Any]:
+    # 先从仓库内哈希清单重建，后续恢复、intake 和 manifest 检查不依赖开发机历史输出。
+    pdf_english_rebuild_smoke = build_pdf_english_rebuild_smoke_report(PDF_ENGLISH_FOUNDATION_SOURCE_MANIFEST)
+    write_json(PDF_ENGLISH_REBUILD_SMOKE_JSON, pdf_english_rebuild_smoke)
+    write_text(PDF_ENGLISH_REBUILD_SMOKE_MD, render_pdf_english_rebuild_smoke_markdown(pdf_english_rebuild_smoke))
+    pdf_english_raw_promotion = build_pdf_english_raw_promotion_report()
+    write_json(PDF_ENGLISH_RAW_PROMOTION_JSON, pdf_english_raw_promotion)
+    write_text(PDF_ENGLISH_RAW_PROMOTION_MD, render_pdf_english_raw_promotion_markdown(pdf_english_raw_promotion))
     registry = load_final_chain_registry(REGISTRY)
     dashboard = build_final_chain_control_dashboard(registry, workspace_root=ROOT)
     control_contract = build_final_chain_control_contract(registry)
@@ -86,18 +105,29 @@ def build_gate_report() -> dict[str, Any]:
     orchestrator_handshake_validation = build_orchestrator_handshake_validation_report()
     write_json(ORCHESTRATOR_HANDSHAKE_VALIDATION_JSON, orchestrator_handshake_validation)
     write_text(ORCHESTRATOR_HANDSHAKE_VALIDATION_MD, render_orchestrator_handshake_validation_markdown(orchestrator_handshake_validation))
-    pdf_english_blocker = build_pdf_english_source_audit_report()
+    pdf_english_blocker = build_pdf_english_source_audit_report(
+        (PdfEnglishSourceRoot("repository_head", ROOT),)
+    )
     pdf_english_recovery = build_pdf_english_recovery_report()
     pdf_english_recovery_intake = build_pdf_english_recovery_intake_report()
     write_json(PDF_ENGLISH_INTAKE_JSON, pdf_english_recovery_intake)
     write_text(PDF_ENGLISH_INTAKE_MD, render_pdf_english_recovery_intake_markdown(pdf_english_recovery_intake))
-    pdf_english_raw_promotion = build_pdf_english_raw_promotion_report()
-    write_json(PDF_ENGLISH_RAW_PROMOTION_JSON, pdf_english_raw_promotion)
-    write_text(PDF_ENGLISH_RAW_PROMOTION_MD, render_pdf_english_raw_promotion_markdown(pdf_english_raw_promotion))
-    ops_health = build_ops_health_report()
+    ops_health = build_ops_health_report(rebuild_pdf_english=False)
     write_json(OPS_HEALTH_JSON, ops_health)
     write_text(OPS_HEALTH_MD, render_ops_health_markdown(ops_health))
     checks = [
+        {
+            "name": "pdf_english_foundation_smoke_rebuilds_from_head",
+            "ok": pdf_english_rebuild_smoke.get("status") == "pass"
+            and pdf_english_rebuild_smoke.get("foundation_integration_status") == "PASS"
+            and pdf_english_rebuild_smoke.get("production_readiness_status") == "BLOCKED"
+            and pdf_english_rebuild_smoke.get("ready_claim_allowed") is False,
+            "value": {
+                "status": pdf_english_rebuild_smoke.get("status"),
+                "source_manifest": pdf_english_rebuild_smoke.get("source_manifest"),
+                "production_readiness_status": pdf_english_rebuild_smoke.get("production_readiness_status"),
+            },
+        },
         {
             "name": "dashboard_contract_ok",
             "ok": dashboard["contract_ok"] is True,
@@ -304,6 +334,8 @@ def build_gate_report() -> dict[str, Any]:
         "batch_queue_ready_count": batch_queue["scheduled_ready_count"],
         "batch_queue_blocked_count": batch_queue["scheduled_blocked_count"],
         "pdf_english_recovery_status": pdf_english_blocker["recovery_status"],
+        "pdf_english_foundation_rebuild_status": pdf_english_rebuild_smoke.get("foundation_integration_status"),
+        "pdf_english_production_readiness_status": pdf_english_rebuild_smoke.get("production_readiness_status"),
         "pdf_english_recovery_source_audit_status": pdf_english_blocker["source_audit_status"],
         "pdf_english_recovery_validation_status": pdf_english_recovery["status"],
         "pdf_english_recovery_intake_status": pdf_english_recovery_intake["status"],

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import zipfile
 from dataclasses import dataclass
@@ -43,16 +44,7 @@ class SourceRoot:
     path: Path
 
 
-def default_source_roots() -> tuple[SourceRoot, ...]:
-    return (
-        SourceRoot("cleanroom_current", ROOT),
-        SourceRoot("old_local_d_projects_jiaoyan", Path("D:/Projects/教研基建")),
-        SourceRoot("handoff_package_user_documents", Path("C:/Users/1/Documents/english_text_first_graph_first_handoff")),
-    )
-
-
-def build_report(source_roots: tuple[SourceRoot, ...] | None = None) -> dict[str, Any]:
-    source_roots = source_roots or default_source_roots()
+def build_report(source_roots: tuple[SourceRoot, ...]) -> dict[str, Any]:
     source_candidates = [_source_candidate(source_root) for source_root in source_roots]
     importable_sources = [
         item["source_label"]
@@ -222,11 +214,31 @@ def render_markdown(report: dict[str, Any]) -> str:
 
 
 def main() -> int:
-    report = build_report()
+    parser = argparse.ArgumentParser(description="Audit explicit PDF English recovery roots without scanning user directories.")
+    parser.add_argument(
+        "--source-root",
+        action="append",
+        required=True,
+        metavar="LABEL=PATH",
+        help="Explicit source root. Repeat for additional controlled roots.",
+    )
+    args = parser.parse_args()
+    try:
+        source_roots = tuple(_parse_source_root(value) for value in args.source_root)
+    except ValueError as exc:
+        parser.error(str(exc))
+    report = build_report(source_roots)
     write_json(REPORT_JSON, report)
     write_text(REPORT_MD, render_markdown(report))
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0
+
+
+def _parse_source_root(value: str) -> SourceRoot:
+    label, separator, raw_path = value.partition("=")
+    if not separator or not label.strip() or not raw_path.strip():
+        raise ValueError("--source-root must use LABEL=PATH")
+    return SourceRoot(label.strip(), Path(raw_path))
 
 
 if __name__ == "__main__":

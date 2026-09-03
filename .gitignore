@@ -20,6 +20,13 @@ codex_tmp_pdf/
 # Generated outputs and scratch files
 outputs/
 out/
+artifacts/ci/
+docs/reports/*.json
+docs/reports/*_20260731.md
+docs/reports/*_20260804.md
+docs/reports/*_20260806.md
+docs/reports/*_20260831.md
+release_seed/reports/
 temp_repo_demo.html
 tmp_script_check.js
 tmp_script_check2.js

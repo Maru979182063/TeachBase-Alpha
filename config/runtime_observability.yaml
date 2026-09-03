@@ -1,8 +1,8 @@
-﻿meta:
-  owner: "棰樼洰宸ュ巶 Demo"
+meta:
+  owner: "TeachBase Demo"
   environment: "local-demo"
-  season_scope: "鏆戝亣鏍囧噯璁蹭箟"
-  notes: "妯″瀷銆佹湇鍔°€侀毀閬撲笌鍚姩鑴氭湰缁熶竴鍦ㄨ繖閲岃娴嬨€?
+  season_scope: "summer teaching material"
+  notes: "Models, services, tunnels, and launcher state are observed from this file."
 
 paths:
   workspace_root: "."
@@ -14,20 +14,20 @@ paths:
 
 services:
   mock_workbench:
-    label: "璁蹭箟宸ヤ綔鍙板墠绔?
+    label: "Handout workbench frontend"
     local_url: "http://127.0.0.1:8787/outputs/split_builder/mock_workbench/index.html"
     port: 8787
     status: "running"
     process: "python_http_server"
   export_api:
-    label: "瀵煎嚭鏈嶅姟"
+    label: "Export service"
     local_url: "http://127.0.0.1:8790"
     health_path: "/health"
     port: 8790
     status: "running"
     process: "node_api_server"
   stack_launcher:
-    label: "涓€閿惎鍔?
+    label: "One-click launcher"
     script_path: "tools/start_demo_stack.ps1"
     stop_script_path: "tools/stop_demo_stack.ps1"
     mode: "one_click"
@@ -52,7 +52,7 @@ tunnels:
     public_url: ""
     local_target: "http://127.0.0.1:8787/outputs/split_builder/mock_workbench/index.html"
     api_url: "http://127.0.0.1:4040/api/tunnels"
-    notes: "鏈湴 secrets 鏂囦欢鎴栫幆澧冨彉閲忓氨缁悗鍙竴閿媺璧峰澶栧叆鍙ｃ€?
+    notes: "Use a local secrets file or environment variable before starting the tunnel."
   export_api_proxy:
     enabled: false
     status: "disabled"

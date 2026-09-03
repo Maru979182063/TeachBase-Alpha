@@ -16,13 +16,27 @@ from teachbase.final_chains import (
     load_final_chain_registry,
 )
 from teachbase.infrastructure.artifact_store import write_json, write_text
-from tools.build_pdf_english_raw_pdf_promotion_gate import build_report as build_pdf_english_raw_promotion_report
+from tools.build_pdf_english_graph_first_rebuild_smoke import (
+    REPORT_JSON as PDF_ENGLISH_REBUILD_SMOKE_JSON,
+    REPORT_MD as PDF_ENGLISH_REBUILD_SMOKE_MD,
+    build_report as build_pdf_english_rebuild_smoke_report,
+    render_markdown as render_pdf_english_rebuild_smoke_markdown,
+)
+from tools.build_pdf_english_raw_pdf_promotion_gate import (
+    REPORT_JSON as PDF_ENGLISH_RAW_PROMOTION_JSON,
+    REPORT_MD as PDF_ENGLISH_RAW_PROMOTION_MD,
+    build_report as build_pdf_english_raw_promotion_report,
+    render_markdown as render_pdf_english_raw_promotion_markdown,
+)
 from tools.validate_pdf_english_recovery_intake import build_report as build_pdf_english_recovery_intake_report
 
 REGISTRY = ROOT / "config" / "final_chain_registry.yaml"
 PACKAGE_JSON = ROOT / "package.json"
 REPORT_JSON = ROOT / "docs" / "reports" / "final_chain_ops_health_20260804.json"
 REPORT_MD = ROOT / "docs" / "reports" / "final_chain_ops_health_20260804.md"
+PDF_ENGLISH_FOUNDATION_SOURCE_MANIFEST = (
+    ROOT / "config" / "english_text_first_graph_first" / "foundation_rebuild_sources.json"
+)
 
 EXPECTED_CHAIN_IDS = ["doc_math", "doc_english", "pdf_math", "pdf_english"]
 EXPECTED_READY_CHAIN_IDS = ["doc_math", "doc_english", "pdf_math", "pdf_english"]
@@ -75,15 +89,36 @@ NO_SIDE_EFFECT_CONTRACT = {
 }
 
 
-def build_report() -> dict[str, Any]:
+def build_report(*, rebuild_pdf_english: bool = True) -> dict[str, Any]:
+    smoke = None
+    if rebuild_pdf_english:
+        smoke = build_pdf_english_rebuild_smoke_report(PDF_ENGLISH_FOUNDATION_SOURCE_MANIFEST)
+        write_json(PDF_ENGLISH_REBUILD_SMOKE_JSON, smoke)
+        write_text(PDF_ENGLISH_REBUILD_SMOKE_MD, render_pdf_english_rebuild_smoke_markdown(smoke))
+    raw_promotion = build_pdf_english_raw_promotion_report()
+    write_json(PDF_ENGLISH_RAW_PROMOTION_JSON, raw_promotion)
+    write_text(PDF_ENGLISH_RAW_PROMOTION_MD, render_pdf_english_raw_promotion_markdown(raw_promotion))
     registry = load_final_chain_registry(REGISTRY)
     control_contract = build_final_chain_control_contract(registry)
     environment_contract = build_environment_interaction_contract(registry, workspace_root=ROOT)
     dashboard = build_final_chain_control_dashboard(registry, workspace_root=ROOT)
     package_scripts = _package_scripts()
     intake = build_pdf_english_recovery_intake_report()
-    raw_promotion = build_pdf_english_raw_promotion_report()
     checks = _build_checks(control_contract, environment_contract, dashboard, package_scripts, intake, raw_promotion)
+    if smoke is not None:
+        checks.insert(
+            0,
+            {
+                "name": "pdf_english_foundation_smoke_rebuilds_from_head",
+                "ok": smoke.get("status") == "pass"
+                and smoke.get("foundation_integration_status") == "PASS"
+                and smoke.get("production_readiness_status") == "BLOCKED",
+                "value": {
+                    "status": smoke.get("status"),
+                    "production_readiness_status": smoke.get("production_readiness_status"),
+                },
+            },
+        )
     return {
         "schema_version": "final_chain_ops_health.v0.1",
         "workspace_contract": "relative_git_paths_only",

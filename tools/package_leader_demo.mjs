@@ -7,9 +7,11 @@
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
-const workspaceRoot = path.resolve("C:/Users/EDY/Documents/教研基建");
+// 从脚本位置定位仓库，避免演示打包器绑定某一台开发机。
+const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const sourceDir = path.join(workspaceRoot, "outputs", "split_builder", "mock_workbench");
 const targetBaseDir = path.join(workspaceRoot, "outputs", "external_demos");
 const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");

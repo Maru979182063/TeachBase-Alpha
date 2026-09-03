@@ -34,7 +34,12 @@ GATES = [
     },
     {
         "name": "pdf_english_rebuild_decision",
-        "command": [sys.executable, "tools/build_pdf_english_rebuild_decision.py"],
+        "command": [
+            sys.executable,
+            "tools/build_pdf_english_rebuild_decision.py",
+            "--source-root",
+            "repository_head=.",
+        ],
         "report": "docs/reports/pdf_english_rebuild_decision_20260804.json",
     },
     {

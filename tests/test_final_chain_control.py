@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
 import sys
 import zipfile
@@ -2333,6 +2334,19 @@ def test_orchestrator_handshake_validator_rejects_tampered_handshake() -> None:
 
 
 def test_pdf_english_recovery_validator_accepts_fresh_rebuild_manifest() -> None:
+    rebuilt = subprocess.run(
+        [
+            sys.executable,
+            "tools/build_pdf_english_graph_first_rebuild_smoke.py",
+            "--source-manifest",
+            "config/english_text_first_graph_first/foundation_rebuild_sources.json",
+        ],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert rebuilt.returncode == 0, rebuilt.stdout + rebuilt.stderr
     completed = subprocess.run(
         [sys.executable, "tools/validate_pdf_english_recovery.py", "--require-ready"],
         cwd=ROOT,
@@ -2444,7 +2458,12 @@ def test_pdf_english_recovery_intake_accepts_isolated_candidate_without_path_lea
 
 def test_pdf_english_recovery_source_audit_uses_labels_without_absolute_paths() -> None:
     completed = subprocess.run(
-        [sys.executable, "tools/build_pdf_english_recovery_source_audit.py"],
+        [
+            sys.executable,
+            "tools/build_pdf_english_recovery_source_audit.py",
+            "--source-root",
+            "repository_head=.",
+        ],
         cwd=ROOT,
         text=True,
         stdout=subprocess.PIPE,
@@ -2458,8 +2477,8 @@ def test_pdf_english_recovery_source_audit_uses_labels_without_absolute_paths() 
     assert payload["schema_version"] == "pdf_english_manifest_recovery_audit.v0.1"
     assert payload["source_audit_status"] == "fresh_rebuild_candidate_found"
     assert payload["recovery_status"] == "fresh_rebuild_candidate_found"
-    assert payload["importable_source_labels"] == ["cleanroom_current"]
-    assert "old_local_d_projects_jiaoyan" in payload["searched_location_labels"]
+    assert payload["importable_source_labels"] == ["repository_head"]
+    assert payload["searched_location_labels"] == ["repository_head"]
     assert "D:\\" not in serialized
     assert "C:\\" not in serialized
     assert "/Users/" not in serialized
@@ -2690,7 +2709,12 @@ def test_cleanroom_hardening_manifest_validator_accepts_sealed_manifest() -> Non
 
 def test_pdf_english_rebuild_decision_keeps_old_identity_closed_but_allows_rebuild() -> None:
     completed = subprocess.run(
-        [sys.executable, "tools/build_pdf_english_rebuild_decision.py"],
+        [
+            sys.executable,
+            "tools/build_pdf_english_rebuild_decision.py",
+            "--source-root",
+            "repository_head=.",
+        ],
         cwd=ROOT,
         text=True,
         stdout=subprocess.PIPE,
@@ -2731,6 +2755,48 @@ def test_pdf_english_rebuild_decision_keeps_old_identity_closed_but_allows_rebui
     assert "D:\\" not in serialized
     assert "C:\\" not in serialized
     assert "/Users/" not in serialized
+
+
+@pytest.mark.parametrize(
+    ("tool", "required_option"),
+    [
+        ("tools/build_pdf_english_graph_first_rebuild_smoke.py", "--source-manifest"),
+        ("tools/build_pdf_english_rebuild_decision.py", "--source-root"),
+        ("tools/build_pdf_english_recovery_source_audit.py", "--source-root"),
+        ("tools/import_pdf_english_rebuild_sources.py", "--source-root"),
+    ],
+)
+def test_pdf_english_recovery_tools_fail_closed_without_explicit_input(
+    tool: str,
+    required_option: str,
+    tmp_path: Path,
+) -> None:
+    fake_home = tmp_path / "must_not_be_scanned"
+    fake_home.mkdir()
+    completed = subprocess.run(
+        [sys.executable, tool],
+        cwd=ROOT,
+        env={**os.environ, "HOME": str(fake_home), "USERPROFILE": str(fake_home)},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode != 0
+    assert required_option in completed.stderr
+    assert str(fake_home) not in completed.stdout + completed.stderr
+
+
+def test_pdf_english_foundation_source_manifest_is_hash_controlled_and_non_production() -> None:
+    path = ROOT / "config/english_text_first_graph_first/foundation_rebuild_sources.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["source_kind"] == "repository_controlled_foundation_fixture"
+    assert payload["scope"] == "final_chain_foundation_integration_only"
+    assert payload["production_evidence"] is False
+    assert payload["production_readiness_status"] == "BLOCKED"
+    assert set(payload["branches"]) == {"reading", "writing", "grammar", "cloze"}
+    assert all(record["sha256"] for branch in payload["branches"].values() for record in branch["page_files"])
 
 
 def test_pdf_english_user_zip_intake_classifies_downstream_review_evidence(tmp_path: Path) -> None:

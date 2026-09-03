@@ -8,6 +8,7 @@ param(
   [int]$TranscriptionConcurrency = 4,
   [int]$ModelTimeout = 120,
   [int]$ModelRetries = 1,
+  [string]$Python = "",
   [switch]$SkipTranscriptionRetry,
   [switch]$DisableHeuristicFigureFallback
 )
@@ -17,7 +18,12 @@ $ErrorActionPreference = "Stop"
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 $workspace = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$python = "C:\Users\EDY\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
+# 优先接受显式解释器，否则使用当前 PATH；不绑定开发机缓存目录。
+if (-not $Python.Trim()) {
+  $pythonCommand = Get-Command python -ErrorAction Stop
+  $Python = $pythonCommand.Source
+}
+$python = (Resolve-Path -LiteralPath $Python).Path
 $sourcePath = (Resolve-Path -LiteralPath $SourceJson).Path
 $outPath = [System.IO.Path]::GetFullPath((Join-Path (Get-Location) $OutDir))
 $transPath = ""

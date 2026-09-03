@@ -1,0 +1,146 @@
+name: Backend Foundation Integration
+
+on:
+  push:
+    branches:
+      - "backend/java-modulith-foundation-survey"
+  pull_request:
+    branches:
+      - "integration/repository-scope-clean-20260715"
+  workflow_dispatch:
+
+concurrency:
+  group: backend-foundation-integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  aggregate-gate:
+    name: Aggregate gate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Install Python package
+        run: python -m pip install -e ".[dev]"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Run aggregate integration gate
+        run: python tools/run_backend_foundation_integration_gate.py --base "${{ github.event.pull_request.base.sha || 'origin/integration/repository-scope-clean-20260715' }}"
+
+      - name: Upload aggregate evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-foundation-integration-${{ matrix.os }}
+          if-no-files-found: warn
+          path: |
+            artifacts/ci/
+            docs/reports/*.json
+            docs/reports/*_20260731.md
+            docs/reports/*_20260804.md
+            docs/reports/*_20260806.md
+            docs/reports/*_20260831.md
+            release_seed/reports/
+
+  release-gate-baseline-debt:
+    name: Release gate baseline debt
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout head
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          path: head
+
+      - name: Checkout integration base
+        uses: actions/checkout@v7
+        with:
+          ref: integration/repository-scope-clean-20260715
+          fetch-depth: 1
+          path: base
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: |
+            head/package-lock.json
+            base/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install release-gate dependencies
+        shell: bash
+        run: |
+          npm ci --prefix base
+          npm ci --prefix head
+          python -m pip install -e "head[dev]"
+
+      - name: Run base and head release gates
+        shell: bash
+        run: |
+          set +e
+          (cd base && npm run test:release-gate)
+          base_exit=$?
+          (cd head && npm run test:release-gate)
+          head_exit=$?
+          set -e
+          echo "base_exit=$base_exit" >> "$GITHUB_STEP_SUMMARY"
+          echo "head_exit=$head_exit" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Compare baseline debt
+        shell: bash
+        run: |
+          base_report=$(find base/outputs/test_runs/release_gate -name report.json -print0 | xargs -0 ls -1t | head -n 1)
+          head_report=$(find head/outputs/test_runs/release_gate -name report.json -print0 | xargs -0 ls -1t | head -n 1)
+          cd head
+          python tools/compare_release_gate_reports.py --base-report "../$base_report" --head-report "../$head_report"
+
+      - name: Upload baseline-debt evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-gate-baseline-debt
+          if-no-files-found: warn
+          path: |
+            head/artifacts/ci/release_gate_baseline_debt_comparison.json
+            head/outputs/test_runs/release_gate/*/report.json
+            base/outputs/test_runs/release_gate/*/report.json

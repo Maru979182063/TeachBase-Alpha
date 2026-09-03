@@ -1,0 +1,55 @@
+{
+  "schema_version": "pdf_english_foundation_rebuild_sources.v0.1",
+  "source_kind": "repository_controlled_foundation_fixture",
+  "scope": "final_chain_foundation_integration_only",
+  "generated_at": "2026-09-03T00:00:00Z",
+  "fixture_root": "tests/fixtures/english_text_first_v05",
+  "fixture_tree_sha256": "12813da38784fd443010fdadbb5031c444c494615c3763d796b585517f67b494",
+  "v05_config": {
+    "path": "tests/fixtures/english_text_first_v05/english_text_first_v05.fixture_config.json",
+    "sha256": "7a4a3665f77c41ff38f3bc6d023ce3b760439cb7e9a34814874bae3efb0e1ed5"
+  },
+  "branches": {
+    "reading": {
+      "page_files": [
+        {
+          "path": "tests/fixtures/english_text_first_v05/page_images/reading_portable_p001.png",
+          "sha256": "dca17555a55db7a6f3d7e476d2618213dd8f5bf9720fd2645661b1408509fda3"
+        }
+      ]
+    },
+    "writing": {
+      "page_files": [
+        {
+          "path": "tests/fixtures/english_text_first_v05/page_images/writing_portable_p001.png",
+          "sha256": "f6933a85b24fdafbb07a7b27d0348cdd854eb5311848ba3961c67e1037447597"
+        }
+      ]
+    },
+    "grammar": {
+      "page_files": [
+        {
+          "path": "tests/fixtures/english_text_first_v05/page_images/reading_portable_p001.png",
+          "sha256": "dca17555a55db7a6f3d7e476d2618213dd8f5bf9720fd2645661b1408509fda3"
+        }
+      ]
+    },
+    "cloze": {
+      "page_files": [
+        {
+          "path": "tests/fixtures/english_text_first_v05/page_images/writing_portable_p001.png",
+          "sha256": "f6933a85b24fdafbb07a7b27d0348cdd854eb5311848ba3961c67e1037447597"
+        }
+      ]
+    }
+  },
+  "production_evidence": false,
+  "production_readiness_status": "BLOCKED",
+  "production_readiness_blockers": [
+    "missing_standard_cli",
+    "missing_result_emission",
+    "missing_checkpoint_resume",
+    "missing_durable_worker_runtime",
+    "missing_java_ingestion_boundary"
+  ]
+}

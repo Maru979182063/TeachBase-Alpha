@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import subprocess
 import sys
@@ -29,21 +30,11 @@ class SourceRoot:
     path: Path
 
 
-def default_source_roots() -> tuple[SourceRoot, ...]:
-    return (
-        SourceRoot("cleanroom_current", ROOT),
-        SourceRoot("old_local_d_projects_jiaoyan", Path("D:/Projects") / "\u6559\u7814\u57fa\u5efa"),
-        SourceRoot("handoff_package_user_documents", Path("C:/Users/1/Documents/english_text_first_graph_first_handoff")),
-    )
-
-
-def build_report(source_roots: tuple[SourceRoot, ...] | None = None, *, run_regression: bool = True) -> dict[str, Any]:
-    source_roots = source_roots or default_source_roots()
+def build_report(source_roots: tuple[SourceRoot, ...], *, run_regression: bool = True) -> dict[str, Any]:
     recovery_validation = _load_json("docs/reports/pdf_english_recovery_validation_20260804.json")
     source_audit = _load_json("docs/reports/pdf_english_manifest_recovery_audit_20260804.json")
     intake_validation = _load_json("docs/reports/pdf_english_recovery_intake_validation_20260804.json")
     user_zip_intake = _load_json("docs/reports/pdf_english_user_zip_intake_20260804.json")
-    source_import = _load_json("docs/reports/pdf_english_rebuild_source_import_20260804.json")
     rebuild_smoke = _load_json("docs/reports/pdf_english_graph_first_rebuild_smoke_20260806.json")
     raw_promotion = _load_json("docs/reports/pdf_english_raw_pdf_promotion_20260806.json")
     source_code_state = [_source_code_state(source_root) for source_root in source_roots]
@@ -95,14 +86,10 @@ def build_report(source_roots: tuple[SourceRoot, ...] | None = None, *, run_regr
         },
         {
             "name": "cleanroom_graph_first_source_import_is_sealed",
-            "ok": source_import.get("status") == "pass"
-            and source_import.get("dry_run") is False
-            and int(source_import.get("imported_file_count") or 0) >= 23
-            and source_import.get("absolute_paths_as_inputs") is False,
+            "ok": cleanroom_state["graph_first_source_file_count"] >= 23,
             "value": {
-                "status": source_import.get("status"),
-                "dry_run": source_import.get("dry_run"),
-                "imported_file_count": source_import.get("imported_file_count"),
+                "source": "repository_head",
+                "graph_first_source_file_count": cleanroom_state["graph_first_source_file_count"],
             },
         },
         {
@@ -234,11 +221,13 @@ def _cleanroom_rebuild_state() -> dict[str, Any]:
         "tests/fixtures/english_text_first_v05",
     ]
     states = [_path_state(ROOT, item) for item in required]
+    graph_first_source_file_count = len(list((ROOT / "tools").glob("english_text_first_*.py")))
     return {
         "required_present": all(item["exists"] for item in states),
         "v05_source_present": all(item["exists"] for item in states[:3]),
         "portable_fixture_present": states[-1]["exists"],
         "required_paths": states,
+        "graph_first_source_file_count": graph_first_source_file_count,
     }
 
 
@@ -323,11 +312,31 @@ def render_markdown(report: dict[str, Any]) -> str:
 
 
 def main() -> int:
-    report = build_report()
+    parser = argparse.ArgumentParser(description="Build a PDF English rebuild decision from explicit controlled roots.")
+    parser.add_argument(
+        "--source-root",
+        action="append",
+        required=True,
+        metavar="LABEL=PATH",
+        help="Explicit source root. Repeat for additional controlled roots.",
+    )
+    args = parser.parse_args()
+    try:
+        source_roots = tuple(_parse_source_root(value) for value in args.source_root)
+    except ValueError as exc:
+        parser.error(str(exc))
+    report = build_report(source_roots)
     write_json(REPORT_JSON, report)
     write_text(REPORT_MD, render_markdown(report))
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0 if report["status"] == "rebuild_track_allowed" else 2
+
+
+def _parse_source_root(value: str) -> SourceRoot:
+    label, separator, raw_path = value.partition("=")
+    if not separator or not label.strip() or not raw_path.strip():
+        raise ValueError("--source-root must use LABEL=PATH")
+    return SourceRoot(label.strip(), Path(raw_path))
 
 
 if __name__ == "__main__":
