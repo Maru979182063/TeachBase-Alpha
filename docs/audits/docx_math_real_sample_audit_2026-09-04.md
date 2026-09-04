@@ -110,8 +110,14 @@ Stage0 handoff 为 `READY_FOR_BLOCK_TAGGER`；`must_not_enter_native_block_tagge
 
 可核实的 Stage0 之后打标、边界首次运行、普通/长题字段整理、全链精修 usage 合计为 1,694,931 tokens；单窗口探测另计 6,980。图片节点重复文件覆盖和中断的长路径轮次使完整计费不可由本地证据重建，上述不是账单总量或费用估算。
 
-完整基础回归首轮发生在新文件尚未提交时，被 precleanup 工作区分类检查阻断，连带两项 sealed-manifest 测试失败，结果为 115 passed / 2 failed；不是新契约测试失败。首轮证据保存在 `foundation_before_commit/`。整理提交后将复跑同一 gate，并在本节追加最终结果。
+含真实输出工作区的两轮完整回归均为 115 passed / 2 failed，失败落在 precleanup 和依赖它的 sealed-manifest 检查。首轮还存在新文件未分类；提交后未分类项归零，但清理扫描仍将 10 个本次运行输出目录列为可归档候选，与历史 post-archive “可归档根必须为零”的断言冲突。证据分别保存在 `foundation_before_commit/`、`foundation_with_live_artifacts/`。没有为了测试通过移动或删除真实样本证据。
+
+最终从代码提交 `0817bbe` 创建干净验证工作树 `D:/Projects/TB-s04-check`，新建 `.venv` 并执行 `pip install -e .[dev]`，再运行相同 `run_final_chain_foundation_integration_gate.py`：**PASS，所有子命令退出码 0，聚合测试 117/117 通过**。产物复制到本地审计目录 `foundation_clean/`。本次属于 Windows/Python 3.12 的验证，没有声称执行远端 CI、Ubuntu 或 Java 业务回归。
+
+机器证据入口为 `outputs/sets_teacher_trial_20260904_5799ab69/evidence.json`，记录关键交付件哈希、恢复文件来源、重放过程和验证结果。后续报告补记不改变 `0817bbe` 的已测试业务代码。
 
 ## 后端边界
 
 本次验证的是原文到候选题包的 Python 加工主链。当前主链默认不执行数据库写入或 Runtime import；四链标准 CLI、结果契约、durable worker、checkpoint resume 与 Java ingestion boundary 的生产门禁仍然开放。真实题包通过内容审计后，仍需经正式 ingestion/审核边界接入 Java，不能用人工批准的 Release Seed 路径冒充任意原文自动入库。
+
+另外，清理门禁应在未来识别并保护真实运行产物；本次干净检出的 PASS 不代表带运行历史工作区的清理检查已修复。
