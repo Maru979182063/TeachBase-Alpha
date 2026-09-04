@@ -5,6 +5,7 @@ import static com.teachbase.jooq.tables.FileVersion.FILE_VERSION;
 
 import com.teachbase.server.fileasset.application.FileAssetRepository;
 import com.teachbase.server.fileasset.api.FileVersionEvidence;
+import com.teachbase.server.fileasset.api.StoredFileDirectory;
 import com.teachbase.server.fileasset.application.FileRegistration;
 import com.teachbase.server.fileasset.application.RegisterFileCommand;
 import java.time.OffsetDateTime;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Repository;
  *
  * 英文术语对照：jOOQ adapter whose unique constraints arbitrate concurrent checksum registration.
  */
-class JooqFileAssetRepository implements FileAssetRepository, FileVersionEvidence {
+class JooqFileAssetRepository implements FileAssetRepository, FileVersionEvidence, StoredFileDirectory {
 
     private final DSLContext database;
 
@@ -33,6 +34,16 @@ class JooqFileAssetRepository implements FileAssetRepository, FileVersionEvidenc
                 .where(FILE_VERSION.WORKSPACE_ID.eq(workspaceId))
                 .and(FILE_VERSION.FILE_VERSION_ID.eq(fileVersionId))
                 .and(FILE_VERSION.SHA256.eq(sha256)));
+    }
+
+    @Override
+    public Optional<StoredFile> findBySha256(UUID workspaceId, String sha256) {
+        return database.select(FILE_VERSION.STORAGE_KEY, FILE_VERSION.SHA256,
+                        FILE_VERSION.MEDIA_TYPE, FILE_VERSION.SIZE_BYTES)
+                .from(FILE_VERSION).where(FILE_VERSION.WORKSPACE_ID.eq(workspaceId))
+                .and(FILE_VERSION.SHA256.eq(sha256))
+                .fetchOptional(r -> new StoredFile(r.get(FILE_VERSION.STORAGE_KEY),
+                        r.get(FILE_VERSION.SHA256), r.get(FILE_VERSION.MEDIA_TYPE), r.get(FILE_VERSION.SIZE_BYTES)));
     }
 
     @Override

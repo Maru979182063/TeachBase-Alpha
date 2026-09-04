@@ -43,12 +43,15 @@ class PandocDocumentRenderer {
     private final RenderingProperties properties;
     private final TiptapMarkdownAdapter adapter;
     private final ObjectMapper objectMapper;
+    private final RegisteredImageResolver images;
     private final ExternalToolRunner tools = new ExternalToolRunner();
 
-    PandocDocumentRenderer(RenderingProperties properties, TiptapMarkdownAdapter adapter, ObjectMapper objectMapper) {
+    PandocDocumentRenderer(RenderingProperties properties, TiptapMarkdownAdapter adapter, ObjectMapper objectMapper,
+            RegisteredImageResolver images) {
         this.properties = properties;
         this.adapter = adapter;
         this.objectMapper = objectMapper;
+        this.images = images;
     }
 
     @PostConstruct
@@ -80,14 +83,18 @@ class PandocDocumentRenderer {
             // 除最终字节外，还要持久化规范化 AST 信封及其哈希，
             // 这样渲染回归才能复现并接受审计。
             JsonNode pandocAst = parsePandocAst(source, workDirectory);
+            images.resolve(pandocAst, job.workspaceId(), storageRoot, workDirectory);
             ObjectNode envelope = objectMapper.createObjectNode();
             envelope.put("schemaVersion", 1);
             envelope.put("adapterVersion", source.adapterVersion());
+            envelope.put("assetAndMathProjectionVersion", 1);
             envelope.put("audience", source.audience());
             envelope.set("pandocAst", pandocAst);
             String sourceHash = sha256(canonicalBytes(envelope));
             Path astPath = workDirectory.resolve("document.pandoc.json");
-            Files.write(astPath, objectMapper.writeValueAsBytes(pandocAst));
+            JsonNode outputAst = pandocAst.deepCopy();
+            if (job.format().equals("docx")) images.embedForDocx(outputAst, workDirectory);
+            Files.write(astPath, objectMapper.writeValueAsBytes(outputAst));
             String rendererVersion = switch (job.format()) {
                 case "docx" -> renderDocx(astPath, temporaryOutput, workDirectory);
                 case "pdf" -> renderPdf(astPath, temporaryOutput, workDirectory);
@@ -159,6 +166,7 @@ class PandocDocumentRenderer {
                 "--sandbox",
                 "--from=json",
                 "--to=docx",
+                "--fail-if-warnings",
                 "--output=" + output,
                 astPath.toString()),
                 workingDirectory, null, properties.processTimeout());
@@ -172,6 +180,7 @@ class PandocDocumentRenderer {
                 "--sandbox",
                 "--from=json",
                 "--to=typst",
+                "--fail-if-warnings",
                 "--output=" + typstSource,
                 astPath.toString()),
                 workingDirectory, null, properties.processTimeout());

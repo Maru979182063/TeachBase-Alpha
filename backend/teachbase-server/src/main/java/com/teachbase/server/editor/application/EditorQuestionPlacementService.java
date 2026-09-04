@@ -102,7 +102,7 @@ public class EditorQuestionPlacementService {
         return node;
     }
 
-    private String markdown(
+    static String markdown(
             QuestionRevisionDescriptor question, boolean teacher, boolean showAnswer, boolean showAnalysis) {
         List<String> sections = new ArrayList<>();
         if (!question.materialMarkdown().isBlank()) sections.add(question.materialMarkdown());
@@ -114,7 +114,8 @@ public class EditorQuestionPlacementService {
                 String label = Character.toString('A' + index++);
                 if (option.isObject()) {
                     label = option.path("label").asText(label);
-                    String text = option.path("text").asText(option.path("content").asText());
+                    String text = option.path("markdown").asText(
+                            option.path("text").asText(option.path("content").asText()));
                     options.add(label + ". " + text);
                 } else {
                     options.add(label + ". " + option.asText());
@@ -122,13 +123,42 @@ public class EditorQuestionPlacementService {
             }
             sections.add(String.join("\n", options));
         }
+        // DOCX 子问正文已经带原文编号，逐字展开，不能再按序号推断或重写编号。
+        JsonNode subquestions = question.content().path("subquestions");
+        if (subquestions.isArray()) {
+            for (JsonNode subquestion : subquestions) {
+                String text = subquestion.path("markdown").asText("");
+                if (!text.isBlank()) sections.add(text);
+            }
+        }
         if (teacher && showAnswer && !question.answerMarkdown().isBlank()) {
             sections.add("**答案**\n\n" + question.answerMarkdown());
         }
         if (teacher && showAnalysis && !question.analysisMarkdown().isBlank()) {
             sections.add("**解析**\n\n" + question.analysisMarkdown());
         }
-        return String.join("\n\n", sections).strip();
+        String teachingNote = question.content().path("teaching_note_md").asText("");
+        if (teacher && showAnalysis && !teachingNote.isBlank()) {
+            sections.add("**教学说明**\n\n" + teachingNote);
+        }
+        String markdown = String.join("\n\n", sections).strip();
+        // 同名 asset_id 可能来自不同文档，冻结引用时转换为内容哈希，避免跨文档图片串用。
+        var assets = question.provenance().path("assetFiles");
+        if (assets.isObject()) {
+            var fields = assets.fields();
+            while (fields.hasNext()) {
+                var asset = fields.next();
+                String sha = asset.getValue().path("sha256").asText();
+                if (!sha.matches("[0-9a-f]{64}")) {
+                    throw new EditorContentValidationException("question_asset_hash_invalid");
+                }
+                // 管线生成的 asset_id 是定位标识，不应作为讲义插图标题输出；真实替代文本保留。
+                markdown = markdown.replace("![" + asset.getKey() + "](asset://" + asset.getKey() + ")",
+                        "![](tbasset:" + sha + ")");
+                markdown = markdown.replace("(asset://" + asset.getKey() + ")", "(tbasset:" + sha + ")");
+            }
+        }
+        return markdown;
     }
 
     private List<String> normalizeLayers(List<String> requested) {

@@ -40,3 +40,15 @@ node tools/verify_candidate_ingestion.mjs --data-root D:/Projects/TeachBase-Alph
 ```
 
 验证器只连接这个专属本地库，检查原始题包及 LaTeX 读回、文件字节、来源和审核关联、并发重放、整批回滚、成员隔离及搜索状态隔离。测试生成的无效候选全部回滚，真实题目不批准、不删除。
+
+## 真实数据副本整体测试
+
+安装开发依赖及 `npm run setup:document-renderer`，构建 Java 后执行：
+
+```text
+node tools/run_real_candidate_workflow_gate.mjs --source-data-root D:/Projects/TeachBase-Alpha-local-data/candidate-ingestion-20260904 --out-dir artifacts/ci/real-candidate-workflow/my-run
+```
+
+`TEACHBASE_PG_BIN` 可以指定 pg_dump/pg_restore 所在目录；`TEACHBASE_QA_PYTHON` 可以指定含 pypdf/Pillow 的 Python。原候选库仅用于只读备份；审批、标签、修订、题篮及导出在独立恢复副本中执行。报告会保留失败并返回非零退出码。当前单主标签不变量会失败，不应忽略该结果。
+
+导出已支持本次 DOCX 结构化选项、子问及同工作空间登记的 PNG/JPEG 图片。引用按 SHA-256 固定图片身份；渲染验证实际字节，不接受任意 URL 或绝对图片路径。数据库中的原始 LaTeX 保持不变，导出 AST 单独适配圈号。
