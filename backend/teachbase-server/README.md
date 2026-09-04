@@ -84,6 +84,13 @@ boundary and serializes concurrent decisions before advancing the production rev
 pointer. The `taxonomy` module stores versioned knowledge trees and revision-pinned
 assignments. It intentionally does not define a difficulty rubric.
 
+## Candidate Ingestion
+
+`POST /api/v1/ingestion/candidate-batches` accepts up to 100 complete candidate packets
+with a registered source file. It atomically imports pending revisions, source evidence
+and review cases through named module ports. It does not approve questions. See
+`docs/backend/candidate-ingestion.md` for the DOCX adapter and persistent local validation.
+
 ## Release Seed Loader
 
 V006 adds a resumable non-web Loader with validate, dry-run, import and verify modes.

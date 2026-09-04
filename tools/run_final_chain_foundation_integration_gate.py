@@ -65,6 +65,7 @@ COMMANDS = [
         "tests/test_final_chain_control.py",
         "tests/test_final_chain_registry.py",
         "tests/test_docx_math_runtime_dependencies.py",
+        "tests/test_docx_candidate_adapter.py",
         "tests/test_docx_asset_role_trace_isolation.py",
         "tests/test_docx_boundary_context_contract.py",
         "tests/test_final_chain_surface_classifier.py",

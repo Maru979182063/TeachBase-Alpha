@@ -121,3 +121,19 @@ Stage0 handoff 为 `READY_FOR_BLOCK_TAGGER`；`must_not_enter_native_block_tagge
 本次验证的是原文到候选题包的 Python 加工主链。当前主链默认不执行数据库写入或 Runtime import；四链标准 CLI、结果契约、durable worker、checkpoint resume 与 Java ingestion boundary 的生产门禁仍然开放。真实题包通过内容审计后，仍需经正式 ingestion/审核边界接入 Java，不能用人工批准的 Release Seed 路径冒充任意原文自动入库。
 
 另外，清理门禁应在未来识别并保护真实运行产物；本次干净检出的 PASS 不代表带运行历史工作区的清理检查已修复。
+
+
+## 补充审计：dq_0042 圈号公式显示异常
+
+用户反馈对照页将圈号显示为红色 `\textcircled`。逐层复核后，归因于公式校验与展示引擎的兼容性契约缺口，不是题包在网页打包时被改写，也不是数据库写坏：本次尚未执行入库。
+
+- 原始规范化段落（例如 paragraph_index=399）、最终题包 `dq_0042.standard_question.explanation_md`、对照页 manifest 的 markdown 均保留 `\textcircled{1}` 等完整命令与参数；该题解析共 25 处圈号命令。
+- 将该题含圈号的 10 个公式交给现有 `tools/katex_validate_math.cjs`，结果全部 `ok=true`，但 stderr 有 `mathVsTextAccents` 警告：该文本重音命令直接用于数学模式。当前配置 `strict: "warn"` 没有将此警告升级为失败。
+- 审阅页实际使用 MathJax，配置未为此命令提供适配。浏览器 DOM 中可见 `data-mml-node="mtext"` 且 `fill="red"`、`stroke="red"` 的命令文本，证明公式引擎已运行，但该命令没有正确排版。
+- 原报告“无 MathJax 错误节点”仅说明当时查询的错误节点为空；未识别命令能以红色 mtext 输出，因此该检查不足以证明公式全部正常。原 51 个 REFINED_READY 和 117/117 测试通过的历史结果不变，但不能据此认定此题展示已合格。
+
+建议统一校验与展示所用的公式引擎和配置，或建立明确、可测试的命令适配，并将未识别命令与兼容性警告纳入展示验收。此补充仅定位与更正审计结论；未修改题包、数据库或展示引擎，也未重跑模型。
+
+## 后续：真实候选已入库
+
+用户随后授权继续验证后端入库。本批 52 道题现已通过 Java 候选接口写入独立持久化 PostgreSQL，均为待审核，来源和审核任务完整；重启后读回验证通过。本文先前“未入库”的表述保留为当时的阶段记录。环境、修复、实际数量和剩余发布门禁见 [真实候选入库审计](docx_math_database_ingestion_audit_2026-09-04.md)。

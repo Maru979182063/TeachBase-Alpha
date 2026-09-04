@@ -4,6 +4,7 @@ import static com.teachbase.jooq.tables.FileAsset.FILE_ASSET;
 import static com.teachbase.jooq.tables.FileVersion.FILE_VERSION;
 
 import com.teachbase.server.fileasset.application.FileAssetRepository;
+import com.teachbase.server.fileasset.api.FileVersionEvidence;
 import com.teachbase.server.fileasset.application.FileRegistration;
 import com.teachbase.server.fileasset.application.RegisterFileCommand;
 import java.time.OffsetDateTime;
@@ -18,12 +19,20 @@ import org.springframework.stereotype.Repository;
  *
  * 英文术语对照：jOOQ adapter whose unique constraints arbitrate concurrent checksum registration.
  */
-class JooqFileAssetRepository implements FileAssetRepository {
+class JooqFileAssetRepository implements FileAssetRepository, FileVersionEvidence {
 
     private final DSLContext database;
 
     JooqFileAssetRepository(DSLContext database) {
         this.database = database;
+    }
+
+    @Override
+    public boolean matches(UUID workspaceId, UUID fileVersionId, String sha256) {
+        return database.fetchExists(database.selectOne().from(FILE_VERSION)
+                .where(FILE_VERSION.WORKSPACE_ID.eq(workspaceId))
+                .and(FILE_VERSION.FILE_VERSION_ID.eq(fileVersionId))
+                .and(FILE_VERSION.SHA256.eq(sha256)));
     }
 
     @Override
