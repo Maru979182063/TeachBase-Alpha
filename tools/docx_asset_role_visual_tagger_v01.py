@@ -336,14 +336,16 @@ def tag_one(
     if image_path.suffix.lower() not in IMAGE_SUFFIXES:
         return fallback_prediction(asset, "unsupported_visual_format"), [{"code": "unsupported_visual_format", "asset_id": asset["asset_id"], "format": image_path.suffix}]
     raw_dir.mkdir(parents=True, exist_ok=True)
-    write_json(raw_dir / f"{asset['asset_id']}.prompt.json", {"asset": {k: v for k, v in asset.items() if k != "local_path"}, "system_prompt": system_prompt})
+    # 中文说明：同一图片可在多个段落复用；按出现位置留证，避免并发调用覆盖上下文和响应。
+    trace_id = str(asset["occurrence_id"]).replace("::", "__")
+    write_json(raw_dir / f"{trace_id}.prompt.json", {"asset": {k: v for k, v in asset.items() if k != "local_path"}, "system_prompt": system_prompt})
     last_issue: list[dict[str, Any]] = []
     last_prediction = fallback_prediction(asset, "not_run")
     for attempt in range(1, max(1, attempts) + 1):
         try:
             result = call_model(api_key=api_key, model=str(config.get("default_model_endpoint_id") or ""), system_prompt=system_prompt, asset=asset, timeout=timeout)
-            write_json(raw_dir / f"{asset['asset_id']}.attempt{attempt}.response.json", result["raw_response"])
-            (raw_dir / f"{asset['asset_id']}.attempt{attempt}.content.json").write_text(result["raw_content"], encoding="utf-8")
+            write_json(raw_dir / f"{trace_id}.attempt{attempt}.response.json", result["raw_response"])
+            (raw_dir / f"{trace_id}.attempt{attempt}.content.json").write_text(result["raw_content"], encoding="utf-8")
             prediction, issues = validate_prediction(asset, result.get("parsed"))
             last_prediction = prediction
             last_issue = issues

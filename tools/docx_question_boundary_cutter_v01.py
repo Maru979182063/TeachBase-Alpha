@@ -278,6 +278,8 @@ def run_one_window(
     no_resume: bool,
 ) -> dict[str, Any]:
     payload = build_window_payload(doc_id=doc_id, window=window, blocks=blocks, tags=tags, config=config)
+    # 中文说明：模型只须判定 current_blocks；被排除的参考段落不属于必答集合。
+    current_ids = [block["block_id"] for block in payload["current_blocks"]]
     user_prompt = render_template(
         user_template,
         {
@@ -296,7 +298,7 @@ def run_one_window(
             "source": "resume",
             "payload": payload,
             "parsed": parsed,
-            "issues": validate_current_accounting(parsed, payload["core_block_ids"]),
+            "issues": validate_current_accounting(parsed, current_ids),
             "usage": {},
             "latency_seconds": 0.0,
         }
@@ -315,7 +317,7 @@ def run_one_window(
                     "attempt": attempt,
                     "payload": payload,
                     "parsed": parsed,
-                    "issues": validate_current_accounting(parsed, payload["core_block_ids"]),
+                    "issues": validate_current_accounting(parsed, current_ids),
                     "usage": model.get("usage", {}),
                     "latency_seconds": model.get("latency_seconds", 0.0),
                 }
@@ -393,10 +395,50 @@ def choose_start_blocks(events: dict[str, Any], candidate_ids: set[str], min_vot
     return sorted(chosen, key=lambda x: source_order(x["block_id"]))
 
 
-def assemble_packets(blocks: list[dict[str, Any]], tags: dict[str, dict[str, Any]], config: dict[str, Any], starts: list[dict[str, Any]]) -> dict[str, Any]:
+def resolve_context_dispositions(results: list[dict[str, Any]]) -> dict[str, Any]:
+    # 中文说明：只消费模型对当前窗口的显式判定；跨窗口冲突或漏答继续阻断，不猜测语义。
+    votes: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for result in results:
+        current_ids = {block["block_id"] for block in (result.get("payload", {}).get("current_blocks") or [])}
+        parsed = result.get("parsed") or {}
+        fields_by_id: dict[str, list[str]] = defaultdict(list)
+        context_evidence: dict[str, list[str]] = defaultdict(list)
+        for item in parsed.get("new_question_starts") or []:
+            fields_by_id[str(item.get("block_id") or "")].append("new_question_starts")
+        for field in ("continuation_groups", "context_only_blocks", "decorative_or_waste_blocks", "uncertain_blocks"):
+            for item in parsed.get(field) or []:
+                for bid in item.get("block_ids") or []:
+                    fields_by_id[str(bid)].append(field)
+                    if field == "context_only_blocks":
+                        context_evidence[str(bid)].append(str(item.get("evidence") or ""))
+        for bid in current_ids:
+            votes[bid].append({
+                "window_id": result["window_id"],
+                "fields": fields_by_id[bid],
+                "context_evidence": context_evidence[bid],
+            })
+    accepted: list[str] = []
+    conflicts: list[str] = []
+    decisions: list[dict[str, Any]] = []
+    for bid, block_votes in sorted(votes.items(), key=lambda item: source_order(item[0])):
+        if not any("context_only_blocks" in vote["fields"] for vote in block_votes):
+            continue
+        unanimous = all(vote["fields"] == ["context_only_blocks"] for vote in block_votes)
+        (accepted if unanimous else conflicts).append(bid)
+        decisions.append({"block_id": bid, "status": "context_only" if unanimous else "needs_resolution", "votes": block_votes})
+    return {"schema_version": "docx_question_boundary_context_dispositions.v0.1", "context_only_block_ids": accepted, "conflicting_block_ids": conflicts, "decisions": decisions}
+
+
+def assemble_packets(blocks: list[dict[str, Any]], tags: dict[str, dict[str, Any]], config: dict[str, Any], starts: list[dict[str, Any]], context_dispositions: dict[str, Any] | None = None) -> dict[str, Any]:
     roles = candidate_roles(config)
     candidate_blocks = [b for b in blocks if str(tags.get(b["block_id"], {}).get("primary_role") or "unknown") in roles]
-    candidate_ids = [b["block_id"] for b in candidate_blocks]
+    disposition = context_dispositions or {}
+    original_candidates = {b["block_id"] for b in candidate_blocks}
+    context_ids = set(disposition.get("context_only_block_ids") or []) & original_candidates
+    conflict_ids = set(disposition.get("conflicting_block_ids") or []) & original_candidates
+    # 中文说明：上下文从题目正文分离并单独留存；有冲突的段落必须出现在未归属清单中。
+    candidate_ids = [b["block_id"] for b in candidate_blocks if b["block_id"] not in context_ids | conflict_ids]
+    retained_context = sorted(context_ids, key=source_order)
     candidate_set = set(candidate_ids)
     start_ids = [s["block_id"] for s in starts if s["block_id"] in candidate_set]
     start_set = set(start_ids)
@@ -406,13 +448,14 @@ def assemble_packets(blocks: list[dict[str, Any]], tags: dict[str, dict[str, Any
         return {
             "schema_version": "docx_question_boundary_assembled_packets.v0.1",
             "packets": [],
-            "unassigned_candidate_blocks": candidate_ids,
+            "unassigned_candidate_blocks": sorted(set(candidate_ids) | conflict_ids, key=source_order),
+            "context_only_blocks": retained_context,
             "start_blocks": [],
         }
     start_positions = {bid: i for i, bid in enumerate(candidate_ids) if bid in start_set}
     sorted_starts = sorted(start_ids, key=lambda bid: start_positions[bid])
     first_pos = start_positions[sorted_starts[0]]
-    unassigned_prefix = candidate_ids[:first_pos]
+    unassigned_prefix = sorted(set(candidate_ids[:first_pos]) | conflict_ids, key=source_order)
     start_meta = {s["block_id"]: s for s in starts}
     for index, start_id in enumerate(sorted_starts):
         start_pos = start_positions[start_id]
@@ -436,6 +479,7 @@ def assemble_packets(blocks: list[dict[str, Any]], tags: dict[str, dict[str, Any
         "schema_version": "docx_question_boundary_assembled_packets.v0.1",
         "packets": packets,
         "unassigned_candidate_blocks": unassigned_prefix,
+        "context_only_blocks": retained_context,
         "start_blocks": starts,
     }
 
@@ -549,7 +593,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     }
     min_votes = int((config.get("assembler_policy") or {}).get("min_start_votes") or 1)
     starts = choose_start_blocks(events, candidate_ids, min_votes)
-    assembled = assemble_packets(blocks, tags, config, starts)
+    context_dispositions = resolve_context_dispositions(results)
+    assembled = assemble_packets(blocks, tags, config, starts, context_dispositions)
+    write_json(out_dir / "context_dispositions.json", context_dispositions)
     write_json(out_dir / "boundary_events.json", events)
     write_json(out_dir / "assembled_packets.json", assembled)
     make_trace_html(out_dir, assembled, events, blocks)
@@ -561,13 +607,14 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     issue_counts = Counter(issue.get("type", "unknown") for issue in events.get("issues") or [])
     summary = {
         "schema_version": "docx_question_boundary_cutter_summary.v0.1",
-        "status": "ok" if not any((r.get("source") == "failed") for r in results) else "needs_resolution",
+        "status": "ok" if not assembled.get("unassigned_candidate_blocks") and not any((r.get("source") == "failed") for r in results) else "needs_resolution",
         "doc_id": doc_id,
         "block_count": len(blocks),
         "window_count": len(windows),
         "start_event_count": len(events.get("new_question_starts") or []),
         "assembled_packet_count": len(assembled.get("packets") or []),
         "unassigned_candidate_block_count": len(assembled.get("unassigned_candidate_blocks") or []),
+        "context_only_block_count": len(assembled.get("context_only_blocks") or []),
         "issue_count": len(events.get("issues") or []),
         "issue_counts": dict(issue_counts),
         "failed_window_count": sum(1 for r in results if r.get("source") == "failed"),
@@ -581,6 +628,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "window_results": safe_rel(out_dir / "window_results.json"),
             "boundary_events": safe_rel(out_dir / "boundary_events.json"),
             "assembled_packets": safe_rel(out_dir / "assembled_packets.json"),
+            "context_dispositions": safe_rel(out_dir / "context_dispositions.json"),
             "boundary_trace": safe_rel(out_dir / "boundary_trace.html"),
         },
         "no_runtime_import": True,

@@ -760,6 +760,8 @@ def render_review_html(out_dir: Path, summary: dict[str, Any], packets: list[dic
         )
         issues = next((item.get("issues") or [] for item in summary["packet_summaries"] if item["source_group_id"] == gid), [])
         issue_html = "".join(f'<span class="issue">{html.escape(str(issue))}</span> ' for issue in issues) or "none"
+        # 中文说明：script 数据不解析 HTML 实体；保留合法 JSON，并转义可结束标签的字符。
+        embedded_json = json.dumps(text, ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
         cards.append(
             f"""
 <article class="card">
@@ -772,7 +774,7 @@ def render_review_html(out_dir: Path, summary: dict[str, Any], packets: list[dic
     issues={issue_html}
   </div>
   <div class="render" id="r_{html.escape(gid)}"></div>
-  <script type="application/json" id="m_{html.escape(gid)}">{html.escape(json.dumps(text, ensure_ascii=False))}</script>
+  <script type="application/json" id="m_{html.escape(gid)}">{embedded_json}</script>
 </article>
 """
         )
@@ -808,7 +810,8 @@ for (const script of document.querySelectorAll('script[type="application/json"]'
   const gid = script.id.slice(2);
   document.getElementById('r_' + gid).innerHTML = marked.parse(JSON.parse(script.textContent));
 }}
-if (window.MathJax) MathJax.typesetPromise();
+// 中文说明：defer 加载完成前只有配置对象；此时由 MathJax 启动流程自动排版。
+if (window.MathJax && typeof MathJax.typesetPromise === "function") MathJax.typesetPromise();
 </script>
 </body>
 </html>
