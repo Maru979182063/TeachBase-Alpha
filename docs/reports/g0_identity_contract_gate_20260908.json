@@ -1,0 +1,145 @@
+{
+  "workPackage": "G0",
+  "scope": "pure_schema_and_identity_contract",
+  "checkedAt": "2026-09-08T06:13:33.750521+00:00",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "test_one_shot_explicit_and_side_effect_free",
+      "status": "passed"
+    },
+    {
+      "name": "test_same_request_same_manifest_same_digest_and_identity",
+      "status": "passed"
+    },
+    {
+      "name": "test_same_request_changed_body_has_different_digest",
+      "status": "passed"
+    },
+    {
+      "name": "test_new_request_same_delivery_retains_digest",
+      "status": "passed"
+    },
+    {
+      "name": "test_new_package_one_shot_identity_is_new_even_if_content_identical",
+      "status": "passed"
+    },
+    {
+      "name": "test_one_shot_item_order_and_number_not_identity",
+      "status": "passed"
+    },
+    {
+      "name": "test_unregistered_stable_claim_rejected",
+      "status": "passed"
+    },
+    {
+      "name": "test_test_registered_external_key_is_not_derived_from_content_or_anchor",
+      "status": "passed"
+    },
+    {
+      "name": "test_registered_profile_change_preserves_identity_and_content",
+      "status": "passed"
+    },
+    {
+      "name": "test_registered_content_change_retains_identity_changes_revision_digest",
+      "status": "passed"
+    },
+    {
+      "name": "test_identical_content_different_opaque_keys_not_merged",
+      "status": "passed"
+    },
+    {
+      "name": "test_split_items_may_not_reuse_one_identity",
+      "status": "passed"
+    },
+    {
+      "name": "test_workspace_scope_separates_identity",
+      "status": "passed"
+    },
+    {
+      "name": "test_source_namespace_not_trusted_by_key_alone",
+      "status": "passed"
+    },
+    {
+      "name": "test_contract_rejections[<lambda>-schema_invalid0]",
+      "status": "passed"
+    },
+    {
+      "name": "test_contract_rejections[<lambda>-schema_invalid1]",
+      "status": "passed"
+    },
+    {
+      "name": "test_contract_rejections[<lambda>-schema_invalid2]",
+      "status": "passed"
+    },
+    {
+      "name": "test_contract_rejections[<lambda>-content_hash_mismatch]",
+      "status": "passed"
+    },
+    {
+      "name": "test_contract_rejections[<lambda>-source_document_unresolved]",
+      "status": "passed"
+    },
+    {
+      "name": "test_contract_rejections[<lambda>-package_path_invalid0]",
+      "status": "passed"
+    },
+    {
+      "name": "test_contract_rejections[<lambda>-package_path_invalid1]",
+      "status": "passed"
+    },
+    {
+      "name": "test_contract_rejections[<lambda>-package_path_invalid2]",
+      "status": "passed"
+    },
+    {
+      "name": "test_contract_rejections[<lambda>-schema_invalid3]",
+      "status": "passed"
+    },
+    {
+      "name": "test_registered_anchor_fields_and_document_required",
+      "status": "passed"
+    },
+    {
+      "name": "test_provenance_and_classification_not_content_digest",
+      "status": "passed"
+    },
+    {
+      "name": "test_canonical_golden_unicode_math_and_object_order",
+      "status": "passed"
+    },
+    {
+      "name": "test_duplicate_json_member_rejected",
+      "status": "passed"
+    },
+    {
+      "name": "test_registered_contract_version_change_needs_explicit_registration",
+      "status": "passed"
+    },
+    {
+      "name": "test_content_sections_participate_in_hash[options-value0]",
+      "status": "passed"
+    },
+    {
+      "name": "test_content_sections_participate_in_hash[subquestions-value1]",
+      "status": "passed"
+    },
+    {
+      "name": "test_content_sections_participate_in_hash[teachingNoteMarkdown-\\u65b0\\u8bf4\\u660e]",
+      "status": "passed"
+    },
+    {
+      "name": "test_content_sections_participate_in_hash[titleMarkdown-\\u65b0\\u6807\\u9898]",
+      "status": "passed"
+    }
+  ],
+  "notImplemented": [
+    "durable_request_receipt",
+    "HTTP_request_id_conflict",
+    "cross_request_package_immutability",
+    "canonical_revision_ingestion",
+    "stable_anchor_authenticity"
+  ],
+  "productionStableContracts": 0,
+  "realPipelineIdentityMode": "one_shot_candidate"
+}

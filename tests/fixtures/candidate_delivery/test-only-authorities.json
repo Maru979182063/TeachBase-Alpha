@@ -1,0 +1,15 @@
+{
+  "registryVersion": 1,
+  "contracts": [
+    {
+      "sourceSystem": "fixture_source",
+      "identityContractId": "fixture-persistent-record",
+      "identityContractVersion": 1,
+      "stableKeyNamespace": "fixture-records",
+      "anchorFields": [
+        "persistentRecordId"
+      ],
+      "requiresDocumentStableKey": true
+    }
+  ]
+}

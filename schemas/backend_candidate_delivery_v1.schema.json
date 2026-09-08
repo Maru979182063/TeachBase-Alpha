@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:teachbase:contract:candidate-delivery:1",
+  "title": "G0 Candidate Delivery v1 — contract only, no ingestion endpoint",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifestSchemaVersion", "importRequestId", "packageId", "workspaceId", "sourceSystem", "pipeline", "files", "sourceDocuments", "questions"],
+  "properties": {
+    "manifestSchemaVersion": {"const": 1},
+    "importRequestId": {"$ref": "#/$defs/uuid"},
+    "packageId": {"$ref": "#/$defs/uuid"},
+    "workspaceId": {"$ref": "#/$defs/uuid"},
+    "sourceSystem": {"$ref": "#/$defs/key"},
+    "pipeline": {
+      "type": "object", "additionalProperties": false,
+      "required": ["runId", "profileVersion"],
+      "properties": {"runId": {"$ref": "#/$defs/key"}, "profileVersion": {"$ref": "#/$defs/key"}}
+    },
+    "files": {"type": "array", "minItems": 1, "maxItems": 10000, "items": {"$ref": "#/$defs/file"}},
+    "sourceDocuments": {"type": "array", "minItems": 1, "maxItems": 100, "items": {"$ref": "#/$defs/sourceDocument"}},
+    "questions": {"type": "array", "minItems": 1, "maxItems": 100, "items": {"$ref": "#/$defs/question"}}
+  },
+  "$defs": {
+    "uuid": {"type": "string", "format": "uuid", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"},
+    "key": {"type": "string", "minLength": 1, "maxLength": 512},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "markdown": {"type": "string", "maxLength": 1000000},
+    "file": {
+      "type": "object", "additionalProperties": false,
+      "required": ["fileKey", "path", "sha256", "sizeBytes", "mediaType"],
+      "properties": {
+        "fileKey": {"$ref": "#/$defs/key"}, "path": {"$ref": "#/$defs/key"},
+        "sha256": {"$ref": "#/$defs/sha256"}, "sizeBytes": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+        "mediaType": {"$ref": "#/$defs/key"}
+      }
+    },
+    "sourceDocument": {
+      "type": "object", "additionalProperties": false,
+      "required": ["documentKey", "fileKey", "documentStableKey"],
+      "properties": {
+        "documentKey": {"$ref": "#/$defs/key"}, "fileKey": {"$ref": "#/$defs/key"},
+        "documentStableKey": {"oneOf": [{"$ref": "#/$defs/key"}, {"type": "null"}]}
+      }
+    },
+    "identity": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["mode", "candidateId", "stableQuestionKey"],
+          "properties": {
+            "mode": {"const": "one_shot_candidate"}, "candidateId": {"$ref": "#/$defs/uuid"},
+            "stableQuestionKey": {"type": "null"}
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["mode", "stableQuestionKey", "identityContractId", "identityContractVersion", "anchorEvidence"],
+          "properties": {
+            "mode": {"const": "registered_stable"}, "stableQuestionKey": {"$ref": "#/$defs/key"},
+            "identityContractId": {"$ref": "#/$defs/key"},
+            "identityContractVersion": {"type": "integer", "minimum": 1},
+            "anchorEvidence": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/key"}}
+          }
+        }
+      ]
+    },
+    "content": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contentSchemaVersion", "titleMarkdown", "materialMarkdown", "stemMarkdown", "options", "subquestions", "answerMarkdown", "analysisMarkdown", "teachingNoteMarkdown", "media"],
+      "properties": {
+        "contentSchemaVersion": {"const": 1},
+        "titleMarkdown": {"$ref": "#/$defs/markdown"},
+        "materialMarkdown": {"$ref": "#/$defs/markdown"},
+        "stemMarkdown": {"type": "string", "minLength": 1, "maxLength": 1000000},
+        "options": {
+          "type": "array", "items": {
+            "type": "object", "additionalProperties": false, "required": ["label", "markdown"],
+            "properties": {"label": {"$ref": "#/$defs/key"}, "markdown": {"$ref": "#/$defs/markdown"}}
+          }
+        },
+        "subquestions": {"type": "array", "items": {"$ref": "#/$defs/markdown"}},
+        "answerMarkdown": {"$ref": "#/$defs/markdown"}, "analysisMarkdown": {"$ref": "#/$defs/markdown"},
+        "teachingNoteMarkdown": {"$ref": "#/$defs/markdown"},
+        "media": {
+          "type": "array", "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["assetKey", "sha256", "mediaType"],
+            "properties": {"assetKey": {"$ref": "#/$defs/key"}, "sha256": {"$ref": "#/$defs/sha256"}, "mediaType": {"$ref": "#/$defs/key"}}
+          }
+        }
+      }
+    },
+    "question": {
+      "type": "object", "additionalProperties": false,
+      "required": ["itemKey", "identity", "sourceDocumentKey", "sourceEvidence", "content", "contentHash", "classificationSuggestions"],
+      "properties": {
+        "itemKey": {"$ref": "#/$defs/key"}, "identity": {"$ref": "#/$defs/identity"},
+        "sourceDocumentKey": {"$ref": "#/$defs/key"},
+        "sourceEvidence": {
+          "type": "object", "additionalProperties": false,
+          "required": ["evidenceFileKeys", "sourceBlockRefs", "pageNumbers"],
+          "properties": {
+            "evidenceFileKeys": {"type": "array", "items": {"$ref": "#/$defs/key"}},
+            "sourceBlockRefs": {"type": "array", "items": {"$ref": "#/$defs/key"}},
+            "pageNumbers": {"type": "array", "items": {"type": "integer", "minimum": 1}}
+          }
+        },
+        "content": {"$ref": "#/$defs/content"},
+        "contentHash": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "classificationSuggestions": {
+          "type": "object", "additionalProperties": false,
+          "required": ["subject", "stage", "grade", "questionType", "difficultyStars", "tags"],
+          "properties": {
+            "subject": {"type": ["string", "null"]}, "stage": {"type": ["string", "null"]},
+            "grade": {"type": ["string", "null"]}, "questionType": {"type": ["string", "null"]},
+            "difficultyStars": {"type": ["integer", "null"], "minimum": 1, "maximum": 5},
+            "tags": {
+              "type": "array", "items": {
+                "type": "object", "additionalProperties": false,
+                "required": ["taxonomyVersionId", "nodeKey", "relationType", "suggestedBy"],
+                "properties": {
+                  "taxonomyVersionId": {"$ref": "#/$defs/uuid"}, "nodeKey": {"$ref": "#/$defs/key"},
+                  "relationType": {"enum": ["primary", "secondary"]}, "suggestedBy": {"enum": ["model", "import"]}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
