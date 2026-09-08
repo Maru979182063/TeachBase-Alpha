@@ -1,0 +1,13 @@
+{
+  "questions": 52,
+  "pending": 52,
+  "approved": 0,
+  "reviews": 52,
+  "taxonomy_links": 0,
+  "latest_migration": "008",
+  "readonly": "on",
+  "registeredFiles": 35,
+  "fileMismatches": [],
+  "checkedAt": "2026-09-08T09:26:59.159Z",
+  "sourcePostgresRestoredTo": "stopped"
+}

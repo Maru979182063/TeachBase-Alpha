@@ -1,0 +1,110 @@
+{
+  "startedAt": "2026-09-08T09:25:53.100Z",
+  "scope": "G1_per_revision_per_taxonomy_version",
+  "realQuestionsApproved": false,
+  "testsUseIsolatedClones": true,
+  "checks": [
+    {
+      "name": "source_conflict_scan_read_only",
+      "status": "passed",
+      "evidence": {
+        "conflicts": [],
+        "counts": {
+          "revisions": 52,
+          "pending": 52,
+          "approved": 0
+        }
+      }
+    },
+    {
+      "name": "migration_conflicts_abort_without_repair",
+      "status": "passed",
+      "evidence": {
+        "conflicts": [
+          {
+            "workspace_id": "f3ccfb6b-db51-4a76-b60e-4dfae93f2a62",
+            "question_revision_id": "07936d12-f0ca-46ce-ba47-38291e3302df",
+            "taxonomy_version_id": "ea9df162-45d8-4002-8c04-42cae50a04d0",
+            "primary_count": 2,
+            "link_ids": [
+              "77487477-bbd4-471f-a12a-9375450b04f9",
+              "8b216711-4bc6-45b0-8dad-41b8421b3fa3"
+            ],
+            "node_ids": [
+              "26c5ddaf-bfad-46f1-8c74-20f31652f60d",
+              "86cd6fa1-1e98-4e31-a6fe-77f41500dde9"
+            ]
+          }
+        ],
+        "migrationSqlstate": "23505",
+        "dataPreserved": true,
+        "partialIndexLeftBehind": false
+      }
+    },
+    {
+      "name": "flyway_v009_preserves_52_candidate_rows",
+      "status": "passed",
+      "evidence": {
+        "migration": {
+          "version": "009",
+          "success": true
+        },
+        "index": "CREATE UNIQUE INDEX uq_question_primary_per_taxonomy_version ON teachbase_app.question_taxonomy_link USING btree (question_revision_id, taxonomy_version_id) WHERE ((relation_type)::text = 'primary'::text)",
+        "rowsUnchanged": true
+      }
+    },
+    {
+      "name": "concurrent_primary_binding_one_success_one_409",
+      "status": "passed",
+      "evidence": {
+        "statuses": [
+          409,
+          200
+        ],
+        "conflictCode": "taxonomy_primary_conflict"
+      }
+    },
+    {
+      "name": "replay_primary_retains_original_link",
+      "status": "passed"
+    },
+    {
+      "name": "secondary_bindings_remain_multiple_and_idempotent",
+      "status": "passed"
+    },
+    {
+      "name": "direct_sql_insert_and_promotion_blocked_by_index",
+      "status": "passed",
+      "evidence": {
+        "sqlstate": "23505",
+        "constraint": "uq_question_primary_per_taxonomy_version",
+        "operations": [
+          "insert",
+          "update"
+        ]
+      }
+    },
+    {
+      "name": "same_question_new_revision_has_independent_primary",
+      "status": "passed",
+      "evidence": {
+        "revisionNo": 2,
+        "originalPrimaryPreserved": true
+      }
+    },
+    {
+      "name": "cross_version_history_preserved_no_semantic_migration",
+      "status": "passed",
+      "evidence": {
+        "versionsWithHistoricalPrimary": 2,
+        "sameVersionConflicts": 0
+      }
+    },
+    {
+      "name": "original_question_review_and_tag_fingerprint_unchanged",
+      "status": "passed"
+    }
+  ],
+  "finishedAt": "2026-09-08T09:26:11.396Z",
+  "status": "passed"
+}

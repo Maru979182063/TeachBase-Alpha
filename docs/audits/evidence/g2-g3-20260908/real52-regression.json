@@ -1,0 +1,178 @@
+{
+  "startedAt": "2026-09-08T09:25:30.194Z",
+  "checks": [
+    {
+      "name": "backup_restore_exact_candidates",
+      "status": "passed",
+      "evidence": {
+        "count": 52
+      }
+    },
+    {
+      "name": "pending_search_real_phrases",
+      "status": "passed",
+      "evidence": {
+        "集合": 49,
+        "足球": 1,
+        "交集": 11
+      }
+    },
+    {
+      "name": "pending_cannot_be_placed",
+      "status": "passed"
+    },
+    {
+      "name": "taxonomy_version_alias_and_assignment",
+      "status": "passed",
+      "evidence": {
+        "semanticClassificationTested": false
+      }
+    },
+    {
+      "name": "active_taxonomy_is_immutable",
+      "status": "passed"
+    },
+    {
+      "name": "taxonomy_single_primary_per_version",
+      "status": "passed"
+    },
+    {
+      "name": "review_hash_guard",
+      "status": "passed"
+    },
+    {
+      "name": "test_only_approval_in_clone",
+      "status": "passed"
+    },
+    {
+      "name": "basket_concurrency_checkpoint_restore_snapshot",
+      "status": "passed"
+    },
+    {
+      "name": "place_all_real_questions",
+      "status": "passed"
+    },
+    {
+      "name": "all_option_markdown_preserved",
+      "status": "passed"
+    },
+    {
+      "name": "all_composite_subquestions_preserved",
+      "status": "passed"
+    },
+    {
+      "name": "teacher_student_answer_separation",
+      "status": "passed"
+    },
+    {
+      "name": "freeze_teacher_and_student_snapshots",
+      "status": "passed"
+    },
+    {
+      "name": "reference_usage_visible_after_freeze",
+      "status": "passed"
+    },
+    {
+      "name": "pending_correction_preserves_approved_pointer_and_snapshots",
+      "status": "passed"
+    },
+    {
+      "name": "export_teacher_docx",
+      "status": "passed",
+      "evidence": {
+        "exportRequestId": "5d926528-24af-4595-a05a-17bcd65006b6"
+      }
+    },
+    {
+      "name": "export_teacher_pdf",
+      "status": "passed",
+      "evidence": {
+        "exportRequestId": "1396a123-0339-444e-8d1d-389afbb72978"
+      }
+    },
+    {
+      "name": "export_student_docx",
+      "status": "passed",
+      "evidence": {
+        "exportRequestId": "4f1d7045-5997-4390-a40c-fb684711715a"
+      }
+    },
+    {
+      "name": "export_student_pdf",
+      "status": "passed",
+      "evidence": {
+        "exportRequestId": "1fb42b63-d236-42cb-9bf0-c67b91f4591b"
+      }
+    },
+    {
+      "name": "export_file_images_formulas_and_circled_numbers",
+      "status": "passed",
+      "evidence": {
+        "status": "passed",
+        "files": 4,
+        "results": [
+          {
+            "audience": "teacher",
+            "format": "docx",
+            "file": "D:\\Projects\\TeachBase-Alpha-backend-g2-g3-20260908\\artifacts\\ci\\g2-g3\\real52-regression\\storage\\exports\\f3ccfb6b-db51-4a76-b60e-4dfae93f2a62\\5d926528-24af-4595-a05a-17bcd65006b6.docx",
+            "sha256": "ae3007521b6c0f765788df341fb4788527aacabf3a5f9ccaf72c2d82d083e839",
+            "expectedImages": 18,
+            "images": 18,
+            "nativeMath": 885,
+            "passed": true
+          },
+          {
+            "audience": "teacher",
+            "format": "pdf",
+            "file": "D:\\Projects\\TeachBase-Alpha-backend-g2-g3-20260908\\artifacts\\ci\\g2-g3\\real52-regression\\storage\\exports\\f3ccfb6b-db51-4a76-b60e-4dfae93f2a62\\1396a123-0339-444e-8d1d-389afbb72978.pdf",
+            "sha256": "0fd9979fbdaa01f10def386274e3868c006ea7b78cb4b9416abb0ca37977b5dc",
+            "expectedImages": 18,
+            "pages": 20,
+            "images": 18,
+            "passed": true
+          },
+          {
+            "audience": "student",
+            "format": "docx",
+            "file": "D:\\Projects\\TeachBase-Alpha-backend-g2-g3-20260908\\artifacts\\ci\\g2-g3\\real52-regression\\storage\\exports\\f3ccfb6b-db51-4a76-b60e-4dfae93f2a62\\4f1d7045-5997-4390-a40c-fb684711715a.docx",
+            "sha256": "98c33b8560f63b4f83fcd8c7dedf0c9be1c3ac3d3598740845d0f498ee56e645",
+            "expectedImages": 9,
+            "images": 9,
+            "nativeMath": 343,
+            "passed": true
+          },
+          {
+            "audience": "student",
+            "format": "pdf",
+            "file": "D:\\Projects\\TeachBase-Alpha-backend-g2-g3-20260908\\artifacts\\ci\\g2-g3\\real52-regression\\storage\\exports\\f3ccfb6b-db51-4a76-b60e-4dfae93f2a62\\1fb42b63-d236-42cb-9bf0-c67b91f4591b.pdf",
+            "sha256": "cbfe025d5f3d366d201ca8aaa813717fe3c769bb8dcc343ebc5db6dc90601b87",
+            "expectedImages": 9,
+            "pages": 6,
+            "images": 9,
+            "passed": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "original_candidates_and_review_state_unchanged",
+      "status": "passed"
+    }
+  ],
+  "sourceReadOnly": true,
+  "reviewDecisionsAreTestFixtures": true,
+  "missingCapabilities": [
+    "automatic_semantic_tagging",
+    "independent_source_crops",
+    "pipeline_to_ingestion_scheduler",
+    "formal_authentication"
+  ],
+  "databaseCounts": {
+    "questions": "52",
+    "tags": "1",
+    "references": "52",
+    "test_decisions": "52"
+  },
+  "status": "passed",
+  "finishedAt": "2026-09-08T09:26:00.770Z"
+}

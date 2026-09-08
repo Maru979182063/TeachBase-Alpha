@@ -1,0 +1,25 @@
+{
+  "historicalMigrationsUnchanged": [
+    "V001__foundation.sql",
+    "V002__editor_and_export_foundation.sql",
+    "V003__document_render_execution.sql",
+    "V004__question_search_and_collection_snapshots.sql",
+    "V005__question_governance_foundation.sql",
+    "V006__release_seed_loader.sql",
+    "V007__member_teaching_scope.sql",
+    "V008__editor_working_draft_separation.sql",
+    "V009__single_primary_per_taxonomy_version.sql"
+  ],
+  "productionStableRegistry": {
+    "registryVersion": 1,
+    "contracts": []
+  },
+  "actualResponseSchemas": "passed",
+  "javaTests": {
+    "tests": 21,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "g0PythonTests": 32
+}
