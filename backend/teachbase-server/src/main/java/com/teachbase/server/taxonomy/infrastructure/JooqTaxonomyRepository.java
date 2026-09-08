@@ -212,10 +212,9 @@ class JooqTaxonomyRepository implements TaxonomyRepository {
                 .set(QUESTION_TAXONOMY_LINK.ASSIGNMENT_SOURCE, assignmentSource)
                 .set(QUESTION_TAXONOMY_LINK.CONFIDENCE, confidence)
                 .set(QUESTION_TAXONOMY_LINK.ASSIGNED_BY, actorUserId)
-                .onConflict(
-                        QUESTION_TAXONOMY_LINK.QUESTION_REVISION_ID,
-                        QUESTION_TAXONOMY_LINK.TAXONOMY_NODE_ID,
-                        QUESTION_TAXONOMY_LINK.RELATION_TYPE)
+                // 同绑定重放和并发主标签冲突均由数据库唯一约束仲裁；随后区分成功重放与 409。
+                // DO NOTHING 保持当前事务可查询，不在已失败的 PostgreSQL 事务中尝试补查。
+                .onConflict()
                 .doNothing()
                 .execute();
         var stored = database.selectFrom(QUESTION_TAXONOMY_LINK)
@@ -223,7 +222,15 @@ class JooqTaxonomyRepository implements TaxonomyRepository {
                 .and(QUESTION_TAXONOMY_LINK.TAXONOMY_NODE_ID.eq(taxonomyNodeId))
                 .and(QUESTION_TAXONOMY_LINK.RELATION_TYPE.eq(relationType))
                 .fetchOne();
-        if (stored == null) throw new IllegalStateException("question_taxonomy_assignment_failed");
+        if (stored == null) {
+            if (relationType.equals("primary") && database.fetchExists(QUESTION_TAXONOMY_LINK,
+                    QUESTION_TAXONOMY_LINK.QUESTION_REVISION_ID.eq(questionRevisionId)
+                            .and(QUESTION_TAXONOMY_LINK.TAXONOMY_VERSION_ID.eq(node.getTaxonomyVersionId()))
+                            .and(QUESTION_TAXONOMY_LINK.RELATION_TYPE.eq("primary")))) {
+                throw new TaxonomyValidationException("taxonomy_primary_conflict");
+            }
+            throw new IllegalStateException("question_taxonomy_assignment_failed");
+        }
         return new QuestionTaxonomyLinkResponse(
                 stored.getQuestionTaxonomyLinkId(), stored.getQuestionRevisionId(),
                 stored.getTaxonomyNodeId(), stored.getRelationType());

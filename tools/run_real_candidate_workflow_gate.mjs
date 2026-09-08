@@ -145,16 +145,17 @@ try {
       knowledgeCode: 'TEST.B', displayName: '测试B', sortOrder: 1, metadata: {}, aliases: [] });
     assert.equal(r.status, 409);
   });
-  await test('taxonomy_single_primary_per_dimension', async () => {
+  await test('taxonomy_single_primary_per_version', async () => {
     const response = await api('/api/v1/taxonomies/assignments', 'POST', { ...identity,
       questionRevisionId: rows[0].question_revision_id, taxonomyNodeId: secondNode.taxonomyNodeId,
       relationType: 'primary', assignmentSource: 'import', confidence: null });
-    assert.ok([200, 409].includes(response.status));
+    assert.equal(response.status, 409);
+    assert.equal(response.data.detail, 'taxonomy_primary_conflict');
     const primaryCount = (await pool.query(`select count(*)::int as n from teachbase_app.question_taxonomy_link
       where question_revision_id=$1 and taxonomy_version_id=$2 and relation_type='primary'`,
       [rows[0].question_revision_id, taxonomy.taxonomyVersionId])).rows[0].n;
-    // 只检查单主标签不变量，不擅自决定旧主标签应降级、删除还是拒绝替换。
-    assert.ok(primaryCount <= 1, `primary_count=${primaryCount}; BLOCKS_TAG_SCHEMA_AND_SEARCH remains open`);
+    // 用户已确认本阶段按版本唯一，普通绑定冲突 409，旧绑定保持不变。
+    assert.equal(primaryCount, 1);
   });
   await test('review_hash_guard', async () => {
     const r = await api(`/api/v1/review-cases/${rows[0].review_case_id}/decisions`, 'POST', { ...identity,
