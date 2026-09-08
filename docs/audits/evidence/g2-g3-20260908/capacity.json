@@ -1,0 +1,279 @@
+{
+  "startedAt": "2026-09-08T09:20:25.580Z",
+  "hardware": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "cpu": "Intel(R) Core(TM) i7-14650HX",
+    "logicalCpus": 24,
+    "memoryBytes": 16790917120
+  },
+  "methodology": {
+    "population": "one synthetic content template with independent UUIDs; original 52 retained only in isolated copy",
+    "setup": "one G2 synthetic import followed by SQL metadata expansion; expansion is not G2 import throughput",
+    "query": "alternating all-match capacitytoken and no-match absentcapacityneedle",
+    "pageSize": 50,
+    "samplesPerCell": 36,
+    "concurrency": [
+      1,
+      5,
+      10
+    ],
+    "percentiles": "nearest-rank; warm local process",
+    "limitations": "single host, duplicate-content distribution, no remote network; sample count limits tail estimates"
+  },
+  "cells": [
+    {
+      "syntheticQuestions": 1000,
+      "totalQuestions": 1052,
+      "concurrency": 1,
+      "requests": 36,
+      "errors": 0,
+      "setupMs": 1033,
+      "elapsedMs": 620,
+      "requestsPerSecond": 58.03,
+      "p50Ms": 16,
+      "p95Ms": 33,
+      "p99Ms": 34,
+      "maxMs": 34,
+      "nodeRssBytes": 69292032,
+      "javaProcess": {
+        "WorkingSet64": 367284224,
+        "PeakWorkingSet64": 399663104,
+        "CPU": 19.890625
+      },
+      "databaseBytes": 17807039
+    },
+    {
+      "syntheticQuestions": 1000,
+      "totalQuestions": 1052,
+      "concurrency": 5,
+      "requests": 36,
+      "errors": 0,
+      "setupMs": 1033,
+      "elapsedMs": 86,
+      "requestsPerSecond": 419.9,
+      "p50Ms": 10,
+      "p95Ms": 28,
+      "p99Ms": 29,
+      "maxMs": 29,
+      "nodeRssBytes": 70889472,
+      "javaProcess": {
+        "WorkingSet64": 371376128,
+        "PeakWorkingSet64": 399663104,
+        "CPU": 20.453125
+      },
+      "databaseBytes": 17807039
+    },
+    {
+      "syntheticQuestions": 1000,
+      "totalQuestions": 1052,
+      "concurrency": 10,
+      "requests": 36,
+      "errors": 0,
+      "setupMs": 1033,
+      "elapsedMs": 45,
+      "requestsPerSecond": 804.17,
+      "p50Ms": 10,
+      "p95Ms": 17,
+      "p99Ms": 30,
+      "maxMs": 30,
+      "nodeRssBytes": 73338880,
+      "javaProcess": {
+        "WorkingSet64": 344559616,
+        "PeakWorkingSet64": 399663104,
+        "CPU": 20.84375
+      },
+      "databaseBytes": 17807039
+    },
+    {
+      "syntheticQuestions": 10000,
+      "totalQuestions": 10052,
+      "concurrency": 1,
+      "requests": 36,
+      "errors": 0,
+      "setupMs": 11144,
+      "elapsedMs": 1151,
+      "requestsPerSecond": 31.28,
+      "p50Ms": 31,
+      "p95Ms": 50,
+      "p99Ms": 51,
+      "maxMs": 51,
+      "nodeRssBytes": 74473472,
+      "javaProcess": {
+        "WorkingSet64": 367308800,
+        "PeakWorkingSet64": 399663104,
+        "CPU": 21.640625
+      },
+      "databaseBytes": 43513535
+    },
+    {
+      "syntheticQuestions": 10000,
+      "totalQuestions": 10052,
+      "concurrency": 5,
+      "requests": 36,
+      "errors": 0,
+      "setupMs": 11144,
+      "elapsedMs": 223,
+      "requestsPerSecond": 161.27,
+      "p50Ms": 25,
+      "p95Ms": 51,
+      "p99Ms": 51,
+      "maxMs": 51,
+      "nodeRssBytes": 74993664,
+      "javaProcess": {
+        "WorkingSet64": 368623616,
+        "PeakWorkingSet64": 399663104,
+        "CPU": 21.921875
+      },
+      "databaseBytes": 43513535
+    },
+    {
+      "syntheticQuestions": 10000,
+      "totalQuestions": 10052,
+      "concurrency": 10,
+      "requests": 36,
+      "errors": 0,
+      "setupMs": 11144,
+      "elapsedMs": 154,
+      "requestsPerSecond": 233.9,
+      "p50Ms": 35,
+      "p95Ms": 58,
+      "p99Ms": 59,
+      "maxMs": 59,
+      "nodeRssBytes": 76070912,
+      "javaProcess": {
+        "WorkingSet64": 383041536,
+        "PeakWorkingSet64": 399663104,
+        "CPU": 22.625
+      },
+      "databaseBytes": 43513535
+    },
+    {
+      "syntheticQuestions": 100000,
+      "totalQuestions": 100052,
+      "concurrency": 1,
+      "requests": 36,
+      "errors": 0,
+      "setupMs": 114081,
+      "elapsedMs": 3404,
+      "requestsPerSecond": 10.58,
+      "p50Ms": 33,
+      "p95Ms": 200,
+      "p99Ms": 208,
+      "maxMs": 208,
+      "nodeRssBytes": 76869632,
+      "javaProcess": {
+        "WorkingSet64": 341168128,
+        "PeakWorkingSet64": 399663104,
+        "CPU": 23.765625
+      },
+      "databaseBytes": 246847167
+    },
+    {
+      "syntheticQuestions": 100000,
+      "totalQuestions": 100052,
+      "concurrency": 5,
+      "requests": 36,
+      "errors": 0,
+      "setupMs": 114081,
+      "elapsedMs": 1067,
+      "requestsPerSecond": 33.75,
+      "p50Ms": 20,
+      "p95Ms": 466,
+      "p99Ms": 540,
+      "maxMs": 540,
+      "nodeRssBytes": 77344768,
+      "javaProcess": {
+        "WorkingSet64": 368205824,
+        "PeakWorkingSet64": 399663104,
+        "CPU": 24.375
+      },
+      "databaseBytes": 246847167
+    },
+    {
+      "syntheticQuestions": 100000,
+      "totalQuestions": 100052,
+      "concurrency": 10,
+      "requests": 36,
+      "errors": 0,
+      "setupMs": 114081,
+      "elapsedMs": 984,
+      "requestsPerSecond": 36.6,
+      "p50Ms": 187,
+      "p95Ms": 543,
+      "p99Ms": 552,
+      "maxMs": 552,
+      "nodeRssBytes": 77860864,
+      "javaProcess": {
+        "WorkingSet64": 350957568,
+        "PeakWorkingSet64": 399663104,
+        "CPU": 24.671875
+      },
+      "databaseBytes": 246847167
+    }
+  ],
+  "indexes": [
+    {
+      "indexname": "idx_question_revision_filters",
+      "indexdef": "CREATE INDEX idx_question_revision_filters ON teachbase_app.question_revision USING btree (workspace_id, review_status, subject, stage, grade, question_type, difficulty_stars)"
+    },
+    {
+      "indexname": "idx_question_revision_search_trgm",
+      "indexdef": "CREATE INDEX idx_question_revision_search_trgm ON teachbase_app.question_revision USING gin (lower((((((((((((((((((((((COALESCE(title, ''::character varying))::text || ' '::text) || (COALESCE(subject, ''::character varying))::text) || ' '::text) || (COALESCE(stage, ''::character varying))::text) || ' '::text) || (COALESCE(grade, ''::character varying))::text) || ' '::text) || (COALESCE(question_type, ''::character varying))::text) || ' '::text) || (COALESCE(lesson, ''::character varying))::text) || ' '::text) || (COALESCE(primary_knowledge_tag, ''::character varying))::text) || ' '::text) || COALESCE(material_markdown, ''::text)) || ' '::text) || COALESCE(stem_markdown, ''::text)) || ' '::text) || COALESCE(answer_markdown, ''::text)) || ' '::text) || COALESCE(analysis_markdown, ''::text))) teachbase_app.gin_trgm_ops)"
+    },
+    {
+      "indexname": "idx_question_revision_search_vector",
+      "indexdef": "CREATE INDEX idx_question_revision_search_vector ON teachbase_app.question_revision USING gin (to_tsvector('simple'::regconfig, (((((((((((((((((((((COALESCE(title, ''::character varying))::text || ' '::text) || (COALESCE(subject, ''::character varying))::text) || ' '::text) || (COALESCE(stage, ''::character varying))::text) || ' '::text) || (COALESCE(grade, ''::character varying))::text) || ' '::text) || (COALESCE(question_type, ''::character varying))::text) || ' '::text) || (COALESCE(lesson, ''::character varying))::text) || ' '::text) || (COALESCE(primary_knowledge_tag, ''::character varying))::text) || ' '::text) || COALESCE(material_markdown, ''::text)) || ' '::text) || COALESCE(stem_markdown, ''::text)) || ' '::text) || COALESCE(answer_markdown, ''::text)) || ' '::text) || COALESCE(analysis_markdown, ''::text))))"
+    },
+    {
+      "indexname": "idx_question_workspace_status",
+      "indexdef": "CREATE INDEX idx_question_workspace_status ON teachbase_app.question USING btree (workspace_id, status, updated_at DESC, question_id)"
+    },
+    {
+      "indexname": "question_pkey",
+      "indexdef": "CREATE UNIQUE INDEX question_pkey ON teachbase_app.question USING btree (question_id)"
+    },
+    {
+      "indexname": "question_revision_pkey",
+      "indexdef": "CREATE UNIQUE INDEX question_revision_pkey ON teachbase_app.question_revision USING btree (question_revision_id)"
+    },
+    {
+      "indexname": "uq_question_external_key",
+      "indexdef": "CREATE UNIQUE INDEX uq_question_external_key ON teachbase_app.question USING btree (workspace_id, external_key)"
+    },
+    {
+      "indexname": "uq_question_revision_hash",
+      "indexdef": "CREATE UNIQUE INDEX uq_question_revision_hash ON teachbase_app.question_revision USING btree (question_id, content_hash)"
+    },
+    {
+      "indexname": "uq_question_revision_number",
+      "indexdef": "CREATE UNIQUE INDEX uq_question_revision_number ON teachbase_app.question_revision USING btree (question_id, revision_no)"
+    },
+    {
+      "indexname": "uq_question_revision_scope",
+      "indexdef": "CREATE UNIQUE INDEX uq_question_revision_scope ON teachbase_app.question_revision USING btree (question_revision_id, question_id, workspace_id)"
+    },
+    {
+      "indexname": "uq_question_revision_workspace",
+      "indexdef": "CREATE UNIQUE INDEX uq_question_revision_workspace ON teachbase_app.question_revision USING btree (question_revision_id, workspace_id)"
+    },
+    {
+      "indexname": "uq_question_source_key",
+      "indexdef": "CREATE UNIQUE INDEX uq_question_source_key ON teachbase_app.question USING btree (workspace_id, source_system, source_key)"
+    },
+    {
+      "indexname": "uq_question_workspace",
+      "indexdef": "CREATE UNIQUE INDEX uq_question_workspace ON teachbase_app.question USING btree (question_id, workspace_id)"
+    }
+  ],
+  "localThreshold": {
+    "p95LimitMs": 1000,
+    "unexpectedErrorsAllowed": 0,
+    "actualP95Ms": 51,
+    "actualErrors": 0,
+    "passed": true
+  },
+  "originalUnchanged": true,
+  "status": "passed",
+  "finishedAt": "2026-09-08T09:22:54.266Z"
+}

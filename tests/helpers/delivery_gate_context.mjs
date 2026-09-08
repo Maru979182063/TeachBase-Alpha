@@ -45,10 +45,11 @@ export async function openContext(sourceRoot,output) {
   await run(path.join(pgBin,'pg_dump'+ext),['-h','127.0.0.1','-p',String(config.port),'-U',config.user,'-d',config.database,'-Fc','-f',dump],{...process.env,PGPASSWORD:config.password});
   const cluster=await startEmbeddedPostgresCluster('delivery_stage_test');
   const context={output,original,cluster,before,identity:{workspaceId:config.workspaceId,actorUserId:config.actorUserId},instances:[]};
-  context.restore=async(name,from=dump,storageFrom=path.join(sourceRoot,'storage'))=>{
+  context.restore=async(name,from=dump,storageFrom=path.join(sourceRoot,'storage'),recover=null)=>{
     const db=await cluster.createDatabase(name);const url=new URL(db.connectionString);
-    await run(path.join(pgBin,'pg_restore'+ext),['-h','127.0.0.1','-p',String(cluster.port),'-U',decodeURIComponent(url.username),'-d',db.database,'--no-owner','--no-privileges',from],{...process.env,PGPASSWORD:decodeURIComponent(url.password)});
-    const storage=path.join(output,name,'storage');await fs.cp(storageFrom,storage,{recursive:true});
+    const storage=path.join(output,name,'storage');
+    if(recover)await recover(db.connectionString,storage);
+    else {await run(path.join(pgBin,'pg_restore'+ext),['-h','127.0.0.1','-p',String(cluster.port),'-U',decodeURIComponent(url.username),'-d',db.database,'--no-owner','--no-privileges',from],{...process.env,PGPASSWORD:decodeURIComponent(url.password)});await fs.cp(storageFrom,storage,{recursive:true});}
     const instance={...db,url,storage,pool:new Pool({connectionString:db.connectionString}),java:null,logs:[],port:await reservePort()}; instance.baseUrl=`http://127.0.0.1:${instance.port}`;
     instance.start=async()=>{
       instance.java=spawn('java',['-jar',path.join(root,'backend/teachbase-server/target/teachbase-server-0.1.0-SNAPSHOT.jar')],{cwd:root,windowsHide:true,stdio:['ignore','pipe','pipe'],env:{...process.env,

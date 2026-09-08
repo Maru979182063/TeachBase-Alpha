@@ -1,0 +1,216 @@
+{
+  "startedAt": "2026-09-08T09:25:38.798Z",
+  "checks": [
+    {
+      "name": "health_separates_liveness_storage_database_and_export",
+      "status": "passed",
+      "evidence": {
+        "healthSchemaVersion": 1,
+        "liveness": "UP",
+        "ingestion": "UP",
+        "database": "UP",
+        "storage": "READ_WRITE",
+        "storageUsableBytes": 1242151919616,
+        "deliveryContract": "candidate-delivery-v1",
+        "productionStableAuthorities": 0,
+        "export": "DISABLED",
+        "fullConsistencyCheck": "use_delivery_storage_maintenance_audit"
+      }
+    },
+    {
+      "name": "actual_g2_52_import_before_backup",
+      "status": "passed",
+      "evidence": {
+        "questions": 104,
+        "revisions": 104,
+        "reviews": 104,
+        "requests": 1,
+        "packages": 1,
+        "receipt_items": 52,
+        "files": 36,
+        "source_documents": 1,
+        "regions": 104,
+        "source_links": 104,
+        "importMs": 1950
+      }
+    },
+    {
+      "name": "transaction_result_metrics_exposed",
+      "status": "passed",
+      "evidence": {
+        "name": "teachbase.delivery.requests",
+        "measurements": [
+          {
+            "statistic": "COUNT",
+            "value": 2
+          }
+        ],
+        "availableTags": [
+          {
+            "tag": "operation",
+            "values": [
+              "import",
+              "preflight"
+            ]
+          },
+          {
+            "tag": "outcome",
+            "values": [
+              "success"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "three_storage_classes_and_complete_receipt_graph",
+      "status": "passed",
+      "evidence": {
+        "referenced": 35,
+        "registeredUnreferenced": 1,
+        "unregisteredDisk": 2,
+        "requests": 1,
+        "receiptItems": 52,
+        "packages": 1
+      }
+    },
+    {
+      "name": "detect_missing_and_corrupt_referenced_bytes",
+      "status": "passed",
+      "evidence": {
+        "missingDetected": true,
+        "corruptionDetected": true
+      }
+    },
+    {
+      "name": "backup_requires_stopped_writers",
+      "status": "passed"
+    },
+    {
+      "name": "consistent_snapshot_and_storage_backup",
+      "status": "passed",
+      "evidence": {
+        "backupSchemaVersion": 1,
+        "snapshot": "00000005-0000001D-1",
+        "backupTime": "2026-09-08T09:25:50.364Z",
+        "writersStopped": true,
+        "tableLocks": "SHARE",
+        "migrations": [
+          {
+            "version": null,
+            "checksum": null,
+            "success": true
+          },
+          {
+            "version": "001",
+            "checksum": 1379587847,
+            "success": true
+          },
+          {
+            "version": "002",
+            "checksum": -2052012555,
+            "success": true
+          },
+          {
+            "version": "003",
+            "checksum": -543698178,
+            "success": true
+          },
+          {
+            "version": "004",
+            "checksum": -1453080217,
+            "success": true
+          },
+          {
+            "version": "005",
+            "checksum": 567003976,
+            "success": true
+          },
+          {
+            "version": "006",
+            "checksum": -1119471439,
+            "success": true
+          },
+          {
+            "version": "007",
+            "checksum": -512523889,
+            "success": true
+          },
+          {
+            "version": "008",
+            "checksum": -1271745522,
+            "success": true
+          },
+          {
+            "version": "009",
+            "checksum": 1711738290,
+            "success": true
+          },
+          {
+            "version": "010",
+            "checksum": -1741750854,
+            "success": true
+          }
+        ],
+        "receiptWatermark": {
+          "succeeded_requests": 1,
+          "latest_completed_at": "2026-09-08T09:25:49.819Z"
+        },
+        "dump": {
+          "sha256": "f3983b71d9ab6388e2b6b5090822e5f7101ec82fddb214c42e0fb752582322b5",
+          "bytes": 527812
+        },
+        "storageInventorySha256": "2f4b739747641e3e3f5526f268125187f8780d6bb2e396e87cf68025e20fe6a0",
+        "storageFiles": 38,
+        "sourceCounts": {
+          "referenced": 35,
+          "registeredUnreferenced": 1,
+          "unregisteredDisk": 2,
+          "requests": 1,
+          "receiptItems": 52,
+          "packages": 1
+        },
+        "elapsedMs": 502,
+        "status": "complete"
+      }
+    },
+    {
+      "name": "restore_rejects_corrupt_backup_and_nonempty_database",
+      "status": "passed",
+      "evidence": {
+        "corruptBackupRejected": true,
+        "nonemptyDatabaseProtected": true
+      }
+    },
+    {
+      "name": "restore_copy_and_full_consistency_audit",
+      "status": "passed",
+      "evidence": {
+        "databaseAndStorageRestoreMs": 757,
+        "fullAuditMs": 93,
+        "independentRepeatAuditMs": 132,
+        "backupMs": 502,
+        "applicationReadyMs": 6347
+      }
+    },
+    {
+      "name": "restored_receipt_get_and_exact_retry",
+      "status": "passed",
+      "evidence": {
+        "restoredItems": 52,
+        "applicationReadyMs": 6347
+      }
+    }
+  ],
+  "real52ImportMs": 1950,
+  "recovery": {
+    "databaseAndStorageRestoreMs": 757,
+    "fullAuditMs": 93,
+    "independentRepeatAuditMs": 132,
+    "backupMs": 502,
+    "applicationReadyMs": 6347
+  },
+  "originalUnchanged": true,
+  "status": "passed",
+  "finishedAt": "2026-09-08T09:25:59.663Z"
+}
