@@ -1,0 +1,183 @@
+{
+  "generatedAt": "2026-09-08T06:17:11.635472+00:00",
+  "status": "ready_for_user_stage_acceptance",
+  "stage": "G0_G1",
+  "implementationCommits": {
+    "G0": "d332ac6a22e3c88175048dbd41031644641c891b",
+    "G1": "4e90ad0e7dc629f92c9642233c10d8b25d04b673"
+  },
+  "testSummary": {
+    "G0": {
+      "scope": "pure_contract",
+      "passed": 32
+    },
+    "G1": {
+      "scope": "isolated_DB_SQL_HTTP",
+      "passed": 10
+    },
+    "real52": {
+      "scope": "isolated_clone_workflow",
+      "passed": 22
+    },
+    "javaUnitTests": 18,
+    "governanceGate": "passed",
+    "chineseComments": {
+      "schemaVersion": 1,
+      "status": "passed",
+      "javaFileCount": 222,
+      "chineseCommentCoverage": 222,
+      "untranslatedCommentBlocks": 0,
+      "genericModuleComments": 0
+    }
+  },
+  "originalDatabase": {
+    "countsBefore": {
+      "questions": 52,
+      "revisions": 52,
+      "pending": 52,
+      "approved": 0,
+      "taxonomy_versions": 0,
+      "taxonomy_nodes": 0,
+      "taxonomy_links": 0,
+      "primary_links": 0
+    },
+    "countsAfter": {
+      "questions": 52,
+      "revisions": 52,
+      "pending": 52,
+      "approved": 0,
+      "taxonomy_versions": 0,
+      "taxonomy_nodes": 0,
+      "taxonomy_links": 0,
+      "primary_links": 0
+    },
+    "conflictGroupsBefore": 0,
+    "conflictGroupsAfter": 0,
+    "migrationsUnchanged": true,
+    "lastVersion": "008",
+    "migrationV009Applied": false,
+    "realQuestionsApproved": false
+  },
+  "G0RuntimeNotImplemented": [
+    "durable_request_receipt",
+    "HTTP_request_id_conflict",
+    "cross_request_package_immutability",
+    "canonical_revision_ingestion",
+    "stable_anchor_authenticity"
+  ],
+  "productionStableContracts": 0,
+  "confirmedG1Scope": "question_revision_id + taxonomy_version_id",
+  "crossVersionTeachingSemantics": "deferred",
+  "remainingSourceConfirmations": [
+    "sourceSystem and identityContract owner/version",
+    "persistent question/source-node ID",
+    "documentStableKey across byte revisions",
+    "exact anchor fields and uniqueness scope",
+    "split/merge/delete/rebuild ID lifecycle",
+    "two real runs with identity comparison and conflict fixtures"
+  ],
+  "stopGate": {
+    "requiresUserAcceptanceBefore": "G2_G3",
+    "G2_G3Implemented": false,
+    "G4_G5Implemented": false,
+    "processingAlgorithmsChanged": false
+  },
+  "evidence": {
+    "schemas/backend_candidate_delivery_v1.schema.json": {
+      "sha256": "e2f95dccb753e436f0210d293f97aba564ee62a6213b01d2b1b223a4d4b8ac10",
+      "bytes": 6727
+    },
+    "tools/candidate_delivery_contract.py": {
+      "sha256": "de2c9d036d7ea0a22ad2c1896f3a35fbe4fe4167d66785f1740f81bc98789b3f",
+      "bytes": 6721
+    },
+    "docs/backend/contracts/identity-authorities.v1.json": {
+      "sha256": "d37b67b9f06d9266123b84744f0d82bfa34810a0a1c7b889c9380324b55ef22b",
+      "bytes": 46
+    },
+    "docs/reports/g0_identity_contract_gate_20260908.json": {
+      "sha256": "2dcef1159a99304d05aa050cfaf912e061edfb5995042442e71e66260e54c0be",
+      "bytes": 4148
+    },
+    "docs/reports/g1_primary_constraint_gate_20260908.json": {
+      "sha256": "4884646e373ea13b7d115d38bf124cc06f46331a0edb66b938810a2b0643f88b",
+      "bytes": 3069
+    },
+    "artifacts/ci/g0-g1/g0-junit.xml": {
+      "sha256": "ede9d22dc00b7f4e62410b5c7ba876156c276ac2a23b4557e89965264aa86a65",
+      "bytes": 4747
+    },
+    "artifacts/ci/g0-g1/g1-live-final/report.json": {
+      "sha256": "4884646e373ea13b7d115d38bf124cc06f46331a0edb66b938810a2b0643f88b",
+      "bytes": 3069
+    },
+    "artifacts/ci/g0-g1/real-52/report.json": {
+      "sha256": "4b828274bf38923174ede4011796cadd55e8a822511f043748b561d208d057ba",
+      "bytes": 5103
+    },
+    "artifacts/ci/g0-g1/real-52/artifact-qa.json": {
+      "sha256": "459753817769e3a77a0a1b8e73b7a8fd73e6d263a4a35286e32f449e47ef3c79",
+      "bytes": 1718
+    },
+    "artifacts/ci/g0-g1/source-conflicts-before.json": {
+      "sha256": "bf51a2d1db91e3a3499ecac892faa494f572b34d32a3fff2493040d45fb5d01c",
+      "bytes": 1245
+    },
+    "artifacts/ci/g0-g1/source-conflicts-after.json": {
+      "sha256": "10e015d340e5b874475b9f6103cf6af277389b0376ad64f351f0ffb0f11a97a0",
+      "bytes": 1245
+    },
+    "artifacts/ci/g0-g1/migration-baseline.json": {
+      "sha256": "075c9266130654d8d3a9c116d5a94e307af2572a30915bb8e92682db30996108",
+      "bytes": 1871
+    },
+    "artifacts/ci/g0-g1/java-comments.json": {
+      "sha256": "2d065c713e8705756277a071e1cf14230131073e53c5592b9b132db262cbfbdd",
+      "bytes": 168
+    },
+    "docs/reports/question_governance_live_gate_20260901.json": {
+      "sha256": "bcfdbcacd55eeae843bf1b3bab15b2fcc207e83f70cee12fa5de629ff93c37d2",
+      "bytes": 1173
+    },
+    "backend/teachbase-server/target/teachbase-server-0.1.0-SNAPSHOT.jar": {
+      "sha256": "89b902f384f17d39f5799757c5ceaf6dd79a8f7d7c0d832c801065b488177b50",
+      "bytes": 42604349
+    },
+    "backend/teachbase-server/target/surefire-reports/TEST-com.teachbase.server.ApplicationModularityTest.xml": {
+      "sha256": "013ec5b85a6819ea6895807aa7633e425275d682cc131751d68e1daf6edabfaf",
+      "bytes": 25689
+    },
+    "backend/teachbase-server/target/surefire-reports/TEST-com.teachbase.server.editor.application.EditorContentValidatorTest.xml": {
+      "sha256": "4e78bcd99b697af3f62bcd1fa4d4d9c991411736016c66d5425cecbdebe03e60",
+      "bytes": 26203
+    },
+    "backend/teachbase-server/target/surefire-reports/TEST-com.teachbase.server.editor.application.EditorQuestionPlacementMarkdownTest.xml": {
+      "sha256": "ea9624a2c915d65a8f1dd0d5fdf3b790cd4f8b7acf65d6d7fe58909cab5db92d",
+      "bytes": 25624
+    },
+    "backend/teachbase-server/target/surefire-reports/TEST-com.teachbase.server.editor.application.EditorVariantProjectorTest.xml": {
+      "sha256": "023c1552f0766591102e4c0a2dffeaaff00953b5751219bd18c1be7732e66377",
+      "bytes": 25596
+    },
+    "backend/teachbase-server/target/surefire-reports/TEST-com.teachbase.server.exporting.application.TiptapMarkdownAdapterTest.xml": {
+      "sha256": "7d8fbf9d3727e6e4bb2675defa4f038ff00b30ec694d2d18642f4e243bf7f3b2",
+      "bytes": 25766
+    },
+    "backend/teachbase-server/target/surefire-reports/TEST-com.teachbase.server.exporting.infrastructure.RegisteredImageResolverTest.xml": {
+      "sha256": "6d644d1166123ec1505f91a5c69bdc1da60a2ec5754cec7c9c5540acfe0ae48f",
+      "bytes": 25937
+    },
+    "backend/teachbase-server/target/surefire-reports/TEST-com.teachbase.server.exporting.infrastructure.RenderTemporaryFileSweeperTest.xml": {
+      "sha256": "cd961f6eb08bf244dc837ec92665a9e7378689b6111569e65f380c92e2072102",
+      "bytes": 25612
+    },
+    "backend/teachbase-server/target/surefire-reports/TEST-com.teachbase.server.fileasset.domain.Sha256Test.xml": {
+      "sha256": "388ec57d799a66ba7575d943c45db956c668422e4052674435501980a57cdf2c",
+      "bytes": 25650
+    },
+    "backend/teachbase-server/target/surefire-reports/TEST-com.teachbase.server.fileasset.domain.StorageKeyTest.xml": {
+      "sha256": "f0d8fcf1d27b77c63b6fdde027cb61852fadf3f3727963ca5c07e3a7aa92a4c3",
+      "bytes": 25673
+    }
+  }
+}
