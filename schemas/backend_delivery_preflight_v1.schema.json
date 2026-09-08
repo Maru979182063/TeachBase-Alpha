@@ -1,0 +1,15 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://teachbase.local/schemas/backend_delivery_preflight_v1.schema.json",
+  "title":"G2 preflight result v1", "type":"object", "additionalProperties":false,
+  "required":["preflightSchemaVersion","eligible","checkedAt","deliveryDigest","issues","warnings","databaseWritten"],
+  "properties":{
+    "preflightSchemaVersion":{"const":1},"eligible":{"type":"boolean"},
+    "checkedAt":{"type":"string","format":"date-time"},
+    "deliveryDigest":{"type":["string","null"],"pattern":"^[0-9a-f]{64}$"},
+    "issues":{"type":"array","items":{"$ref":"#/$defs/issue"}},
+    "warnings":{"type":"array","items":{"$ref":"#/$defs/issue"}},
+    "databaseWritten":{"const":false}
+  },
+  "$defs":{"issue":{"type":"object","additionalProperties":false,"required":["code","fieldPath"],"properties":{"code":{"type":"string"},"fieldPath":{"type":"string"}}}}
+}

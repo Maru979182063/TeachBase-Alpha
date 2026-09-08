@@ -4,5 +4,5 @@
  */
 @org.springframework.modulith.ApplicationModule(
         displayName = "Candidate Ingestion",
-        allowedDependencies = {"question::api", "source::api", "review::api", "fileasset::api"})
+        allowedDependencies = {"question::api", "source::api", "review::api", "fileasset::api", "identity::api", "taxonomy::api"})
 package com.teachbase.server.ingestion;

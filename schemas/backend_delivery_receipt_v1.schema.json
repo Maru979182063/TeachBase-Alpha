@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://teachbase.local/schemas/backend_delivery_receipt_v1.schema.json",
+  "title": "G2 persistent receipt v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["receiptSchemaVersion","workspaceId","importRequestId","packageId","deliveryDigest","status","completedAt","items","warnings"],
+  "properties": {
+    "receiptSchemaVersion": {"const": 1},
+    "workspaceId": {"type":"string","format":"uuid"},
+    "importRequestId": {"type":"string","format":"uuid"},
+    "packageId": {"type":"string","format":"uuid"},
+    "deliveryDigest": {"$ref":"#/$defs/hash"},
+    "status": {"const":"succeeded"},
+    "completedAt": {"type":"string","format":"date-time"},
+    "items": {"type":"array","minItems":1,"maxItems":100,"items":{
+      "type":"object","additionalProperties":false,
+      "required":["itemKey","questionId","questionRevisionId","reviewCaseId","sourceRegionId","contentHash","domainContentHash"],
+      "properties":{
+        "itemKey":{"type":"string","minLength":1,"maxLength":512},
+        "questionId":{"type":"string","format":"uuid"},
+        "questionRevisionId":{"type":"string","format":"uuid"},
+        "reviewCaseId":{"type":"string","format":"uuid"},
+        "sourceRegionId":{"type":"string","format":"uuid"},
+        "contentHash":{"$ref":"#/$defs/hash"},"domainContentHash":{"$ref":"#/$defs/hash"}
+      }
+    }},
+    "warnings":{"type":"array","items":{"$ref":"#/$defs/issue"}}
+  },
+  "$defs":{
+    "hash":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "issue":{"type":"object","additionalProperties":false,"required":["code","fieldPath"],"properties":{"code":{"type":"string"},"fieldPath":{"type":"string"}}}
+  }
+}

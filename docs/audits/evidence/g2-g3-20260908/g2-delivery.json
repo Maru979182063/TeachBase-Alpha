@@ -1,0 +1,121 @@
+{
+  "startedAt": "2026-09-08T09:25:38.642Z",
+  "scope": "G2_isolated_real_package",
+  "checks": [
+    {
+      "name": "real52_preflight_read_only_and_python_java_digest_parity",
+      "status": "passed",
+      "evidence": {
+        "questions": 52,
+        "warnings": 156,
+        "deliveryDigest": "ea5497c0928430986b0088f5f26b8d8a07ed44a3d203414760ed122bc19fbe2e"
+      }
+    },
+    {
+      "name": "real52_commit_success_receipt_and_business_rows",
+      "status": "passed",
+      "evidence": {
+        "after": {
+          "questions": 104,
+          "revisions": 104,
+          "reviews": 104,
+          "requests": 1,
+          "packages": 1,
+          "receipt_items": 52,
+          "files": 35,
+          "source_documents": 1,
+          "regions": 104,
+          "source_links": 104
+        },
+        "joinedCompleteItems": 52
+      }
+    },
+    {
+      "name": "same_id_same_package_exact_receipt_and_no_writes",
+      "status": "passed"
+    },
+    {
+      "name": "same_id_different_package_409_server_digest",
+      "status": "passed"
+    },
+    {
+      "name": "new_request_same_package_reuses_business_and_preserves_review_state",
+      "status": "passed"
+    },
+    {
+      "name": "concurrent_same_id_one_commit_identical_receipts",
+      "status": "passed",
+      "evidence": {
+        "statuses": [
+          201,
+          200,
+          200,
+          200,
+          200,
+          200
+        ]
+      }
+    },
+    {
+      "name": "concurrent_same_id_different_digest_one_409",
+      "status": "passed",
+      "evidence": {
+        "statuses": [
+          409,
+          201
+        ]
+      }
+    },
+    {
+      "name": "one_shot_no_cross_package_merge_even_with_same_candidate_id",
+      "status": "passed"
+    },
+    {
+      "name": "preflight_then_inbox_tamper_commit_rejects_and_rolls_back",
+      "status": "passed"
+    },
+    {
+      "name": "second_item_invalid_no_partial_business_or_receipt",
+      "status": "passed"
+    },
+    {
+      "name": "synchronous_bounds_reject_101_items_and_oversized_file",
+      "status": "passed"
+    },
+    {
+      "name": "stable_source_unregistered_and_nonmember_rejected",
+      "status": "passed"
+    },
+    {
+      "name": "before_commit_exception_rolls_back_all_business_and_success_receipt",
+      "status": "passed"
+    },
+    {
+      "name": "database_cannot_commit_processing_or_fake_success_receipt",
+      "status": "passed"
+    },
+    {
+      "name": "lost_response_after_success_recovers_original_receipt",
+      "status": "passed"
+    },
+    {
+      "name": "java_terminated_before_commit_rolls_back_then_same_request_retries",
+      "status": "passed"
+    }
+  ],
+  "finalCounts": {
+    "questions": 110,
+    "revisions": 110,
+    "reviews": 110,
+    "requests": 8,
+    "packages": 7,
+    "receipt_items": 110,
+    "files": 35,
+    "source_documents": 1,
+    "regions": 110,
+    "source_links": 110
+  },
+  "originalUnchanged": true,
+  "finishedAt": "2026-09-08T09:26:03.109Z",
+  "status": "passed"
+}

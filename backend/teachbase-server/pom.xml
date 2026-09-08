@@ -93,6 +93,11 @@
   </dependencies>
 
   <build>
+    <resources>
+      <resource><directory>src/main/resources</directory></resource>
+      <resource><directory>${project.basedir}/../../schemas</directory><targetPath>contracts</targetPath><includes><include>backend_candidate_delivery_v1.schema.json</include></includes></resource>
+      <resource><directory>${project.basedir}/../../docs/backend/contracts</directory><targetPath>contracts</targetPath><includes><include>identity-authorities.v1.json</include></includes></resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

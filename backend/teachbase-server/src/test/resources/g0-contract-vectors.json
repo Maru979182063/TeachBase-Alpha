@@ -1,0 +1,239 @@
+[
+  {
+    "name": "baseline",
+    "manifest": {
+      "manifestSchemaVersion": 1,
+      "importRequestId": "00000000-0000-4000-8000-000000000001",
+      "packageId": "00000000-0000-4000-8000-000000000002",
+      "workspaceId": "00000000-0000-4000-8000-000000000003",
+      "sourceSystem": "fixture_source",
+      "pipeline": {
+        "runId": "fixture-run-a",
+        "profileVersion": "fixture-profile-a"
+      },
+      "files": [
+        {
+          "fileKey": "source",
+          "path": "source/document.docx",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "sizeBytes": 100,
+          "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        }
+      ],
+      "sourceDocuments": [
+        {
+          "documentKey": "document-in-this-package",
+          "fileKey": "source",
+          "documentStableKey": null
+        }
+      ],
+      "questions": [
+        {
+          "itemKey": "local-item-a",
+          "identity": {
+            "mode": "one_shot_candidate",
+            "candidateId": "00000000-0000-4000-8000-000000000004",
+            "stableQuestionKey": null
+          },
+          "sourceDocumentKey": "document-in-this-package",
+          "sourceEvidence": {
+            "evidenceFileKeys": [
+              "source"
+            ],
+            "sourceBlockRefs": [],
+            "pageNumbers": []
+          },
+          "content": {
+            "contentSchemaVersion": 1,
+            "materialMarkdown": "",
+            "stemMarkdown": "集合 $\\textcircled{1}$",
+            "options": [
+              {
+                "label": "A",
+                "markdown": "$x \\in A$"
+              }
+            ],
+            "subquestions": [
+              "（1）保留原文编号"
+            ],
+            "answerMarkdown": "A",
+            "analysisMarkdown": "保留解析",
+            "teachingNoteMarkdown": "",
+            "media": [],
+            "titleMarkdown": "原题标题"
+          },
+          "contentHash": null,
+          "classificationSuggestions": {
+            "subject": "数学",
+            "stage": null,
+            "grade": null,
+            "questionType": null,
+            "difficultyStars": null,
+            "tags": []
+          }
+        }
+      ]
+    },
+    "deliveryDigest": "9c528d9306a58e37fe8cc38e52f97781e905c907b1081a662f6ca62b7c50c355",
+    "contentHash": "860e0e989108ed97a5bf217912409d7afb01463cc270c696bf81527ef09bb6a4",
+    "canonical": "{\"files\":[{\"fileKey\":\"source\",\"mediaType\":\"application/vnd.openxmlformats-officedocument.wordprocessingml.document\",\"path\":\"source/document.docx\",\"sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sizeBytes\":100}],\"importRequestId\":\"00000000-0000-4000-8000-000000000001\",\"manifestSchemaVersion\":1,\"packageId\":\"00000000-0000-4000-8000-000000000002\",\"pipeline\":{\"profileVersion\":\"fixture-profile-a\",\"runId\":\"fixture-run-a\"},\"questions\":[{\"classificationSuggestions\":{\"difficultyStars\":null,\"grade\":null,\"questionType\":null,\"stage\":null,\"subject\":\"数学\",\"tags\":[]},\"content\":{\"analysisMarkdown\":\"保留解析\",\"answerMarkdown\":\"A\",\"contentSchemaVersion\":1,\"materialMarkdown\":\"\",\"media\":[],\"options\":[{\"label\":\"A\",\"markdown\":\"$x \\\\in A$\"}],\"stemMarkdown\":\"集合 $\\\\textcircled{1}$\",\"subquestions\":[\"（1）保留原文编号\"],\"teachingNoteMarkdown\":\"\",\"titleMarkdown\":\"原题标题\"},\"contentHash\":null,\"identity\":{\"candidateId\":\"00000000-0000-4000-8000-000000000004\",\"mode\":\"one_shot_candidate\",\"stableQuestionKey\":null},\"itemKey\":\"local-item-a\",\"sourceDocumentKey\":\"document-in-this-package\",\"sourceEvidence\":{\"evidenceFileKeys\":[\"source\"],\"pageNumbers\":[],\"sourceBlockRefs\":[]}}],\"sourceDocuments\":[{\"documentKey\":\"document-in-this-package\",\"documentStableKey\":null,\"fileKey\":\"source\"}],\"sourceSystem\":\"fixture_source\",\"workspaceId\":\"00000000-0000-4000-8000-000000000003\"}"
+  },
+  {
+    "name": "supplementary_unicode",
+    "manifest": {
+      "manifestSchemaVersion": 1,
+      "importRequestId": "00000000-0000-4000-8000-000000000001",
+      "packageId": "00000000-0000-4000-8000-000000000002",
+      "workspaceId": "00000000-0000-4000-8000-000000000003",
+      "sourceSystem": "fixture_source",
+      "pipeline": {
+        "runId": "fixture-run-a",
+        "profileVersion": "fixture-profile-a"
+      },
+      "files": [
+        {
+          "fileKey": "source",
+          "path": "source/document.docx",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "sizeBytes": 100,
+          "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        }
+      ],
+      "sourceDocuments": [
+        {
+          "documentKey": "document-in-this-package",
+          "fileKey": "source",
+          "documentStableKey": null
+        }
+      ],
+      "questions": [
+        {
+          "itemKey": "local-item-a",
+          "identity": {
+            "mode": "one_shot_candidate",
+            "candidateId": "00000000-0000-4000-8000-000000000004",
+            "stableQuestionKey": null
+          },
+          "sourceDocumentKey": "document-in-this-package",
+          "sourceEvidence": {
+            "evidenceFileKeys": [
+              "source"
+            ],
+            "sourceBlockRefs": [],
+            "pageNumbers": []
+          },
+          "content": {
+            "contentSchemaVersion": 1,
+            "materialMarkdown": "",
+            "stemMarkdown": "集合 $\\textcircled{1}$",
+            "options": [
+              {
+                "label": "A",
+                "markdown": "$x \\in A$"
+              }
+            ],
+            "subquestions": [
+              "（1）保留原文编号"
+            ],
+            "answerMarkdown": "A",
+            "analysisMarkdown": "保留解析",
+            "teachingNoteMarkdown": "",
+            "media": [],
+            "titleMarkdown": "集合😀𝒜\n\t"
+          },
+          "contentHash": null,
+          "classificationSuggestions": {
+            "subject": "数学",
+            "stage": null,
+            "grade": null,
+            "questionType": null,
+            "difficultyStars": null,
+            "tags": []
+          }
+        }
+      ]
+    },
+    "deliveryDigest": "6bd739024bc2cc9d79a8d97b025f8cfdbef08fb7b53716a83aba76a83d2fc1a3",
+    "contentHash": "b958dacf1ea0f249be07e0e213aa76af6b07fea76d7aa77491336e69af9db119",
+    "canonical": "{\"files\":[{\"fileKey\":\"source\",\"mediaType\":\"application/vnd.openxmlformats-officedocument.wordprocessingml.document\",\"path\":\"source/document.docx\",\"sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sizeBytes\":100}],\"importRequestId\":\"00000000-0000-4000-8000-000000000001\",\"manifestSchemaVersion\":1,\"packageId\":\"00000000-0000-4000-8000-000000000002\",\"pipeline\":{\"profileVersion\":\"fixture-profile-a\",\"runId\":\"fixture-run-a\"},\"questions\":[{\"classificationSuggestions\":{\"difficultyStars\":null,\"grade\":null,\"questionType\":null,\"stage\":null,\"subject\":\"数学\",\"tags\":[]},\"content\":{\"analysisMarkdown\":\"保留解析\",\"answerMarkdown\":\"A\",\"contentSchemaVersion\":1,\"materialMarkdown\":\"\",\"media\":[],\"options\":[{\"label\":\"A\",\"markdown\":\"$x \\\\in A$\"}],\"stemMarkdown\":\"集合 $\\\\textcircled{1}$\",\"subquestions\":[\"（1）保留原文编号\"],\"teachingNoteMarkdown\":\"\",\"titleMarkdown\":\"集合😀𝒜\\n\\t\"},\"contentHash\":null,\"identity\":{\"candidateId\":\"00000000-0000-4000-8000-000000000004\",\"mode\":\"one_shot_candidate\",\"stableQuestionKey\":null},\"itemKey\":\"local-item-a\",\"sourceDocumentKey\":\"document-in-this-package\",\"sourceEvidence\":{\"evidenceFileKeys\":[\"source\"],\"pageNumbers\":[],\"sourceBlockRefs\":[]}}],\"sourceDocuments\":[{\"documentKey\":\"document-in-this-package\",\"documentStableKey\":null,\"fileKey\":\"source\"}],\"sourceSystem\":\"fixture_source\",\"workspaceId\":\"00000000-0000-4000-8000-000000000003\"}"
+  },
+  {
+    "name": "hash_supplied",
+    "manifest": {
+      "manifestSchemaVersion": 1,
+      "importRequestId": "00000000-0000-4000-8000-000000000001",
+      "packageId": "00000000-0000-4000-8000-000000000002",
+      "workspaceId": "00000000-0000-4000-8000-000000000003",
+      "sourceSystem": "fixture_source",
+      "pipeline": {
+        "runId": "fixture-run-a",
+        "profileVersion": "fixture-profile-a"
+      },
+      "files": [
+        {
+          "fileKey": "source",
+          "path": "source/document.docx",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "sizeBytes": 100,
+          "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        }
+      ],
+      "sourceDocuments": [
+        {
+          "documentKey": "document-in-this-package",
+          "fileKey": "source",
+          "documentStableKey": null
+        }
+      ],
+      "questions": [
+        {
+          "itemKey": "local-item-a",
+          "identity": {
+            "mode": "one_shot_candidate",
+            "candidateId": "00000000-0000-4000-8000-000000000004",
+            "stableQuestionKey": null
+          },
+          "sourceDocumentKey": "document-in-this-package",
+          "sourceEvidence": {
+            "evidenceFileKeys": [
+              "source"
+            ],
+            "sourceBlockRefs": [],
+            "pageNumbers": []
+          },
+          "content": {
+            "contentSchemaVersion": 1,
+            "materialMarkdown": "",
+            "stemMarkdown": "集合 $\\textcircled{1}$",
+            "options": [
+              {
+                "label": "A",
+                "markdown": "$x \\in A$"
+              }
+            ],
+            "subquestions": [
+              "（1）保留原文编号"
+            ],
+            "answerMarkdown": "A",
+            "analysisMarkdown": "保留解析",
+            "teachingNoteMarkdown": "",
+            "media": [],
+            "titleMarkdown": "原题标题"
+          },
+          "contentHash": "860e0e989108ed97a5bf217912409d7afb01463cc270c696bf81527ef09bb6a4",
+          "classificationSuggestions": {
+            "subject": "数学",
+            "stage": null,
+            "grade": null,
+            "questionType": null,
+            "difficultyStars": null,
+            "tags": []
+          }
+        }
+      ]
+    },
+    "deliveryDigest": "f28366625b57998ea6a862c35707af7e82c74936e0c8645428df84357b5104c4",
+    "contentHash": "860e0e989108ed97a5bf217912409d7afb01463cc270c696bf81527ef09bb6a4",
+    "canonical": "{\"files\":[{\"fileKey\":\"source\",\"mediaType\":\"application/vnd.openxmlformats-officedocument.wordprocessingml.document\",\"path\":\"source/document.docx\",\"sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sizeBytes\":100}],\"importRequestId\":\"00000000-0000-4000-8000-000000000001\",\"manifestSchemaVersion\":1,\"packageId\":\"00000000-0000-4000-8000-000000000002\",\"pipeline\":{\"profileVersion\":\"fixture-profile-a\",\"runId\":\"fixture-run-a\"},\"questions\":[{\"classificationSuggestions\":{\"difficultyStars\":null,\"grade\":null,\"questionType\":null,\"stage\":null,\"subject\":\"数学\",\"tags\":[]},\"content\":{\"analysisMarkdown\":\"保留解析\",\"answerMarkdown\":\"A\",\"contentSchemaVersion\":1,\"materialMarkdown\":\"\",\"media\":[],\"options\":[{\"label\":\"A\",\"markdown\":\"$x \\\\in A$\"}],\"stemMarkdown\":\"集合 $\\\\textcircled{1}$\",\"subquestions\":[\"（1）保留原文编号\"],\"teachingNoteMarkdown\":\"\",\"titleMarkdown\":\"原题标题\"},\"contentHash\":\"860e0e989108ed97a5bf217912409d7afb01463cc270c696bf81527ef09bb6a4\",\"identity\":{\"candidateId\":\"00000000-0000-4000-8000-000000000004\",\"mode\":\"one_shot_candidate\",\"stableQuestionKey\":null},\"itemKey\":\"local-item-a\",\"sourceDocumentKey\":\"document-in-this-package\",\"sourceEvidence\":{\"evidenceFileKeys\":[\"source\"],\"pageNumbers\":[],\"sourceBlockRefs\":[]}}],\"sourceDocuments\":[{\"documentKey\":\"document-in-this-package\",\"documentStableKey\":null,\"fileKey\":\"source\"}],\"sourceSystem\":\"fixture_source\",\"workspaceId\":\"00000000-0000-4000-8000-000000000003\"}"
+  }
+]
