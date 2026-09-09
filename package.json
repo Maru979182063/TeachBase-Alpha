@@ -70,7 +70,7 @@
     "test:g5-import-live": "node tools/run_g5_canonical_import_live_gate.mjs",
     "test:g5-import-recovery": "node tools/run_g5_canonical_import_live_gate.mjs",
     "test:g5-workflow-contract": "python -m pytest tests/test_g5_canonical_import_contract.py -q",
-    "test:g5-canonical-import": "npm run test:java-comment-contract && npm run test:g5-v010-migration && npm run build:java-foundation && npm run test:g5-import-live && npm run test:g4-handout-live && npm run test:wp01-editor-working-draft && npm run test:question-governance-live && npm run test:release-seed-loader-live && npm run test:active-absolute-paths && npm run test:final-chain-foundation-integration && npm run test:g5-workflow-contract && python tools/build_g5_acceptance_evidence.py",
+    "test:g5-canonical-import": "npm run test:java-comment-contract && npm run test:g5-v010-migration && npm run build:java-foundation && npm run test:final-chain-foundation-integration && npm run test:g5-import-live && npm run test:g4-handout-live && npm run test:wp01-editor-working-draft && npm run test:question-governance-live && npm run test:release-seed-loader-live && npm run test:active-absolute-paths && npm run test:g5-workflow-contract && python tools/build_g5_acceptance_evidence.py",
     "final-chain:list": "python tools/final_chain_control.py list",
     "final-chain:plan": "python tools/final_chain_control.py plan",
     "final-chain:env-check": "python tools/final_chain_control.py env-check",
