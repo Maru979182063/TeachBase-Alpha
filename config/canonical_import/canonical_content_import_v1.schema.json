@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:teachbase:canonical-content-import:v1",
+  "title": "TeachBase Canonical Content Import Package v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion", "importRequest", "fileReferences", "sourceDocuments", "sourceRegions",
+    "questions", "standardModules", "taxonomyAssignments", "reviewIntents", "handout",
+    "lineage", "producerMetadata"
+  ],
+  "properties": {
+    "contractVersion": { "const": "teachbase.canonical-content-import.v1" },
+    "importRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packageKey", "producer"],
+      "properties": {
+        "packageKey": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "producer": { "type": "string", "minLength": 1, "maxLength": 160 }
+      }
+    },
+    "fileReferences": { "type": "array", "items": { "$ref": "#/$defs/fileReference" } },
+    "sourceDocuments": { "type": "array", "items": { "$ref": "#/$defs/sourceDocument" } },
+    "sourceRegions": { "type": "array", "items": { "$ref": "#/$defs/sourceRegion" } },
+    "questions": { "type": "array", "items": { "$ref": "#/$defs/question" } },
+    "standardModules": { "type": "array", "items": { "$ref": "#/$defs/standardModule" } },
+    "taxonomyAssignments": { "type": "array", "items": { "$ref": "#/$defs/taxonomyAssignment" } },
+    "reviewIntents": { "type": "array", "items": { "$ref": "#/$defs/reviewIntent" } },
+    "handout": { "$ref": "#/$defs/handout" },
+    "lineage": { "type": "object" },
+    "producerMetadata": { "type": "object" }
+  },
+  "$defs": {
+    "key": { "type": "string", "minLength": 1, "maxLength": 320 },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "fileReference": {
+      "type": "object",
+      "required": ["fileKey", "fileVersionId", "sha256"],
+      "properties": {
+        "fileKey": { "$ref": "#/$defs/key" },
+        "fileVersionId": { "type": "string", "format": "uuid" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "sourceDocument": {
+      "type": "object",
+      "required": ["sourceDocumentKey", "fileKey", "externalSourceKey", "sourceType", "subject", "title", "metadata"],
+      "properties": {
+        "sourceDocumentKey": { "$ref": "#/$defs/key" },
+        "fileKey": { "$ref": "#/$defs/key" },
+        "externalSourceKey": { "$ref": "#/$defs/key" },
+        "sourceType": { "type": "string", "minLength": 1 },
+        "subject": { "type": "string", "minLength": 1 },
+        "stage": { "type": "string" },
+        "grade": { "type": "string" },
+        "title": { "type": "string", "minLength": 1 },
+        "metadata": { "type": "object" }
+      }
+    },
+    "sourceRegion": {
+      "type": "object",
+      "required": ["sourceRegionKey", "sourceDocumentKey", "regionType", "sourceReference"],
+      "properties": {
+        "sourceRegionKey": { "$ref": "#/$defs/key" },
+        "sourceDocumentKey": { "$ref": "#/$defs/key" },
+        "regionType": { "type": "string", "minLength": 1 },
+        "pageNo": { "type": "integer", "minimum": 0 },
+        "orderIndex": { "type": "integer", "minimum": 0 },
+        "boundingBox": { "type": ["object", "null"] },
+        "extractedText": { "type": "string" },
+        "sourceReference": { "type": "object" },
+        "coverageRequired": { "type": "boolean" }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["evidenceKey", "sourceDocumentKey", "sourceReference"],
+      "properties": {
+        "evidenceKey": { "$ref": "#/$defs/key" },
+        "sourceDocumentKey": { "$ref": "#/$defs/key" },
+        "sourceRegionKey": { "$ref": "#/$defs/key" },
+        "sourceRole": { "type": "string" },
+        "sourceLabel": { "type": "string" },
+        "pageStart": { "type": "integer" },
+        "pageEnd": { "type": "integer" },
+        "sourceReference": { "type": "object" }
+      }
+    },
+    "question": {
+      "type": "object",
+      "required": ["questionKey", "sourceSystem", "sourceKey", "subject", "questionType", "stemMarkdown", "content", "provenance", "sources"],
+      "properties": {
+        "questionKey": { "$ref": "#/$defs/key" },
+        "sourceSystem": { "type": "string", "minLength": 1 },
+        "sourceKey": { "type": "string", "minLength": 1 },
+        "reviewStatus": { "enum": ["unreviewed", "pending_review"] },
+        "subject": { "type": "string", "minLength": 1 },
+        "questionType": { "type": "string", "minLength": 1 },
+        "stemMarkdown": { "type": "string", "minLength": 1 },
+        "content": { "type": "object" },
+        "provenance": { "type": "object" },
+        "sources": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/evidence" } }
+      }
+    },
+    "standardModule": {
+      "type": "object",
+      "required": ["moduleKey", "moduleType", "title", "subject", "schemaVersion", "content", "sources"],
+      "properties": {
+        "moduleKey": { "$ref": "#/$defs/key" },
+        "moduleType": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "subject": { "type": "string", "minLength": 1 },
+        "schemaVersion": { "type": "integer", "minimum": 1 },
+        "content": { "type": "object" },
+        "sources": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/evidence" } },
+        "files": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "taxonomyAssignment": {
+      "type": "object",
+      "required": ["assignmentKey", "targetType", "targetKey", "taxonomyVersionId", "codeOrAlias", "relationType", "assignmentSource"],
+      "properties": {
+        "assignmentKey": { "$ref": "#/$defs/key" },
+        "targetType": { "enum": ["question", "standard_module"] },
+        "targetKey": { "$ref": "#/$defs/key" },
+        "taxonomyVersionId": { "type": "string", "format": "uuid" },
+        "codeOrAlias": { "type": "string", "minLength": 1 },
+        "relationType": { "enum": ["primary", "secondary"] },
+        "assignmentSource": { "enum": ["human", "model", "import"] }
+      }
+    },
+    "reviewIntent": {
+      "type": "object",
+      "required": ["intentKey", "targetType", "targetKey"],
+      "properties": {
+        "intentKey": { "$ref": "#/$defs/key" },
+        "targetType": { "enum": ["question", "standard_module"] },
+        "targetKey": { "$ref": "#/$defs/key" },
+        "assignedTo": { "type": "string", "format": "uuid" }
+      }
+    },
+    "occurrence": {
+      "type": "object",
+      "required": ["occurrenceKey", "positionIndex", "kind", "attributes", "sources"],
+      "properties": {
+        "occurrenceKey": { "$ref": "#/$defs/key" },
+        "parentOccurrenceKey": { "type": ["string", "null"] },
+        "positionIndex": { "type": "integer", "minimum": 0 },
+        "kind": { "enum": ["container", "question", "standard_module", "ordinary_content"] },
+        "questionKey": { "$ref": "#/$defs/key" },
+        "moduleKey": { "$ref": "#/$defs/key" },
+        "localContent": { "type": "object" },
+        "attributes": { "type": "object" },
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/evidence" } }
+      }
+    },
+    "edition": {
+      "type": "object",
+      "required": ["editionKey", "editionRole", "schemaVersion", "projectionRules", "delta", "occurrences"],
+      "properties": {
+        "editionKey": { "$ref": "#/$defs/key" },
+        "editionRole": { "enum": ["canonical", "projection"] },
+        "canonicalTeacherEditionKey": { "type": ["string", "null"] },
+        "schemaVersion": { "type": "integer", "minimum": 1 },
+        "projectionRules": { "type": "object" },
+        "delta": { "type": "object" },
+        "occurrences": { "type": "array", "items": { "$ref": "#/$defs/occurrence" } }
+      }
+    },
+    "handout": {
+      "type": "object",
+      "required": ["editorDocumentKey", "documentKind", "title", "schemaVersion", "masterDoc", "versionOverrides", "editions", "artifacts"],
+      "properties": {
+        "editorDocumentKey": { "$ref": "#/$defs/key" },
+        "documentKind": { "enum": ["synchronized_handout", "independent_question_pack"] },
+        "title": { "type": "string", "minLength": 1 },
+        "schemaVersion": { "const": 1 },
+        "masterDoc": { "type": "object" },
+        "versionOverrides": { "type": "array", "minItems": 3, "maxItems": 3 },
+        "editions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/edition" } },
+        "artifacts": { "type": "array", "items": { "type": "object" } }
+      }
+    }
+  }
+}

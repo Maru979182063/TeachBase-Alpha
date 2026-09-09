@@ -36,6 +36,10 @@ springdoc:
     enabled: false
 
 teachbase:
+  canonical-import:
+    # 生产环境默认禁止请求触发故障；仅验收进程通过显式环境变量开启。
+    fault-injection-enabled: ${TEACHBASE_CANONICAL_IMPORT_FAULT_INJECTION_ENABLED:false}
+    lease-duration: ${TEACHBASE_CANONICAL_IMPORT_LEASE_DURATION:2m}
   editor:
     working-draft:
       enabled: ${TEACHBASE_EDITOR_WORKING_DRAFT_ENABLED:true}

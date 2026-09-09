@@ -10,6 +10,7 @@ import com.teachbase.server.audit.api.AuditTrail;
 import com.teachbase.server.editor.api.EditorRevisionDirectory;
 import com.teachbase.server.handout.api.CreateHandoutCompositionRequest;
 import com.teachbase.server.handout.api.HandoutCompositionResponse;
+import com.teachbase.server.handout.api.HandoutCompositionImporter;
 import com.teachbase.server.handout.api.HandoutEditionInput;
 import com.teachbase.server.handout.api.HandoutOccurrenceInput;
 import com.teachbase.server.identity.api.ActorNotWorkspaceMemberException;
@@ -40,7 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 本服务不创建题目、模块或 editor revision，也不会修改 WP-01 working draft。
  */
 @Service
-public class HandoutCompositionService {
+public class HandoutCompositionService implements HandoutCompositionImporter {
 
     private static final Set<String> KINDS = Set.of(
             "container", "question", "standard_module", "ordinary_content");
@@ -89,6 +90,12 @@ public class HandoutCompositionService {
                         "editionCount", response.editions().size(), "occurrenceCount", occurrences,
                         "artifactCount", response.artifactCount())));
         return response;
+    }
+
+    @Override
+    public HandoutCompositionResponse importComposition(
+            UUID editorDocumentId, UUID editorRevisionId, CreateHandoutCompositionRequest request) {
+        return create(editorDocumentId, editorRevisionId, request);
     }
 
     private List<ResolvedHandoutEdition> resolveEditions(CreateHandoutCompositionRequest request) {

@@ -15,6 +15,7 @@ import com.teachbase.server.standardmodule.api.CreateStandardModuleRevisionReque
 import com.teachbase.server.standardmodule.api.LinkStandardModuleFileRequest;
 import com.teachbase.server.standardmodule.api.LinkStandardModuleSourceRequest;
 import com.teachbase.server.standardmodule.api.StandardModuleLinkResponse;
+import com.teachbase.server.standardmodule.api.StandardModuleImporter;
 import com.teachbase.server.standardmodule.api.StandardModuleResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -31,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
  * module type 属于稳定身份，不能在修订时偷偷改变。
  */
 @Service
-public class StandardModuleService {
+public class StandardModuleService implements StandardModuleImporter {
 
     private final WorkspaceDirectory workspaces;
     private final StandardModuleRepository modules;
@@ -59,6 +60,21 @@ public class StandardModuleService {
         var result = modules.create(input);
         if (result.createdRevision()) audit(request.workspaceId(), request.actorUserId(), result, "standard_module.created");
         return result;
+    }
+
+    @Override
+    public StandardModuleResponse importModule(CreateStandardModuleRequest request) {
+        return create(request);
+    }
+
+    @Override
+    public StandardModuleLinkResponse importSource(UUID revisionId, LinkStandardModuleSourceRequest request) {
+        return linkSource(revisionId, request);
+    }
+
+    @Override
+    public StandardModuleLinkResponse importFile(UUID revisionId, LinkStandardModuleFileRequest request) {
+        return linkFile(revisionId, request);
     }
 
     @Transactional

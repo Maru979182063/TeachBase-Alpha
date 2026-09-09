@@ -6,6 +6,9 @@ import static com.teachbase.jooq.tables.FileVersion.FILE_VERSION;
 import com.teachbase.server.fileasset.application.FileAssetRepository;
 import com.teachbase.server.fileasset.application.FileRegistration;
 import com.teachbase.server.fileasset.application.RegisterFileCommand;
+import com.teachbase.server.fileasset.api.FileVersionDescriptor;
+import com.teachbase.server.fileasset.api.FileVersionDirectory;
+import java.util.List;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,7 +21,7 @@ import org.springframework.stereotype.Repository;
  *
  * 英文术语对照：jOOQ adapter whose unique constraints arbitrate concurrent checksum registration.
  */
-class JooqFileAssetRepository implements FileAssetRepository {
+class JooqFileAssetRepository implements FileAssetRepository, FileVersionDirectory {
 
     private final DSLContext database;
 
@@ -106,5 +109,28 @@ class JooqFileAssetRepository implements FileAssetRepository {
                 command.sizeBytes(),
                 command.sha256(),
                 true);
+    }
+
+    @Override
+    public List<FileVersionDescriptor> findAll(UUID workspaceId, List<UUID> fileVersionIds) {
+        if (fileVersionIds == null || fileVersionIds.isEmpty()) return List.of();
+        var records = database.select(
+                        FILE_VERSION.FILE_VERSION_ID,
+                        FILE_VERSION.WORKSPACE_ID,
+                        FILE_VERSION.STORAGE_KEY,
+                        FILE_VERSION.MEDIA_TYPE,
+                        FILE_VERSION.SIZE_BYTES,
+                        FILE_VERSION.SHA256)
+                .from(FILE_VERSION)
+                .where(FILE_VERSION.WORKSPACE_ID.eq(workspaceId))
+                .and(FILE_VERSION.FILE_VERSION_ID.in(fileVersionIds))
+                .fetchMap(FILE_VERSION.FILE_VERSION_ID);
+        return fileVersionIds.stream().distinct().filter(records::containsKey).map(id -> {
+            var record = records.get(id);
+            return new FileVersionDescriptor(
+                    id, workspaceId, record.get(FILE_VERSION.STORAGE_KEY),
+                    record.get(FILE_VERSION.MEDIA_TYPE), record.get(FILE_VERSION.SIZE_BYTES),
+                    record.get(FILE_VERSION.SHA256));
+        }).toList();
     }
 }
