@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "status": "G4_FOUNDATION_LOCAL_COMPLETE",
+  "base": {
+    "branch": "integration/repository-scope-clean-20260715",
+    "sha": "61fd6438d944484bf6d07bb0fed5ed71e055f8ab"
+  },
+  "implementation": {
+    "branch": "backend/g4-handout-content-asset-foundation",
+    "testedSha": "ffb8b2e43f734f7ca2fb5be983213bbc4cabbd54",
+    "commitSubject": "feat(backend): add handout content composition foundation",
+    "changedFileCount": 73
+  },
+  "commands": [
+    {
+      "command": "npm run test:g4-handout-foundation",
+      "exitCode": 0,
+      "summary": "complete G4, V009, Java, WP-01, editor, question, Release Seed and renderer gate"
+    },
+    {
+      "command": "npm run test:g4-v009-migration",
+      "exitCode": 0,
+      "passed": 6,
+      "total": 6,
+      "report": "docs/reports/g4_v009_migration_gate.json"
+    },
+    {
+      "command": "npm run test:g4-handout-live",
+      "exitCode": 0,
+      "passed": 23,
+      "total": 23,
+      "report": "docs/reports/g4_handout_foundation_live_gate.json"
+    },
+    {
+      "command": "npm run test:wp01-editor-working-draft",
+      "exitCode": 0,
+      "passed": 21,
+      "total": 21,
+      "report": "docs/reports/wp01_editor_working_draft_gate_20260902.json"
+    },
+    {
+      "command": "npm run test:release-seed-loader-live",
+      "exitCode": 0,
+      "report": "docs/reports/release_seed_loader_live_gate_20260901.json"
+    },
+    {
+      "command": "npm run test:active-absolute-paths",
+      "exitCode": 0,
+      "activeAbsolutePathCount": 0
+    },
+    {
+      "command": "python PyYAML workflow parse",
+      "exitCode": 0,
+      "summary": "all .github/workflows/*.yml parsed"
+    },
+    {
+      "command": "G4 fixture generators with explicit source and SHA-256 comparison",
+      "exitCode": 0,
+      "englishFixtureSha256": "381654aead826ce0e329b27c9bce10ba55e60419c17bebdb59e101cb7869bf28",
+      "circleFixtureSha256": "774dde518ebaf8903176948a0114a6ef0092376a66ca532ecd687a533b71fcad"
+    }
+  ],
+  "golden": {
+    "english": {
+      "sourceBlocks": 439,
+      "questionOccurrences": 63,
+      "uniqueQuestionRevisions": 60,
+      "standardModules": 3,
+      "questionContainers": 4,
+      "studentProjectionRevisions": 1,
+      "duplicatedStudentQuestionAssets": 0,
+      "tableRegions": 4,
+      "imageFileReferences": 9
+    },
+    "circle": {
+      "sourceBlocks": 320,
+      "questionOccurrences": 31,
+      "uniqueQuestionRevisions": 31,
+      "standardModules": 3
+    }
+  },
+  "regressions": {
+    "javaChineseCommentCoverage": "255/255",
+    "wp01": "21/21",
+    "editorBackend": "passed",
+    "questionGovernance": "passed",
+    "releaseSeedContractUnchanged": true,
+    "htmlMathMl": "passed",
+    "docxNativeOmml": "passed",
+    "pdf": "passed",
+    "temporaryArtifactResidue": 0
+  },
+  "scope": {
+    "bulkHandoutIngestion": false,
+    "importContractExpansion": false,
+    "releaseSeedContractExpansion": false,
+    "riskAutoPromotion": false,
+    "unifiedSearch": false,
+    "recommendationOrAiGeneration": false,
+    "productionPipelineChanges": false
+  },
+  "openGates": [
+    "BLOCKS_TAG_SCHEMA_AND_SEARCH",
+    "G4_COMPOSITION_EXPORT_ADAPTER",
+    "PRODUCTION_CAPACITY_AND_MIGRATION_DRILL"
+  ],
+  "portability": {
+    "absoluteLocalPathAsInputContract": false
+  }
+}

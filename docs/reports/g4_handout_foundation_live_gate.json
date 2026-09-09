@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-09T06:17:10.258Z",
+  "status": "passed",
+  "database": {
+    "engine": "PostgreSQL",
+    "version": "18.4"
+  },
+  "acceptance": {
+    "passed": 23,
+    "total": 23,
+    "checks": {
+      "standardModuleFirstClassAsset": true,
+      "immutableModuleRevisionAndApprovalPointer": true,
+      "moduleReviewPassed": true,
+      "moduleTaxonomyAndSourceLinksPassed": true,
+      "questionMultipleCanonicalSourcesPassed": true,
+      "canonicalAndPlacementProvenanceSeparated": true,
+      "unifiedOccurrenceKindsPassed": true,
+      "stableOccurrenceIdentityPassed": true,
+      "repeatedAssetRevisionOccurrencePassed": true,
+      "teacherCanonicalCompositionPassed": true,
+      "studentProjectionPinnedPassed": true,
+      "editorArtifactStrongReferencesPassed": true,
+      "english439BlocksCoveredExactlyOnce": true,
+      "english63OccurrencesUse60QuestionRevisions": true,
+      "englishThreeModulesAndFourContainersDistinct": true,
+      "circle320BlocksAnd31QuestionsPassed": true,
+      "wp01DraftRevisionSnapshotUnchanged": true,
+      "standardModuleRevisionContentMutationRejected": true,
+      "immutableCompositionMutationRejected": true,
+      "crossWorkspaceCompositionRejected": true,
+      "concurrentCompositionExactlyOneCreator": true,
+      "compositionPayloadConflictFailsClosed": true,
+      "artifactPayloadConflictFailsClosed": true
+    }
+  },
+  "english": {
+    "sourceBlocks": 439,
+    "questionOccurrences": 63,
+    "uniqueQuestionRevisions": 60,
+    "approvedStandardModules": 3,
+    "questionContainers": 4,
+    "studentProjectionRevisions": 1,
+    "duplicatedStudentQuestionAssets": 0,
+    "tableStorage": 4,
+    "imageFileReferences": 9
+  },
+  "circle": {
+    "sourceBlocks": 320,
+    "questionOccurrences": 31,
+    "uniqueQuestionRevisions": 31,
+    "approvedStandardModules": 3
+  },
+  "richContent": {
+    "storageGate": "passed",
+    "rendererGate": "separate_existing_regression_required"
+  },
+  "cleanup": "passed"
+}

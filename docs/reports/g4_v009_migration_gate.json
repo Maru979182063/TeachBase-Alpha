@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-09T06:16:33.889Z",
+  "status": "passed",
+  "database": {
+    "engine": "PostgreSQL",
+    "version": "18.4"
+  },
+  "migrations": {
+    "fresh": "V001->V009",
+    "upgrade": "V008->V009"
+  },
+  "acceptance": {
+    "passed": 6,
+    "total": 6,
+    "checks": {
+      "freshMigrationPassed": true,
+      "upgradeMigrationPassed": true,
+      "existingRevisionAndWorkingDraftUnchanged": true,
+      "legacySourceEvidenceBackfilled": true,
+      "multipleQuestionSourceEvidenceAllowed": true,
+      "g4TablesPresent": true
+    }
+  },
+  "cleanup": "passed"
+}
