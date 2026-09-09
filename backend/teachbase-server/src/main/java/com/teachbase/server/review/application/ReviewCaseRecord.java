@@ -11,8 +11,11 @@ import java.util.UUID;
 public record ReviewCaseRecord(
         UUID reviewCaseId,
         UUID workspaceId,
+        String targetType,
         UUID questionId,
         UUID questionRevisionId,
+        UUID standardModuleId,
+        UUID standardModuleRevisionId,
         String expectedContentHash,
         String status,
         UUID assignedTo,

@@ -2,6 +2,7 @@ package com.teachbase.server.taxonomy.application;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.teachbase.server.taxonomy.api.QuestionTaxonomyLinkResponse;
+import com.teachbase.server.taxonomy.api.StandardModuleTaxonomyLinkResponse;
 import com.teachbase.server.taxonomy.api.TaxonomyNodeResponse;
 import com.teachbase.server.taxonomy.api.TaxonomyVersionResponse;
 import java.math.BigDecimal;
@@ -30,5 +31,9 @@ public interface TaxonomyRepository {
 
     QuestionTaxonomyLinkResponse assign(
             UUID workspaceId, UUID actorUserId, UUID questionId, UUID questionRevisionId,
+            UUID taxonomyNodeId, String relationType, String assignmentSource, BigDecimal confidence);
+
+    StandardModuleTaxonomyLinkResponse assignStandardModule(
+            UUID workspaceId, UUID actorUserId, UUID standardModuleId, UUID standardModuleRevisionId,
             UUID taxonomyNodeId, String relationType, String assignmentSource, BigDecimal confidence);
 }

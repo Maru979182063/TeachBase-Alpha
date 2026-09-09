@@ -18,4 +18,6 @@ public interface TaxonomyCatalog {
     TaxonomyNodeResponse resolve(ResolveTaxonomyNodeRequest request);
 
     QuestionTaxonomyLinkResponse assign(AssignQuestionTaxonomyRequest request);
+
+    StandardModuleTaxonomyLinkResponse assignStandardModule(AssignStandardModuleTaxonomyRequest request);
 }

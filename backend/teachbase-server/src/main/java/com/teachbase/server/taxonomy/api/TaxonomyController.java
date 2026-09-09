@@ -61,4 +61,10 @@ class TaxonomyController {
             @Valid @RequestBody AssignQuestionTaxonomyRequest request) {
         return ResponseEntity.ok(service.assign(request));
     }
+
+    @PostMapping("/standard-module-assignments")
+    ResponseEntity<StandardModuleTaxonomyLinkResponse> assignStandardModule(
+            @Valid @RequestBody AssignStandardModuleTaxonomyRequest request) {
+        return ResponseEntity.ok(service.assignStandardModule(request));
+    }
 }

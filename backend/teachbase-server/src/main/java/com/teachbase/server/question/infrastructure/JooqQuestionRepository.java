@@ -354,15 +354,29 @@ class JooqQuestionRepository implements
                 .set(QUESTION_SOURCE_LINK.QUESTION_ID, command.questionId())
                 .set(QUESTION_SOURCE_LINK.QUESTION_REVISION_ID, command.questionRevisionId())
                 .set(QUESTION_SOURCE_LINK.WORKSPACE_ID, command.workspaceId())
+                .set(QUESTION_SOURCE_LINK.SOURCE_EVIDENCE_KEY, command.sourceEvidenceKey())
                 .set(QUESTION_SOURCE_LINK.SOURCE_DOCUMENT_ID, command.sourceDocumentId())
                 .set(QUESTION_SOURCE_LINK.SOURCE_REGION_ID, command.sourceRegionId())
                 .set(QUESTION_SOURCE_LINK.SOURCE_LABEL, command.sourceLabel())
                 .set(QUESTION_SOURCE_LINK.SOURCE_PAGE_START, command.sourcePageStart())
                 .set(QUESTION_SOURCE_LINK.SOURCE_PAGE_END, command.sourcePageEnd())
                 .set(QUESTION_SOURCE_LINK.SOURCE_REF_JSON, json(command.sourceReference()))
-                .onConflict(QUESTION_SOURCE_LINK.QUESTION_REVISION_ID)
+                .onConflict(QUESTION_SOURCE_LINK.QUESTION_REVISION_ID, QUESTION_SOURCE_LINK.SOURCE_EVIDENCE_KEY)
                 .doNothing()
                 .execute();
+        var stored = database.selectFrom(QUESTION_SOURCE_LINK)
+                .where(QUESTION_SOURCE_LINK.QUESTION_REVISION_ID.eq(command.questionRevisionId()))
+                .and(QUESTION_SOURCE_LINK.SOURCE_EVIDENCE_KEY.eq(command.sourceEvidenceKey()))
+                .fetchOne();
+        if (stored == null) throw new IllegalStateException("question_source_link_failed");
+        if (!java.util.Objects.equals(stored.getSourceDocumentId(), command.sourceDocumentId())
+                || !java.util.Objects.equals(stored.getSourceRegionId(), command.sourceRegionId())
+                || !java.util.Objects.equals(stored.getSourceLabel(), command.sourceLabel())
+                || !java.util.Objects.equals(stored.getSourcePageStart(), command.sourcePageStart())
+                || !java.util.Objects.equals(stored.getSourcePageEnd(), command.sourcePageEnd())
+                || !parse(stored.getSourceRefJson()).equals(command.sourceReference())) {
+            throw new IllegalStateException("question_source_evidence_conflict");
+        }
     }
 
     @Override

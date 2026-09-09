@@ -12,10 +12,18 @@ import java.util.UUID;
  */
 public interface ReviewRepository {
 
-    ReviewCaseRecord open(
+    ReviewCaseRecord openQuestion(
             UUID workspaceId,
             UUID questionId,
             UUID questionRevisionId,
+            String expectedContentHash,
+            UUID assignedTo,
+            UUID openedBy);
+
+    ReviewCaseRecord openStandardModule(
+            UUID workspaceId,
+            UUID standardModuleId,
+            UUID standardModuleRevisionId,
             String expectedContentHash,
             UUID assignedTo,
             UUID openedBy);

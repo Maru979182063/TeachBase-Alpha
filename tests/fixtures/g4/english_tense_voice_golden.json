@@ -1,0 +1,6194 @@
+{
+  "schema": "teachbase.g4-handout-golden.v1",
+  "documentKey": "english_tense_voice_secret_weapon_teacher",
+  "title": "时态语态秘密武器",
+  "source": {
+    "logicalName": "时态语态秘密武器-教师版.docx",
+    "sha256": "b102060aca7e36514dea2a56ca2cd2f178b2060ba55b4ffad9c96f9b7d737fd3",
+    "contentBlockCount": 439,
+    "paragraphCount": 435,
+    "tableCount": 4,
+    "imageOccurrences": 9
+  },
+  "blocks": [
+    {
+      "blockId": "B000",
+      "sourceIndex": 0,
+      "kind": "paragraph",
+      "xmlSha256": "12888e2e8383e0eb87b58caf6b6a3abb029eecb8d79fd49367e6aa18d4557839",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B001",
+      "sourceIndex": 1,
+      "kind": "paragraph",
+      "xmlSha256": "ec654273c840b77457c56e32fb1f9ff0d6e1c20d7f0672c40694ffafc8875467",
+      "imageCount": 1
+    },
+    {
+      "blockId": "B002",
+      "sourceIndex": 2,
+      "kind": "paragraph",
+      "xmlSha256": "4c308bb4e69de07adbb2d6374d60a140afd848ed5cf7fbf2cd2e3290e06686f7",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B003",
+      "sourceIndex": 3,
+      "kind": "paragraph",
+      "xmlSha256": "72e25e1ab19fea7cafe413460dfc4b7ed074aca832b92e8ea1845a910ab14ea4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B004",
+      "sourceIndex": 4,
+      "kind": "paragraph",
+      "xmlSha256": "e436fc1ee3d251aff4a4dd5572e22ef8f2bd3e20bc4a26f906ea6c22b66677db",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B005",
+      "sourceIndex": 5,
+      "kind": "paragraph",
+      "xmlSha256": "b248caa7820c96c7ba8d612b138a502e8714f2675086547fe635c839407c3aa9",
+      "imageCount": 1
+    },
+    {
+      "blockId": "B006",
+      "sourceIndex": 6,
+      "kind": "paragraph",
+      "xmlSha256": "2dc7a0a6772871ad5959b0d1d63e1f40fea78cb240028aac9831afd1bf629866",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B007",
+      "sourceIndex": 7,
+      "kind": "paragraph",
+      "xmlSha256": "2e11c9d20b80c92431213fb636926a07bed8a6b645552ad0ede3475cfb3ea1c6",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B008",
+      "sourceIndex": 8,
+      "kind": "paragraph",
+      "xmlSha256": "066dc041491b72e4bd3bd452cc1d4ba341636d79faaa1cdaa6a6590ee17bc75f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B009",
+      "sourceIndex": 9,
+      "kind": "paragraph",
+      "xmlSha256": "9d88a2e8ef5247fcb74fe4fd568c08d4c64b12fcef3818802555adc7dfb8db60",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B010",
+      "sourceIndex": 10,
+      "kind": "paragraph",
+      "xmlSha256": "846dcc47a6c18404d736328e113fc474b647ee108bd2dc86d0f8bb90ee5d6741",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B011",
+      "sourceIndex": 11,
+      "kind": "paragraph",
+      "xmlSha256": "d42d5261fcc947fa9b3a613447b1b33377e62bae933684a3a39a5c14cfa007fc",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B012",
+      "sourceIndex": 12,
+      "kind": "paragraph",
+      "xmlSha256": "873bdbf8680e9b4243310a564ee1de1931b094302b226ada7c5e24a5749890d1",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B013",
+      "sourceIndex": 13,
+      "kind": "paragraph",
+      "xmlSha256": "e4024ac95cb26d2c8b83c28c0ddd9434d3f933fb5463a0fc33f6bc628bce1da8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B014",
+      "sourceIndex": 14,
+      "kind": "table",
+      "xmlSha256": "bd5cefa9a05ce7db01e886b9f44f04db7dc0381226ccc105fd232ae8df01598b",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B015",
+      "sourceIndex": 15,
+      "kind": "paragraph",
+      "xmlSha256": "ae60ef8cb44986166064990d5044e987051654041e4e9b390a298b2c73548019",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B016",
+      "sourceIndex": 16,
+      "kind": "paragraph",
+      "xmlSha256": "2dfef5c6aa92accb818476df9540af7952d658025acfdc8875f0998a13df0ada",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B017",
+      "sourceIndex": 17,
+      "kind": "table",
+      "xmlSha256": "d81a5e91bdcbd449076f80575a4c082647253c9c058421ddb6f4ff25027dd6b8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B018",
+      "sourceIndex": 18,
+      "kind": "paragraph",
+      "xmlSha256": "5e9d172cfa8f968869e341528871c455bede61c3308219c62d010d90385df41f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B019",
+      "sourceIndex": 19,
+      "kind": "paragraph",
+      "xmlSha256": "df4b441cf213a43cd546804c0694f71191dc8e73628649951e753c285fe3b993",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B020",
+      "sourceIndex": 20,
+      "kind": "paragraph",
+      "xmlSha256": "d9edffe20d57b7d73448d84a3511aaef86fec2f5d6738e6a4bc3a026bd3dc352",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B021",
+      "sourceIndex": 21,
+      "kind": "paragraph",
+      "xmlSha256": "2a593772db97586df2e6f84ee1907a71c5583a77eeebf8a824be91349cd8c7bd",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B022",
+      "sourceIndex": 22,
+      "kind": "paragraph",
+      "xmlSha256": "50b6e4623621bb231f9633b10a40cc46b6791da15039022728fee6dd6eca7386",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B023",
+      "sourceIndex": 23,
+      "kind": "paragraph",
+      "xmlSha256": "0c4bd20693373b586e13269588cd0e4f5b96167391576cc67606da4031604b01",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B024",
+      "sourceIndex": 24,
+      "kind": "paragraph",
+      "xmlSha256": "4c7500f487f228781c812eaed07cf9bb8e0761fd9ac38e3684e455bd7ecd647e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B025",
+      "sourceIndex": 25,
+      "kind": "paragraph",
+      "xmlSha256": "29cbedc0ca0697226984a3467870195c130561e557bb048b33aa3a7de3510025",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B026",
+      "sourceIndex": 26,
+      "kind": "paragraph",
+      "xmlSha256": "2b5580fcfb3f1e5d4fac05e8b1a4ee1c5c20368a01296703730c5cca37e027b4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B027",
+      "sourceIndex": 27,
+      "kind": "paragraph",
+      "xmlSha256": "f42138d08f2b4eba16050ed16dd12a4a0a8a9b51066c5edb2ab79850dc779af5",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B028",
+      "sourceIndex": 28,
+      "kind": "paragraph",
+      "xmlSha256": "8afda00aa577fea0e59a6adcaf3e7714cd39fcc57173cbf8b65ee18f7d8e9c7b",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B029",
+      "sourceIndex": 29,
+      "kind": "paragraph",
+      "xmlSha256": "807706b49416739a171e7af1e6db234562d04a47ac8d31a778b82e62f3abdeda",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B030",
+      "sourceIndex": 30,
+      "kind": "paragraph",
+      "xmlSha256": "c010235daa8d5cdaa0780e8b5f1c7de7707441e17faa5670cf0a754eff317c18",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B031",
+      "sourceIndex": 31,
+      "kind": "paragraph",
+      "xmlSha256": "c07256cd4c22cc25f4afaec74bf687b71c485e467454813d1e41d550aaac8be3",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B032",
+      "sourceIndex": 32,
+      "kind": "paragraph",
+      "xmlSha256": "d24c659b59d1bd03574c0e1f8728a4e29deac8d690bc65ded999fbc2303db41e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B033",
+      "sourceIndex": 33,
+      "kind": "paragraph",
+      "xmlSha256": "6a2da78cb2da3f458d108213209e98992431c3820a694b64a19815d45af44319",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B034",
+      "sourceIndex": 34,
+      "kind": "paragraph",
+      "xmlSha256": "a370d4ca8f0bd88fba9753d0820c4a161e166cdfe588a43e185d6ba82d890f32",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B035",
+      "sourceIndex": 35,
+      "kind": "paragraph",
+      "xmlSha256": "0394aa4b5bf5e5856bfbaa084d51df93ea53c225550b2331631206809b442a67",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B036",
+      "sourceIndex": 36,
+      "kind": "paragraph",
+      "xmlSha256": "90e211e8f1e90a015cb54adc3a7c27eb9677d9e58c531c16a4e3ee75d3ce8ea8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B037",
+      "sourceIndex": 37,
+      "kind": "paragraph",
+      "xmlSha256": "e2044ad1d8449573a0cb964cb4901b6ed674eb5e7a4077a10f64bf734230be30",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B038",
+      "sourceIndex": 38,
+      "kind": "paragraph",
+      "xmlSha256": "b03800f68c82c56a12c04c12d37fa2715f7914bdb0ad15b5f9c123a0c15cdcc3",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B039",
+      "sourceIndex": 39,
+      "kind": "paragraph",
+      "xmlSha256": "ca1a2a3ae89f28144fb0f151c3db1048c0583f5bb2dac25323575e2c12335124",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B040",
+      "sourceIndex": 40,
+      "kind": "paragraph",
+      "xmlSha256": "9f83d3bb02dd4aceb5e22a4e599f13c889292ebd42434e9b642091a3f811674a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B041",
+      "sourceIndex": 41,
+      "kind": "paragraph",
+      "xmlSha256": "72d60db799591d4056e43a570b41c8bb6536cac2541803d998b5a38c15af43fd",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B042",
+      "sourceIndex": 42,
+      "kind": "paragraph",
+      "xmlSha256": "dfb01bdda96b89d00eed9bb0b9593772b7a16989e07702972230006bb164b36f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B043",
+      "sourceIndex": 43,
+      "kind": "paragraph",
+      "xmlSha256": "edb6b56cdc3ba19f72e658c988d4e64ac2628dddead39082b8b69b14519f0464",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B044",
+      "sourceIndex": 44,
+      "kind": "paragraph",
+      "xmlSha256": "847b2aa872237d366ee22b8a217c593d0238ee06add14eeab41e3ab6f77dc164",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B045",
+      "sourceIndex": 45,
+      "kind": "paragraph",
+      "xmlSha256": "cf4bfc06f7b50437c95e04acc5fb5d74075290bd5d5ad8a010dd3edd91fc4793",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B046",
+      "sourceIndex": 46,
+      "kind": "table",
+      "xmlSha256": "fe100514917ceba0fdfa3e768bbb8f563da10c3d361f5d513cdeece38699d083",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B047",
+      "sourceIndex": 47,
+      "kind": "paragraph",
+      "xmlSha256": "fb361b3a173bc20a3956ef1f8858e621be26ecc67eb2f7e9304db91f514e4cac",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B048",
+      "sourceIndex": 48,
+      "kind": "paragraph",
+      "xmlSha256": "76709ef0502048ba37affd2ffd27506980dbd47b1353d833a387b62549e1a74b",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B049",
+      "sourceIndex": 49,
+      "kind": "table",
+      "xmlSha256": "9d7f040b279838cc421b305ce8c08562e8db45bf347bcf1ae175730879d385f8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B050",
+      "sourceIndex": 50,
+      "kind": "paragraph",
+      "xmlSha256": "19c048cc9f0d4319b6ad7e1d6b80f4b985b96c25081541e09e75cd4b0c991851",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B051",
+      "sourceIndex": 51,
+      "kind": "paragraph",
+      "xmlSha256": "2e1fc1f0c11ff051b48d75119968441e2f4edbf6a51e213e37345c450cdc0c11",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B052",
+      "sourceIndex": 52,
+      "kind": "paragraph",
+      "xmlSha256": "629ec886ee003d79995134b2b0ab8219898c303faa2a37c26bc60c3699f5f5ee",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B053",
+      "sourceIndex": 53,
+      "kind": "paragraph",
+      "xmlSha256": "9cf25c667994675b845a38028f29f00c29c20396b473500811f092ded2898217",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B054",
+      "sourceIndex": 54,
+      "kind": "paragraph",
+      "xmlSha256": "4b73acef0e27d5f61d1b42b4d104699ec4b5b5135831f4b90c5243ca553e0abe",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B055",
+      "sourceIndex": 55,
+      "kind": "paragraph",
+      "xmlSha256": "f714771fc5f05bc40b7d3a9295145038db515cc6546fdf4325945f09349d52c7",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B056",
+      "sourceIndex": 56,
+      "kind": "paragraph",
+      "xmlSha256": "ef75c13faa36c7bda5770c6297d919412516e4feaa9d06d371f0770955ac8c66",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B057",
+      "sourceIndex": 57,
+      "kind": "paragraph",
+      "xmlSha256": "502fd87b56c2bb99e2f09cec2f1641d8c76889e81e5eaa2501e26cfec5a0bbcb",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B058",
+      "sourceIndex": 58,
+      "kind": "paragraph",
+      "xmlSha256": "012a17c845da128256a044f225f10230a7fe17a0179e61d39a2159c9e56137f5",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B059",
+      "sourceIndex": 59,
+      "kind": "paragraph",
+      "xmlSha256": "2f2d10518b5327a6d99c741c70ddb3cc6b219f226eb5929bff7f935ae248256e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B060",
+      "sourceIndex": 60,
+      "kind": "paragraph",
+      "xmlSha256": "c98e0ca40694f8cf9ebaa41ad756ed615c46ee93c6991cc411a1cfa0db58a9ec",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B061",
+      "sourceIndex": 61,
+      "kind": "paragraph",
+      "xmlSha256": "0366489b44d500d2512395b3bccacd2c37580d8e88f1c2961db98b925c530972",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B062",
+      "sourceIndex": 62,
+      "kind": "paragraph",
+      "xmlSha256": "ed31f4aaa7000ad4675b2e0dfc11e6b319485b34c3313707e6c38d7f2fedb08c",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B063",
+      "sourceIndex": 63,
+      "kind": "paragraph",
+      "xmlSha256": "c12f5d930359adec1db3608cfcdce348158b428992a491e34728ece371e27cf6",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B064",
+      "sourceIndex": 64,
+      "kind": "paragraph",
+      "xmlSha256": "10d7591399e354c846fb0225cadac5364f6ed7c72d6005c4c996e4227afebc1f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B065",
+      "sourceIndex": 65,
+      "kind": "paragraph",
+      "xmlSha256": "52efa7ff05806faa33411d771bdbc219c2e1f32cbe9e3760f5c884209f3f728c",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B066",
+      "sourceIndex": 66,
+      "kind": "paragraph",
+      "xmlSha256": "8988e7f38f31109461a79f1f5c8ab12c35009a73093394b25b00aa42f55e56e9",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B067",
+      "sourceIndex": 67,
+      "kind": "paragraph",
+      "xmlSha256": "f5fee5614ad59d7b2c752ec962c26b7a971b65121271423851e2fac7cd3325fe",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B068",
+      "sourceIndex": 68,
+      "kind": "paragraph",
+      "xmlSha256": "f48e56b29f7622f5fd04b66a19a304a75a6b91f5b91b0a959b9dfe877b5a793f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B069",
+      "sourceIndex": 69,
+      "kind": "paragraph",
+      "xmlSha256": "d93fbc41fdd609e23d27474932c3dd0035d9d0cb2c575dccf3c4e696d9a0c762",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B070",
+      "sourceIndex": 70,
+      "kind": "paragraph",
+      "xmlSha256": "8a771d46481807c9ee4ca7d4c14cde932830734fdd32899fd9020ac83063f8bc",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B071",
+      "sourceIndex": 71,
+      "kind": "paragraph",
+      "xmlSha256": "7cf88a420f0fae19c24b27e2bcb9ae9b4d54349ae22cb57960b14dc113e2f6f2",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B072",
+      "sourceIndex": 72,
+      "kind": "paragraph",
+      "xmlSha256": "1a8b12a340bc589984f52eb291778951e62c7fb137cd002190bea53c72d52827",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B073",
+      "sourceIndex": 73,
+      "kind": "paragraph",
+      "xmlSha256": "bd4a7fb63efef9625bf00b4412a75301d51001cb161922c90f0e3e038f8a6226",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B074",
+      "sourceIndex": 74,
+      "kind": "paragraph",
+      "xmlSha256": "db5bc6540571cfa7c85ce132dce804fbb6506d8be42688bb3bebf77860d1685b",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B075",
+      "sourceIndex": 75,
+      "kind": "paragraph",
+      "xmlSha256": "63bfafcb0aebb5d10db5941f3a4e8a4b07655ff9041ede31c85e2397e3e4f4e0",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B076",
+      "sourceIndex": 76,
+      "kind": "paragraph",
+      "xmlSha256": "ec8fcf683bef8c96fac7224105c89a68d0d4352bf9e70ec44b24f58c4f24783f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B077",
+      "sourceIndex": 77,
+      "kind": "paragraph",
+      "xmlSha256": "b892bb220a3ad2ad2d6f951122dfd23794e881aa57fec1358098c18e5ce9cfc4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B078",
+      "sourceIndex": 78,
+      "kind": "paragraph",
+      "xmlSha256": "14aaae4040c8109f10292b6297e0bf2afdb693746dcf839b36b3fac3ff23a47e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B079",
+      "sourceIndex": 79,
+      "kind": "paragraph",
+      "xmlSha256": "41f7fc336506d7ae1e8b829172395340854bf7671d78d06aa8fbaff7c0768ee6",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B080",
+      "sourceIndex": 80,
+      "kind": "paragraph",
+      "xmlSha256": "130611c0e998e9f83086119f946834a997391ffc56161cc356c420f11be72a29",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B081",
+      "sourceIndex": 81,
+      "kind": "paragraph",
+      "xmlSha256": "bf26c65139c44c8323cda1604f11afa747d2f85600d202386bf9b3db75503a8a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B082",
+      "sourceIndex": 82,
+      "kind": "paragraph",
+      "xmlSha256": "7b8b4f96825ec78c42ee8f78f57d197aefd5457a249e552277136cd49f311e41",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B083",
+      "sourceIndex": 83,
+      "kind": "paragraph",
+      "xmlSha256": "656166b053d9ee649b15ce2f5f6e06372fed25844ea78374c77de1807ba46753",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B084",
+      "sourceIndex": 84,
+      "kind": "paragraph",
+      "xmlSha256": "e7637909bf024220b25e3f0b8cc6bd3c7887ab40cfadc1940180c7bb7439a73c",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B085",
+      "sourceIndex": 85,
+      "kind": "paragraph",
+      "xmlSha256": "6e4b77dc1caa92af5b6403631f9d865f427314d88601d1c39a77f62f168be5b1",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B086",
+      "sourceIndex": 86,
+      "kind": "paragraph",
+      "xmlSha256": "c526267fea92459650cd0ba8fe1619356dfed94e10613cfa1398ebb0d0b1e1a3",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B087",
+      "sourceIndex": 87,
+      "kind": "paragraph",
+      "xmlSha256": "bd21cdd7e9b5db1281ac30fcf16d54236966b87e42ab1e0c4ff53cbdc8f72750",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B088",
+      "sourceIndex": 88,
+      "kind": "paragraph",
+      "xmlSha256": "0d45ff9172244de646828b2470f6025ccae3ab3ff052ee6156033e5158d4d5fe",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B089",
+      "sourceIndex": 89,
+      "kind": "paragraph",
+      "xmlSha256": "1a5e9f62324a4a2cddb4f15b4df8738d75d5e6703289b341c625ef7cd6ae2590",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B090",
+      "sourceIndex": 90,
+      "kind": "paragraph",
+      "xmlSha256": "cd7ac413e6bd894dcf181109c0ffdad0567b36300deabd3b2e57d2b155b0a51a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B091",
+      "sourceIndex": 91,
+      "kind": "paragraph",
+      "xmlSha256": "a6c9b562fb63c1bfc61a42d20b565d9fc82274924b2701ff5044179585aebc80",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B092",
+      "sourceIndex": 92,
+      "kind": "paragraph",
+      "xmlSha256": "cdc10110b3149e819dedbd69168b3a9a6646767df399bf1d4511f00be6bf6334",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B093",
+      "sourceIndex": 93,
+      "kind": "paragraph",
+      "xmlSha256": "761fd2ae354cda2c24abb7db725bb47597a55e03523a269aa48359624792e7ff",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B094",
+      "sourceIndex": 94,
+      "kind": "paragraph",
+      "xmlSha256": "f4bf07dece320067954fc3b5e02f88dd555a9b6ca48f1e31796fc8ee1ac23139",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B095",
+      "sourceIndex": 95,
+      "kind": "paragraph",
+      "xmlSha256": "ca1f188560de3a2674f38bff0e9dea683189687403b21ae641f1e0b20dc96ae7",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B096",
+      "sourceIndex": 96,
+      "kind": "paragraph",
+      "xmlSha256": "be5bef5b32be6e78dc76f7cc469b8920ca1bd0f7f5ff7cb3cc9cac473ab51714",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B097",
+      "sourceIndex": 97,
+      "kind": "paragraph",
+      "xmlSha256": "1eeb95da2566aee3d43ae092593c1fa2aa5f9f353c86d9825eeb27d3557e8ddd",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B098",
+      "sourceIndex": 98,
+      "kind": "paragraph",
+      "xmlSha256": "fdfb260013eba11502ae959f862fdca4b0b189eb19787c082a61e608857b5181",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B099",
+      "sourceIndex": 99,
+      "kind": "paragraph",
+      "xmlSha256": "5dc53aaf3f6dd7953745244dc5e70e1355468d616a122e7560c0bbc847aad571",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B100",
+      "sourceIndex": 100,
+      "kind": "paragraph",
+      "xmlSha256": "415d3fc2f0c95cec76878628a0ca50e47812c15a6b1b9336b9e9802581b04cd7",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B101",
+      "sourceIndex": 101,
+      "kind": "paragraph",
+      "xmlSha256": "254ffa7762f6bd4405c3cd8c80e75edfb33579fb952f6b8170f7ab188a649286",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B102",
+      "sourceIndex": 102,
+      "kind": "paragraph",
+      "xmlSha256": "7a9b22ab85510f1349e9abb5724626767ac821ac1b153aa65cc317475f55fdc4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B103",
+      "sourceIndex": 103,
+      "kind": "paragraph",
+      "xmlSha256": "9783c3c56b58bf4cf6bef2dc1bb6c9bd4f685f46acb60c73f0568261f73ae3fc",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B104",
+      "sourceIndex": 104,
+      "kind": "paragraph",
+      "xmlSha256": "9181119714aa0d8c623716c124431413196ebde48ee0f754d48caa9c9426a6e4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B105",
+      "sourceIndex": 105,
+      "kind": "paragraph",
+      "xmlSha256": "5a5f2e4714679c03234745a337c79b09a66229d2791234ae5fc1058f00d5e0ac",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B106",
+      "sourceIndex": 106,
+      "kind": "paragraph",
+      "xmlSha256": "e6debd11b0634f21c5218d836e76230d76d0ab161691f4cda73b107fad2c8f9a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B107",
+      "sourceIndex": 107,
+      "kind": "paragraph",
+      "xmlSha256": "53ce6b98922e76044e38cd4f806106878cb9f4ad74fae2b8902b5e79305af7e8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B108",
+      "sourceIndex": 108,
+      "kind": "paragraph",
+      "xmlSha256": "a163c1eab52a714d27597db14d4a046331156a95a21ca6eda1daa8da31603922",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B109",
+      "sourceIndex": 109,
+      "kind": "paragraph",
+      "xmlSha256": "84dbef8aa15eb4804819d22859a53d1f515930fc9d0906213b4eeced564bd9cb",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B110",
+      "sourceIndex": 110,
+      "kind": "paragraph",
+      "xmlSha256": "1328e9fd82336619c3114c82508376f5fb350c5e258d69f8286fd0d693e2ec90",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B111",
+      "sourceIndex": 111,
+      "kind": "paragraph",
+      "xmlSha256": "e5f46afa22cc22b1adea8ad1937f093e453484905b339b353938843800db9861",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B112",
+      "sourceIndex": 112,
+      "kind": "paragraph",
+      "xmlSha256": "474d75056ee62d2a0ac6a814432453ca2556f56a0aabd6e14f56d7b4fc5b6d69",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B113",
+      "sourceIndex": 113,
+      "kind": "paragraph",
+      "xmlSha256": "7ce142812977c9db4bf9603ce7e14b14dae03bb2049376b5394b79000e1bd9aa",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B114",
+      "sourceIndex": 114,
+      "kind": "paragraph",
+      "xmlSha256": "e2ce32899ba10b163519e9efad5c5be1f1c624e448d07f38c3b879d8402bbde6",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B115",
+      "sourceIndex": 115,
+      "kind": "paragraph",
+      "xmlSha256": "515a313ed2c66edc3b31204e5d288a3ba3a2fc362bab7484728c618587d172b1",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B116",
+      "sourceIndex": 116,
+      "kind": "paragraph",
+      "xmlSha256": "ee6288d6b894682ab538fa36602756a7377507ad34a8064d6b4c9a93d32b1d1e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B117",
+      "sourceIndex": 117,
+      "kind": "paragraph",
+      "xmlSha256": "a14be67c85802308d2a29fe900ead60754c458466660c76a92f6a5ee6046ed94",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B118",
+      "sourceIndex": 118,
+      "kind": "paragraph",
+      "xmlSha256": "9002e9b53b1da565d00fc64980e23201f76f3eb728463c6be14fe4c331ea6587",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B119",
+      "sourceIndex": 119,
+      "kind": "paragraph",
+      "xmlSha256": "d85ce979678982c6ac0823d043fe0ea779b45f667fa39bf6581baff08b9befac",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B120",
+      "sourceIndex": 120,
+      "kind": "paragraph",
+      "xmlSha256": "7b9491176d031ad5ed477f0215398bb437c9ebda98e9c82d007444d7047beb16",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B121",
+      "sourceIndex": 121,
+      "kind": "paragraph",
+      "xmlSha256": "f2f666c3ea3841753f50327c2ee6bc1e1cb26d8a410f48d679cbf02954a95b57",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B122",
+      "sourceIndex": 122,
+      "kind": "paragraph",
+      "xmlSha256": "3ec99e6677f832201a778d8ec959df2a2b624c350ce7c3159766daa93e214c71",
+      "imageCount": 1
+    },
+    {
+      "blockId": "B123",
+      "sourceIndex": 123,
+      "kind": "paragraph",
+      "xmlSha256": "0fa4f871cbb29834bfb89b705a1d3ad2bb97675e7a1be97a250d45c267036de4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B124",
+      "sourceIndex": 124,
+      "kind": "paragraph",
+      "xmlSha256": "6a8d1bd48e3aca61f1334efeec9f6e3c39d3eb8c83ff08a501fe983072f29fff",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B125",
+      "sourceIndex": 125,
+      "kind": "paragraph",
+      "xmlSha256": "5be2509117f4cc2d529a1a9b3f1ccec27203ccf836df8020f3bde51c12976ed1",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B126",
+      "sourceIndex": 126,
+      "kind": "paragraph",
+      "xmlSha256": "85df857f8ff93cf38ed35277a7568e5318c686bae5dc3ba5585a3696ee2afaa5",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B127",
+      "sourceIndex": 127,
+      "kind": "paragraph",
+      "xmlSha256": "9cfa0cb6914e6733b4c5ee90e1c891bdce77fb13c8476012d94abee7d6c687d8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B128",
+      "sourceIndex": 128,
+      "kind": "paragraph",
+      "xmlSha256": "666da985f97020e13e14f7761fb1a92310aac9112af25667147046f028659949",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B129",
+      "sourceIndex": 129,
+      "kind": "paragraph",
+      "xmlSha256": "2a033f6c1d269c7d930a11a846ff7d7657a6ae857b0eba57904da793e61aa1ed",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B130",
+      "sourceIndex": 130,
+      "kind": "paragraph",
+      "xmlSha256": "d10fd1f2afd893ddfba57e2057647163eb49dadc2054382ba5740f3e79017d92",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B131",
+      "sourceIndex": 131,
+      "kind": "paragraph",
+      "xmlSha256": "f8e27a579abc16140b9ec9ae19867c862cf3215f1f9038da3078610d4c5e3845",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B132",
+      "sourceIndex": 132,
+      "kind": "paragraph",
+      "xmlSha256": "f5198403bb4f057cdcf66f9bafaf670c61a1c5dd2995a2702a778eb011aaecb8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B133",
+      "sourceIndex": 133,
+      "kind": "paragraph",
+      "xmlSha256": "49bd361a74dc88bcc40480e5f8bbe4ebd188c25fd4012a032283c5751d77aa06",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B134",
+      "sourceIndex": 134,
+      "kind": "paragraph",
+      "xmlSha256": "d5d96fe6cf0f4bec799b988541ba83226f24410c2eae8237a4d1cfa66f39d5ed",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B135",
+      "sourceIndex": 135,
+      "kind": "paragraph",
+      "xmlSha256": "87491686c806016b625439d269787245afa0629b46b8cef1d314a63988bf7410",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B136",
+      "sourceIndex": 136,
+      "kind": "paragraph",
+      "xmlSha256": "fa595030ab8279e151fc9ec13b278018e1664b80e48ffa8a6a7938b71edc41c4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B137",
+      "sourceIndex": 137,
+      "kind": "paragraph",
+      "xmlSha256": "6fb07f18a1cc68634d34438ea1c4edafae4afaa2a9448fd91862cd87e7961ee3",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B138",
+      "sourceIndex": 138,
+      "kind": "paragraph",
+      "xmlSha256": "f755abd0af16ca2df51b7139275af71a645ad1c8d32429035f9befda51209366",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B139",
+      "sourceIndex": 139,
+      "kind": "paragraph",
+      "xmlSha256": "64098984bafafd8f2cc3ed0264dc1a454e88d8b89189d99be3ceef17a63dc2c9",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B140",
+      "sourceIndex": 140,
+      "kind": "paragraph",
+      "xmlSha256": "727e7ec8d9046e8cbbcd45964157fb09c2331fb37512f907081000a1ed413492",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B141",
+      "sourceIndex": 141,
+      "kind": "paragraph",
+      "xmlSha256": "21b16894fcbd2abf8704282220900f4b7e30577af378d9093d49df3bf5538a5d",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B142",
+      "sourceIndex": 142,
+      "kind": "paragraph",
+      "xmlSha256": "58858b28dfc83ab3df2b577775434927fbf560233e9e0d2b1147058817296cea",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B143",
+      "sourceIndex": 143,
+      "kind": "paragraph",
+      "xmlSha256": "18706b9f57dd39392641f65c46cc42b30bc687df7cd20d47744788559e1cbb8d",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B144",
+      "sourceIndex": 144,
+      "kind": "paragraph",
+      "xmlSha256": "41f9731ed9f12967fe7a6aba9b573aa0220f7ca0f5fb30d59bfb54e6daf897f0",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B145",
+      "sourceIndex": 145,
+      "kind": "paragraph",
+      "xmlSha256": "2393eb4fb97efc50fb8eaffe3c29cf83e1de3d7d83f2925cb36fb02a68576ef5",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B146",
+      "sourceIndex": 146,
+      "kind": "paragraph",
+      "xmlSha256": "8343c1e709902e1f8c2d4dd0825ecb9655fd94b1be0a7941a38dd716eb8a67a4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B147",
+      "sourceIndex": 147,
+      "kind": "paragraph",
+      "xmlSha256": "2575026d8c0aa9db9c79f2b82e670b618f24bcd45cdd0628e882f7bd533d92b5",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B148",
+      "sourceIndex": 148,
+      "kind": "paragraph",
+      "xmlSha256": "f9906fbd662c047ce8f87ee55edd842058ef00a242c0ab3ceaced4ddcc8bd913",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B149",
+      "sourceIndex": 149,
+      "kind": "paragraph",
+      "xmlSha256": "1798a0f043d30b29db52cd6005c43e82e710442d9b90e9af5b6f455b98ff8e92",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B150",
+      "sourceIndex": 150,
+      "kind": "paragraph",
+      "xmlSha256": "3daabc97aee28b53cd662060e158ed08d0ef27de2423600bb137790e51ba5624",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B151",
+      "sourceIndex": 151,
+      "kind": "paragraph",
+      "xmlSha256": "47a117deeb30b8a91e772a26f2b22e1c22c02c69401477ef5627544c0e25e303",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B152",
+      "sourceIndex": 152,
+      "kind": "paragraph",
+      "xmlSha256": "5ae1c1ac7c9c99f77c5a8ad2f677685f4268950f1796443051bfbdab2da9f308",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B153",
+      "sourceIndex": 153,
+      "kind": "paragraph",
+      "xmlSha256": "a6163fcd10174c21f93a9a555f8cb5a1f2e0c8251f7677398e822ce4a3979d32",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B154",
+      "sourceIndex": 154,
+      "kind": "paragraph",
+      "xmlSha256": "4b2d9b9ed78e8705d9cf762e175d1f3bc14380d56cb8a8288f860dfdfdfd1879",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B155",
+      "sourceIndex": 155,
+      "kind": "paragraph",
+      "xmlSha256": "3bd4398d43e3ed1a0f0f623b3304e6d490b7f2a3a888a4cbd94364b67f04dd30",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B156",
+      "sourceIndex": 156,
+      "kind": "paragraph",
+      "xmlSha256": "48742c2524f82e03b9c01ca07dd0a469c9ea4f4ae76a5c93f2ae482bb38ea2ac",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B157",
+      "sourceIndex": 157,
+      "kind": "paragraph",
+      "xmlSha256": "32518ea4f9b5759fa26cdea05f70bd3912e5764bc2fe7bb04974a5e4540af6c7",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B158",
+      "sourceIndex": 158,
+      "kind": "paragraph",
+      "xmlSha256": "8c7111bc2e8be69261d61cc895faddb15791458c2b343f633f2d5ec05ebc6351",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B159",
+      "sourceIndex": 159,
+      "kind": "paragraph",
+      "xmlSha256": "a55a9e8a6236896b6ecddd109d0b759d8d444d2b26425482f03b8318934070d9",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B160",
+      "sourceIndex": 160,
+      "kind": "paragraph",
+      "xmlSha256": "4b5d1e25f737588d1c2e48c3807aee3cdd36f1e258f5caa38c9aa5c873e9ebbd",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B161",
+      "sourceIndex": 161,
+      "kind": "paragraph",
+      "xmlSha256": "4a242d280ed960c45cbb6cfc6959bc9d2fadc0cf8e214f5b27723734bee6d16a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B162",
+      "sourceIndex": 162,
+      "kind": "paragraph",
+      "xmlSha256": "2b002e13bede2bea63d2b5e2dc87e30ad16fc201ebdb8a00eba39d369b178b05",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B163",
+      "sourceIndex": 163,
+      "kind": "paragraph",
+      "xmlSha256": "131903744bff0cfdffc0837201639743210d772158ff26be41ef0c4b9f751421",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B164",
+      "sourceIndex": 164,
+      "kind": "paragraph",
+      "xmlSha256": "11b1b592f00a9eef47efa8c27c6adc1b54ab47796ce43dea6a63e044daa6b86d",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B165",
+      "sourceIndex": 165,
+      "kind": "paragraph",
+      "xmlSha256": "4e9fe0fbc6d13f8fe80284a960d7c4627f67906addc3379755df399a8272e1f0",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B166",
+      "sourceIndex": 166,
+      "kind": "paragraph",
+      "xmlSha256": "ae007da4a501c09ff1ffed8026965dd9b2f1bc7981e89459a41bb62210a4fbb4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B167",
+      "sourceIndex": 167,
+      "kind": "paragraph",
+      "xmlSha256": "c4e4fe40741d8431400271612d30605c78ec5d246ada0242e3decb54205c3b4b",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B168",
+      "sourceIndex": 168,
+      "kind": "paragraph",
+      "xmlSha256": "6bf5ef2c8af5254105f2dc75862c5b00d4c49142878ae88529b8d1b69061eda6",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B169",
+      "sourceIndex": 169,
+      "kind": "paragraph",
+      "xmlSha256": "6428233cc24809c394eb2a492a9ef0a9b6b76d546f2fa62083bfe62f8e630e6a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B170",
+      "sourceIndex": 170,
+      "kind": "paragraph",
+      "xmlSha256": "b38343739b4f924a8b05970f79edf2ba2000cc64ce9048de55467b9d1ffb0ac6",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B171",
+      "sourceIndex": 171,
+      "kind": "paragraph",
+      "xmlSha256": "050ac3516f077afe0f756876d59f4acd429688a1e5af71af6b5aed73aa8b6af3",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B172",
+      "sourceIndex": 172,
+      "kind": "paragraph",
+      "xmlSha256": "2fe7e6bddf1bcca0e40ed9b75c4adb69e33574bfe8b388e8a231ab7d470be73a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B173",
+      "sourceIndex": 173,
+      "kind": "paragraph",
+      "xmlSha256": "98ad7579a039c3d6bf6bbef799485df443891b846b6ea08ae79d4814982112b5",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B174",
+      "sourceIndex": 174,
+      "kind": "paragraph",
+      "xmlSha256": "4aa9d47a64e71c0b15add207d648f91ce007fbd296e0aa369f31d27fc027437e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B175",
+      "sourceIndex": 175,
+      "kind": "paragraph",
+      "xmlSha256": "9cc81aefda45b4958cb1590b27a902bdbc89c060051ea4bc807e6eaeb54f2f86",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B176",
+      "sourceIndex": 176,
+      "kind": "paragraph",
+      "xmlSha256": "4f0771ae02538458619953ad49ec20ff9b204256ee52ddf5005306405b01758b",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B177",
+      "sourceIndex": 177,
+      "kind": "paragraph",
+      "xmlSha256": "f957310b31ed1a6417f581ca04c8bc0456cfabd65bb20e6b2701f57d09e6f1bc",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B178",
+      "sourceIndex": 178,
+      "kind": "paragraph",
+      "xmlSha256": "db312ccbeff7ebb8ae8e93f454e46c37fb3d181d63595883bef229f33e1e57d1",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B179",
+      "sourceIndex": 179,
+      "kind": "paragraph",
+      "xmlSha256": "c03ea99348b9d9519af234e63dd384e613a95d1e6c9f0ac03fe153ead574f39f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B180",
+      "sourceIndex": 180,
+      "kind": "paragraph",
+      "xmlSha256": "90cb446f018b8b87f21968c2c78294478e917b219b5204fecc898c949a2d9ab5",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B181",
+      "sourceIndex": 181,
+      "kind": "paragraph",
+      "xmlSha256": "024438dbcc10242cb6ccb5f39b6698fd57ed2bb986057bb96fcd7e9ce1bcb2fd",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B182",
+      "sourceIndex": 182,
+      "kind": "paragraph",
+      "xmlSha256": "5573862b4793d88e4e6ed0f28486f1dbf4e8313e32abae2db7f793ea831eeb88",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B183",
+      "sourceIndex": 183,
+      "kind": "paragraph",
+      "xmlSha256": "694650ae3850acf5e83c920d5b62f56478989cb9c327db9d6d5815bf6feb1962",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B184",
+      "sourceIndex": 184,
+      "kind": "paragraph",
+      "xmlSha256": "35fa816793b3934d0a3c7e891d5dcd8a88afe2f4dbfce8217e60ce183632ca3b",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B185",
+      "sourceIndex": 185,
+      "kind": "paragraph",
+      "xmlSha256": "df65c368cd6bf25e03bd4fb1a12d697dbbaba6992b23fade6b405a35b84c075c",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B186",
+      "sourceIndex": 186,
+      "kind": "paragraph",
+      "xmlSha256": "74328034ad664d8bc67f7641d619af8aa5b52e718a98989fd3f40049cdf87d0f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B187",
+      "sourceIndex": 187,
+      "kind": "paragraph",
+      "xmlSha256": "990fd33503571dfd2ed2bcef9b403237fd67131c162b99a32fc45c17dd382019",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B188",
+      "sourceIndex": 188,
+      "kind": "paragraph",
+      "xmlSha256": "79c27e9c9b6f59fb0469c8bce6767b9b7c1a4f78946c355a94141c0f84f6be88",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B189",
+      "sourceIndex": 189,
+      "kind": "paragraph",
+      "xmlSha256": "82ef44ecdd69f62e32e44ff8c91b426830f39bcac17e686a3f22096ed26d0773",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B190",
+      "sourceIndex": 190,
+      "kind": "paragraph",
+      "xmlSha256": "a04a24377b37eea4400fa5da672bd8ef68f2cc09b98639d5ee13ba1450bf9eec",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B191",
+      "sourceIndex": 191,
+      "kind": "paragraph",
+      "xmlSha256": "a1bda9f17d193a87de5fcc5582d56e7885926caca18066ebd078075e1f7dee1c",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B192",
+      "sourceIndex": 192,
+      "kind": "paragraph",
+      "xmlSha256": "056fed05e758e84c24a43750721e475385364a838dd67b125dffdff5f719a18e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B193",
+      "sourceIndex": 193,
+      "kind": "paragraph",
+      "xmlSha256": "056a5ed72760bb4720e5276665c5389fc73e4d30170fa758bd2b58c4ad65dc73",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B194",
+      "sourceIndex": 194,
+      "kind": "paragraph",
+      "xmlSha256": "c301d37708735533d26bb8b8a162cdd11e61ac93dbf4f9476daf16d13c68839a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B195",
+      "sourceIndex": 195,
+      "kind": "paragraph",
+      "xmlSha256": "ec7ee4f40a8717811b54e358bfbf2c0ad6ad5c199330402bde208d9a161f41fd",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B196",
+      "sourceIndex": 196,
+      "kind": "paragraph",
+      "xmlSha256": "e32763c7c7f18bd34cf6cd41f6ff21e7a7c6711a7b888c94540a2f988a87458d",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B197",
+      "sourceIndex": 197,
+      "kind": "paragraph",
+      "xmlSha256": "a3eee5832918a69a0a3316fe6de2b785feccc659448a1147789520fc687f4d40",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B198",
+      "sourceIndex": 198,
+      "kind": "paragraph",
+      "xmlSha256": "76cf38f45862ef5e70fe77e73a680a94bd150c11a3f74396a1b94ce7d5465d6c",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B199",
+      "sourceIndex": 199,
+      "kind": "paragraph",
+      "xmlSha256": "6ec7e4bceb0d34ada9d488e1f60fe0818626f9d6339fb2c55521bef83a408182",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B200",
+      "sourceIndex": 200,
+      "kind": "paragraph",
+      "xmlSha256": "cf7ed32e6cb151307186b1377cdb8ab995db91f6d8f13351633551875290bf92",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B201",
+      "sourceIndex": 201,
+      "kind": "paragraph",
+      "xmlSha256": "a906b4306b6039518e0badd84261835c3a342d9d4ba3b93662871bd8941e766a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B202",
+      "sourceIndex": 202,
+      "kind": "paragraph",
+      "xmlSha256": "f7436fb38bd0f88d53e99ae81505378105f8b9063fa0cc28e7f7db437c290a59",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B203",
+      "sourceIndex": 203,
+      "kind": "paragraph",
+      "xmlSha256": "edb8749833167c01fb6fd0ec8e1420557c6447a6d6f03783dd6b8b12a7cec3ce",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B204",
+      "sourceIndex": 204,
+      "kind": "paragraph",
+      "xmlSha256": "11911feae57b981f0fe8b6b5d5d331846233f539634ee7d3819c3dcc6230c6cb",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B205",
+      "sourceIndex": 205,
+      "kind": "paragraph",
+      "xmlSha256": "f24298eb817f9b4bb5b89dfa776a9c9b3d1880efc450a7539442e176a479e235",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B206",
+      "sourceIndex": 206,
+      "kind": "paragraph",
+      "xmlSha256": "f8d4ba662ff6d04a1de6b0acb5d516bce149d9fbdc3358e532cf08a7b40cb3e7",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B207",
+      "sourceIndex": 207,
+      "kind": "paragraph",
+      "xmlSha256": "9d1235b7d0e7e6a7c42074d3680902691d387c521a710d59963e4481a7e01684",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B208",
+      "sourceIndex": 208,
+      "kind": "paragraph",
+      "xmlSha256": "37cc57f565d20c1a78934f3553ff838ec65b27d272d3a376c60db8079e8585e8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B209",
+      "sourceIndex": 209,
+      "kind": "paragraph",
+      "xmlSha256": "208676b8be7a76490991eeb99eddfcf9beb90b41d6ce2fbf192a1f8e96e85de2",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B210",
+      "sourceIndex": 210,
+      "kind": "paragraph",
+      "xmlSha256": "8ae7ecaa2ec1676cee4a927763a4f69bad03f8bf12eaf37d48744e408f43a648",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B211",
+      "sourceIndex": 211,
+      "kind": "paragraph",
+      "xmlSha256": "123813c17323535983e1d879ffb29137ba504042fea988f6f0936eb20c54af4a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B212",
+      "sourceIndex": 212,
+      "kind": "paragraph",
+      "xmlSha256": "1ae6e9a06cd03784ebfbded18ea4eac1654e4f4f9b19242057e3c118021f06fa",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B213",
+      "sourceIndex": 213,
+      "kind": "paragraph",
+      "xmlSha256": "b881e6832768424809929a793fe6f5df2077ca5172d0c7bf6e824096f8d68b41",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B214",
+      "sourceIndex": 214,
+      "kind": "paragraph",
+      "xmlSha256": "7f359a262f56f3a15d8485eb93a6e688f4f59b9c2076ac6d43979ce435f2b5fd",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B215",
+      "sourceIndex": 215,
+      "kind": "paragraph",
+      "xmlSha256": "1a6d9a3109de9a2a315b726e2e75318eb469786620000bf728c4f94b69520e90",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B216",
+      "sourceIndex": 216,
+      "kind": "paragraph",
+      "xmlSha256": "f8178e77dc21933a3c16ee9cd1a29f317fdc6828e62d646dcde136fd0b459fd2",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B217",
+      "sourceIndex": 217,
+      "kind": "paragraph",
+      "xmlSha256": "c12fdfeb26b0483dc40824f0b24255a2497c8c35db84cc7c4d1c52e77164f447",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B218",
+      "sourceIndex": 218,
+      "kind": "paragraph",
+      "xmlSha256": "be9b5551a385f9817cb6a59ad42340cad0fcd12abc14aa118c33e4b10f56d97b",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B219",
+      "sourceIndex": 219,
+      "kind": "paragraph",
+      "xmlSha256": "d4a657fe6f0db42167d8aabc09934da9629652f909c487b8c06e14808ca4e7d0",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B220",
+      "sourceIndex": 220,
+      "kind": "paragraph",
+      "xmlSha256": "69fa8cafa02186c115e2416a4db43910a658c0cbcbbf401a3322a4927befd2c8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B221",
+      "sourceIndex": 221,
+      "kind": "paragraph",
+      "xmlSha256": "009184006414884a844535f14fceead2d7d4320171c6ead73fbbfe085cea42d4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B222",
+      "sourceIndex": 222,
+      "kind": "paragraph",
+      "xmlSha256": "8f3e397bdd41811c13ae688d48fb8b93846659fef708e4303133fff54514c264",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B223",
+      "sourceIndex": 223,
+      "kind": "paragraph",
+      "xmlSha256": "adb4957c2fa013e2aeead2060b7969e489ffead84218abfacfbd2888f5cec577",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B224",
+      "sourceIndex": 224,
+      "kind": "paragraph",
+      "xmlSha256": "cc45aa87db29cc006d9ab028489e0ffab2ce795709eea243cf00b71932d919c0",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B225",
+      "sourceIndex": 225,
+      "kind": "paragraph",
+      "xmlSha256": "a28257fc68a42a0a69de10616e528ec2893d7b1ed81d351e321ee04abcc76dca",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B226",
+      "sourceIndex": 226,
+      "kind": "paragraph",
+      "xmlSha256": "d3a6256d2fc4b0060a06a121eb6d17c171e36fc22cca0e8efd45f3e621c46300",
+      "imageCount": 1
+    },
+    {
+      "blockId": "B227",
+      "sourceIndex": 227,
+      "kind": "paragraph",
+      "xmlSha256": "834c71f6f31e1484b48156417a1d0a9d18e37174969195e2b027766e8b4fa26e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B228",
+      "sourceIndex": 228,
+      "kind": "paragraph",
+      "xmlSha256": "46b035809b8adc8e141f7ca585823e8ce8fe8596c0ba87a552b2aa0a6c47d9a1",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B229",
+      "sourceIndex": 229,
+      "kind": "paragraph",
+      "xmlSha256": "36939a6d32c0ce879144eee2a5822a6837bda20746680b541933017e79fab832",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B230",
+      "sourceIndex": 230,
+      "kind": "paragraph",
+      "xmlSha256": "d31595a644406867ef6743757e4864937ea608c80d618288ae7ac025c7eb1dfa",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B231",
+      "sourceIndex": 231,
+      "kind": "paragraph",
+      "xmlSha256": "51a3f27f3f802334db57ca5f0c3a33dc678e9bf090b2e4c5a5494f00abe74c57",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B232",
+      "sourceIndex": 232,
+      "kind": "paragraph",
+      "xmlSha256": "ba0d05f8ca3c484ddc819fbc79dcb507f45ce0eaf636bc41323ce1bf8ccccbe3",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B233",
+      "sourceIndex": 233,
+      "kind": "paragraph",
+      "xmlSha256": "ec0a1c32bc8c66315f7ffe2d686a0e3979c4248045b525e7d9f375857c2163a1",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B234",
+      "sourceIndex": 234,
+      "kind": "paragraph",
+      "xmlSha256": "dc1977742958b610911518cd8a8158ccca942dc93396aba687c963df681a99eb",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B235",
+      "sourceIndex": 235,
+      "kind": "paragraph",
+      "xmlSha256": "64421ebdd0ef7ad0587479d12e2d6d0ad5513d275faf17e510ad8154300286e6",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B236",
+      "sourceIndex": 236,
+      "kind": "paragraph",
+      "xmlSha256": "3bb05bc4db7f49894b9471cdf678df867e62ae2b2f28f04eb3bfa01855dd3fcc",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B237",
+      "sourceIndex": 237,
+      "kind": "paragraph",
+      "xmlSha256": "3895c373cb9c12ca3df4bad9c9fcccf10cda6ae6c28a83656ffb854b27a28217",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B238",
+      "sourceIndex": 238,
+      "kind": "paragraph",
+      "xmlSha256": "43498f467302cff3fdc3cf684c09877100f9a87806a2d1fe8a3edc942c72a120",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B239",
+      "sourceIndex": 239,
+      "kind": "paragraph",
+      "xmlSha256": "79ae684b27598fd5d65e496ed7e22ca0cfbbe17ee6e6e79694de70ac9af99202",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B240",
+      "sourceIndex": 240,
+      "kind": "paragraph",
+      "xmlSha256": "957dd9a6f9de7ecbca0f7c8346f24e5ef030fa6b1b1c881d636985021b14fcd5",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B241",
+      "sourceIndex": 241,
+      "kind": "paragraph",
+      "xmlSha256": "b9f048b3076a16053c0bf7f93cc3ecbaf85930ce6785fc04a7cd39d6f06ed646",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B242",
+      "sourceIndex": 242,
+      "kind": "paragraph",
+      "xmlSha256": "a0fd98fc8e13e70f0d85801796c10a2d59924e15f36aaf2fb0e1251f645e1119",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B243",
+      "sourceIndex": 243,
+      "kind": "paragraph",
+      "xmlSha256": "d5521f79b6c45ea6094a5cfa9ea4f81b7acb37fcbb3d8d4be97da189a2739dc3",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B244",
+      "sourceIndex": 244,
+      "kind": "paragraph",
+      "xmlSha256": "6a384969659dddc3e3b0ebba165dabe4b9cd7da4d8de342a9c64dfdf1ea5a149",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B245",
+      "sourceIndex": 245,
+      "kind": "paragraph",
+      "xmlSha256": "c5baa9076c2306f4f2b1f795cade50f54cdc1df5086c66455759857fd1bba22c",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B246",
+      "sourceIndex": 246,
+      "kind": "paragraph",
+      "xmlSha256": "aaa91849f385f411e00a98d07de6b75091346f219a6fa36156a606a3da67336d",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B247",
+      "sourceIndex": 247,
+      "kind": "paragraph",
+      "xmlSha256": "ebc8ac0211a40826525b81ab229ea2481ad68e6a12ad34acd036322783429ef2",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B248",
+      "sourceIndex": 248,
+      "kind": "paragraph",
+      "xmlSha256": "3c53278707e061c4ca94a4993e3e522ac8c3bc0b228cc54ddebb82aa9cc831bc",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B249",
+      "sourceIndex": 249,
+      "kind": "paragraph",
+      "xmlSha256": "f76c4e8f1d309c22bd69bdeefebd0c5d544504727b05c5417d4711d1428432ca",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B250",
+      "sourceIndex": 250,
+      "kind": "paragraph",
+      "xmlSha256": "bd472c471837a7241b6386712ed8e35787b8b081d0cb5cf44815db3fefe046ba",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B251",
+      "sourceIndex": 251,
+      "kind": "paragraph",
+      "xmlSha256": "b36f53df5141e0f798c2f16f9354d25b2c2c5f53a67a91384abfc04df3ae704c",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B252",
+      "sourceIndex": 252,
+      "kind": "paragraph",
+      "xmlSha256": "ace13ce75ac3e32a3a4f92b0e21400c00955f426b418da35c2b3225033f854b4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B253",
+      "sourceIndex": 253,
+      "kind": "paragraph",
+      "xmlSha256": "34b6413991eab951ac05dce458e0afa475698098d4b181166cc5c25944edd6f2",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B254",
+      "sourceIndex": 254,
+      "kind": "paragraph",
+      "xmlSha256": "63aeed88ba892b52f57a2536556a7795aa579bad0d62429700aa2f995fc3fe2e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B255",
+      "sourceIndex": 255,
+      "kind": "paragraph",
+      "xmlSha256": "b4f3dd387c26a77d50f46390f287c29c1782cae7fe69520dcb738c46f695c2c1",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B256",
+      "sourceIndex": 256,
+      "kind": "paragraph",
+      "xmlSha256": "4a9798eb8b4817603d84d4a5be304c8dc4155ca2877868e05d04377994d16e2b",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B257",
+      "sourceIndex": 257,
+      "kind": "paragraph",
+      "xmlSha256": "3fdf9b433d73eb72c46be316c66e47c69ba9717bcdf6b13a4705d0f9151225ee",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B258",
+      "sourceIndex": 258,
+      "kind": "paragraph",
+      "xmlSha256": "8f4d721db9acea329bfbe5ce23591b6b247eac6f12b5e0f17cd75eebc25db9ed",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B259",
+      "sourceIndex": 259,
+      "kind": "paragraph",
+      "xmlSha256": "6f84eb09eb6cb4cc6295505478e605fbc08ee974d96b0c1bfbdf0022d6d4f173",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B260",
+      "sourceIndex": 260,
+      "kind": "paragraph",
+      "xmlSha256": "46bfa012e2d3bce437e4da1080020b7e84dcf8efa9e6c5f0e4d0661190009150",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B261",
+      "sourceIndex": 261,
+      "kind": "paragraph",
+      "xmlSha256": "9d3a263587f7246cc6d7631898e8707fd589bdeaba77ba985017a3f4376cc90f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B262",
+      "sourceIndex": 262,
+      "kind": "paragraph",
+      "xmlSha256": "b5c96371a39f0a5a6c03bf37a93e2f6ae17b113819ecd7dfee95caec07bf8cf2",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B263",
+      "sourceIndex": 263,
+      "kind": "paragraph",
+      "xmlSha256": "36662598b4c8cbe01f70c70d22dc7859db3d0dce44ee0b2e98a8306e44158740",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B264",
+      "sourceIndex": 264,
+      "kind": "paragraph",
+      "xmlSha256": "8c3f39241888711a1969f26a14386cb2989c89fb07d7e5294930804d410edafb",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B265",
+      "sourceIndex": 265,
+      "kind": "paragraph",
+      "xmlSha256": "39c64b0c1ab1b0f6f90104a527d453a40e7d706181ada57d2690e7df9cb1ab1f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B266",
+      "sourceIndex": 266,
+      "kind": "paragraph",
+      "xmlSha256": "bd737ff9c246dc3c473bb83265fbff4e6fe1c32f5eeb706b28fd225447d0b8fd",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B267",
+      "sourceIndex": 267,
+      "kind": "paragraph",
+      "xmlSha256": "34755735e3b5dddee593200a73a0f094a4b8fa3a8f144d0fa7090b5d97a994cf",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B268",
+      "sourceIndex": 268,
+      "kind": "paragraph",
+      "xmlSha256": "d9b82a486f6150133e3152ce2fb1d9f2714d2da00b93cc38165adc21321e2488",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B269",
+      "sourceIndex": 269,
+      "kind": "paragraph",
+      "xmlSha256": "90c87f4e1c556eb76dde8b0a80ede8dfa1b5079ac7097b71d2435ac8105d5bf6",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B270",
+      "sourceIndex": 270,
+      "kind": "paragraph",
+      "xmlSha256": "2d98077eb8fe95860becd6e71f95e5b478be832dada1f03df2e4808b74e92030",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B271",
+      "sourceIndex": 271,
+      "kind": "paragraph",
+      "xmlSha256": "405ca08b872a78d9eef0481c128cb8e86fb77f2e2db385a15584dafcead2f13d",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B272",
+      "sourceIndex": 272,
+      "kind": "paragraph",
+      "xmlSha256": "b54246e876ea4e63a729251fc21aadc4cdb0905bd5c6251339351d5ba7c53f83",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B273",
+      "sourceIndex": 273,
+      "kind": "paragraph",
+      "xmlSha256": "00bd3453ad73d59db2db663e72619d549c65a1592517c02efc3f6951077ea80c",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B274",
+      "sourceIndex": 274,
+      "kind": "paragraph",
+      "xmlSha256": "29cda3b2301164b4faa8b582a6839b5d7b2cf038838a005a55a9c82edfed834f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B275",
+      "sourceIndex": 275,
+      "kind": "paragraph",
+      "xmlSha256": "d65c816cc567407375a6d1d79a533eab80dfb82cd9a83a0c1154a8032b6b8f57",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B276",
+      "sourceIndex": 276,
+      "kind": "paragraph",
+      "xmlSha256": "451a092d4295253b31da135ae7e8ea03b0ebcc4783c34da442553497173ef24a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B277",
+      "sourceIndex": 277,
+      "kind": "paragraph",
+      "xmlSha256": "b9ae2a56bb27f7f5bef043d0cc496f8bea8a0697ed7cc96eed08f77fac15cc15",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B278",
+      "sourceIndex": 278,
+      "kind": "paragraph",
+      "xmlSha256": "49a2b1f1a93ba763b7eff0d8b6cfef208b6866e6aa6233b5687b5ab0a5da1110",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B279",
+      "sourceIndex": 279,
+      "kind": "paragraph",
+      "xmlSha256": "b5f5667155e88947fff92b2021faa0ada7719a1d8ffe3fd23178c958e43620e4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B280",
+      "sourceIndex": 280,
+      "kind": "paragraph",
+      "xmlSha256": "42806ed3569f39c77290c21b040ad572b98b4ebec4bb1259ed8a3cd50c40789c",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B281",
+      "sourceIndex": 281,
+      "kind": "paragraph",
+      "xmlSha256": "95ee5ea8906c9fb3c28d02ab3a55dc58e7a1d80ff49ec5f69e249c3eaa07eec4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B282",
+      "sourceIndex": 282,
+      "kind": "paragraph",
+      "xmlSha256": "61225f95856ad6a0e1565312742a628b08b5aa552ec4d76fc29f7de5210c8430",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B283",
+      "sourceIndex": 283,
+      "kind": "paragraph",
+      "xmlSha256": "86d58623ef68f091ffb0f0826ebc7a3c7d8e04484db1f18b9ababfc8bfd3faed",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B284",
+      "sourceIndex": 284,
+      "kind": "paragraph",
+      "xmlSha256": "0660d96da76f726ba869398088c9ed885bc31ea5a77b32bfd6b2be402f94951d",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B285",
+      "sourceIndex": 285,
+      "kind": "paragraph",
+      "xmlSha256": "c1f6d3254c263f511e26e1ef1db1328eff88179bfd16eb58a4181d2633034328",
+      "imageCount": 1
+    },
+    {
+      "blockId": "B286",
+      "sourceIndex": 286,
+      "kind": "paragraph",
+      "xmlSha256": "a2bf4b125ec0c4e2ed7b193025969ea18b67b1ead2a2a1e34c2ce2dd2343c912",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B287",
+      "sourceIndex": 287,
+      "kind": "paragraph",
+      "xmlSha256": "f7172cc36df238b4c2634c30f2c924f175ee267970c8bd9d0ba32403d61897bd",
+      "imageCount": 1
+    },
+    {
+      "blockId": "B288",
+      "sourceIndex": 288,
+      "kind": "paragraph",
+      "xmlSha256": "24c42ccbd2d2e243e02e40a887b60836a7bb9399aae48fd977d4bb5116360ebc",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B289",
+      "sourceIndex": 289,
+      "kind": "paragraph",
+      "xmlSha256": "f02658c114a5ca88d06a8a817c508f8b38173cd115d93001c4c45bd8a35c33b6",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B290",
+      "sourceIndex": 290,
+      "kind": "paragraph",
+      "xmlSha256": "5611cd8339d8b80e88e1e6551658ba3c81eb0278b64804df7b45059e0229621a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B291",
+      "sourceIndex": 291,
+      "kind": "paragraph",
+      "xmlSha256": "b8a3b86759ecee1fff175b9aa1f7f2a8d3d353a4ffd39b0a6c79e768125f8199",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B292",
+      "sourceIndex": 292,
+      "kind": "paragraph",
+      "xmlSha256": "6a816665defbc4cec9890df88c156573a2f55cf2324dbd71ba9280e00f9f0ccd",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B293",
+      "sourceIndex": 293,
+      "kind": "paragraph",
+      "xmlSha256": "8c3cd44dde6c49dd0f6544ede419537980ad5ec324c6f29acf734d14b7872d8f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B294",
+      "sourceIndex": 294,
+      "kind": "paragraph",
+      "xmlSha256": "408dc6e9bbdc9aeaabdaa529038b08fdb025f565b0c5255157e6cecdbba130b8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B295",
+      "sourceIndex": 295,
+      "kind": "paragraph",
+      "xmlSha256": "0e692d11781443402d43174ae33a9986e7cd45aee8c0ad6ded1c20f9723b66e7",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B296",
+      "sourceIndex": 296,
+      "kind": "paragraph",
+      "xmlSha256": "2a39b5724e0f887269e50bce2715fa2d0d619e54f140c5d40b67996f239e59bd",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B297",
+      "sourceIndex": 297,
+      "kind": "paragraph",
+      "xmlSha256": "53b03fd036fab074b62222096e29573693552d4f6f9b96c44566060028096a18",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B298",
+      "sourceIndex": 298,
+      "kind": "paragraph",
+      "xmlSha256": "523c2d647398995e2e1428a3589f9e47bac182010ec5d38f672f6b4827c238c3",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B299",
+      "sourceIndex": 299,
+      "kind": "paragraph",
+      "xmlSha256": "d874c51460f3170efc59c20a392b3bd42e50cf72652b2b74a61e56c3763cee34",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B300",
+      "sourceIndex": 300,
+      "kind": "paragraph",
+      "xmlSha256": "d71604c51f940b320ebf2295e103ca203045958a53fd7112ca279e7640aea991",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B301",
+      "sourceIndex": 301,
+      "kind": "paragraph",
+      "xmlSha256": "f7fbb91ca666d7eff933e477fc7d84d9818aaa862f36c3ca2392cc408afae67d",
+      "imageCount": 1
+    },
+    {
+      "blockId": "B302",
+      "sourceIndex": 302,
+      "kind": "paragraph",
+      "xmlSha256": "9c48cc4448546aaa207abe181b354d67ab64e1b08386cd866f75b626d953f6a2",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B303",
+      "sourceIndex": 303,
+      "kind": "paragraph",
+      "xmlSha256": "3a63050e9de1374d1b8257b74a2fadaa97c04fb58bb563d3e17fbd6387fd9b44",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B304",
+      "sourceIndex": 304,
+      "kind": "paragraph",
+      "xmlSha256": "ec2bd1698d4f6549f02520b0bee050e241c011b8db1302dcc674d154871111b3",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B305",
+      "sourceIndex": 305,
+      "kind": "paragraph",
+      "xmlSha256": "3e508dbda9446f2f3774ca08519c5bc02b7a0ce43a846907856b83c0b6816c23",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B306",
+      "sourceIndex": 306,
+      "kind": "paragraph",
+      "xmlSha256": "53499896b4e90316559264a68f4867f3f5fb1dbdc1fe606e6c28f8173feced8b",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B307",
+      "sourceIndex": 307,
+      "kind": "paragraph",
+      "xmlSha256": "844906136c2f1a8ec71c6ded759d6c510a24d9bc1613e78856c1203a73eee019",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B308",
+      "sourceIndex": 308,
+      "kind": "paragraph",
+      "xmlSha256": "0fe506b9ccbc4ee0d0ebd4b02f2ff2905e5dffe788ac29fc0b6b00b5deb12788",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B309",
+      "sourceIndex": 309,
+      "kind": "paragraph",
+      "xmlSha256": "32674bd49ee4b024680e6a78335f30cd21bfccab2f7e9ba465dfd6a381f357ce",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B310",
+      "sourceIndex": 310,
+      "kind": "paragraph",
+      "xmlSha256": "cb9dc54a317ebb50c9b4022e4f5a130b8dd907668873b64cf63010bace4d79e8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B311",
+      "sourceIndex": 311,
+      "kind": "paragraph",
+      "xmlSha256": "78bc4b0d38d2f6ee0796fef8e895b1a8273f11c4f4d3fca27ee89b01099d809c",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B312",
+      "sourceIndex": 312,
+      "kind": "paragraph",
+      "xmlSha256": "c7f42ca992a8bc8c8335401476d5ec3e44263c7cef360d0db49ce49db5ddf755",
+      "imageCount": 1
+    },
+    {
+      "blockId": "B313",
+      "sourceIndex": 313,
+      "kind": "paragraph",
+      "xmlSha256": "4f1b7327c96bbc79281a2649c3d8e8c058f2aebd0453292ff6c067ad20496386",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B314",
+      "sourceIndex": 314,
+      "kind": "paragraph",
+      "xmlSha256": "6675032d8a561be563bb61bfb0162b599260c0113e7cafc19b2c722959d65161",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B315",
+      "sourceIndex": 315,
+      "kind": "paragraph",
+      "xmlSha256": "7be2e3a8884b82ec3b3daab7d788769111ab40c38f83a48e06d88667b4da94cc",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B316",
+      "sourceIndex": 316,
+      "kind": "paragraph",
+      "xmlSha256": "c2f6da70791f9878bc76bfc49de154caa764131b726cb07af76d3ac3d5a3083e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B317",
+      "sourceIndex": 317,
+      "kind": "paragraph",
+      "xmlSha256": "3409e2a0c0e89cdc2097dcaa07df5b73f747665ff4d53c738ba3484f78aefa71",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B318",
+      "sourceIndex": 318,
+      "kind": "paragraph",
+      "xmlSha256": "1edd8ab90875b5da281d931075c889a76afb916a94b19447b722f66b5e0bb7b7",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B319",
+      "sourceIndex": 319,
+      "kind": "paragraph",
+      "xmlSha256": "735596711046e0307652fa1ca7798849868610c8dd2ad2f135c5757c66d5c4f3",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B320",
+      "sourceIndex": 320,
+      "kind": "paragraph",
+      "xmlSha256": "418764d47653f7a63f4c7fcbfd637dc4bd9426093093ed54b701f21ddf9eb152",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B321",
+      "sourceIndex": 321,
+      "kind": "paragraph",
+      "xmlSha256": "beef65a19eaea7211f6d18c12b35cbcc6f13f374803ca7d35ddb17d96fad0743",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B322",
+      "sourceIndex": 322,
+      "kind": "paragraph",
+      "xmlSha256": "864d845d4976ebd112df9d15acce65bbe618d48044bff2c47b9d46e75302dd71",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B323",
+      "sourceIndex": 323,
+      "kind": "paragraph",
+      "xmlSha256": "76df63f732c5eb8280dbf5b6d28103ca8d7ff69241e8fee90bfa1c42ad5165ea",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B324",
+      "sourceIndex": 324,
+      "kind": "paragraph",
+      "xmlSha256": "9109742c3a36ac69003e5b793efb8b231585461a60ff74ee424b2d8aea77885a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B325",
+      "sourceIndex": 325,
+      "kind": "paragraph",
+      "xmlSha256": "a958d5a12d2974ff20b8155a2fd1ce88086f7031c661556d88db247f274e3538",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B326",
+      "sourceIndex": 326,
+      "kind": "paragraph",
+      "xmlSha256": "4eea4c1d99db7bcb2be5fe7abbe7e4ef0e5d933daa5ff9c460a17f9f191f9b49",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B327",
+      "sourceIndex": 327,
+      "kind": "paragraph",
+      "xmlSha256": "462d06d6a58a46fafd0d0e85204ad3e9b2e7be5108a091140dacbfd2dcf9c4c6",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B328",
+      "sourceIndex": 328,
+      "kind": "paragraph",
+      "xmlSha256": "b46c1944406e64599c3d810914b530535e9f7228af72d175f4bb93583a7717c4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B329",
+      "sourceIndex": 329,
+      "kind": "paragraph",
+      "xmlSha256": "cb2811e5569323dfeed7347ba928eaffb0a7cda7b29bac12dd71b1f293180a62",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B330",
+      "sourceIndex": 330,
+      "kind": "paragraph",
+      "xmlSha256": "1635e08bd897ce010da5452c52a1500c080eb0d62e780bdc1eb6dcbff36bb355",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B331",
+      "sourceIndex": 331,
+      "kind": "paragraph",
+      "xmlSha256": "f1984d9c425d76b33c91964823947439b727aface4f8fa834979a0bf6618b317",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B332",
+      "sourceIndex": 332,
+      "kind": "paragraph",
+      "xmlSha256": "4c69040edc4441d9ba8877a9632bb23d4c354453d2f289e846eaeb011f315eb8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B333",
+      "sourceIndex": 333,
+      "kind": "paragraph",
+      "xmlSha256": "9896d71d7ece7214b841a350bbcb0409bb4ea84eac78e636ebb0fd80771abcf8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B334",
+      "sourceIndex": 334,
+      "kind": "paragraph",
+      "xmlSha256": "976e99330684c9ec1e1d17b8a110f6fe466643e754c19a63d69663f6b5adb334",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B335",
+      "sourceIndex": 335,
+      "kind": "paragraph",
+      "xmlSha256": "490371365f09068ee8beea839d99372567d6bad947a48dead34424a830df7363",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B336",
+      "sourceIndex": 336,
+      "kind": "paragraph",
+      "xmlSha256": "cac8a2a6c6bce2e75475f0514a9c51566683c3603833d52a2c551eb9b85fc917",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B337",
+      "sourceIndex": 337,
+      "kind": "paragraph",
+      "xmlSha256": "92d6f8db9fa63aac54083a767138744e3878cb5e623623908b3bb6508b15c62d",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B338",
+      "sourceIndex": 338,
+      "kind": "paragraph",
+      "xmlSha256": "a4334e1925f19822bca3290e282ccfc660ee1c4c6b85e9cb58501ba7f1f49a5f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B339",
+      "sourceIndex": 339,
+      "kind": "paragraph",
+      "xmlSha256": "dbadfc41158a04af32dae24b841b3d701f056c163cea5b7def7d10e12e009216",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B340",
+      "sourceIndex": 340,
+      "kind": "paragraph",
+      "xmlSha256": "6450f3061b7125eef40752e7d8f4e7307184569d752c1f83f270eb8ae6df0082",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B341",
+      "sourceIndex": 341,
+      "kind": "paragraph",
+      "xmlSha256": "97c2e8688fe37f160924a318c87dbe91cc24a9f510cde4da8529115d8be4397b",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B342",
+      "sourceIndex": 342,
+      "kind": "paragraph",
+      "xmlSha256": "01a67dff294dde06263468bd367165de7154f4c86e625907aa1c4ceb38b62e09",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B343",
+      "sourceIndex": 343,
+      "kind": "paragraph",
+      "xmlSha256": "3c7097fce06d1568e88a86e6786479be3f4dd24db819ca982e3d57ce72e88974",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B344",
+      "sourceIndex": 344,
+      "kind": "paragraph",
+      "xmlSha256": "ddced30abe64741574f2c1f12ef3a222e1b03805fa99baef71638226717e27c0",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B345",
+      "sourceIndex": 345,
+      "kind": "paragraph",
+      "xmlSha256": "0f44b8ec8c3456f32a2503fdfb069349befc14c73000623f7d284c48663f435d",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B346",
+      "sourceIndex": 346,
+      "kind": "paragraph",
+      "xmlSha256": "17296b21ce1663023e831debedf7de5ab9f0b3389d57a97c104f17342d727d90",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B347",
+      "sourceIndex": 347,
+      "kind": "paragraph",
+      "xmlSha256": "3077b46c93c0aa0eb39f7ecc1be3e88e343e141d35722d07a6a9254353308e49",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B348",
+      "sourceIndex": 348,
+      "kind": "paragraph",
+      "xmlSha256": "4a52e4ce42bfb5d09ab6bf487390352b211e261425a4a4d11a48fa4c5b8bf300",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B349",
+      "sourceIndex": 349,
+      "kind": "paragraph",
+      "xmlSha256": "fd827a5d50c3ec9d1e2a69cd3597a597616a54e093358c2775b71b16255c6a49",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B350",
+      "sourceIndex": 350,
+      "kind": "paragraph",
+      "xmlSha256": "f4b08b22cbcc8609f7cfe220394f4732b2fcb5a57d346d943e963f465581b2b4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B351",
+      "sourceIndex": 351,
+      "kind": "paragraph",
+      "xmlSha256": "1dd468e07016ed60d164c16bb2c56117a0b7cb4ddef3979c8db702eed9f0567b",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B352",
+      "sourceIndex": 352,
+      "kind": "paragraph",
+      "xmlSha256": "e4f650422e8e103b2568ca9910c2c8871b5fbf42d1e2a2d6a01b90aba5437a56",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B353",
+      "sourceIndex": 353,
+      "kind": "paragraph",
+      "xmlSha256": "81c3acf146313e85407d362d3a8d4ff9dc4d22d6f62b20b372f3317f091b1b12",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B354",
+      "sourceIndex": 354,
+      "kind": "paragraph",
+      "xmlSha256": "b2ab2254a7536b7363762c1ad5877a3e8f6392c69a0867966adcebef9dbbdc40",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B355",
+      "sourceIndex": 355,
+      "kind": "paragraph",
+      "xmlSha256": "e567026947b7424290a971822e834c115a684068a96a706cc8c20a9f25f618ca",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B356",
+      "sourceIndex": 356,
+      "kind": "paragraph",
+      "xmlSha256": "a498fb0ba90c47f0642cf176f49264399be2cb44d158f983c13808e3d5709485",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B357",
+      "sourceIndex": 357,
+      "kind": "paragraph",
+      "xmlSha256": "a7a967ac60a5e7af7bc7d9c693117fad7ca29642af91d925d35a39d43f8ac1be",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B358",
+      "sourceIndex": 358,
+      "kind": "paragraph",
+      "xmlSha256": "a0c2f568fd19af7e691373c0e9c7722320d7817b2a92f5477d0d1bea2d5bded0",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B359",
+      "sourceIndex": 359,
+      "kind": "paragraph",
+      "xmlSha256": "2ca68ef4407724f0b0c03406d3653101854de209dcc28274efb5c9185219d011",
+      "imageCount": 1
+    },
+    {
+      "blockId": "B360",
+      "sourceIndex": 360,
+      "kind": "paragraph",
+      "xmlSha256": "bf9cb26b9a90a7e43aca72e9848b4786830331be0ba0f06ad2ba51f982e694ab",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B361",
+      "sourceIndex": 361,
+      "kind": "paragraph",
+      "xmlSha256": "985fa7e93268202ea1835f8d9fdcb75a220b827cb468e691207166c7be06da49",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B362",
+      "sourceIndex": 362,
+      "kind": "paragraph",
+      "xmlSha256": "f02a0d302a2d705bdc71d890143b2b7c4fee28ad6345a61c832dd9326f64bd57",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B363",
+      "sourceIndex": 363,
+      "kind": "paragraph",
+      "xmlSha256": "387db62366438068200ebae01342aa25103b59c32aa141c0b185f6a1a3e95158",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B364",
+      "sourceIndex": 364,
+      "kind": "paragraph",
+      "xmlSha256": "73b007a2d6046382c20b98650c22aeceb9ef89b4bcc141241af81c36fe230da5",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B365",
+      "sourceIndex": 365,
+      "kind": "paragraph",
+      "xmlSha256": "42b07ed1020da29350d340cc858dcc7bf7b8b5f012e3cc1f25a3efc68c209e04",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B366",
+      "sourceIndex": 366,
+      "kind": "paragraph",
+      "xmlSha256": "a575b66200f4af42a91433fb4932c88cc3a447c36217d079cf3f3ccc6a1b0816",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B367",
+      "sourceIndex": 367,
+      "kind": "paragraph",
+      "xmlSha256": "b302737b7b15ff346af9734c3986eb902156196388d034b902dadeb8269bda88",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B368",
+      "sourceIndex": 368,
+      "kind": "paragraph",
+      "xmlSha256": "ebe503318bfea169e30884e473ca2f02d7680cb0154acc3a1e9e8b403ccb989e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B369",
+      "sourceIndex": 369,
+      "kind": "paragraph",
+      "xmlSha256": "bb83ab6eb56ace7e169b6bdb8478304784afe889ef5056052fe7aa34c399a680",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B370",
+      "sourceIndex": 370,
+      "kind": "paragraph",
+      "xmlSha256": "634e669aa991784ce7482f25430f7e8ddbbc1332d811b795a03efe5294384dec",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B371",
+      "sourceIndex": 371,
+      "kind": "paragraph",
+      "xmlSha256": "8cfe091fb6a83ed4c798f7d4e76eb64300c36f39332ee6a0a26cc2b7cd961037",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B372",
+      "sourceIndex": 372,
+      "kind": "paragraph",
+      "xmlSha256": "3cbdaca01bbad9ce31f15c59906eb463aeae7c9a5eef22723a0a72da32298e0d",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B373",
+      "sourceIndex": 373,
+      "kind": "paragraph",
+      "xmlSha256": "6f4677b76330c91c3e745afacc3e8e966794765da4212bc6f2a0828e51cb6311",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B374",
+      "sourceIndex": 374,
+      "kind": "paragraph",
+      "xmlSha256": "590626026e89ff5c5e743ec1ff09137f21c6c21fa6fe1108b38aa57f0f302bc0",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B375",
+      "sourceIndex": 375,
+      "kind": "paragraph",
+      "xmlSha256": "60e00a779e2abe6cf931d86eb00f64437d79eef7d2d2699cca5a1c48d5dfb013",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B376",
+      "sourceIndex": 376,
+      "kind": "paragraph",
+      "xmlSha256": "0d4b9682095a3a3ee035d64b0f7b75230896f0edb32e63987959304a0f2a840c",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B377",
+      "sourceIndex": 377,
+      "kind": "paragraph",
+      "xmlSha256": "5254df4b51d19148bc30ac42e978141f04dce6b164aef39bd837170cf622f5cf",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B378",
+      "sourceIndex": 378,
+      "kind": "paragraph",
+      "xmlSha256": "dbfb242530e9fbfadbc7474d623a09c741259de66f21e4873b7fcf0e0f05e9d0",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B379",
+      "sourceIndex": 379,
+      "kind": "paragraph",
+      "xmlSha256": "5dc0ee1edafeafba11348d5bf1253d9e4cdae8543d0239e1051de0fb5c449afa",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B380",
+      "sourceIndex": 380,
+      "kind": "paragraph",
+      "xmlSha256": "ca0bdd1f9b2a949d1c800f13cca730f0ae6003209f827d34b3df9bd622b7fce4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B381",
+      "sourceIndex": 381,
+      "kind": "paragraph",
+      "xmlSha256": "5b462a02e28ec9a316e96dd8d632c94c9276f2609fea6ab167fe69f6c454144e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B382",
+      "sourceIndex": 382,
+      "kind": "paragraph",
+      "xmlSha256": "b98ecb6ff0a247786eb56183e014d9ff4280631beec234ce254ae7a12b6ef2d7",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B383",
+      "sourceIndex": 383,
+      "kind": "paragraph",
+      "xmlSha256": "1abc1fac12b675efbc7adcea6d39cf0ef7123a59dfc6bef93135541a280529c3",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B384",
+      "sourceIndex": 384,
+      "kind": "paragraph",
+      "xmlSha256": "1d3186be7762fb77a5dbdc68d37918d31f09fdcff1df7b5eb08307d8f2715337",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B385",
+      "sourceIndex": 385,
+      "kind": "paragraph",
+      "xmlSha256": "44386ab0f009c92150c41878c907379beea47382de4a46d5d09e823bf3a34f0e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B386",
+      "sourceIndex": 386,
+      "kind": "paragraph",
+      "xmlSha256": "6a92c30f71477b3477084bc7cdaecbbecb9bcce23edaa11c9088945ed927326e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B387",
+      "sourceIndex": 387,
+      "kind": "paragraph",
+      "xmlSha256": "0407aaeafd5531be41d7025f2989c741c3af4dcec8421fbbe090966c35bc0113",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B388",
+      "sourceIndex": 388,
+      "kind": "paragraph",
+      "xmlSha256": "629456d2eeb1d590caa9c272552471d484cce79b9e43792d57137b0521d2902a",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B389",
+      "sourceIndex": 389,
+      "kind": "paragraph",
+      "xmlSha256": "7288eef88dc69d6586d82c9daaea9c80fa7295b495e0682a3876c43af58605f4",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B390",
+      "sourceIndex": 390,
+      "kind": "paragraph",
+      "xmlSha256": "478a17cde83760f0209992e0b0ea95e4320787e644df3aa5149d8f31068a5891",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B391",
+      "sourceIndex": 391,
+      "kind": "paragraph",
+      "xmlSha256": "81fbf831679238bba82559b8f9b442be2a445bec178fa9d9dda5606cf1884ad2",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B392",
+      "sourceIndex": 392,
+      "kind": "paragraph",
+      "xmlSha256": "9910973fd729abfecdd40cb5b966cdb32821ea42f24242e17c664a541996d45e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B393",
+      "sourceIndex": 393,
+      "kind": "paragraph",
+      "xmlSha256": "4fc8b7cd6c1ac3165976b88c69f98aec6bfef94a13c4b32b7dd60e41ba791423",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B394",
+      "sourceIndex": 394,
+      "kind": "paragraph",
+      "xmlSha256": "47197d1e58012e1685c4c57a225c38d19b1c8b0bd02ee0c31a2bcc6f7eb1bece",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B395",
+      "sourceIndex": 395,
+      "kind": "paragraph",
+      "xmlSha256": "94811e81c66c3895d932e91ed2ed6c1bf13911bbf3e2b79270503a926f631af1",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B396",
+      "sourceIndex": 396,
+      "kind": "paragraph",
+      "xmlSha256": "66d7e05a3b7f285f7b2f17a3c00848c5fc1b79a080f3d79259940501ada07677",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B397",
+      "sourceIndex": 397,
+      "kind": "paragraph",
+      "xmlSha256": "95d10ace40ba8ad1227c9763d8996d7d6f67c00a91dc89faa3ad1a111d935bd9",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B398",
+      "sourceIndex": 398,
+      "kind": "paragraph",
+      "xmlSha256": "b6a0520e1641570097c5ed23fc0be2dc4deb985d5ff6095ad3e0b1029f9ea4dd",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B399",
+      "sourceIndex": 399,
+      "kind": "paragraph",
+      "xmlSha256": "1e0d423c3baf807e2fdad71b63f9602f4a915005e30ce11f62c00027b1d51316",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B400",
+      "sourceIndex": 400,
+      "kind": "paragraph",
+      "xmlSha256": "eed4714f8f53302acd362a75fd9cf848b55c343d8ca0a3b06b24fb7253a76eb6",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B401",
+      "sourceIndex": 401,
+      "kind": "paragraph",
+      "xmlSha256": "1798db33904d02d3011ae9d6419b8d235e7d43514961ecf91cafb35011b01a3e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B402",
+      "sourceIndex": 402,
+      "kind": "paragraph",
+      "xmlSha256": "1d54299a201c2e7014577e4cf1dc699a6f23de329242a6f18d0c4054ab52c815",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B403",
+      "sourceIndex": 403,
+      "kind": "paragraph",
+      "xmlSha256": "5af13fb02b3526ca418e3900d5ce1125f30fa690570ba2eb117ce669664439b1",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B404",
+      "sourceIndex": 404,
+      "kind": "paragraph",
+      "xmlSha256": "a8381db91785c4a4fa8e188823ece09f4ccaedba36b430006e6db9e9d5e21bf6",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B405",
+      "sourceIndex": 405,
+      "kind": "paragraph",
+      "xmlSha256": "3e6bc12a0c990f4efafadcb341fb5d6251061b923c3a2b95958723c230aee36c",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B406",
+      "sourceIndex": 406,
+      "kind": "paragraph",
+      "xmlSha256": "720a79ec5bf8bc7872783e3d00ccf726bcbf846be81ec37048e70b2824312a3f",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B407",
+      "sourceIndex": 407,
+      "kind": "paragraph",
+      "xmlSha256": "7085e76f280fd22bb33e91044753c7335b45d0bd713ceee2fb73b468f0b1261d",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B408",
+      "sourceIndex": 408,
+      "kind": "paragraph",
+      "xmlSha256": "4d8268e80fc8526fffca28a8a817e8c64fc294632d5761dab0cd66eb506000d5",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B409",
+      "sourceIndex": 409,
+      "kind": "paragraph",
+      "xmlSha256": "f4711c2cc025b665fbb1d7d63c0fa9039feea4213f09cb0a88a8560358abcd05",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B410",
+      "sourceIndex": 410,
+      "kind": "paragraph",
+      "xmlSha256": "08b65a033e960236a33c2816cac4cb4bb329ed1dd6ad426782ad60799c6adbe6",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B411",
+      "sourceIndex": 411,
+      "kind": "paragraph",
+      "xmlSha256": "04c4d3dffb2ea41aadb5bba43b4f507a50920c8acf074ba69a1caef0ab1e302d",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B412",
+      "sourceIndex": 412,
+      "kind": "paragraph",
+      "xmlSha256": "b1129a1c86f35d16c78ebe5ae774ae407efe6e66dd3c8d719ae67b5587a5b174",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B413",
+      "sourceIndex": 413,
+      "kind": "paragraph",
+      "xmlSha256": "f8c1b8503542fbb8f259ea5bab4cbd54a6e1ea2812eef8c30a83557f31cca2ba",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B414",
+      "sourceIndex": 414,
+      "kind": "paragraph",
+      "xmlSha256": "6af35e2413ecb477292b801c17fff2801ad309791e2ca8bc39164d72e922dc94",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B415",
+      "sourceIndex": 415,
+      "kind": "paragraph",
+      "xmlSha256": "8401ffd152a5ca7a49b576ed8ceb1e49347f2251b8711f5e6fa3bc6f68e76847",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B416",
+      "sourceIndex": 416,
+      "kind": "paragraph",
+      "xmlSha256": "72c4aaa479c2ff61442123457ec88b52591519aca5e53ba75ac94cefa7557d7d",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B417",
+      "sourceIndex": 417,
+      "kind": "paragraph",
+      "xmlSha256": "5ebc3594bf9e9bb5fe42eb6e67b05fdabe146e71cb20523d56a36480478f799b",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B418",
+      "sourceIndex": 418,
+      "kind": "paragraph",
+      "xmlSha256": "255d1866eafd24f7e932ab7fb02ebcf1a033d542f63e52debc852e69765616a5",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B419",
+      "sourceIndex": 419,
+      "kind": "paragraph",
+      "xmlSha256": "e1aea71c094ff7bdf48152fb2f4c9961ff1fdf9cf6f824da342b47c317148cfd",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B420",
+      "sourceIndex": 420,
+      "kind": "paragraph",
+      "xmlSha256": "bf8e0a1792dbada2cd20a209e8b2669629f68ad50e53f5b9039593e0dcd62022",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B421",
+      "sourceIndex": 421,
+      "kind": "paragraph",
+      "xmlSha256": "a3a826e6e1dc1a313ebb1da8fabc6b2f457a48744ff408d4599e1528a5d60f19",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B422",
+      "sourceIndex": 422,
+      "kind": "paragraph",
+      "xmlSha256": "42e01129736b673130b74a9f4827eea6eadbeaf129001a3690d2e7c80a03de87",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B423",
+      "sourceIndex": 423,
+      "kind": "paragraph",
+      "xmlSha256": "228066e32134ea69380d149d87efc3e71265b3d6b32bee4a65836ae4ecbfd9d3",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B424",
+      "sourceIndex": 424,
+      "kind": "paragraph",
+      "xmlSha256": "6d39e29f43d7ed8477568d47a335a6fe871effc0333aae3092f9b82136a65398",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B425",
+      "sourceIndex": 425,
+      "kind": "paragraph",
+      "xmlSha256": "9e2ea11febf944f76dfe4d850463305c47b823feeb2799aa2229b43716b550b8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B426",
+      "sourceIndex": 426,
+      "kind": "paragraph",
+      "xmlSha256": "5f9a42ab1db9bac04ad74bdcf4c3487145cb783182bd2de328b881bb28f61dc8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B427",
+      "sourceIndex": 427,
+      "kind": "paragraph",
+      "xmlSha256": "9fd767e4bcc59230b47b66a1b9c0b6dca5b4b8bf1aa796673af14d14e99ab989",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B428",
+      "sourceIndex": 428,
+      "kind": "paragraph",
+      "xmlSha256": "7f77242c364a4a759d5ea31d589d32f1ec4a2d58e8bfceb7bba2883a2b20ad42",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B429",
+      "sourceIndex": 429,
+      "kind": "paragraph",
+      "xmlSha256": "1f7640128ee4b040d44210251db9a5088e2de9c2cafdd62e006d6edd76813469",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B430",
+      "sourceIndex": 430,
+      "kind": "paragraph",
+      "xmlSha256": "1c9bb60cea649fe9fb1d66db98c472990b872f73329ffacc275af5a6641904e3",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B431",
+      "sourceIndex": 431,
+      "kind": "paragraph",
+      "xmlSha256": "3ce29078702d618a95ebaaff304173f91fccecbc992bf88b1b75010ce2a42f33",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B432",
+      "sourceIndex": 432,
+      "kind": "paragraph",
+      "xmlSha256": "bd2fe682ecf480e9bd889d73f46807ba20e05791371a95562b88827ee4c254ee",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B433",
+      "sourceIndex": 433,
+      "kind": "paragraph",
+      "xmlSha256": "053cb3edde4316a54123ab73b4390ea2ad41408c40418f4e873cde907451cbe8",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B434",
+      "sourceIndex": 434,
+      "kind": "paragraph",
+      "xmlSha256": "a400a4503fb260061d6d1448a4b94127031032b61d3571b8eda84f1c52a299ed",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B435",
+      "sourceIndex": 435,
+      "kind": "paragraph",
+      "xmlSha256": "fb3c2de257e2a0d8d4dc1a3db832aea6424559b3fb981c8c883e4ebc1003f48e",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B436",
+      "sourceIndex": 436,
+      "kind": "paragraph",
+      "xmlSha256": "9222225a14e22a4ca684b4acd45ecf34ca838828ff8ef9cf8a9988dd9f24ebf9",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B437",
+      "sourceIndex": 437,
+      "kind": "paragraph",
+      "xmlSha256": "d8d15e2f50651c399692d89c650e76395e522ab737a292a3cde413a9a69fc8dc",
+      "imageCount": 0
+    },
+    {
+      "blockId": "B438",
+      "sourceIndex": 438,
+      "kind": "paragraph",
+      "xmlSha256": "bfcf1f7255e3fde5940dab37469e79bd4059172d7cd6fd7e92837ee91f09be62",
+      "imageCount": 0
+    }
+  ],
+  "standardModules": [
+    {
+      "id": "SM01",
+      "type": "course_objectives",
+      "name": "课程目标",
+      "containerRange": [
+        1,
+        4
+      ],
+      "questionContainer": false,
+      "children": [
+        {
+          "kind": "module_local_content",
+          "range": [
+            1,
+            4
+          ],
+          "blockIds": [
+            "B001",
+            "B002",
+            "B003",
+            "B004"
+          ],
+          "independentlyReferenceable": false
+        }
+      ],
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "SM02",
+      "type": "knowledge_summary",
+      "name": "知识梳理",
+      "containerRange": [
+        5,
+        116
+      ],
+      "questionContainer": true,
+      "children": [
+        {
+          "kind": "module_local_content",
+          "range": [
+            5,
+            22
+          ],
+          "blockIds": [
+            "B005",
+            "B006",
+            "B007",
+            "B008",
+            "B009",
+            "B010",
+            "B011",
+            "B012",
+            "B013",
+            "B014",
+            "B015",
+            "B016",
+            "B017",
+            "B018",
+            "B019",
+            "B020",
+            "B021",
+            "B022"
+          ],
+          "independentlyReferenceable": false
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K1-E01",
+          "range": [
+            23,
+            24
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K1-E02",
+          "range": [
+            25,
+            26
+          ]
+        },
+        {
+          "kind": "module_local_content",
+          "range": [
+            27,
+            29
+          ],
+          "blockIds": [
+            "B027",
+            "B028",
+            "B029"
+          ],
+          "independentlyReferenceable": false
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K1-P01",
+          "range": [
+            30,
+            31
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K1-P02",
+          "range": [
+            32,
+            33
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K1-P03",
+          "range": [
+            34,
+            35
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K1-P04",
+          "range": [
+            36,
+            37
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K1-P05",
+          "range": [
+            38,
+            39
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K1-P06",
+          "range": [
+            40,
+            41
+          ]
+        },
+        {
+          "kind": "module_local_content",
+          "range": [
+            42,
+            52
+          ],
+          "blockIds": [
+            "B042",
+            "B043",
+            "B044",
+            "B045",
+            "B046",
+            "B047",
+            "B048",
+            "B049",
+            "B050",
+            "B051",
+            "B052"
+          ],
+          "independentlyReferenceable": false
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K2-E01",
+          "range": [
+            53,
+            54
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K2-E02",
+          "range": [
+            55,
+            56
+          ]
+        },
+        {
+          "kind": "module_local_content",
+          "range": [
+            57,
+            59
+          ],
+          "blockIds": [
+            "B057",
+            "B058",
+            "B059"
+          ],
+          "independentlyReferenceable": false
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K2-P01",
+          "range": [
+            60,
+            61
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K2-P02",
+          "range": [
+            62,
+            64
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K2-P03",
+          "range": [
+            65,
+            66
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K2-P04",
+          "range": [
+            67,
+            71
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K2-P05",
+          "range": [
+            72,
+            74
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K2-P06",
+          "range": [
+            75,
+            78
+          ]
+        },
+        {
+          "kind": "module_local_content",
+          "range": [
+            79,
+            88
+          ],
+          "blockIds": [
+            "B079",
+            "B080",
+            "B081",
+            "B082",
+            "B083",
+            "B084",
+            "B085",
+            "B086",
+            "B087",
+            "B088"
+          ],
+          "independentlyReferenceable": false
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K3-E01",
+          "range": [
+            89,
+            93
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K3-E02",
+          "range": [
+            94,
+            98
+          ]
+        },
+        {
+          "kind": "module_local_content",
+          "range": [
+            99,
+            101
+          ],
+          "blockIds": [
+            "B099",
+            "B100",
+            "B101"
+          ],
+          "independentlyReferenceable": false
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K3-P01",
+          "range": [
+            102,
+            106
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K3-P02",
+          "range": [
+            107,
+            111
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "K3-P03",
+          "range": [
+            112,
+            116
+          ]
+        }
+      ],
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "SM05",
+      "type": "keypoint_review",
+      "name": "要点回顾",
+      "containerRange": [
+        285,
+        301
+      ],
+      "questionContainer": false,
+      "children": [
+        {
+          "kind": "module_local_content",
+          "range": [
+            285,
+            301
+          ],
+          "blockIds": [
+            "B285",
+            "B286",
+            "B287",
+            "B288",
+            "B289",
+            "B290",
+            "B291",
+            "B292",
+            "B293",
+            "B294",
+            "B295",
+            "B296",
+            "B297",
+            "B298",
+            "B299",
+            "B300",
+            "B301"
+          ],
+          "independentlyReferenceable": false
+        }
+      ],
+      "independentlyReferenceable": true
+    }
+  ],
+  "questionSectionContainers": [
+    {
+      "id": "SM03",
+      "type": "comprehensive_training",
+      "name": "综合训练",
+      "containerRange": [
+        122,
+        199
+      ],
+      "questionContainer": true,
+      "children": [
+        {
+          "kind": "module_local_content",
+          "range": [
+            122,
+            124
+          ],
+          "blockIds": [
+            "B122",
+            "B123",
+            "B124"
+          ],
+          "independentlyReferenceable": false
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-01",
+          "range": [
+            125,
+            129
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-02",
+          "range": [
+            130,
+            134
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-03",
+          "range": [
+            135,
+            139
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-04",
+          "range": [
+            140,
+            144
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-05",
+          "range": [
+            145,
+            149
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-06",
+          "range": [
+            150,
+            154
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-07",
+          "range": [
+            155,
+            159
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-08",
+          "range": [
+            160,
+            164
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-09",
+          "range": [
+            165,
+            169
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-10",
+          "range": [
+            170,
+            174
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-11",
+          "range": [
+            175,
+            179
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-12",
+          "range": [
+            180,
+            184
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-13",
+          "range": [
+            185,
+            189
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-14",
+          "range": [
+            190,
+            194
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "CT-15",
+          "range": [
+            195,
+            199
+          ]
+        }
+      ],
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "SM04",
+      "type": "ability_advancement",
+      "name": "能力进阶",
+      "containerRange": [
+        226,
+        263
+      ],
+      "questionContainer": true,
+      "children": [
+        {
+          "kind": "module_local_content",
+          "range": [
+            226,
+            227
+          ],
+          "blockIds": [
+            "B226",
+            "B227"
+          ],
+          "independentlyReferenceable": false
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "AA-01",
+          "range": [
+            228,
+            233
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "AA-02",
+          "range": [
+            234,
+            239
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "AA-03",
+          "range": [
+            240,
+            245
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "AA-04",
+          "range": [
+            246,
+            251
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "AA-05",
+          "range": [
+            252,
+            257
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "AA-06",
+          "range": [
+            258,
+            263
+          ]
+        }
+      ],
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "SM06",
+      "type": "keypoint_quiz",
+      "name": "要点小测",
+      "containerRange": [
+        312,
+        342
+      ],
+      "questionContainer": true,
+      "children": [
+        {
+          "kind": "module_local_content",
+          "range": [
+            312,
+            312
+          ],
+          "blockIds": [
+            "B312"
+          ],
+          "independentlyReferenceable": false
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "KQ-01",
+          "range": [
+            313,
+            317
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "KQ-02",
+          "range": [
+            318,
+            322
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "KQ-03",
+          "range": [
+            323,
+            327
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "KQ-04",
+          "range": [
+            328,
+            332
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "KQ-05",
+          "range": [
+            333,
+            337
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "KQ-06",
+          "range": [
+            338,
+            342
+          ]
+        }
+      ],
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "SM07",
+      "type": "after_class_practice",
+      "name": "课后落实",
+      "containerRange": [
+        359,
+        436
+      ],
+      "questionContainer": true,
+      "children": [
+        {
+          "kind": "module_local_content",
+          "range": [
+            359,
+            359
+          ],
+          "blockIds": [
+            "B359"
+          ],
+          "independentlyReferenceable": false
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-01",
+          "range": [
+            360,
+            364
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-02",
+          "range": [
+            365,
+            369
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-03",
+          "range": [
+            370,
+            374
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-04",
+          "range": [
+            375,
+            379
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-05",
+          "range": [
+            380,
+            384
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-06",
+          "range": [
+            385,
+            389
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-07",
+          "range": [
+            390,
+            394
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-08",
+          "range": [
+            395,
+            399
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-09",
+          "range": [
+            400,
+            404
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-10",
+          "range": [
+            405,
+            409
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-11",
+          "range": [
+            410,
+            414
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-12",
+          "range": [
+            415,
+            419
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-13",
+          "range": [
+            420,
+            424
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-14",
+          "range": [
+            425,
+            429
+          ]
+        },
+        {
+          "kind": "question_reference",
+          "questionId": "HW-15",
+          "range": [
+            430,
+            436
+          ]
+        }
+      ],
+      "independentlyReferenceable": true
+    }
+  ],
+  "questions": [
+    {
+      "id": "K1-E01",
+      "module": "SM02",
+      "range": [
+        23,
+        24
+      ],
+      "blockIds": [
+        "B023",
+        "B024"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B023"
+        ],
+        "answer": [
+          "B024"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K1-E02",
+      "module": "SM02",
+      "range": [
+        25,
+        26
+      ],
+      "blockIds": [
+        "B025",
+        "B026"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B025"
+        ],
+        "answer": [
+          "B026"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K1-P01",
+      "module": "SM02",
+      "range": [
+        30,
+        31
+      ],
+      "blockIds": [
+        "B030",
+        "B031"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B030"
+        ],
+        "answer": [
+          "B031"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K1-P02",
+      "module": "SM02",
+      "range": [
+        32,
+        33
+      ],
+      "blockIds": [
+        "B032",
+        "B033"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B032"
+        ],
+        "answer": [
+          "B033"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K1-P03",
+      "module": "SM02",
+      "range": [
+        34,
+        35
+      ],
+      "blockIds": [
+        "B034",
+        "B035"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B034"
+        ],
+        "answer": [
+          "B035"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K1-P04",
+      "module": "SM02",
+      "range": [
+        36,
+        37
+      ],
+      "blockIds": [
+        "B036",
+        "B037"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B036"
+        ],
+        "answer": [
+          "B037"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K1-P05",
+      "module": "SM02",
+      "range": [
+        38,
+        39
+      ],
+      "blockIds": [
+        "B038",
+        "B039"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B038"
+        ],
+        "answer": [
+          "B039"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K1-P06",
+      "module": "SM02",
+      "range": [
+        40,
+        41
+      ],
+      "blockIds": [
+        "B040",
+        "B041"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B040"
+        ],
+        "answer": [
+          "B041"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K2-E01",
+      "module": "SM02",
+      "range": [
+        53,
+        54
+      ],
+      "blockIds": [
+        "B053",
+        "B054"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B053"
+        ],
+        "answer": [
+          "B054"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K2-E02",
+      "module": "SM02",
+      "range": [
+        55,
+        56
+      ],
+      "blockIds": [
+        "B055",
+        "B056"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B055"
+        ],
+        "answer": [
+          "B056"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K2-P01",
+      "module": "SM02",
+      "range": [
+        60,
+        61
+      ],
+      "blockIds": [
+        "B060",
+        "B061"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B060"
+        ],
+        "answer": [
+          "B061"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K2-P02",
+      "module": "SM02",
+      "range": [
+        62,
+        64
+      ],
+      "blockIds": [
+        "B062",
+        "B063",
+        "B064"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B062"
+        ],
+        "answer": [
+          "B063",
+          "B064"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K2-P03",
+      "module": "SM02",
+      "range": [
+        65,
+        66
+      ],
+      "blockIds": [
+        "B065",
+        "B066"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B065"
+        ],
+        "answer": [
+          "B066"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K2-P04",
+      "module": "SM02",
+      "range": [
+        67,
+        71
+      ],
+      "blockIds": [
+        "B067",
+        "B068",
+        "B069",
+        "B070",
+        "B071"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B067"
+        ],
+        "answer": [
+          "B068",
+          "B069",
+          "B070",
+          "B071"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K2-P05",
+      "module": "SM02",
+      "range": [
+        72,
+        74
+      ],
+      "blockIds": [
+        "B072",
+        "B073",
+        "B074"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B072"
+        ],
+        "answer": [
+          "B073",
+          "B074"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K2-P06",
+      "module": "SM02",
+      "range": [
+        75,
+        78
+      ],
+      "blockIds": [
+        "B075",
+        "B076",
+        "B077",
+        "B078"
+      ],
+      "roleLayout": "predicate_identification_teacher",
+      "roles": {
+        "stem": [
+          "B075"
+        ],
+        "answer": [
+          "B076",
+          "B077",
+          "B078"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K3-E01",
+      "module": "SM02",
+      "range": [
+        89,
+        93
+      ],
+      "blockIds": [
+        "B089",
+        "B090",
+        "B091",
+        "B092",
+        "B093"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B089"
+        ],
+        "judgement": [
+          "B090"
+        ],
+        "analysis": [
+          "B091"
+        ],
+        "answer": [
+          "B092"
+        ],
+        "translation": [
+          "B093"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K3-E02",
+      "module": "SM02",
+      "range": [
+        94,
+        98
+      ],
+      "blockIds": [
+        "B094",
+        "B095",
+        "B096",
+        "B097",
+        "B098"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B094"
+        ],
+        "judgement": [
+          "B095"
+        ],
+        "analysis": [
+          "B096"
+        ],
+        "answer": [
+          "B097"
+        ],
+        "translation": [
+          "B098"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K3-P01",
+      "module": "SM02",
+      "range": [
+        102,
+        106
+      ],
+      "blockIds": [
+        "B102",
+        "B103",
+        "B104",
+        "B105",
+        "B106"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B102"
+        ],
+        "judgement": [
+          "B103"
+        ],
+        "analysis": [
+          "B104"
+        ],
+        "answer": [
+          "B105"
+        ],
+        "translation": [
+          "B106"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K3-P02",
+      "module": "SM02",
+      "range": [
+        107,
+        111
+      ],
+      "blockIds": [
+        "B107",
+        "B108",
+        "B109",
+        "B110",
+        "B111"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B107"
+        ],
+        "judgement": [
+          "B108"
+        ],
+        "analysis": [
+          "B109"
+        ],
+        "answer": [
+          "B110"
+        ],
+        "translation": [
+          "B111"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "K3-P03",
+      "module": "SM02",
+      "range": [
+        112,
+        116
+      ],
+      "blockIds": [
+        "B112",
+        "B113",
+        "B114",
+        "B115",
+        "B116"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B112"
+        ],
+        "judgement": [
+          "B113"
+        ],
+        "analysis": [
+          "B114"
+        ],
+        "answer": [
+          "B115"
+        ],
+        "translation": [
+          "B116"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-01",
+      "module": "SM03",
+      "range": [
+        125,
+        129
+      ],
+      "blockIds": [
+        "B125",
+        "B126",
+        "B127",
+        "B128",
+        "B129"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B125"
+        ],
+        "judgement": [
+          "B126"
+        ],
+        "analysis": [
+          "B127"
+        ],
+        "answer": [
+          "B128"
+        ],
+        "translation": [
+          "B129"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-02",
+      "module": "SM03",
+      "range": [
+        130,
+        134
+      ],
+      "blockIds": [
+        "B130",
+        "B131",
+        "B132",
+        "B133",
+        "B134"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B130"
+        ],
+        "judgement": [
+          "B131"
+        ],
+        "analysis": [
+          "B132"
+        ],
+        "answer": [
+          "B133"
+        ],
+        "translation": [
+          "B134"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-03",
+      "module": "SM03",
+      "range": [
+        135,
+        139
+      ],
+      "blockIds": [
+        "B135",
+        "B136",
+        "B137",
+        "B138",
+        "B139"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B135"
+        ],
+        "judgement": [
+          "B136"
+        ],
+        "analysis": [
+          "B137"
+        ],
+        "answer": [
+          "B138"
+        ],
+        "translation": [
+          "B139"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-04",
+      "module": "SM03",
+      "range": [
+        140,
+        144
+      ],
+      "blockIds": [
+        "B140",
+        "B141",
+        "B142",
+        "B143",
+        "B144"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B140"
+        ],
+        "judgement": [
+          "B141"
+        ],
+        "analysis": [
+          "B142"
+        ],
+        "answer": [
+          "B143"
+        ],
+        "translation": [
+          "B144"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-05",
+      "module": "SM03",
+      "range": [
+        145,
+        149
+      ],
+      "blockIds": [
+        "B145",
+        "B146",
+        "B147",
+        "B148",
+        "B149"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B145"
+        ],
+        "judgement": [
+          "B146"
+        ],
+        "analysis": [
+          "B147"
+        ],
+        "answer": [
+          "B148"
+        ],
+        "translation": [
+          "B149"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-06",
+      "module": "SM03",
+      "range": [
+        150,
+        154
+      ],
+      "blockIds": [
+        "B150",
+        "B151",
+        "B152",
+        "B153",
+        "B154"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B150"
+        ],
+        "judgement": [
+          "B151"
+        ],
+        "analysis": [
+          "B152"
+        ],
+        "answer": [
+          "B153"
+        ],
+        "translation": [
+          "B154"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-07",
+      "module": "SM03",
+      "range": [
+        155,
+        159
+      ],
+      "blockIds": [
+        "B155",
+        "B156",
+        "B157",
+        "B158",
+        "B159"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B155"
+        ],
+        "judgement": [
+          "B156"
+        ],
+        "analysis": [
+          "B157"
+        ],
+        "answer": [
+          "B158"
+        ],
+        "translation": [
+          "B159"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-08",
+      "module": "SM03",
+      "range": [
+        160,
+        164
+      ],
+      "blockIds": [
+        "B160",
+        "B161",
+        "B162",
+        "B163",
+        "B164"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B160"
+        ],
+        "judgement": [
+          "B161"
+        ],
+        "analysis": [
+          "B162"
+        ],
+        "answer": [
+          "B163"
+        ],
+        "translation": [
+          "B164"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-09",
+      "module": "SM03",
+      "range": [
+        165,
+        169
+      ],
+      "blockIds": [
+        "B165",
+        "B166",
+        "B167",
+        "B168",
+        "B169"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B165"
+        ],
+        "judgement": [
+          "B166"
+        ],
+        "analysis": [
+          "B167"
+        ],
+        "answer": [
+          "B168"
+        ],
+        "translation": [
+          "B169"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-10",
+      "module": "SM03",
+      "range": [
+        170,
+        174
+      ],
+      "blockIds": [
+        "B170",
+        "B171",
+        "B172",
+        "B173",
+        "B174"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B170"
+        ],
+        "judgement": [
+          "B171"
+        ],
+        "analysis": [
+          "B172"
+        ],
+        "answer": [
+          "B173"
+        ],
+        "translation": [
+          "B174"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-11",
+      "module": "SM03",
+      "range": [
+        175,
+        179
+      ],
+      "blockIds": [
+        "B175",
+        "B176",
+        "B177",
+        "B178",
+        "B179"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B175"
+        ],
+        "judgement": [
+          "B176"
+        ],
+        "analysis": [
+          "B177"
+        ],
+        "answer": [
+          "B178"
+        ],
+        "translation": [
+          "B179"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-12",
+      "module": "SM03",
+      "range": [
+        180,
+        184
+      ],
+      "blockIds": [
+        "B180",
+        "B181",
+        "B182",
+        "B183",
+        "B184"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B180"
+        ],
+        "judgement": [
+          "B181"
+        ],
+        "analysis": [
+          "B182"
+        ],
+        "answer": [
+          "B183"
+        ],
+        "translation": [
+          "B184"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-13",
+      "module": "SM03",
+      "range": [
+        185,
+        189
+      ],
+      "blockIds": [
+        "B185",
+        "B186",
+        "B187",
+        "B188",
+        "B189"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B185"
+        ],
+        "judgement": [
+          "B186"
+        ],
+        "analysis": [
+          "B187"
+        ],
+        "answer": [
+          "B188"
+        ],
+        "translation": [
+          "B189"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-14",
+      "module": "SM03",
+      "range": [
+        190,
+        194
+      ],
+      "blockIds": [
+        "B190",
+        "B191",
+        "B192",
+        "B193",
+        "B194"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B190"
+        ],
+        "judgement": [
+          "B191"
+        ],
+        "analysis": [
+          "B192"
+        ],
+        "answer": [
+          "B193"
+        ],
+        "translation": [
+          "B194"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "CT-15",
+      "module": "SM03",
+      "range": [
+        195,
+        199
+      ],
+      "blockIds": [
+        "B195",
+        "B196",
+        "B197",
+        "B198",
+        "B199"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B195"
+        ],
+        "judgement": [
+          "B196"
+        ],
+        "analysis": [
+          "B197"
+        ],
+        "answer": [
+          "B198"
+        ],
+        "translation": [
+          "B199"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "AA-01",
+      "module": "SM04",
+      "range": [
+        228,
+        233
+      ],
+      "blockIds": [
+        "B228",
+        "B229",
+        "B230",
+        "B231",
+        "B232",
+        "B233"
+      ],
+      "roleLayout": "translation_active_passive_teacher",
+      "roles": {
+        "stem": [
+          "B228"
+        ],
+        "response_placeholders": [
+          "B229",
+          "B230"
+        ],
+        "answer_label": [
+          "B231"
+        ],
+        "active_answer": [
+          "B232"
+        ],
+        "passive_answer": [
+          "B233"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "AA-02",
+      "module": "SM04",
+      "range": [
+        234,
+        239
+      ],
+      "blockIds": [
+        "B234",
+        "B235",
+        "B236",
+        "B237",
+        "B238",
+        "B239"
+      ],
+      "roleLayout": "translation_active_passive_teacher",
+      "roles": {
+        "stem": [
+          "B234"
+        ],
+        "response_placeholders": [
+          "B235",
+          "B236"
+        ],
+        "answer_label": [
+          "B237"
+        ],
+        "active_answer": [
+          "B238"
+        ],
+        "passive_answer": [
+          "B239"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "AA-03",
+      "module": "SM04",
+      "range": [
+        240,
+        245
+      ],
+      "blockIds": [
+        "B240",
+        "B241",
+        "B242",
+        "B243",
+        "B244",
+        "B245"
+      ],
+      "roleLayout": "translation_active_passive_teacher",
+      "roles": {
+        "stem": [
+          "B240"
+        ],
+        "response_placeholders": [
+          "B241",
+          "B242"
+        ],
+        "answer_label": [
+          "B243"
+        ],
+        "active_answer": [
+          "B244"
+        ],
+        "passive_answer": [
+          "B245"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "AA-04",
+      "module": "SM04",
+      "range": [
+        246,
+        251
+      ],
+      "blockIds": [
+        "B246",
+        "B247",
+        "B248",
+        "B249",
+        "B250",
+        "B251"
+      ],
+      "roleLayout": "translation_active_passive_teacher",
+      "roles": {
+        "stem": [
+          "B246"
+        ],
+        "response_placeholders": [
+          "B247",
+          "B248"
+        ],
+        "answer_label": [
+          "B249"
+        ],
+        "active_answer": [
+          "B250"
+        ],
+        "passive_answer": [
+          "B251"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "AA-05",
+      "module": "SM04",
+      "range": [
+        252,
+        257
+      ],
+      "blockIds": [
+        "B252",
+        "B253",
+        "B254",
+        "B255",
+        "B256",
+        "B257"
+      ],
+      "roleLayout": "translation_active_passive_teacher",
+      "roles": {
+        "stem": [
+          "B252"
+        ],
+        "response_placeholders": [
+          "B253",
+          "B254"
+        ],
+        "answer_label": [
+          "B255"
+        ],
+        "active_answer": [
+          "B256"
+        ],
+        "passive_answer": [
+          "B257"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "AA-06",
+      "module": "SM04",
+      "range": [
+        258,
+        263
+      ],
+      "blockIds": [
+        "B258",
+        "B259",
+        "B260",
+        "B261",
+        "B262",
+        "B263"
+      ],
+      "roleLayout": "translation_active_passive_teacher",
+      "roles": {
+        "stem": [
+          "B258"
+        ],
+        "response_placeholders": [
+          "B259",
+          "B260"
+        ],
+        "answer_label": [
+          "B261"
+        ],
+        "active_answer": [
+          "B262"
+        ],
+        "passive_answer": [
+          "B263"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "KQ-01",
+      "module": "SM06",
+      "range": [
+        313,
+        317
+      ],
+      "blockIds": [
+        "B313",
+        "B314",
+        "B315",
+        "B316",
+        "B317"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B313"
+        ],
+        "judgement": [
+          "B314"
+        ],
+        "analysis": [
+          "B315"
+        ],
+        "answer": [
+          "B316"
+        ],
+        "translation": [
+          "B317"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "KQ-02",
+      "module": "SM06",
+      "range": [
+        318,
+        322
+      ],
+      "blockIds": [
+        "B318",
+        "B319",
+        "B320",
+        "B321",
+        "B322"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B318"
+        ],
+        "judgement": [
+          "B319"
+        ],
+        "analysis": [
+          "B320"
+        ],
+        "answer": [
+          "B321"
+        ],
+        "translation": [
+          "B322"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "KQ-03",
+      "module": "SM06",
+      "range": [
+        323,
+        327
+      ],
+      "blockIds": [
+        "B323",
+        "B324",
+        "B325",
+        "B326",
+        "B327"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B323"
+        ],
+        "judgement": [
+          "B324"
+        ],
+        "analysis": [
+          "B325"
+        ],
+        "answer": [
+          "B326"
+        ],
+        "translation": [
+          "B327"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "KQ-04",
+      "module": "SM06",
+      "range": [
+        328,
+        332
+      ],
+      "blockIds": [
+        "B328",
+        "B329",
+        "B330",
+        "B331",
+        "B332"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B328"
+        ],
+        "judgement": [
+          "B329"
+        ],
+        "analysis": [
+          "B330"
+        ],
+        "answer": [
+          "B331"
+        ],
+        "translation": [
+          "B332"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "KQ-05",
+      "module": "SM06",
+      "range": [
+        333,
+        337
+      ],
+      "blockIds": [
+        "B333",
+        "B334",
+        "B335",
+        "B336",
+        "B337"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B333"
+        ],
+        "judgement": [
+          "B334"
+        ],
+        "analysis": [
+          "B335"
+        ],
+        "answer": [
+          "B336"
+        ],
+        "translation": [
+          "B337"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "KQ-06",
+      "module": "SM06",
+      "range": [
+        338,
+        342
+      ],
+      "blockIds": [
+        "B338",
+        "B339",
+        "B340",
+        "B341",
+        "B342"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B338"
+        ],
+        "judgement": [
+          "B339"
+        ],
+        "analysis": [
+          "B340"
+        ],
+        "answer": [
+          "B341"
+        ],
+        "translation": [
+          "B342"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-01",
+      "module": "SM07",
+      "range": [
+        360,
+        364
+      ],
+      "blockIds": [
+        "B360",
+        "B361",
+        "B362",
+        "B363",
+        "B364"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B360"
+        ],
+        "judgement": [
+          "B361"
+        ],
+        "analysis": [
+          "B362"
+        ],
+        "answer": [
+          "B363"
+        ],
+        "translation": [
+          "B364"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-02",
+      "module": "SM07",
+      "range": [
+        365,
+        369
+      ],
+      "blockIds": [
+        "B365",
+        "B366",
+        "B367",
+        "B368",
+        "B369"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B365"
+        ],
+        "judgement": [
+          "B366"
+        ],
+        "analysis": [
+          "B367"
+        ],
+        "answer": [
+          "B368"
+        ],
+        "translation": [
+          "B369"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-03",
+      "module": "SM07",
+      "range": [
+        370,
+        374
+      ],
+      "blockIds": [
+        "B370",
+        "B371",
+        "B372",
+        "B373",
+        "B374"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B370"
+        ],
+        "judgement": [
+          "B371"
+        ],
+        "analysis": [
+          "B372"
+        ],
+        "answer": [
+          "B373"
+        ],
+        "translation": [
+          "B374"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-04",
+      "module": "SM07",
+      "range": [
+        375,
+        379
+      ],
+      "blockIds": [
+        "B375",
+        "B376",
+        "B377",
+        "B378",
+        "B379"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B375"
+        ],
+        "judgement": [
+          "B376"
+        ],
+        "analysis": [
+          "B377"
+        ],
+        "answer": [
+          "B378"
+        ],
+        "translation": [
+          "B379"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-05",
+      "module": "SM07",
+      "range": [
+        380,
+        384
+      ],
+      "blockIds": [
+        "B380",
+        "B381",
+        "B382",
+        "B383",
+        "B384"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B380"
+        ],
+        "judgement": [
+          "B381"
+        ],
+        "analysis": [
+          "B382"
+        ],
+        "answer": [
+          "B383"
+        ],
+        "translation": [
+          "B384"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-06",
+      "module": "SM07",
+      "range": [
+        385,
+        389
+      ],
+      "blockIds": [
+        "B385",
+        "B386",
+        "B387",
+        "B388",
+        "B389"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B385"
+        ],
+        "judgement": [
+          "B386"
+        ],
+        "analysis": [
+          "B387"
+        ],
+        "answer": [
+          "B388"
+        ],
+        "translation": [
+          "B389"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-07",
+      "module": "SM07",
+      "range": [
+        390,
+        394
+      ],
+      "blockIds": [
+        "B390",
+        "B391",
+        "B392",
+        "B393",
+        "B394"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B390"
+        ],
+        "judgement": [
+          "B391"
+        ],
+        "analysis": [
+          "B392"
+        ],
+        "answer": [
+          "B393"
+        ],
+        "translation": [
+          "B394"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-08",
+      "module": "SM07",
+      "range": [
+        395,
+        399
+      ],
+      "blockIds": [
+        "B395",
+        "B396",
+        "B397",
+        "B398",
+        "B399"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B395"
+        ],
+        "judgement": [
+          "B396"
+        ],
+        "analysis": [
+          "B397"
+        ],
+        "answer": [
+          "B398"
+        ],
+        "translation": [
+          "B399"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-09",
+      "module": "SM07",
+      "range": [
+        400,
+        404
+      ],
+      "blockIds": [
+        "B400",
+        "B401",
+        "B402",
+        "B403",
+        "B404"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B400"
+        ],
+        "judgement": [
+          "B401"
+        ],
+        "analysis": [
+          "B402"
+        ],
+        "answer": [
+          "B403"
+        ],
+        "translation": [
+          "B404"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-10",
+      "module": "SM07",
+      "range": [
+        405,
+        409
+      ],
+      "blockIds": [
+        "B405",
+        "B406",
+        "B407",
+        "B408",
+        "B409"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B405"
+        ],
+        "judgement": [
+          "B406"
+        ],
+        "analysis": [
+          "B407"
+        ],
+        "answer": [
+          "B408"
+        ],
+        "translation": [
+          "B409"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-11",
+      "module": "SM07",
+      "range": [
+        410,
+        414
+      ],
+      "blockIds": [
+        "B410",
+        "B411",
+        "B412",
+        "B413",
+        "B414"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B410"
+        ],
+        "judgement": [
+          "B411"
+        ],
+        "analysis": [
+          "B412"
+        ],
+        "answer": [
+          "B413"
+        ],
+        "translation": [
+          "B414"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-12",
+      "module": "SM07",
+      "range": [
+        415,
+        419
+      ],
+      "blockIds": [
+        "B415",
+        "B416",
+        "B417",
+        "B418",
+        "B419"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B415"
+        ],
+        "judgement": [
+          "B416"
+        ],
+        "analysis": [
+          "B417"
+        ],
+        "answer": [
+          "B418"
+        ],
+        "translation": [
+          "B419"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-13",
+      "module": "SM07",
+      "range": [
+        420,
+        424
+      ],
+      "blockIds": [
+        "B420",
+        "B421",
+        "B422",
+        "B423",
+        "B424"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B420"
+        ],
+        "judgement": [
+          "B421"
+        ],
+        "analysis": [
+          "B422"
+        ],
+        "answer": [
+          "B423"
+        ],
+        "translation": [
+          "B424"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-14",
+      "module": "SM07",
+      "range": [
+        425,
+        429
+      ],
+      "blockIds": [
+        "B425",
+        "B426",
+        "B427",
+        "B428",
+        "B429"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B425"
+        ],
+        "judgement": [
+          "B426"
+        ],
+        "analysis": [
+          "B427"
+        ],
+        "answer": [
+          "B428"
+        ],
+        "translation": [
+          "B429"
+        ]
+      },
+      "independentlyReferenceable": true
+    },
+    {
+      "id": "HW-15",
+      "module": "SM07",
+      "range": [
+        430,
+        436
+      ],
+      "blockIds": [
+        "B430",
+        "B431",
+        "B432",
+        "B433",
+        "B434",
+        "B435",
+        "B436"
+      ],
+      "roleLayout": "grammar_fill_teacher",
+      "roles": {
+        "stem": [
+          "B430"
+        ],
+        "judgement": [
+          "B431"
+        ],
+        "analysis": [
+          "B432",
+          "B433",
+          "B434"
+        ],
+        "answer": [
+          "B435"
+        ],
+        "translation": [
+          "B436"
+        ]
+      },
+      "independentlyReferenceable": true
+    }
+  ],
+  "topLevelSequence": [
+    {
+      "kind": "ordinary_placement",
+      "range": [
+        0,
+        0
+      ],
+      "blockIds": [
+        "B000"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "kind": "standard_module_occurrence",
+      "moduleId": "SM01",
+      "range": [
+        1,
+        4
+      ]
+    },
+    {
+      "kind": "standard_module_occurrence",
+      "moduleId": "SM02",
+      "range": [
+        5,
+        116
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "range": [
+        117,
+        121
+      ],
+      "blockIds": [
+        "B117",
+        "B118",
+        "B119",
+        "B120",
+        "B121"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "kind": "question_section_container",
+      "moduleId": "SM03",
+      "range": [
+        122,
+        199
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "range": [
+        200,
+        225
+      ],
+      "blockIds": [
+        "B200",
+        "B201",
+        "B202",
+        "B203",
+        "B204",
+        "B205",
+        "B206",
+        "B207",
+        "B208",
+        "B209",
+        "B210",
+        "B211",
+        "B212",
+        "B213",
+        "B214",
+        "B215",
+        "B216",
+        "B217",
+        "B218",
+        "B219",
+        "B220",
+        "B221",
+        "B222",
+        "B223",
+        "B224",
+        "B225"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "kind": "question_section_container",
+      "moduleId": "SM04",
+      "range": [
+        226,
+        263
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "range": [
+        264,
+        284
+      ],
+      "blockIds": [
+        "B264",
+        "B265",
+        "B266",
+        "B267",
+        "B268",
+        "B269",
+        "B270",
+        "B271",
+        "B272",
+        "B273",
+        "B274",
+        "B275",
+        "B276",
+        "B277",
+        "B278",
+        "B279",
+        "B280",
+        "B281",
+        "B282",
+        "B283",
+        "B284"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "kind": "standard_module_occurrence",
+      "moduleId": "SM05",
+      "range": [
+        285,
+        301
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "range": [
+        302,
+        311
+      ],
+      "blockIds": [
+        "B302",
+        "B303",
+        "B304",
+        "B305",
+        "B306",
+        "B307",
+        "B308",
+        "B309",
+        "B310",
+        "B311"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "kind": "question_section_container",
+      "moduleId": "SM06",
+      "range": [
+        312,
+        342
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "range": [
+        343,
+        358
+      ],
+      "blockIds": [
+        "B343",
+        "B344",
+        "B345",
+        "B346",
+        "B347",
+        "B348",
+        "B349",
+        "B350",
+        "B351",
+        "B352",
+        "B353",
+        "B354",
+        "B355",
+        "B356",
+        "B357",
+        "B358"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "kind": "question_section_container",
+      "moduleId": "SM07",
+      "range": [
+        359,
+        436
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "range": [
+        437,
+        438
+      ],
+      "blockIds": [
+        "B437",
+        "B438"
+      ],
+      "independentlyReferenceable": false
+    }
+  ],
+  "validation": {
+    "sourceBlockCount": 439,
+    "standardModuleCount": 3,
+    "questionCount": 63,
+    "topLevelOccurrenceCount": 14,
+    "leafOwnershipExactlyOnce": true,
+    "missingBlockIndexes": [],
+    "duplicateBlockIndexes": [],
+    "paragraphCount": 435,
+    "tableCount": 4,
+    "imageOccurrences": 9,
+    "semanticClassificationMethod": "human-explicit-boundaries",
+    "regexSemanticRules": 0,
+    "questionSectionContainerCount": 4
+  },
+  "deduplication": {
+    "policy": "golden_fixture_human_confirmed_content_equivalence",
+    "aliases": {
+      "KQ-06": "K3-P02",
+      "KQ-03": "CT-09",
+      "HW-13": "KQ-02"
+    }
+  },
+  "studentProjection": {
+    "canonicalEdition": "teacher",
+    "storagePolicy": "不复制为第二套题目与模块正文；只保存版本差异、学生版落位轨迹和来源索引。",
+    "source": {
+      "logicalName": "时态语态秘密武器-学生版.docx",
+      "sha256": "6d0a03dcfb3ce7791b1ec56cb7b386b345b9c37968f90e8f43c172f57fc9ebd1",
+      "contentBlockCount": 149
+    },
+    "questionOccurrences": {
+      "teacher": 63,
+      "student": 63,
+      "sameUnderlyingQuestionPolicy": true
+    },
+    "deltaTypes": [
+      {
+        "type": "teacher_only_context",
+        "description": "教师版知识梳理增加知识导入、课程衔接、重要性三段。"
+      },
+      {
+        "type": "teacher_only_solution",
+        "description": "16 道时态/语态识别题增加简短答案；41 道语法填空题增加判断考点、解析、答案、翻译；6 道能力进阶题增加主动/被动答案对。"
+      },
+      {
+        "type": "teacher_only_provenance_label",
+        "description": "人工复核到 38 道题在教师版带年份/地区标签、学生版省略；标签属于 occurrence 的版本差异，不生成新题。"
+      },
+      {
+        "type": "teacher_answer_table",
+        "description": "两版共同保留两张空表；教师版另增加两张已填答案表。"
+      },
+      {
+        "type": "teacher_answer_image",
+        "description": "两版空白思维导图二进制相同；教师版另增加完成版答案思维导图。"
+      },
+      {
+        "type": "layout_trace",
+        "description": "教师版因答案展开为 24 页，学生版为 9 页；空段、分页和页码轨迹不作为教学实体。"
+      }
+    ],
+    "studentModuleRanges": [
+      {
+        "type": "course_objectives",
+        "range": [
+          1,
+          4
+        ]
+      },
+      {
+        "type": "knowledge_summary",
+        "range": [
+          5,
+          76
+        ]
+      },
+      {
+        "type": "comprehensive_training",
+        "range": [
+          77,
+          95
+        ]
+      },
+      {
+        "type": "ability_advancement",
+        "range": [
+          96,
+          120
+        ]
+      },
+      {
+        "type": "keypoint_review",
+        "range": [
+          121,
+          122
+        ]
+      },
+      {
+        "type": "keypoint_quiz",
+        "range": [
+          123,
+          132
+        ]
+      },
+      {
+        "type": "after_class_practice",
+        "range": [
+          133,
+          148
+        ]
+      }
+    ]
+  },
+  "artifactKeys": {
+    "originalDocx": "tests/fixtures/g4/english/teacher-original.docx",
+    "splitManifest": "tests/fixtures/g4/english/composition-manifest.json",
+    "preservationBundle": "tests/fixtures/g4/english/preservation-bundle.zip",
+    "roundtripOutput": "tests/fixtures/g4/english/teacher-reassembled.docx"
+  }
+}

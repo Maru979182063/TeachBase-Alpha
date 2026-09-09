@@ -6,5 +6,5 @@
  */
 @org.springframework.modulith.ApplicationModule(
         displayName = "Review",
-        allowedDependencies = {"identity::api", "question::api", "audit::api"})
+        allowedDependencies = {"identity::api", "question::api", "standardmodule::api", "audit::api"})
 package com.teachbase.server.review;

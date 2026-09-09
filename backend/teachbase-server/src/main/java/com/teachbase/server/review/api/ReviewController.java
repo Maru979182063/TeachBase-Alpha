@@ -30,6 +30,12 @@ class ReviewController {
         return ResponseEntity.ok(service.open(request));
     }
 
+    @PostMapping("/standard-modules")
+    ResponseEntity<ReviewCaseResponse> openStandardModule(
+            @Valid @RequestBody OpenStandardModuleReviewCaseRequest request) {
+        return ResponseEntity.ok(service.openStandardModule(request));
+    }
+
     @PostMapping("/{reviewCaseId}/decisions")
     ResponseEntity<ReviewCaseResponse> decide(
             @PathVariable UUID reviewCaseId,

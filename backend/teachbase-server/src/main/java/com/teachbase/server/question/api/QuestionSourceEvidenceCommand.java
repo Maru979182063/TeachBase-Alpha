@@ -12,6 +12,7 @@ public record QuestionSourceEvidenceCommand(
         UUID workspaceId,
         UUID questionId,
         UUID questionRevisionId,
+        String sourceEvidenceKey,
         UUID sourceDocumentId,
         UUID sourceRegionId,
         String sourceLabel,

@@ -32,7 +32,7 @@ class JooqReviewRepository implements ReviewRepository {
     }
 
     @Override
-    public ReviewCaseRecord open(
+    public ReviewCaseRecord openQuestion(
             UUID workspaceId,
             UUID questionId,
             UUID questionRevisionId,
@@ -43,6 +43,7 @@ class JooqReviewRepository implements ReviewRepository {
         database.insertInto(REVIEW_CASE)
                 .set(REVIEW_CASE.REVIEW_CASE_ID, candidateId)
                 .set(REVIEW_CASE.WORKSPACE_ID, workspaceId)
+                .set(REVIEW_CASE.TARGET_TYPE, "question")
                 .set(REVIEW_CASE.QUESTION_ID, questionId)
                 .set(REVIEW_CASE.QUESTION_REVISION_ID, questionRevisionId)
                 .set(REVIEW_CASE.EXPECTED_CONTENT_HASH, expectedContentHash)
@@ -53,6 +54,34 @@ class JooqReviewRepository implements ReviewRepository {
                 .execute();
         return database.selectFrom(REVIEW_CASE)
                 .where(REVIEW_CASE.QUESTION_REVISION_ID.eq(questionRevisionId))
+                .and(REVIEW_CASE.STATUS.eq("open"))
+                .fetchOptional(this::map)
+                .orElseThrow(() -> new IllegalStateException("review_case_open_failed"));
+    }
+
+    @Override
+    public ReviewCaseRecord openStandardModule(
+            UUID workspaceId,
+            UUID standardModuleId,
+            UUID standardModuleRevisionId,
+            String expectedContentHash,
+            UUID assignedTo,
+            UUID openedBy) {
+        UUID candidateId = UUID.randomUUID();
+        database.insertInto(REVIEW_CASE)
+                .set(REVIEW_CASE.REVIEW_CASE_ID, candidateId)
+                .set(REVIEW_CASE.WORKSPACE_ID, workspaceId)
+                .set(REVIEW_CASE.TARGET_TYPE, "standard_module")
+                .set(REVIEW_CASE.STANDARD_MODULE_ID, standardModuleId)
+                .set(REVIEW_CASE.STANDARD_MODULE_REVISION_ID, standardModuleRevisionId)
+                .set(REVIEW_CASE.EXPECTED_CONTENT_HASH, expectedContentHash)
+                .set(REVIEW_CASE.STATUS, "open")
+                .set(REVIEW_CASE.ASSIGNED_TO, assignedTo)
+                .set(REVIEW_CASE.OPENED_BY, openedBy)
+                .onConflictDoNothing()
+                .execute();
+        return database.selectFrom(REVIEW_CASE)
+                .where(REVIEW_CASE.STANDARD_MODULE_REVISION_ID.eq(standardModuleRevisionId))
                 .and(REVIEW_CASE.STATUS.eq("open"))
                 .fetchOptional(this::map)
                 .orElseThrow(() -> new IllegalStateException("review_case_open_failed"));
@@ -101,15 +130,19 @@ class JooqReviewRepository implements ReviewRepository {
                 .execute();
         if (changed != 1) throw new IllegalStateException("review_case_concurrent_decision");
         return new ReviewCaseRecord(
-                reviewCase.reviewCaseId(), reviewCase.workspaceId(), reviewCase.questionId(),
-                reviewCase.questionRevisionId(), reviewCase.expectedContentHash(), decision,
+                reviewCase.reviewCaseId(), reviewCase.workspaceId(), reviewCase.targetType(),
+                reviewCase.questionId(), reviewCase.questionRevisionId(),
+                reviewCase.standardModuleId(), reviewCase.standardModuleRevisionId(),
+                reviewCase.expectedContentHash(), decision,
                 reviewCase.assignedTo(), reviewCase.openedAt(), now);
     }
 
     private ReviewCaseRecord map(com.teachbase.jooq.tables.records.ReviewCaseRecord record) {
         return new ReviewCaseRecord(
-                record.getReviewCaseId(), record.getWorkspaceId(), record.getQuestionId(),
-                record.getQuestionRevisionId(), record.getExpectedContentHash(), record.getStatus(),
+                record.getReviewCaseId(), record.getWorkspaceId(), record.getTargetType(),
+                record.getQuestionId(), record.getQuestionRevisionId(),
+                record.getStandardModuleId(), record.getStandardModuleRevisionId(),
+                record.getExpectedContentHash(), record.getStatus(),
                 record.getAssignedTo(), record.getOpenedAt(), record.getDecidedAt());
     }
 

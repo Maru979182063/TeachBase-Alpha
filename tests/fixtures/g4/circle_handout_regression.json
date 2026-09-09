@@ -1,0 +1,3928 @@
+{
+  "schema": "teachbase.g4-circle-regression.v1",
+  "documentKey": "circle_teacher",
+  "title": "圆的方程",
+  "blocks": [
+    {
+      "blockId": "b_000000",
+      "sourceIndex": 0,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000001",
+      "sourceIndex": 1,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000002",
+      "sourceIndex": 2,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000003",
+      "sourceIndex": 3,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000004",
+      "sourceIndex": 4,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000005",
+      "sourceIndex": 5,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000006",
+      "sourceIndex": 6,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000007",
+      "sourceIndex": 7,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000008",
+      "sourceIndex": 8,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000009",
+      "sourceIndex": 9,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000010",
+      "sourceIndex": 10,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000011",
+      "sourceIndex": 11,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000012",
+      "sourceIndex": 12,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000013",
+      "sourceIndex": 13,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000014",
+      "sourceIndex": 14,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000015",
+      "sourceIndex": 15,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000016",
+      "sourceIndex": 16,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000017",
+      "sourceIndex": 17,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000018",
+      "sourceIndex": 18,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000019",
+      "sourceIndex": 19,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000020",
+      "sourceIndex": 20,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000021",
+      "sourceIndex": 21,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000022",
+      "sourceIndex": 22,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000023",
+      "sourceIndex": 23,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000024",
+      "sourceIndex": 24,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000025",
+      "sourceIndex": 25,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000026",
+      "sourceIndex": 26,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000027",
+      "sourceIndex": 27,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000028",
+      "sourceIndex": 28,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000029",
+      "sourceIndex": 29,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000030",
+      "sourceIndex": 30,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000031",
+      "sourceIndex": 31,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000032",
+      "sourceIndex": 32,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000033",
+      "sourceIndex": 33,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000034",
+      "sourceIndex": 34,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000035",
+      "sourceIndex": 35,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000036",
+      "sourceIndex": 36,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000037",
+      "sourceIndex": 37,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000038",
+      "sourceIndex": 38,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000039",
+      "sourceIndex": 39,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000040",
+      "sourceIndex": 40,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000041",
+      "sourceIndex": 41,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000042",
+      "sourceIndex": 42,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000043",
+      "sourceIndex": 43,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000044",
+      "sourceIndex": 44,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000045",
+      "sourceIndex": 45,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000046",
+      "sourceIndex": 46,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000047",
+      "sourceIndex": 47,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000048",
+      "sourceIndex": 48,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000049",
+      "sourceIndex": 49,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000050",
+      "sourceIndex": 50,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000051",
+      "sourceIndex": 51,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000052",
+      "sourceIndex": 52,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000053",
+      "sourceIndex": 53,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000054",
+      "sourceIndex": 54,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000055",
+      "sourceIndex": 55,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000056",
+      "sourceIndex": 56,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000057",
+      "sourceIndex": 57,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000058",
+      "sourceIndex": 58,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000059",
+      "sourceIndex": 59,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000060",
+      "sourceIndex": 60,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000061",
+      "sourceIndex": 61,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000062",
+      "sourceIndex": 62,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000063",
+      "sourceIndex": 63,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000064",
+      "sourceIndex": 64,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000065",
+      "sourceIndex": 65,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000066",
+      "sourceIndex": 66,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000067",
+      "sourceIndex": 67,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000068",
+      "sourceIndex": 68,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000069",
+      "sourceIndex": 69,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000070",
+      "sourceIndex": 70,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000071",
+      "sourceIndex": 71,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000072",
+      "sourceIndex": 72,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000073",
+      "sourceIndex": 73,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000074",
+      "sourceIndex": 74,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000075",
+      "sourceIndex": 75,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000076",
+      "sourceIndex": 76,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000077",
+      "sourceIndex": 77,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000078",
+      "sourceIndex": 78,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000079",
+      "sourceIndex": 79,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000080",
+      "sourceIndex": 80,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000081",
+      "sourceIndex": 81,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000082",
+      "sourceIndex": 82,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000083",
+      "sourceIndex": 83,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000084",
+      "sourceIndex": 84,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000085",
+      "sourceIndex": 85,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000086",
+      "sourceIndex": 86,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000087",
+      "sourceIndex": 87,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000088",
+      "sourceIndex": 88,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000089",
+      "sourceIndex": 89,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000090",
+      "sourceIndex": 90,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000091",
+      "sourceIndex": 91,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000092",
+      "sourceIndex": 92,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000093",
+      "sourceIndex": 93,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000094",
+      "sourceIndex": 94,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000095",
+      "sourceIndex": 95,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000096",
+      "sourceIndex": 96,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000097",
+      "sourceIndex": 97,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000098",
+      "sourceIndex": 98,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000099",
+      "sourceIndex": 99,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000100",
+      "sourceIndex": 100,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000101",
+      "sourceIndex": 101,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000102",
+      "sourceIndex": 102,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000103",
+      "sourceIndex": 103,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000104",
+      "sourceIndex": 104,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000105",
+      "sourceIndex": 105,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000106",
+      "sourceIndex": 106,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000107",
+      "sourceIndex": 107,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000108",
+      "sourceIndex": 108,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000109",
+      "sourceIndex": 109,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000110",
+      "sourceIndex": 110,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000111",
+      "sourceIndex": 111,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000112",
+      "sourceIndex": 112,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000113",
+      "sourceIndex": 113,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000114",
+      "sourceIndex": 114,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000115",
+      "sourceIndex": 115,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000116",
+      "sourceIndex": 116,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000117",
+      "sourceIndex": 117,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000118",
+      "sourceIndex": 118,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000119",
+      "sourceIndex": 119,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000120",
+      "sourceIndex": 120,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000121",
+      "sourceIndex": 121,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000122",
+      "sourceIndex": 122,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000123",
+      "sourceIndex": 123,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000124",
+      "sourceIndex": 124,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000125",
+      "sourceIndex": 125,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000126",
+      "sourceIndex": 126,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000127",
+      "sourceIndex": 127,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000128",
+      "sourceIndex": 128,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000129",
+      "sourceIndex": 129,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000130",
+      "sourceIndex": 130,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000131",
+      "sourceIndex": 131,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000132",
+      "sourceIndex": 132,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000133",
+      "sourceIndex": 133,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000134",
+      "sourceIndex": 134,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000135",
+      "sourceIndex": 135,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000136",
+      "sourceIndex": 136,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000137",
+      "sourceIndex": 137,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000138",
+      "sourceIndex": 138,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000139",
+      "sourceIndex": 139,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000140",
+      "sourceIndex": 140,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000141",
+      "sourceIndex": 141,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000142",
+      "sourceIndex": 142,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000143",
+      "sourceIndex": 143,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000144",
+      "sourceIndex": 144,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000145",
+      "sourceIndex": 145,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000146",
+      "sourceIndex": 146,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000147",
+      "sourceIndex": 147,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000148",
+      "sourceIndex": 148,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000149",
+      "sourceIndex": 149,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000150",
+      "sourceIndex": 150,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000151",
+      "sourceIndex": 151,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000152",
+      "sourceIndex": 152,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000153",
+      "sourceIndex": 153,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000154",
+      "sourceIndex": 154,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000155",
+      "sourceIndex": 155,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000156",
+      "sourceIndex": 156,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000157",
+      "sourceIndex": 157,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000158",
+      "sourceIndex": 158,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000159",
+      "sourceIndex": 159,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000160",
+      "sourceIndex": 160,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000161",
+      "sourceIndex": 161,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000162",
+      "sourceIndex": 162,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000163",
+      "sourceIndex": 163,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000164",
+      "sourceIndex": 164,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000165",
+      "sourceIndex": 165,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000166",
+      "sourceIndex": 166,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000167",
+      "sourceIndex": 167,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000168",
+      "sourceIndex": 168,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000169",
+      "sourceIndex": 169,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000170",
+      "sourceIndex": 170,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000171",
+      "sourceIndex": 171,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000172",
+      "sourceIndex": 172,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000173",
+      "sourceIndex": 173,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000174",
+      "sourceIndex": 174,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000175",
+      "sourceIndex": 175,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000176",
+      "sourceIndex": 176,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000177",
+      "sourceIndex": 177,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000178",
+      "sourceIndex": 178,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000179",
+      "sourceIndex": 179,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000180",
+      "sourceIndex": 180,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000181",
+      "sourceIndex": 181,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000182",
+      "sourceIndex": 182,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000183",
+      "sourceIndex": 183,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000184",
+      "sourceIndex": 184,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000185",
+      "sourceIndex": 185,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000186",
+      "sourceIndex": 186,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000187",
+      "sourceIndex": 187,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000188",
+      "sourceIndex": 188,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000189",
+      "sourceIndex": 189,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000190",
+      "sourceIndex": 190,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000191",
+      "sourceIndex": 191,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000192",
+      "sourceIndex": 192,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000193",
+      "sourceIndex": 193,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000194",
+      "sourceIndex": 194,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000195",
+      "sourceIndex": 195,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000196",
+      "sourceIndex": 196,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000197",
+      "sourceIndex": 197,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000198",
+      "sourceIndex": 198,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000199",
+      "sourceIndex": 199,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000200",
+      "sourceIndex": 200,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000201",
+      "sourceIndex": 201,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000202",
+      "sourceIndex": 202,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000203",
+      "sourceIndex": 203,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000204",
+      "sourceIndex": 204,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000205",
+      "sourceIndex": 205,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000206",
+      "sourceIndex": 206,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000207",
+      "sourceIndex": 207,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000208",
+      "sourceIndex": 208,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000209",
+      "sourceIndex": 209,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000210",
+      "sourceIndex": 210,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000211",
+      "sourceIndex": 211,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000212",
+      "sourceIndex": 212,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000213",
+      "sourceIndex": 213,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000214",
+      "sourceIndex": 214,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000215",
+      "sourceIndex": 215,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000216",
+      "sourceIndex": 216,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000217",
+      "sourceIndex": 217,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000218",
+      "sourceIndex": 218,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000219",
+      "sourceIndex": 219,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000220",
+      "sourceIndex": 220,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000221",
+      "sourceIndex": 221,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000222",
+      "sourceIndex": 222,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000223",
+      "sourceIndex": 223,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000224",
+      "sourceIndex": 224,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000225",
+      "sourceIndex": 225,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000226",
+      "sourceIndex": 226,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000227",
+      "sourceIndex": 227,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000228",
+      "sourceIndex": 228,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000229",
+      "sourceIndex": 229,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000230",
+      "sourceIndex": 230,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000231",
+      "sourceIndex": 231,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000232",
+      "sourceIndex": 232,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000233",
+      "sourceIndex": 233,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000234",
+      "sourceIndex": 234,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000235",
+      "sourceIndex": 235,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000236",
+      "sourceIndex": 236,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000237",
+      "sourceIndex": 237,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000238",
+      "sourceIndex": 238,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000239",
+      "sourceIndex": 239,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000240",
+      "sourceIndex": 240,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000241",
+      "sourceIndex": 241,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000242",
+      "sourceIndex": 242,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000243",
+      "sourceIndex": 243,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000244",
+      "sourceIndex": 244,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000245",
+      "sourceIndex": 245,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000246",
+      "sourceIndex": 246,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000247",
+      "sourceIndex": 247,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000248",
+      "sourceIndex": 248,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000249",
+      "sourceIndex": 249,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000250",
+      "sourceIndex": 250,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000251",
+      "sourceIndex": 251,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000252",
+      "sourceIndex": 252,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000253",
+      "sourceIndex": 253,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000254",
+      "sourceIndex": 254,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000255",
+      "sourceIndex": 255,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000256",
+      "sourceIndex": 256,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000257",
+      "sourceIndex": 257,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000258",
+      "sourceIndex": 258,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000259",
+      "sourceIndex": 259,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000260",
+      "sourceIndex": 260,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000261",
+      "sourceIndex": 261,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000262",
+      "sourceIndex": 262,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000263",
+      "sourceIndex": 263,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000264",
+      "sourceIndex": 264,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000265",
+      "sourceIndex": 265,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000266",
+      "sourceIndex": 266,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000267",
+      "sourceIndex": 267,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000268",
+      "sourceIndex": 268,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000269",
+      "sourceIndex": 269,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000270",
+      "sourceIndex": 270,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000271",
+      "sourceIndex": 271,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000272",
+      "sourceIndex": 272,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000273",
+      "sourceIndex": 273,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000274",
+      "sourceIndex": 274,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000275",
+      "sourceIndex": 275,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000276",
+      "sourceIndex": 276,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000277",
+      "sourceIndex": 277,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000278",
+      "sourceIndex": 278,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000279",
+      "sourceIndex": 279,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000280",
+      "sourceIndex": 280,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000281",
+      "sourceIndex": 281,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000282",
+      "sourceIndex": 282,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000283",
+      "sourceIndex": 283,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000284",
+      "sourceIndex": 284,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000285",
+      "sourceIndex": 285,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000286",
+      "sourceIndex": 286,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000287",
+      "sourceIndex": 287,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000288",
+      "sourceIndex": 288,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000289",
+      "sourceIndex": 289,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000290",
+      "sourceIndex": 290,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000291",
+      "sourceIndex": 291,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000292",
+      "sourceIndex": 292,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000293",
+      "sourceIndex": 293,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000294",
+      "sourceIndex": 294,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000295",
+      "sourceIndex": 295,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000296",
+      "sourceIndex": 296,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000297",
+      "sourceIndex": 297,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000298",
+      "sourceIndex": 298,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000299",
+      "sourceIndex": 299,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000300",
+      "sourceIndex": 300,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000301",
+      "sourceIndex": 301,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000302",
+      "sourceIndex": 302,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000303",
+      "sourceIndex": 303,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000304",
+      "sourceIndex": 304,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000305",
+      "sourceIndex": 305,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000306",
+      "sourceIndex": 306,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000307",
+      "sourceIndex": 307,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000308",
+      "sourceIndex": 308,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000309",
+      "sourceIndex": 309,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000310",
+      "sourceIndex": 310,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000311",
+      "sourceIndex": 311,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000312",
+      "sourceIndex": 312,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000313",
+      "sourceIndex": 313,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000314",
+      "sourceIndex": 314,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000315",
+      "sourceIndex": 315,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000316",
+      "sourceIndex": 316,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000317",
+      "sourceIndex": 317,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000318",
+      "sourceIndex": 318,
+      "kind": "paragraph",
+      "xmlSha256": null
+    },
+    {
+      "blockId": "b_000319",
+      "sourceIndex": 319,
+      "kind": "paragraph",
+      "xmlSha256": null
+    }
+  ],
+  "standardModules": [
+    {
+      "moduleInstanceKey": "circle_teacher.course_objectives",
+      "moduleType": "course_objectives",
+      "moduleTypeName": "课程目标",
+      "range": [
+        1,
+        3
+      ],
+      "blockIds": [
+        "b_000001",
+        "b_000002",
+        "b_000003"
+      ],
+      "source": "../../standard_modules/circle_teaching_modules_v3/modules.json",
+      "independentlyReferenceable": true
+    },
+    {
+      "moduleInstanceKey": "circle_teacher.knowledge_summary",
+      "moduleType": "knowledge_summary",
+      "moduleTypeName": "知识梳理",
+      "range": [
+        4,
+        12
+      ],
+      "blockIds": [
+        "b_000004",
+        "b_000005",
+        "b_000006",
+        "b_000007",
+        "b_000008",
+        "b_000009",
+        "b_000010",
+        "b_000011",
+        "b_000012"
+      ],
+      "source": "../../standard_modules/circle_teaching_modules_v3/modules.json",
+      "independentlyReferenceable": true
+    },
+    {
+      "moduleInstanceKey": "circle_teacher.keypoint_review",
+      "moduleType": "keypoint_review",
+      "moduleTypeName": "要点回顾",
+      "range": [
+        244,
+        245
+      ],
+      "blockIds": [
+        "b_000244",
+        "b_000245"
+      ],
+      "source": "../../standard_modules/circle_teaching_modules_v3/modules.json",
+      "independentlyReferenceable": true
+    }
+  ],
+  "questions": [
+    {
+      "questionId": "C1-01",
+      "range": [
+        16,
+        18
+      ],
+      "ownedBlockIds": [
+        "b_000016",
+        "b_000017",
+        "b_000018"
+      ],
+      "contextBlockIds": [
+        "b_000014",
+        "b_000015"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000016"
+        ],
+        "answer": [
+          "b_000018"
+        ],
+        "solution": [
+          "b_000017"
+        ]
+      },
+      "questionType": "fill",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C1-02",
+      "range": [
+        19,
+        25
+      ],
+      "ownedBlockIds": [
+        "b_000019",
+        "b_000020",
+        "b_000021",
+        "b_000022",
+        "b_000023",
+        "b_000024",
+        "b_000025"
+      ],
+      "contextBlockIds": [
+        "b_000014",
+        "b_000015"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000019"
+        ],
+        "answer": [
+          "b_000020"
+        ],
+        "solution": [
+          "b_000021",
+          "b_000022",
+          "b_000023",
+          "b_000024",
+          "b_000025"
+        ]
+      },
+      "questionType": "fill",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C1-03",
+      "range": [
+        26,
+        32
+      ],
+      "ownedBlockIds": [
+        "b_000026",
+        "b_000027",
+        "b_000028",
+        "b_000029",
+        "b_000030",
+        "b_000031",
+        "b_000032"
+      ],
+      "contextBlockIds": [
+        "b_000014",
+        "b_000015"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000026"
+        ],
+        "options": [
+          "b_000027",
+          "b_000028"
+        ],
+        "answer": [
+          "b_000029"
+        ],
+        "solution": [
+          "b_000030",
+          "b_000031",
+          "b_000032"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C1-04",
+      "range": [
+        34,
+        43
+      ],
+      "ownedBlockIds": [
+        "b_000034",
+        "b_000035",
+        "b_000036",
+        "b_000037",
+        "b_000038",
+        "b_000039",
+        "b_000040",
+        "b_000041",
+        "b_000042",
+        "b_000043"
+      ],
+      "contextBlockIds": [
+        "b_000014",
+        "b_000033"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000034"
+        ],
+        "options": [
+          "b_000035",
+          "b_000036"
+        ],
+        "answer": [
+          "b_000037"
+        ],
+        "analysis": [
+          "b_000038"
+        ],
+        "solution": [
+          "b_000039",
+          "b_000040",
+          "b_000041",
+          "b_000042",
+          "b_000043"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C1-05",
+      "range": [
+        44,
+        50
+      ],
+      "ownedBlockIds": [
+        "b_000044",
+        "b_000045",
+        "b_000046",
+        "b_000047",
+        "b_000048",
+        "b_000049",
+        "b_000050"
+      ],
+      "contextBlockIds": [
+        "b_000014",
+        "b_000033"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000044"
+        ],
+        "answer": [
+          "b_000045"
+        ],
+        "solution": [
+          "b_000046",
+          "b_000047",
+          "b_000048",
+          "b_000049",
+          "b_000050"
+        ]
+      },
+      "questionType": "fill",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C1-06",
+      "range": [
+        51,
+        54
+      ],
+      "ownedBlockIds": [
+        "b_000051",
+        "b_000052",
+        "b_000053",
+        "b_000054"
+      ],
+      "contextBlockIds": [
+        "b_000014",
+        "b_000033"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000051"
+        ],
+        "answer": [
+          "b_000054"
+        ],
+        "solution": [
+          "b_000052",
+          "b_000053"
+        ]
+      },
+      "questionType": "fill",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C1-07",
+      "range": [
+        55,
+        64
+      ],
+      "ownedBlockIds": [
+        "b_000055",
+        "b_000056",
+        "b_000057",
+        "b_000058",
+        "b_000059",
+        "b_000060",
+        "b_000061",
+        "b_000062",
+        "b_000063",
+        "b_000064"
+      ],
+      "contextBlockIds": [
+        "b_000014",
+        "b_000033"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000055"
+        ],
+        "answer": [
+          "b_000064"
+        ],
+        "solution": [
+          "b_000056",
+          "b_000057",
+          "b_000058",
+          "b_000059",
+          "b_000060",
+          "b_000061",
+          "b_000062",
+          "b_000063"
+        ]
+      },
+      "questionType": "fill",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C1-08",
+      "range": [
+        66,
+        71
+      ],
+      "ownedBlockIds": [
+        "b_000066",
+        "b_000067",
+        "b_000068",
+        "b_000069",
+        "b_000070",
+        "b_000071"
+      ],
+      "contextBlockIds": [
+        "b_000014",
+        "b_000065"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000066"
+        ],
+        "answer": [
+          "b_000067"
+        ],
+        "solution": [
+          "b_000068",
+          "b_000069",
+          "b_000070",
+          "b_000071"
+        ]
+      },
+      "questionType": "fill",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C2-01",
+      "range": [
+        74,
+        84
+      ],
+      "ownedBlockIds": [
+        "b_000074",
+        "b_000075",
+        "b_000076",
+        "b_000077",
+        "b_000078",
+        "b_000079",
+        "b_000080",
+        "b_000081",
+        "b_000082",
+        "b_000083",
+        "b_000084"
+      ],
+      "contextBlockIds": [
+        "b_000072",
+        "b_000073"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000074"
+        ],
+        "options": [
+          "b_000075",
+          "b_000076"
+        ],
+        "answer": [
+          "b_000077"
+        ],
+        "analysis": [
+          "b_000078"
+        ],
+        "solution": [
+          "b_000079",
+          "b_000080",
+          "b_000081",
+          "b_000082",
+          "b_000083",
+          "b_000084"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C2-02",
+      "range": [
+        85,
+        95
+      ],
+      "ownedBlockIds": [
+        "b_000085",
+        "b_000086",
+        "b_000087",
+        "b_000088",
+        "b_000089",
+        "b_000090",
+        "b_000091",
+        "b_000092",
+        "b_000093",
+        "b_000094",
+        "b_000095"
+      ],
+      "contextBlockIds": [
+        "b_000072",
+        "b_000073"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000085"
+        ],
+        "options": [
+          "b_000086",
+          "b_000087"
+        ],
+        "answer": [
+          "b_000088"
+        ],
+        "analysis": [
+          "b_000089"
+        ],
+        "solution": [
+          "b_000090",
+          "b_000091",
+          "b_000092",
+          "b_000093",
+          "b_000094",
+          "b_000095"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C2-03",
+      "range": [
+        97,
+        104
+      ],
+      "ownedBlockIds": [
+        "b_000097",
+        "b_000098",
+        "b_000099",
+        "b_000100",
+        "b_000101",
+        "b_000102",
+        "b_000103",
+        "b_000104"
+      ],
+      "contextBlockIds": [
+        "b_000072",
+        "b_000096"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000097"
+        ],
+        "answer": [
+          "b_000104"
+        ],
+        "solution": [
+          "b_000098",
+          "b_000099",
+          "b_000100",
+          "b_000101",
+          "b_000102",
+          "b_000103"
+        ]
+      },
+      "questionType": "fill",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C2-04",
+      "range": [
+        105,
+        112
+      ],
+      "ownedBlockIds": [
+        "b_000105",
+        "b_000106",
+        "b_000107",
+        "b_000108",
+        "b_000109",
+        "b_000110",
+        "b_000111",
+        "b_000112"
+      ],
+      "contextBlockIds": [
+        "b_000072",
+        "b_000096"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000105"
+        ],
+        "answer": [
+          "b_000112"
+        ],
+        "solution": [
+          "b_000106",
+          "b_000107",
+          "b_000108",
+          "b_000109",
+          "b_000110",
+          "b_000111"
+        ]
+      },
+      "questionType": "fill",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C3-01",
+      "range": [
+        116,
+        125
+      ],
+      "ownedBlockIds": [
+        "b_000116",
+        "b_000117",
+        "b_000118",
+        "b_000119",
+        "b_000120",
+        "b_000121",
+        "b_000122",
+        "b_000123",
+        "b_000124",
+        "b_000125"
+      ],
+      "contextBlockIds": [
+        "b_000113",
+        "b_000114",
+        "b_000115"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000116"
+        ],
+        "options": [
+          "b_000117"
+        ],
+        "answer": [
+          "b_000118"
+        ],
+        "analysis": [
+          "b_000119"
+        ],
+        "solution": [
+          "b_000120",
+          "b_000121",
+          "b_000122",
+          "b_000123",
+          "b_000124",
+          "b_000125"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C3-02",
+      "range": [
+        126,
+        134
+      ],
+      "ownedBlockIds": [
+        "b_000126",
+        "b_000127",
+        "b_000128",
+        "b_000129",
+        "b_000130",
+        "b_000131",
+        "b_000132",
+        "b_000133",
+        "b_000134"
+      ],
+      "contextBlockIds": [
+        "b_000113",
+        "b_000114",
+        "b_000115"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000126"
+        ],
+        "options": [
+          "b_000127"
+        ],
+        "answer": [
+          "b_000128"
+        ],
+        "analysis": [
+          "b_000129"
+        ],
+        "solution": [
+          "b_000130",
+          "b_000131",
+          "b_000132",
+          "b_000133",
+          "b_000134"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C3-03",
+      "range": [
+        136,
+        144
+      ],
+      "ownedBlockIds": [
+        "b_000136",
+        "b_000137",
+        "b_000138",
+        "b_000139",
+        "b_000140",
+        "b_000141",
+        "b_000142",
+        "b_000143",
+        "b_000144"
+      ],
+      "contextBlockIds": [
+        "b_000113",
+        "b_000114",
+        "b_000135"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000136"
+        ],
+        "options": [
+          "b_000137"
+        ],
+        "answer": [
+          "b_000138"
+        ],
+        "analysis": [
+          "b_000139"
+        ],
+        "solution": [
+          "b_000140",
+          "b_000141",
+          "b_000142",
+          "b_000143",
+          "b_000144"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C3-04",
+      "range": [
+        145,
+        158
+      ],
+      "ownedBlockIds": [
+        "b_000145",
+        "b_000146",
+        "b_000147",
+        "b_000148",
+        "b_000149",
+        "b_000150",
+        "b_000151",
+        "b_000152",
+        "b_000153",
+        "b_000154",
+        "b_000155",
+        "b_000156",
+        "b_000157",
+        "b_000158"
+      ],
+      "contextBlockIds": [
+        "b_000113",
+        "b_000114",
+        "b_000135"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000145"
+        ],
+        "options": [
+          "b_000146",
+          "b_000147"
+        ],
+        "answer": [
+          "b_000148"
+        ],
+        "analysis": [
+          "b_000149"
+        ],
+        "solution": [
+          "b_000150",
+          "b_000151",
+          "b_000152",
+          "b_000153",
+          "b_000154",
+          "b_000155",
+          "b_000156",
+          "b_000157",
+          "b_000158"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C3-05",
+      "range": [
+        160,
+        168
+      ],
+      "ownedBlockIds": [
+        "b_000160",
+        "b_000161",
+        "b_000162",
+        "b_000163",
+        "b_000164",
+        "b_000165",
+        "b_000166",
+        "b_000167",
+        "b_000168"
+      ],
+      "contextBlockIds": [
+        "b_000113",
+        "b_000114",
+        "b_000159"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000160"
+        ],
+        "options": [
+          "b_000161",
+          "b_000162"
+        ],
+        "answer": [
+          "b_000163"
+        ],
+        "analysis": [
+          "b_000164"
+        ],
+        "solution": [
+          "b_000165",
+          "b_000166",
+          "b_000167",
+          "b_000168"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C3-06",
+      "range": [
+        169,
+        178
+      ],
+      "ownedBlockIds": [
+        "b_000169",
+        "b_000170",
+        "b_000171",
+        "b_000172",
+        "b_000173",
+        "b_000174",
+        "b_000175",
+        "b_000176",
+        "b_000177",
+        "b_000178"
+      ],
+      "contextBlockIds": [
+        "b_000113",
+        "b_000114",
+        "b_000159"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000169"
+        ],
+        "options": [
+          "b_000170"
+        ],
+        "answer": [
+          "b_000171"
+        ],
+        "analysis": [
+          "b_000172"
+        ],
+        "solution": [
+          "b_000173",
+          "b_000174",
+          "b_000175",
+          "b_000176",
+          "b_000177",
+          "b_000178"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C3-07",
+      "range": [
+        181,
+        187
+      ],
+      "ownedBlockIds": [
+        "b_000181",
+        "b_000182",
+        "b_000183",
+        "b_000184",
+        "b_000185",
+        "b_000186",
+        "b_000187"
+      ],
+      "contextBlockIds": [
+        "b_000113",
+        "b_000179",
+        "b_000180"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000181"
+        ],
+        "answer": [
+          "b_000182"
+        ],
+        "analysis": [
+          "b_000183"
+        ],
+        "solution": [
+          "b_000184",
+          "b_000185",
+          "b_000186",
+          "b_000187"
+        ]
+      },
+      "questionType": "fill",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C3-08",
+      "range": [
+        188,
+        198
+      ],
+      "ownedBlockIds": [
+        "b_000188",
+        "b_000189",
+        "b_000190",
+        "b_000191",
+        "b_000192",
+        "b_000193",
+        "b_000194",
+        "b_000195",
+        "b_000196",
+        "b_000197",
+        "b_000198"
+      ],
+      "contextBlockIds": [
+        "b_000113",
+        "b_000179",
+        "b_000180"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000188"
+        ],
+        "options": [
+          "b_000189",
+          "b_000190"
+        ],
+        "answer": [
+          "b_000191"
+        ],
+        "analysis": [
+          "b_000192"
+        ],
+        "solution": [
+          "b_000193",
+          "b_000194",
+          "b_000195",
+          "b_000196",
+          "b_000197",
+          "b_000198"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C3-09",
+      "range": [
+        200,
+        210
+      ],
+      "ownedBlockIds": [
+        "b_000200",
+        "b_000201",
+        "b_000202",
+        "b_000203",
+        "b_000204",
+        "b_000205",
+        "b_000206",
+        "b_000207",
+        "b_000208",
+        "b_000209",
+        "b_000210"
+      ],
+      "contextBlockIds": [
+        "b_000113",
+        "b_000179",
+        "b_000199"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000200"
+        ],
+        "options": [
+          "b_000201",
+          "b_000202"
+        ],
+        "answer": [
+          "b_000203"
+        ],
+        "analysis": [
+          "b_000204"
+        ],
+        "solution": [
+          "b_000205",
+          "b_000206",
+          "b_000207",
+          "b_000208",
+          "b_000209",
+          "b_000210"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C3-10",
+      "range": [
+        211,
+        221
+      ],
+      "ownedBlockIds": [
+        "b_000211",
+        "b_000212",
+        "b_000213",
+        "b_000214",
+        "b_000215",
+        "b_000216",
+        "b_000217",
+        "b_000218",
+        "b_000219",
+        "b_000220",
+        "b_000221"
+      ],
+      "contextBlockIds": [
+        "b_000113",
+        "b_000179",
+        "b_000199"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000211"
+        ],
+        "options": [
+          "b_000212",
+          "b_000213"
+        ],
+        "answer": [
+          "b_000214"
+        ],
+        "analysis": [
+          "b_000215"
+        ],
+        "solution": [
+          "b_000216",
+          "b_000217",
+          "b_000218",
+          "b_000219",
+          "b_000220",
+          "b_000221"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "C3-11",
+      "range": [
+        223,
+        243
+      ],
+      "ownedBlockIds": [
+        "b_000223",
+        "b_000224",
+        "b_000225",
+        "b_000226",
+        "b_000227",
+        "b_000228",
+        "b_000229",
+        "b_000230",
+        "b_000231",
+        "b_000232",
+        "b_000233",
+        "b_000234",
+        "b_000235",
+        "b_000236",
+        "b_000237",
+        "b_000238",
+        "b_000239",
+        "b_000240",
+        "b_000241",
+        "b_000242",
+        "b_000243"
+      ],
+      "contextBlockIds": [
+        "b_000113",
+        "b_000222"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000223"
+        ],
+        "subquestions": [
+          "b_000224",
+          "b_000225",
+          "b_000226"
+        ],
+        "answer": [
+          "b_000227"
+        ],
+        "analysis": [
+          "b_000228",
+          "b_000229",
+          "b_000230"
+        ],
+        "solution": [
+          "b_000231",
+          "b_000232",
+          "b_000233",
+          "b_000234",
+          "b_000235",
+          "b_000236",
+          "b_000237",
+          "b_000238",
+          "b_000239",
+          "b_000240",
+          "b_000241",
+          "b_000242",
+          "b_000243"
+        ]
+      },
+      "questionType": "composite",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "HW-01",
+      "range": [
+        247,
+        253
+      ],
+      "ownedBlockIds": [
+        "b_000247",
+        "b_000248",
+        "b_000249",
+        "b_000250",
+        "b_000251",
+        "b_000252",
+        "b_000253"
+      ],
+      "contextBlockIds": [
+        "b_000246"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000247"
+        ],
+        "options": [
+          "b_000248"
+        ],
+        "answer": [
+          "b_000249"
+        ],
+        "solution": [
+          "b_000250",
+          "b_000251",
+          "b_000252",
+          "b_000253"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "HW-02",
+      "range": [
+        254,
+        261
+      ],
+      "ownedBlockIds": [
+        "b_000254",
+        "b_000255",
+        "b_000256",
+        "b_000257",
+        "b_000258",
+        "b_000259",
+        "b_000260",
+        "b_000261"
+      ],
+      "contextBlockIds": [
+        "b_000246"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000254"
+        ],
+        "options": [
+          "b_000255",
+          "b_000256"
+        ],
+        "answer": [
+          "b_000257"
+        ],
+        "solution": [
+          "b_000258",
+          "b_000259",
+          "b_000260",
+          "b_000261"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "HW-03",
+      "range": [
+        262,
+        270
+      ],
+      "ownedBlockIds": [
+        "b_000262",
+        "b_000263",
+        "b_000264",
+        "b_000265",
+        "b_000266",
+        "b_000267",
+        "b_000268",
+        "b_000269",
+        "b_000270"
+      ],
+      "contextBlockIds": [
+        "b_000246"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000262"
+        ],
+        "options": [
+          "b_000263",
+          "b_000264"
+        ],
+        "answer": [
+          "b_000265"
+        ],
+        "solution": [
+          "b_000266",
+          "b_000267",
+          "b_000268",
+          "b_000269",
+          "b_000270"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "HW-04",
+      "range": [
+        271,
+        276
+      ],
+      "ownedBlockIds": [
+        "b_000271",
+        "b_000272",
+        "b_000273",
+        "b_000274",
+        "b_000275",
+        "b_000276"
+      ],
+      "contextBlockIds": [
+        "b_000246"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000271"
+        ],
+        "options": [
+          "b_000272"
+        ],
+        "answer": [
+          "b_000273"
+        ],
+        "solution": [
+          "b_000274",
+          "b_000275",
+          "b_000276"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "HW-05",
+      "range": [
+        277,
+        287
+      ],
+      "ownedBlockIds": [
+        "b_000277",
+        "b_000278",
+        "b_000279",
+        "b_000280",
+        "b_000281",
+        "b_000282",
+        "b_000283",
+        "b_000284",
+        "b_000285",
+        "b_000286",
+        "b_000287"
+      ],
+      "contextBlockIds": [
+        "b_000246"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000277"
+        ],
+        "options": [
+          "b_000278",
+          "b_000279"
+        ],
+        "answer": [
+          "b_000280"
+        ],
+        "analysis": [
+          "b_000281"
+        ],
+        "solution": [
+          "b_000282",
+          "b_000283",
+          "b_000284",
+          "b_000285",
+          "b_000286",
+          "b_000287"
+        ]
+      },
+      "questionType": "single_choice",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "HW-06",
+      "range": [
+        288,
+        293
+      ],
+      "ownedBlockIds": [
+        "b_000288",
+        "b_000289",
+        "b_000290",
+        "b_000291",
+        "b_000292",
+        "b_000293"
+      ],
+      "contextBlockIds": [
+        "b_000246"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000288"
+        ],
+        "answer": [
+          "b_000289"
+        ],
+        "analysis": [
+          "b_000290"
+        ],
+        "solution": [
+          "b_000291",
+          "b_000292",
+          "b_000293"
+        ]
+      },
+      "questionType": "fill",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "HW-07",
+      "range": [
+        294,
+        304
+      ],
+      "ownedBlockIds": [
+        "b_000294",
+        "b_000295",
+        "b_000296",
+        "b_000297",
+        "b_000298",
+        "b_000299",
+        "b_000300",
+        "b_000301",
+        "b_000302",
+        "b_000303",
+        "b_000304"
+      ],
+      "contextBlockIds": [
+        "b_000246"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000294"
+        ],
+        "answer": [
+          "b_000295"
+        ],
+        "analysis": [
+          "b_000296"
+        ],
+        "solution": [
+          "b_000297",
+          "b_000298",
+          "b_000299",
+          "b_000300",
+          "b_000301",
+          "b_000302",
+          "b_000303",
+          "b_000304"
+        ]
+      },
+      "questionType": "fill",
+      "independentlyReferenceable": true
+    },
+    {
+      "questionId": "HW-08",
+      "range": [
+        305,
+        319
+      ],
+      "ownedBlockIds": [
+        "b_000305",
+        "b_000306",
+        "b_000307",
+        "b_000308",
+        "b_000309",
+        "b_000310",
+        "b_000311",
+        "b_000312",
+        "b_000313",
+        "b_000314",
+        "b_000315",
+        "b_000316",
+        "b_000317",
+        "b_000318",
+        "b_000319"
+      ],
+      "contextBlockIds": [
+        "b_000246"
+      ],
+      "roleBlockRefs": {
+        "stem": [
+          "b_000305"
+        ],
+        "subquestions": [
+          "b_000306",
+          "b_000307"
+        ],
+        "analysis": [
+          "b_000308"
+        ],
+        "solution": [
+          "b_000309",
+          "b_000310",
+          "b_000311",
+          "b_000312",
+          "b_000313",
+          "b_000314",
+          "b_000315",
+          "b_000316",
+          "b_000317",
+          "b_000318",
+          "b_000319"
+        ]
+      },
+      "questionType": "composite",
+      "independentlyReferenceable": true
+    }
+  ],
+  "ordinaryPlacements": [
+    {
+      "placementKey": "placement.M00",
+      "legacySourceGroup": "M00",
+      "range": [
+        0,
+        0
+      ],
+      "blockIds": [
+        "b_000000"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "placementKey": "placement.M03",
+      "legacySourceGroup": "M03",
+      "range": [
+        13,
+        13
+      ],
+      "blockIds": [
+        "b_000013"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "placementKey": "placement.M04",
+      "legacySourceGroup": "M04",
+      "range": [
+        14,
+        15
+      ],
+      "blockIds": [
+        "b_000014",
+        "b_000015"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "placementKey": "placement.M05",
+      "legacySourceGroup": "M05",
+      "range": [
+        33,
+        33
+      ],
+      "blockIds": [
+        "b_000033"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "placementKey": "placement.M06",
+      "legacySourceGroup": "M06",
+      "range": [
+        65,
+        65
+      ],
+      "blockIds": [
+        "b_000065"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "placementKey": "placement.M07",
+      "legacySourceGroup": "M07",
+      "range": [
+        72,
+        73
+      ],
+      "blockIds": [
+        "b_000072",
+        "b_000073"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "placementKey": "placement.M08",
+      "legacySourceGroup": "M08",
+      "range": [
+        96,
+        96
+      ],
+      "blockIds": [
+        "b_000096"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "placementKey": "placement.M09",
+      "legacySourceGroup": "M09",
+      "range": [
+        113,
+        115
+      ],
+      "blockIds": [
+        "b_000113",
+        "b_000114",
+        "b_000115"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "placementKey": "placement.M10",
+      "legacySourceGroup": "M10",
+      "range": [
+        135,
+        135
+      ],
+      "blockIds": [
+        "b_000135"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "placementKey": "placement.M11",
+      "legacySourceGroup": "M11",
+      "range": [
+        159,
+        159
+      ],
+      "blockIds": [
+        "b_000159"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "placementKey": "placement.M12",
+      "legacySourceGroup": "M12",
+      "range": [
+        179,
+        180
+      ],
+      "blockIds": [
+        "b_000179",
+        "b_000180"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "placementKey": "placement.M13",
+      "legacySourceGroup": "M13",
+      "range": [
+        199,
+        199
+      ],
+      "blockIds": [
+        "b_000199"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "placementKey": "placement.M14",
+      "legacySourceGroup": "M14",
+      "range": [
+        222,
+        222
+      ],
+      "blockIds": [
+        "b_000222"
+      ],
+      "independentlyReferenceable": false
+    },
+    {
+      "placementKey": "placement.M16",
+      "legacySourceGroup": "M16",
+      "range": [
+        246,
+        246
+      ],
+      "blockIds": [
+        "b_000246"
+      ],
+      "independentlyReferenceable": false
+    }
+  ],
+  "topLevelSequence": [
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M00",
+      "range": [
+        0,
+        0
+      ]
+    },
+    {
+      "kind": "standard_module_occurrence",
+      "ref": "circle_teacher.course_objectives",
+      "range": [
+        1,
+        3
+      ]
+    },
+    {
+      "kind": "standard_module_occurrence",
+      "ref": "circle_teacher.knowledge_summary",
+      "range": [
+        4,
+        12
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M03",
+      "range": [
+        13,
+        13
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M04",
+      "range": [
+        14,
+        15
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C1-01",
+      "range": [
+        16,
+        18
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C1-02",
+      "range": [
+        19,
+        25
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C1-03",
+      "range": [
+        26,
+        32
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M05",
+      "range": [
+        33,
+        33
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C1-04",
+      "range": [
+        34,
+        43
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C1-05",
+      "range": [
+        44,
+        50
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C1-06",
+      "range": [
+        51,
+        54
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C1-07",
+      "range": [
+        55,
+        64
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M06",
+      "range": [
+        65,
+        65
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C1-08",
+      "range": [
+        66,
+        71
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M07",
+      "range": [
+        72,
+        73
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C2-01",
+      "range": [
+        74,
+        84
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C2-02",
+      "range": [
+        85,
+        95
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M08",
+      "range": [
+        96,
+        96
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C2-03",
+      "range": [
+        97,
+        104
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C2-04",
+      "range": [
+        105,
+        112
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M09",
+      "range": [
+        113,
+        115
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C3-01",
+      "range": [
+        116,
+        125
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C3-02",
+      "range": [
+        126,
+        134
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M10",
+      "range": [
+        135,
+        135
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C3-03",
+      "range": [
+        136,
+        144
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C3-04",
+      "range": [
+        145,
+        158
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M11",
+      "range": [
+        159,
+        159
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C3-05",
+      "range": [
+        160,
+        168
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C3-06",
+      "range": [
+        169,
+        178
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M12",
+      "range": [
+        179,
+        180
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C3-07",
+      "range": [
+        181,
+        187
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C3-08",
+      "range": [
+        188,
+        198
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M13",
+      "range": [
+        199,
+        199
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C3-09",
+      "range": [
+        200,
+        210
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C3-10",
+      "range": [
+        211,
+        221
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M14",
+      "range": [
+        222,
+        222
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "C3-11",
+      "range": [
+        223,
+        243
+      ]
+    },
+    {
+      "kind": "standard_module_occurrence",
+      "ref": "circle_teacher.keypoint_review",
+      "range": [
+        244,
+        245
+      ]
+    },
+    {
+      "kind": "ordinary_placement",
+      "ref": "placement.M16",
+      "range": [
+        246,
+        246
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "HW-01",
+      "range": [
+        247,
+        253
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "HW-02",
+      "range": [
+        254,
+        261
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "HW-03",
+      "range": [
+        262,
+        270
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "HW-04",
+      "range": [
+        271,
+        276
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "HW-05",
+      "range": [
+        277,
+        287
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "HW-06",
+      "range": [
+        288,
+        293
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "HW-07",
+      "range": [
+        294,
+        304
+      ]
+    },
+    {
+      "kind": "question_occurrence",
+      "ref": "HW-08",
+      "range": [
+        305,
+        319
+      ]
+    }
+  ],
+  "validation": {
+    "sourceBlockCount": 320,
+    "standardModuleCount": 3,
+    "standardModuleOwnedBlocks": 14,
+    "questionCount": 31,
+    "questionOwnedBlocks": 287,
+    "ordinaryPlacementCount": 14,
+    "ordinaryPlacementOwnedBlocks": 19,
+    "topLevelOccurrenceCount": 48,
+    "coverageExactlyOnce": true,
+    "orderExact": true,
+    "missingBlockIndexes": [],
+    "duplicateBlockIndexes": [],
+    "contextReferenceOccurrences": 64,
+    "contextRefsExcludedFromOwnership": true,
+    "semanticClassificationMethod": "human-explicit-boundaries",
+    "regexSemanticRules": 0
+  },
+  "preservationInput": "samples/circle/input/preservation-v1",
+  "teacherReassembly": "circle-teacher-reassembled.docx"
+}

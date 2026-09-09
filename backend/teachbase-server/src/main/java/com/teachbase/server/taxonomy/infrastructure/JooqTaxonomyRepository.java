@@ -1,6 +1,7 @@
 package com.teachbase.server.taxonomy.infrastructure;
 
 import static com.teachbase.jooq.tables.QuestionTaxonomyLink.QUESTION_TAXONOMY_LINK;
+import static com.teachbase.jooq.tables.StandardModuleTaxonomyLink.STANDARD_MODULE_TAXONOMY_LINK;
 import static com.teachbase.jooq.tables.TaxonomyAlias.TAXONOMY_ALIAS;
 import static com.teachbase.jooq.tables.TaxonomyNode.TAXONOMY_NODE;
 import static com.teachbase.jooq.tables.TaxonomyVersion.TAXONOMY_VERSION;
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teachbase.server.taxonomy.api.QuestionTaxonomyLinkResponse;
+import com.teachbase.server.taxonomy.api.StandardModuleTaxonomyLinkResponse;
 import com.teachbase.server.taxonomy.api.TaxonomyNodeResponse;
 import com.teachbase.server.taxonomy.api.TaxonomyVersionResponse;
 import com.teachbase.server.taxonomy.application.TaxonomyRepository;
@@ -226,6 +228,57 @@ class JooqTaxonomyRepository implements TaxonomyRepository {
         if (stored == null) throw new IllegalStateException("question_taxonomy_assignment_failed");
         return new QuestionTaxonomyLinkResponse(
                 stored.getQuestionTaxonomyLinkId(), stored.getQuestionRevisionId(),
+                stored.getTaxonomyNodeId(), stored.getRelationType());
+    }
+
+    @Override
+    public StandardModuleTaxonomyLinkResponse assignStandardModule(
+            UUID workspaceId,
+            UUID actorUserId,
+            UUID standardModuleId,
+            UUID standardModuleRevisionId,
+            UUID taxonomyNodeId,
+            String relationType,
+            String assignmentSource,
+            BigDecimal confidence) {
+        var node = database.selectFrom(TAXONOMY_NODE)
+                .where(TAXONOMY_NODE.WORKSPACE_ID.eq(workspaceId))
+                .and(TAXONOMY_NODE.TAXONOMY_NODE_ID.eq(taxonomyNodeId))
+                .fetchOne();
+        if (node == null) throw new TaxonomyValidationException("taxonomy_node_not_found");
+        if (!database.fetchExists(
+                TAXONOMY_VERSION,
+                TAXONOMY_VERSION.TAXONOMY_VERSION_ID.eq(node.getTaxonomyVersionId())
+                        .and(TAXONOMY_VERSION.WORKSPACE_ID.eq(workspaceId))
+                        .and(TAXONOMY_VERSION.STATUS.eq("active")))) {
+            throw new TaxonomyValidationException("taxonomy_version_not_active");
+        }
+        UUID id = UUID.randomUUID();
+        database.insertInto(STANDARD_MODULE_TAXONOMY_LINK)
+                .set(STANDARD_MODULE_TAXONOMY_LINK.STANDARD_MODULE_TAXONOMY_LINK_ID, id)
+                .set(STANDARD_MODULE_TAXONOMY_LINK.WORKSPACE_ID, workspaceId)
+                .set(STANDARD_MODULE_TAXONOMY_LINK.STANDARD_MODULE_ID, standardModuleId)
+                .set(STANDARD_MODULE_TAXONOMY_LINK.STANDARD_MODULE_REVISION_ID, standardModuleRevisionId)
+                .set(STANDARD_MODULE_TAXONOMY_LINK.TAXONOMY_NODE_ID, taxonomyNodeId)
+                .set(STANDARD_MODULE_TAXONOMY_LINK.TAXONOMY_VERSION_ID, node.getTaxonomyVersionId())
+                .set(STANDARD_MODULE_TAXONOMY_LINK.RELATION_TYPE, relationType)
+                .set(STANDARD_MODULE_TAXONOMY_LINK.ASSIGNMENT_SOURCE, assignmentSource)
+                .set(STANDARD_MODULE_TAXONOMY_LINK.CONFIDENCE, confidence)
+                .set(STANDARD_MODULE_TAXONOMY_LINK.ASSIGNED_BY, actorUserId)
+                .onConflict(
+                        STANDARD_MODULE_TAXONOMY_LINK.STANDARD_MODULE_REVISION_ID,
+                        STANDARD_MODULE_TAXONOMY_LINK.TAXONOMY_NODE_ID,
+                        STANDARD_MODULE_TAXONOMY_LINK.RELATION_TYPE)
+                .doNothing()
+                .execute();
+        var stored = database.selectFrom(STANDARD_MODULE_TAXONOMY_LINK)
+                .where(STANDARD_MODULE_TAXONOMY_LINK.STANDARD_MODULE_REVISION_ID.eq(standardModuleRevisionId))
+                .and(STANDARD_MODULE_TAXONOMY_LINK.TAXONOMY_NODE_ID.eq(taxonomyNodeId))
+                .and(STANDARD_MODULE_TAXONOMY_LINK.RELATION_TYPE.eq(relationType))
+                .fetchOne();
+        if (stored == null) throw new IllegalStateException("standard_module_taxonomy_assignment_failed");
+        return new StandardModuleTaxonomyLinkResponse(
+                stored.getStandardModuleTaxonomyLinkId(), stored.getStandardModuleRevisionId(),
                 stored.getTaxonomyNodeId(), stored.getRelationType());
     }
 

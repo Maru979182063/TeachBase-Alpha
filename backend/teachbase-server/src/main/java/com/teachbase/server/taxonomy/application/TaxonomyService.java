@@ -6,11 +6,14 @@ import com.teachbase.server.identity.api.ActorNotWorkspaceMemberException;
 import com.teachbase.server.identity.api.WorkspaceDirectory;
 import com.teachbase.server.identity.api.WorkspaceNotFoundException;
 import com.teachbase.server.question.api.QuestionRevisionDirectory;
+import com.teachbase.server.standardmodule.api.StandardModuleRevisionDirectory;
 import com.teachbase.server.taxonomy.api.ActivateTaxonomyVersionRequest;
 import com.teachbase.server.taxonomy.api.AssignQuestionTaxonomyRequest;
+import com.teachbase.server.taxonomy.api.AssignStandardModuleTaxonomyRequest;
 import com.teachbase.server.taxonomy.api.CreateTaxonomyNodeRequest;
 import com.teachbase.server.taxonomy.api.CreateTaxonomyVersionRequest;
 import com.teachbase.server.taxonomy.api.QuestionTaxonomyLinkResponse;
+import com.teachbase.server.taxonomy.api.StandardModuleTaxonomyLinkResponse;
 import com.teachbase.server.taxonomy.api.ResolveTaxonomyNodeRequest;
 import com.teachbase.server.taxonomy.api.TaxonomyCatalog;
 import com.teachbase.server.taxonomy.api.TaxonomyNodeResponse;
@@ -32,16 +35,19 @@ public class TaxonomyService implements TaxonomyCatalog {
 
     private final WorkspaceDirectory workspaces;
     private final QuestionRevisionDirectory questions;
+    private final StandardModuleRevisionDirectory standardModules;
     private final TaxonomyRepository taxonomies;
     private final AuditTrail auditTrail;
 
     public TaxonomyService(
             WorkspaceDirectory workspaces,
             QuestionRevisionDirectory questions,
+            StandardModuleRevisionDirectory standardModules,
             TaxonomyRepository taxonomies,
             AuditTrail auditTrail) {
         this.workspaces = workspaces;
         this.questions = questions;
+        this.standardModules = standardModules;
         this.taxonomies = taxonomies;
         this.auditTrail = auditTrail;
     }
@@ -105,6 +111,36 @@ public class TaxonomyService implements TaxonomyCatalog {
         audit(request.workspaceId(), request.actorUserId(), "question_taxonomy.assigned",
                 result.questionTaxonomyLinkId(), Map.of(
                         "questionRevisionId", question.questionRevisionId().toString(),
+                        "taxonomyNodeId", request.taxonomyNodeId().toString(), "relationType", relation));
+        return result;
+    }
+
+    @Transactional
+    @Override
+    public StandardModuleTaxonomyLinkResponse assignStandardModule(
+            AssignStandardModuleTaxonomyRequest request) {
+        validateActor(request.workspaceId(), request.actorUserId());
+        String relation = clean(request.relationType());
+        String source = clean(request.assignmentSource());
+        if (!Set.of("primary", "secondary").contains(relation)) {
+            throw new TaxonomyValidationException("taxonomy_relation_invalid");
+        }
+        if (!Set.of("human", "model", "import").contains(source)) {
+            throw new TaxonomyValidationException("taxonomy_assignment_source_invalid");
+        }
+        var descriptors = standardModules.findAll(
+                request.workspaceId(), List.of(request.standardModuleRevisionId()));
+        if (descriptors.size() != 1) {
+            throw new TaxonomyValidationException("taxonomy_standard_module_revision_not_found");
+        }
+        var module = descriptors.getFirst();
+        var result = taxonomies.assignStandardModule(
+                request.workspaceId(), request.actorUserId(), module.standardModuleId(),
+                module.standardModuleRevisionId(), request.taxonomyNodeId(), relation, source,
+                request.confidence());
+        audit(request.workspaceId(), request.actorUserId(), "standard_module_taxonomy.assigned",
+                result.standardModuleTaxonomyLinkId(), Map.of(
+                        "standardModuleRevisionId", module.standardModuleRevisionId().toString(),
                         "taxonomyNodeId", request.taxonomyNodeId().toString(), "relationType", relation));
         return result;
     }

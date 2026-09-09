@@ -9,8 +9,11 @@ import com.teachbase.server.question.api.QuestionReviewGateway;
 import com.teachbase.server.question.api.QuestionReviewStateException;
 import com.teachbase.server.review.api.DecideReviewCaseRequest;
 import com.teachbase.server.review.api.OpenReviewCaseRequest;
+import com.teachbase.server.review.api.OpenStandardModuleReviewCaseRequest;
 import com.teachbase.server.review.api.ReviewCaseResponse;
 import com.teachbase.server.review.api.ReviewWorkflow;
+import com.teachbase.server.standardmodule.api.StandardModuleReviewGateway;
+import com.teachbase.server.standardmodule.api.StandardModuleReviewStateException;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -27,16 +30,19 @@ public class ReviewService implements ReviewWorkflow {
 
     private final WorkspaceDirectory workspaces;
     private final QuestionReviewGateway questions;
+    private final StandardModuleReviewGateway standardModules;
     private final ReviewRepository reviews;
     private final AuditTrail auditTrail;
 
     public ReviewService(
             WorkspaceDirectory workspaces,
             QuestionReviewGateway questions,
+            StandardModuleReviewGateway standardModules,
             ReviewRepository reviews,
             AuditTrail auditTrail) {
         this.workspaces = workspaces;
         this.questions = questions;
+        this.standardModules = standardModules;
         this.reviews = reviews;
         this.auditTrail = auditTrail;
     }
@@ -53,7 +59,7 @@ public class ReviewService implements ReviewWorkflow {
         if (!Set.of("unreviewed", "pending_review").contains(target.reviewStatus())) {
             throw new ReviewValidationException("review_question_not_reviewable");
         }
-        var reviewCase = reviews.open(
+        var reviewCase = reviews.openQuestion(
                 request.workspaceId(), target.questionId(), target.questionRevisionId(), target.contentHash(),
                 request.assignedTo(), request.actorUserId());
         auditTrail.record(new AuditCommand(
@@ -61,6 +67,31 @@ public class ReviewService implements ReviewWorkflow {
                 reviewCase.reviewCaseId(), Map.of(
                         "questionId", target.questionId().toString(),
                         "questionRevisionId", target.questionRevisionId().toString(),
+                        "expectedContentHash", target.contentHash())));
+        return response(reviewCase);
+    }
+
+    @Transactional
+    @Override
+    public ReviewCaseResponse openStandardModule(OpenStandardModuleReviewCaseRequest request) {
+        validateActor(request.workspaceId(), request.actorUserId());
+        if (request.assignedTo() != null && !workspaces.isActiveMember(request.workspaceId(), request.assignedTo())) {
+            throw new ActorNotWorkspaceMemberException();
+        }
+        var target = standardModules.findTarget(request.workspaceId(), request.standardModuleRevisionId())
+                .orElseThrow(() -> new ReviewValidationException("review_standard_module_revision_not_found"));
+        if (!Set.of("unreviewed", "pending_review").contains(target.reviewStatus())) {
+            throw new ReviewValidationException("review_standard_module_not_reviewable");
+        }
+        var reviewCase = reviews.openStandardModule(
+                request.workspaceId(), target.standardModuleId(), target.standardModuleRevisionId(),
+                target.contentHash(), request.assignedTo(), request.actorUserId());
+        auditTrail.record(new AuditCommand(
+                request.workspaceId(), request.actorUserId(), "review_case.opened", "review_case",
+                reviewCase.reviewCaseId(), Map.of(
+                        "targetType", "standard_module",
+                        "standardModuleId", target.standardModuleId().toString(),
+                        "standardModuleRevisionId", target.standardModuleRevisionId().toString(),
                         "expectedContentHash", target.contentHash())));
         return response(reviewCase);
     }
@@ -87,25 +118,46 @@ public class ReviewService implements ReviewWorkflow {
         if (!reviewCase.expectedContentHash().equals(expectedHash)) {
             throw new ReviewValidationException("review_case_content_changed");
         }
-        try {
-            questions.applyDecision(
-                    request.workspaceId(), request.actorUserId(), reviewCase.questionRevisionId(),
-                    expectedHash, decision);
-        } catch (QuestionReviewStateException exception) {
-            throw new ReviewValidationException(exception.getMessage());
-        }
+        applyTargetDecision(request, reviewCase, expectedHash, decision);
         var completed = reviews.complete(
                 reviewCase, request.actorUserId(), decision, request.note() == null ? "" : request.note().strip(),
                 clean(request.policyVersion()), decisionSource, request.evidence(), request.evidenceOccurredAt());
+        var auditPayload = new java.util.LinkedHashMap<String, Object>();
+        auditPayload.put("targetType", reviewCase.targetType());
+        if (reviewCase.questionId() != null) auditPayload.put("questionId", reviewCase.questionId().toString());
+        if (reviewCase.questionRevisionId() != null) {
+            auditPayload.put("questionRevisionId", reviewCase.questionRevisionId().toString());
+        }
+        if (reviewCase.standardModuleId() != null) {
+            auditPayload.put("standardModuleId", reviewCase.standardModuleId().toString());
+            auditPayload.put("standardModuleRevisionId", reviewCase.standardModuleRevisionId().toString());
+        }
+        auditPayload.put("expectedContentHash", expectedHash);
+        auditPayload.put("policyVersion", clean(request.policyVersion()));
+        auditPayload.put("decisionSource", decisionSource);
         auditTrail.record(new AuditCommand(
                 request.workspaceId(), request.actorUserId(), "review_case." + decision, "review_case",
-                reviewCaseId, Map.of(
-                        "questionId", reviewCase.questionId().toString(),
-                        "questionRevisionId", reviewCase.questionRevisionId().toString(),
-                        "expectedContentHash", expectedHash,
-                        "policyVersion", clean(request.policyVersion()),
-                        "decisionSource", decisionSource)));
+                reviewCaseId, auditPayload));
         return response(completed);
+    }
+
+    private void applyTargetDecision(
+            DecideReviewCaseRequest request, ReviewCaseRecord reviewCase, String expectedHash, String decision) {
+        try {
+            if (reviewCase.targetType().equals("question")) {
+                questions.applyDecision(
+                        request.workspaceId(), request.actorUserId(), reviewCase.questionRevisionId(),
+                        expectedHash, decision);
+            } else if (reviewCase.targetType().equals("standard_module")) {
+                standardModules.applyDecision(
+                        request.workspaceId(), request.actorUserId(), reviewCase.standardModuleRevisionId(),
+                        expectedHash, decision);
+            } else {
+                throw new ReviewValidationException("review_target_type_invalid");
+            }
+        } catch (QuestionReviewStateException | StandardModuleReviewStateException exception) {
+            throw new ReviewValidationException(exception.getMessage());
+        }
     }
 
     private void validateActor(UUID workspaceId, UUID actorUserId) {
@@ -115,7 +167,8 @@ public class ReviewService implements ReviewWorkflow {
 
     private ReviewCaseResponse response(ReviewCaseRecord value) {
         return new ReviewCaseResponse(
-                value.reviewCaseId(), value.questionId(), value.questionRevisionId(), value.expectedContentHash(),
+                value.reviewCaseId(), value.targetType(), value.questionId(), value.questionRevisionId(),
+                value.standardModuleId(), value.standardModuleRevisionId(), value.expectedContentHash(),
                 value.status(), value.assignedTo(), value.openedAt(), value.decidedAt());
     }
 

@@ -11,5 +11,7 @@ public interface ReviewWorkflow {
 
     ReviewCaseResponse open(OpenReviewCaseRequest request);
 
+    ReviewCaseResponse openStandardModule(OpenStandardModuleReviewCaseRequest request);
+
     ReviewCaseResponse decide(UUID reviewCaseId, DecideReviewCaseRequest request);
 }

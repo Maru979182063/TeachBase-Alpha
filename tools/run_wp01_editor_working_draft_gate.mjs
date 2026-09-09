@@ -121,6 +121,8 @@ async function main() {
         TEACHBASE_DATABASE_PASSWORD: decodeURIComponent(databaseUrl.password),
         TEACHBASE_DATABASE_POOL_SIZE: "16",
         TEACHBASE_SERVER_PORT: String(serverPort),
+        // WP-01 的“不得新增后续业务表”断言必须固定在 V008 边界；G4 由 V009 gate 独立验收。
+        SPRING_FLYWAY_TARGET: "8",
         TEACHBASE_RENDER_ENABLED: "false",
         TEACHBASE_EDITOR_WORKING_DRAFT_ENABLED: "true",
         TEACHBASE_EDITOR_LAZY_MIGRATION_ENABLED: "true",
@@ -396,6 +398,8 @@ async function main() {
         TEACHBASE_DATABASE_PASSWORD: decodeURIComponent(databaseUrl.password),
         TEACHBASE_DATABASE_POOL_SIZE: "8",
         TEACHBASE_SERVER_PORT: String(fencedPort),
+        // 第二次启动仍复用同一个 V008 数据库，避免后续迁移改变历史工作包的验收语义。
+        SPRING_FLYWAY_TARGET: "8",
         TEACHBASE_RENDER_ENABLED: "false",
         TEACHBASE_EDITOR_WORKING_DRAFT_ENABLED: "false",
         TEACHBASE_EDITOR_LAZY_MIGRATION_ENABLED: "false",

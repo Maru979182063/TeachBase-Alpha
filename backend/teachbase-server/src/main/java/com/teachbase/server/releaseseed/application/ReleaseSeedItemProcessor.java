@@ -176,10 +176,25 @@ public class ReleaseSeedItemProcessor {
         Integer page = locator.path("page").isIntegralNumber() ? locator.path("page").asInt() : null;
         links.linkSource(new QuestionSourceEvidenceCommand(
                 properties.workspaceId(), questionId, questionRevisionId,
+                sourceEvidenceKey(row, documentKey, regionKey),
                 document == null ? null : document.sourceDocumentId(),
                 region == null ? null : region.sourceRegionId(),
                 row.path("sourceSystem").asText() + ":" + row.path("sourceKey").asText(),
                 page, page, locator.deepCopy()));
+    }
+
+    private String sourceEvidenceKey(JsonNode row, String documentKey, String regionKey) {
+        // Release Seed 合同不新增字段；由稳定来源身份和 locator 推导证据键，
+        // 因此不同批次重放同一证据仍幂等，不把 batch id 错当 canonical provenance。
+        String material = row.path("sourceSystem").asText() + "|" + row.path("sourceKey").asText()
+                + "|" + documentKey + "|" + regionKey + "|" + row.path("sourceLocator").toString();
+        try {
+            byte[] digest = java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(material.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return "release-seed:" + java.util.HexFormat.of().formatHex(digest);
+        } catch (java.security.NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("sha256_unavailable", exception);
+        }
     }
 
     private void publishQuestionImages(

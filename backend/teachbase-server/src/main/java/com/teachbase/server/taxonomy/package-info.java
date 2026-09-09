@@ -5,5 +5,5 @@
  */
 @org.springframework.modulith.ApplicationModule(
         displayName = "Taxonomy",
-        allowedDependencies = {"identity::api", "question::api", "audit::api"})
+        allowedDependencies = {"identity::api", "question::api", "standardmodule::api", "audit::api"})
 package com.teachbase.server.taxonomy;
