@@ -1,6 +1,7 @@
 package com.teachbase.server.canonicalimport.api;
 
 import com.teachbase.server.canonicalimport.application.CanonicalImportConflictException;
+import com.teachbase.server.canonicalimport.application.CanonicalImportInjectedFailureException;
 import com.teachbase.server.canonicalimport.application.CanonicalImportValidationException;
 import com.teachbase.server.identity.api.ActorNotWorkspaceMemberException;
 import com.teachbase.server.identity.api.WorkspaceNotFoundException;
@@ -23,6 +24,11 @@ class CanonicalImportExceptionHandler {
     @ExceptionHandler(CanonicalImportValidationException.class)
     ProblemDetail invalid(CanonicalImportValidationException exception) {
         return problem(HttpStatus.BAD_REQUEST, "Invalid canonical import", exception.getMessage());
+    }
+
+    @ExceptionHandler(CanonicalImportInjectedFailureException.class)
+    ProblemDetail injected(CanonicalImportInjectedFailureException exception) {
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, "Injected canonical import interruption", exception.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

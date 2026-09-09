@@ -94,16 +94,24 @@ async function main() {
       immutablePlan = error.code === "P0001" && error.message.includes("canonical_import_operation_plan_immutable");
     }
     expect(immutablePlan, "v010_operation_plan_mutation_not_rejected");
+    let deleteRejected = false;
+    try {
+      await upgrade.query("delete from teachbase_app.canonical_import_operation where import_operation_id=$1", [operationId]);
+    } catch (error) {
+      deleteRejected = error.code === "P0001" && error.message.includes("canonical_import_ledger_delete_forbidden");
+    }
+    expect(deleteRejected, "v010_operation_ledger_delete_not_rejected");
     report = {
       schemaVersion: 1,
       generatedAt: new Date().toISOString(),
       status: "passed",
       database: { engine: "PostgreSQL", version: (await fresh.query("show server_version")).rows[0].server_version },
       migrations: { fresh: "V001->V010", upgrade: "V009->V010" },
-      acceptance: { passed: 7, total: 7, checks: {
+      acceptance: { passed: 8, total: 8, checks: {
         cleanMigration: true, additiveUpgrade: true, g4TablesPreserved: true,
         editorRevisionPreserved: true, nullableImportIdentityBackfill: true, ledgerPlanPresent: true,
         operationPlanImmutableFromValidation: true,
+        ledgerDeleteRejected: true,
       } },
       cleanup: "pending",
     };

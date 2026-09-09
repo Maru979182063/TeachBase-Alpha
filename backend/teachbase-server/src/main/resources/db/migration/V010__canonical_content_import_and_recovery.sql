@@ -182,4 +182,21 @@ $$;
 create trigger trg_canonical_import_completed_operation_immutable
 before update on teachbase_app.canonical_import_operation
 for each row execute function teachbase_app.protect_completed_import_operation();
+
+create or replace function teachbase_app.reject_canonical_import_ledger_delete()
+returns trigger
+language plpgsql
+as $$
+begin
+  raise exception 'canonical_import_ledger_delete_forbidden';
+end;
+$$;
+
+create trigger trg_canonical_import_request_delete_forbidden
+before delete on teachbase_app.canonical_import_request
+for each row execute function teachbase_app.reject_canonical_import_ledger_delete();
+
+create trigger trg_canonical_import_operation_delete_forbidden
+before delete on teachbase_app.canonical_import_operation
+for each row execute function teachbase_app.reject_canonical_import_ledger_delete();
 -- [jooq ignore stop]

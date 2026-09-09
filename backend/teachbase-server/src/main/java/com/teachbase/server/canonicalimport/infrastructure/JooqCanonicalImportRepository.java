@@ -118,7 +118,7 @@ class JooqCanonicalImportRepository implements CanonicalImportRepository {
         if ("importing".equals(record.getStatus()) && record.getLeaseExpiresAt().isAfter(now)) {
             throw new CanonicalImportConflictException("canonical_import_lease_active");
         }
-        database.update(CANONICAL_IMPORT_OPERATION)
+        int changed = database.update(CANONICAL_IMPORT_OPERATION)
                 .set(CANONICAL_IMPORT_OPERATION.STATUS, "pending")
                 .setNull(CANONICAL_IMPORT_OPERATION.ERROR_JSON)
                 .set(CANONICAL_IMPORT_OPERATION.UPDATED_AT, now)
@@ -169,7 +169,7 @@ class JooqCanonicalImportRepository implements CanonicalImportRepository {
     @Override
     public void complete(UUID operationId, ImportOperationOutcome outcome) {
         OffsetDateTime now = OffsetDateTime.now();
-        database.update(CANONICAL_IMPORT_OPERATION)
+        int operationChanged = database.update(CANONICAL_IMPORT_OPERATION)
                 .set(CANONICAL_IMPORT_OPERATION.STATUS, "completed")
                 .set(CANONICAL_IMPORT_OPERATION.TARGET_ID, outcome.targetId())
                 .set(CANONICAL_IMPORT_OPERATION.TARGET_REVISION_ID, outcome.targetRevisionId())
@@ -181,6 +181,9 @@ class JooqCanonicalImportRepository implements CanonicalImportRepository {
                 .where(CANONICAL_IMPORT_OPERATION.IMPORT_OPERATION_ID.eq(operationId))
                 .and(CANONICAL_IMPORT_OPERATION.STATUS.eq("running"))
                 .execute();
+        if (operationChanged != 1) {
+            throw new CanonicalImportConflictException("canonical_import_operation_completion_conflict");
+        }
         UUID requestId = database.select(CANONICAL_IMPORT_OPERATION.IMPORT_REQUEST_ID)
                 .from(CANONICAL_IMPORT_OPERATION)
                 .where(CANONICAL_IMPORT_OPERATION.IMPORT_OPERATION_ID.eq(operationId))
@@ -217,7 +220,7 @@ class JooqCanonicalImportRepository implements CanonicalImportRepository {
     @Override
     public void completeRequest(UUID requestId, UUID workerToken, String fingerprint) {
         OffsetDateTime now = OffsetDateTime.now();
-        database.update(CANONICAL_IMPORT_REQUEST)
+        int changed = database.update(CANONICAL_IMPORT_REQUEST)
                 .set(CANONICAL_IMPORT_REQUEST.STATUS, "completed")
                 .set(CANONICAL_IMPORT_REQUEST.RESULT_FINGERPRINT, fingerprint)
                 .set(CANONICAL_IMPORT_REQUEST.COMPLETED_AT, now)
@@ -229,6 +232,7 @@ class JooqCanonicalImportRepository implements CanonicalImportRepository {
                 .and(CANONICAL_IMPORT_REQUEST.WORKER_TOKEN.eq(workerToken))
                 .and(CANONICAL_IMPORT_REQUEST.COMPLETED_OPERATION_COUNT.eq(CANONICAL_IMPORT_REQUEST.OPERATION_COUNT))
                 .execute();
+        if (changed != 1) throw new CanonicalImportConflictException("canonical_import_request_completion_conflict");
     }
 
     @Override

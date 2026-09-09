@@ -2,7 +2,9 @@
 
 ## 结论
 
-G5 建立了 Java Backend 唯一正式内容收货合同 `teachbase.canonical-content-import.v1`。本报告的最终完成状态必须由 exact HEAD 上的完整 gate 和机器证据共同确认；生产解析链适配不因 schema 可承载而被宣称已接通。
+状态：`G5_CANONICAL_IMPORT_LOCAL_COMPLETE`
+
+G5 建立了 Java Backend 唯一正式内容收货合同 `teachbase.canonical-content-import.v1`。最终测试 SHA、branch 和工作树状态记录在机器证据的 `implementation` 节点；生产解析链适配不因 schema 可承载而被宣称已接通。
 
 ## 已实现
 
@@ -41,5 +43,16 @@ G5 建立了 Java Backend 唯一正式内容收货合同 `teachbase.canonical-co
 - `docs/reports/g5_canonical_import_live_gate.json`
 - `docs/reports/g5_canonical_import_acceptance_evidence.json`
 - `npm run test:g5-canonical-import`
+
+| 验收项 | 结果 |
+|---|---:|
+| V010 migration | 8/8 |
+| G5 live contract/recovery | 24/24 |
+| G4 handout foundation | 23/23 |
+| WP-01 working draft | 21/21 |
+| G5 workflow/schema contract | 4/4 |
+| Final Chain Foundation | PASS，内部 107 项 pytest 通过 |
+| Java 中文注释 | 288/288 |
+| Active absolute path | 0 |
 
 报告和 package 合同均不把本机绝对路径作为可复现输入。
