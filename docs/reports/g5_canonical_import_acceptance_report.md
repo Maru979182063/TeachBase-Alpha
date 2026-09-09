@@ -24,6 +24,7 @@ G5 建立了 Java Backend 唯一正式内容收货合同 `teachbase.canonical-co
 - 十个 operation 前后故障点均可恢复；恢复后 target ID、revision ID 和 hash 重放不变。
 - evidence、occurrence、artifact 永久冲突，坏 projection、跨 workspace 引用均 fail closed。
 - 同 package 四路并发只形成一套稳定资产。
+- G4 完整门禁通过；两份 Golden fixture 从显式受控源重新生成后，按 UTF-8/LF 口径与仓库 fixture hash 一致。该口径避免 Windows `autocrlf` 改变证据值。
 
 ## 只设计未实现
 
@@ -48,9 +49,10 @@ G5 建立了 Java Backend 唯一正式内容收货合同 `teachbase.canonical-co
 |---|---:|
 | V010 migration | 8/8 |
 | G5 live contract/recovery | 24/24 |
-| G4 handout foundation | 23/23 |
+| G4 handout foundation full gate | PASS（live 23/23，并含 WP-01、治理、Release Seed 与 renderer） |
 | WP-01 working draft | 21/21 |
-| G5 workflow/schema contract | 4/4 |
+| G5 workflow/schema contract | 5/5 |
+| Golden fixture regenerate/hash | PASS（圆 `774dde...`；英语 `381654...`） |
 | Final Chain Foundation | PASS，内部 107 项 pytest 通过 |
 | Java 中文注释 | 288/288 |
 | Active absolute path | 0 |

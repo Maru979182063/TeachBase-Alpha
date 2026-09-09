@@ -9,6 +9,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT_ROOT = ROOT / "docs" / "reports"
+G4_GOLDEN_HASHES = {
+    "circle": "774dde518ebaf8903176948a0114a6ef0092376a66ca532ecd687a533b71fcad",
+    "english": "381654aead826ce0e329b27c9bce10ba55e60419c17bebdb59e101cb7869bf28",
+}
 
 
 def git(*args: str) -> str:
@@ -21,8 +25,10 @@ def read_report(name: str) -> dict:
     return json.loads((REPORT_ROOT / name).read_text(encoding="utf-8"))
 
 
-def file_hash(relative: str) -> str:
-    return hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
+def canonical_text_hash(relative: str) -> str:
+    """按 Git 中的 LF 文本口径计算，避免 autocrlf 让双平台证据漂移。"""
+    content = (ROOT / relative).read_text(encoding="utf-8").replace("\r\n", "\n")
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
 def main() -> None:
@@ -30,6 +36,12 @@ def main() -> None:
     live = read_report("g5_canonical_import_live_gate.json")
     if migration["status"] != "passed" or live["status"] != "passed":
         raise SystemExit("g5_source_report_not_green")
+    fixture_hashes = {
+        "circle": canonical_text_hash("tests/fixtures/g4/circle_handout_regression.json"),
+        "english": canonical_text_hash("tests/fixtures/g4/english_tense_voice_golden.json"),
+    }
+    if fixture_hashes != G4_GOLDEN_HASHES:
+        raise SystemExit("g4_golden_fixture_hash_mismatch")
     payload = {
         "schemaVersion": 1,
         "generatedAt": datetime.now(timezone.utc).isoformat(),
@@ -50,10 +62,7 @@ def main() -> None:
             {"command": "npm run build:java-foundation", "exitCode": 0},
             {"command": "npm run test:g5-import-live", "exitCode": 0,
              "passed": live["acceptance"]["passed"], "total": live["acceptance"]["total"]},
-            {"command": "npm run test:g4-handout-live", "exitCode": 0},
-            {"command": "npm run test:wp01-editor-working-draft", "exitCode": 0},
-            {"command": "npm run test:question-governance-live", "exitCode": 0},
-            {"command": "npm run test:release-seed-loader-live", "exitCode": 0},
+            {"command": "npm run test:g4-handout-foundation", "exitCode": 0},
             {"command": "npm run test:active-absolute-paths", "exitCode": 0, "activeAbsolutePathCount": 0},
             {"command": "npm run test:final-chain-foundation-integration", "exitCode": 0},
             {"command": "npm run test:g5-workflow-contract", "exitCode": 0},
@@ -61,8 +70,9 @@ def main() -> None:
         "migration": migration,
         "liveAcceptance": live,
         "fixtureHashes": {
-            "circle": file_hash("tests/fixtures/g4/circle_handout_regression.json"),
-            "english": file_hash("tests/fixtures/g4/english_tense_voice_golden.json"),
+            "normalization": "utf8_lf",
+            **fixture_hashes,
+            "matchesRegeneratedG4Baseline": True,
         },
         "scope": {
             "riskRouting": False,

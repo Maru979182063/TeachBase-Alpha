@@ -22,6 +22,13 @@ def test_g5_workflow_is_cross_platform_and_runs_the_complete_gate() -> None:
     assert "java-version: \"21\"" in rendered
 
 
+def test_g5_aggregate_gate_includes_the_g4_full_gate() -> None:
+    package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+    command = package["scripts"]["test:g5-canonical-import"]
+    assert "npm run test:g4-handout-foundation" in command
+    assert "npm run test:g4-handout-live" not in command
+
+
 def test_g5_contract_keeps_domain_and_non_scope_boundaries_explicit() -> None:
     contract = (ROOT / "docs" / "architecture" / "g5_canonical_import_contract.md").read_text(encoding="utf-8")
     for value in (
