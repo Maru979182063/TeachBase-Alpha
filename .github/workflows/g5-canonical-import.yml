@@ -69,8 +69,34 @@ jobs:
           "RUNTIME_TEST_POSTGRES_ADMIN_URL=postgresql://postgres:root@127.0.0.1:5432/postgres" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "RUNTIME_TEST_TEMP_ROOT=$testRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Run complete G5 gate
-        run: npm run test:g5-canonical-import
+      # 与 npm run test:g5-canonical-import 保持同一顺序，但拆成命名步骤，
+      # 让双平台失败能直接落到具体合同，而不是只留下一个聚合 exit code。
+      - name: Check Java Chinese comments
+        run: npm run test:java-comment-contract
+
+      - name: Run V010 migration gate
+        run: npm run test:g5-v010-migration
+
+      - name: Build Java foundation
+        run: npm run build:java-foundation
+
+      - name: Run final-chain foundation integration gate
+        run: npm run test:final-chain-foundation-integration
+
+      - name: Run G5 canonical import live gate
+        run: npm run test:g5-import-live
+
+      - name: Run complete G4 regression gate
+        run: npm run test:g4-handout-foundation
+
+      - name: Check active absolute paths
+        run: npm run test:active-absolute-paths
+
+      - name: Check G5 workflow contract
+        run: npm run test:g5-workflow-contract
+
+      - name: Build G5 acceptance evidence
+        run: python tools/build_g5_acceptance_evidence.py
 
       - name: Upload G5 evidence
         if: always()

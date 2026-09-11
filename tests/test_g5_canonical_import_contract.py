@@ -9,13 +9,24 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_g5_workflow_is_cross_platform_and_runs_the_complete_gate() -> None:
+def test_g5_workflow_is_cross_platform_and_runs_every_aggregate_gate_step() -> None:
     workflow_path = ROOT / ".github" / "workflows" / "g5-canonical-import.yml"
     workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
     job = workflow["jobs"]["g5-gate"]
     assert set(job["strategy"]["matrix"]["os"]) == {"ubuntu-latest", "windows-latest"}
     rendered = workflow_path.read_text(encoding="utf-8")
-    assert "npm run test:g5-canonical-import" in rendered
+    for command in (
+        "npm run test:java-comment-contract",
+        "npm run test:g5-v010-migration",
+        "npm run build:java-foundation",
+        "npm run test:final-chain-foundation-integration",
+        "npm run test:g5-import-live",
+        "npm run test:g4-handout-foundation",
+        "npm run test:active-absolute-paths",
+        "npm run test:g5-workflow-contract",
+        "python tools/build_g5_acceptance_evidence.py",
+    ):
+        assert command in rendered
     assert "cancel-in-progress: true" in rendered
     assert "python-version: \"3.12\"" in rendered
     assert "node-version: \"20\"" in rendered
