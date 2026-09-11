@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from teachbase.infrastructure.artifact_store import write_json, write_text
 
 SOURCE_LABEL = "explicit_controlled_source"
+HASH_MODE = "portable_text_lf_v1"
 REPORT_JSON = ROOT / "docs" / "reports" / "pdf_english_rebuild_source_import_20260804.json"
 REPORT_MD = ROOT / "docs" / "reports" / "pdf_english_rebuild_source_import_20260804.md"
 
@@ -87,6 +88,7 @@ def build_report(source_root: Path, *, dry_run: bool = False, overwrite: bool = 
         "chain_id": "pdf_english",
         "source_label": SOURCE_LABEL,
         "source_root_recording": "label_only",
+        "hash_mode": HASH_MODE,
         "dry_run": dry_run,
         "overwrite": overwrite,
         "status": "pass" if not failed else "fail",
@@ -146,11 +148,9 @@ def _allowlisted(relative_path: str) -> bool:
 
 
 def _file_sha256(path: Path) -> str:
-    digest = sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    # 源清单只允许文本文件；换行规范化后取哈希，使 Windows/Linux 报告可重现。
+    payload = path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return sha256(payload).hexdigest()
 
 
 def _atomic_copy(source: Path, target: Path) -> None:

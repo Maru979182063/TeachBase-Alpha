@@ -18,7 +18,7 @@ def read_json(path: Path) -> Any:
 
 def write_json(path: Path, payload: Any) -> None:
     content = json.dumps(payload, ensure_ascii=False, indent=2)
-    if _matches_existing_json_text(path, content):
+    if _matches_existing_text(path, content):
         # 受版本控制的 manifest 可能带 LF/CRLF 或末尾换行；内容未变时保留原始字节，
         # 避免只因运行平台不同就把安全门禁误报为业务配置变更。
         return
@@ -26,10 +26,13 @@ def write_json(path: Path, payload: Any) -> None:
 
 
 def write_text(path: Path, content: str) -> None:
+    if _matches_existing_text(path, content):
+        # Markdown 等证据文本在 Windows checkout 中可能是 CRLF；语义相同时不制造伪脏写。
+        return
     _atomic_write_text(path, content)
 
 
-def _matches_existing_json_text(path: Path, content: str) -> bool:
+def _matches_existing_text(path: Path, content: str) -> bool:
     if not path.is_file():
         return False
     try:

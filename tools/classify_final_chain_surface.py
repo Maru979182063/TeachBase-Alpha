@@ -10,6 +10,7 @@ from typing import Any
 DEFAULT_FILE_ROOTS = ["tools", "config", "prompts", "schemas", "docs", "tests"]
 DEFAULT_DIRECTORY_ROOTS = ["outputs"]
 IGNORED_DIR_NAMES = {".git", ".venv", "node_modules", "__pycache__", ".pytest_cache"}
+RETAINED_AUDIT_ROOTS = ("outputs/pipeline_isolation_safety_20260714",)
 HISTORICAL_MARKERS = {
     "backup",
     "archive",
@@ -162,6 +163,15 @@ def classify_path(path: str, kind: str, protected: dict[str, set[str]], do_not_u
                 "chain_id": chain_id,
                 "reason": f"listed as do_not_use_as_final for {chain_id}",
             }
+
+    if any(is_same_or_child(path, root) for root in RETAINED_AUDIT_ROOTS):
+        return {
+            "path": path,
+            "kind": kind,
+            "category": "retained_audit_evidence",
+            "chain_id": "",
+            "reason": "retained pipeline-isolation evidence; not a live cleanup candidate",
+        }
 
     historical = marker_hits(path, HISTORICAL_MARKERS)
     if historical:

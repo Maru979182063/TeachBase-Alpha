@@ -70,3 +70,25 @@ def test_surface_classifier_can_use_docx_math_inventory(tmp_path: Path) -> None:
     samples = report["summary"]["samples_by_category"]["protected_final_chain_surface"]
     assert samples[0]["path"] == "tools/docx_math_extra_from_inventory.py"
     assert samples[0]["chain_id"] == "doc_math"
+
+
+def test_surface_classifier_retains_pipeline_isolation_evidence_in_full_checkout(tmp_path: Path) -> None:
+    evidence = (
+        tmp_path
+        / "outputs"
+        / "pipeline_isolation_safety_20260714"
+        / "late_business_files_after_registry_fix"
+    )
+    evidence.mkdir(parents=True)
+
+    args = Args()
+    args.target_root = str(tmp_path)
+    args.file_roots = []
+    args.directory_roots = ["outputs"]
+    report = build_report(args)
+    records = {record["path"]: record for record in report["records"]}
+
+    assert records["outputs/pipeline_isolation_safety_20260714"]["category"] == "retained_audit_evidence"
+    assert records[
+        "outputs/pipeline_isolation_safety_20260714/late_business_files_after_registry_fix"
+    ]["category"] == "retained_audit_evidence"

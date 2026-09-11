@@ -58,6 +58,18 @@ def test_write_text_preserves_existing_contract(tmp_path: Path) -> None:
     assert temp_files_for(target) == []
 
 
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_write_text_keeps_equivalent_evidence_bytes(newline: str, tmp_path: Path) -> None:
+    target = tmp_path / "evidence.md"
+    original = f"alpha{newline}beta{newline}".encode("utf-8")
+    target.write_bytes(original)
+
+    write_text(target, "alpha\nbeta")
+
+    assert target.read_bytes() == original
+    assert temp_files_for(target) == []
+
+
 def test_concurrent_json_writes_leave_complete_payload_and_no_temp_files(tmp_path: Path) -> None:
     target = tmp_path / "shared.json"
     payloads = [

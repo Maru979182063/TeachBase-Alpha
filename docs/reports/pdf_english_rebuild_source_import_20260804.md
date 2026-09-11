@@ -30,7 +30,7 @@ Imported files: `23`
 - `already_present_same_hash` `tools/english_text_first_candidate_continuation_repair_v01.py`
 - `already_present_same_hash` `tools/english_text_first_question_packet_refiner_v01.py`
 - `already_present_same_hash` `tools/english_text_first_runtime_projection_planner_v01.py`
-- `copied` `tools/english_text_first_display_projection_planner_v01.py`
+- `already_present_same_hash` `tools/english_text_first_display_projection_planner_v01.py`
 - `already_present_same_hash` `tools/english_text_first_question_render_normalizer_v01.py`
 - `already_present_same_hash` `tools/english_text_first_render_verifier_repair_v01.py`
 - `already_present_same_hash` `tools/english_text_first_render_gate_point_repair_v01.py`

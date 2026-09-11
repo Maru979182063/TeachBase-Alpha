@@ -101,6 +101,32 @@ def test_cleanup_candidates_treat_finalish_names_as_review(tmp_path: Path) -> No
     assert report["counts_by_action"]["needs_review_finalish_name"] == 1
 
 
+def test_cleanup_candidates_exclude_retained_pipeline_isolation_evidence(tmp_path: Path) -> None:
+    classification = {
+        "target_root_label": "test",
+        "records": [
+            {
+                "path": "outputs/pipeline_isolation_safety_20260714",
+                "kind": "directory",
+                "category": "retained_audit_evidence",
+                "chain_id": "",
+                "reason": "retained pipeline-isolation evidence",
+            }
+        ],
+    }
+    classification_path = tmp_path / "classification.json"
+    classification_path.write_text(json.dumps(classification), encoding="utf-8")
+
+    args = Args()
+    args.classification = str(classification_path)
+    args.target_root = str(tmp_path)
+    args.scan_references = False
+    report = build_report(args)
+
+    assert report["candidate_count"] == 0
+    assert report["samples_by_action"] == {}
+
+
 def test_cleanup_candidates_keep_reference_detection_without_ripgrep(tmp_path: Path, monkeypatch) -> None:
     """Windows runner 没有 rg 时也不能把仍被引用的文件误判为可归档。"""
     cleanup_report._TEXT_INDEX_CACHE.clear()

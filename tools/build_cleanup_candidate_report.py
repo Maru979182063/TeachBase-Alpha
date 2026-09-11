@@ -16,6 +16,7 @@ CANDIDATE_CATEGORIES = {
 }
 NEVER_DELETE_CATEGORIES = {
     "protected_final_chain_surface",
+    "retained_audit_evidence",
     "chain_adjacent_needs_review",
     "unclassified_non_chain_surface",
 }

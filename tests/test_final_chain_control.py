@@ -2850,12 +2850,24 @@ def test_pdf_english_user_zip_intake_classifies_downstream_review_evidence(tmp_p
 
 
 def test_pdf_english_rebuild_source_import_allowlist_is_unique_and_source_only() -> None:
-    from tools.import_pdf_english_rebuild_sources import SOURCE_FILES
+    from tools.import_pdf_english_rebuild_sources import HASH_MODE, SOURCE_FILES
 
+    assert HASH_MODE == "portable_text_lf_v1"
     assert len(SOURCE_FILES) == len(set(SOURCE_FILES))
     assert all(not item.startswith("outputs/") for item in SOURCE_FILES)
     assert not any("active_manifest" in item for item in SOURCE_FILES)
     assert "tools/english_text_first_display_projection_planner_v01.py" in SOURCE_FILES
+
+
+def test_pdf_english_rebuild_source_import_hash_is_line_ending_portable(tmp_path: Path) -> None:
+    from tools.import_pdf_english_rebuild_sources import _file_sha256
+
+    lf = tmp_path / "source_lf.py"
+    crlf = tmp_path / "source_crlf.py"
+    lf.write_bytes(b"print('ok')\n")
+    crlf.write_bytes(b"print('ok')\r\n")
+
+    assert _file_sha256(lf) == _file_sha256(crlf)
 
 
 def test_cleanroom_hardening_manifest_validator_rejects_tampered_contract() -> None:

@@ -3,8 +3,9 @@
   "workspace_contract": "relative_git_paths_only",
   "absolute_paths_as_inputs": false,
   "chain_id": "pdf_english",
-  "source_label": "old_local_d_projects_jiaoyan",
+  "source_label": "explicit_controlled_source",
   "source_root_recording": "label_only",
+  "hash_mode": "portable_text_lf_v1",
   "dry_run": false,
   "overwrite": false,
   "status": "pass",
@@ -124,11 +125,11 @@
       "relative_path": "tools/english_text_first_node4b_field_role_resolver_v01.py",
       "allowlisted": true,
       "source_exists": true,
-      "source_sha256": "7f62c5fb7baba743091754e6fe98eb6bf635a5d79817a2316526528ea0e38d7f",
+      "source_sha256": "6cee5912c2b99b9ff0c1415e52979951f9f48cd851c4f87394a8d0f9abd0ce9c",
       "target_exists_before": true,
       "target_action": "already_present_same_hash",
       "target_exists_after": true,
-      "target_sha256": "7f62c5fb7baba743091754e6fe98eb6bf635a5d79817a2316526528ea0e38d7f"
+      "target_sha256": "6cee5912c2b99b9ff0c1415e52979951f9f48cd851c4f87394a8d0f9abd0ce9c"
     },
     {
       "relative_path": "tools/english_text_first_question_packet_builder_v01.py",
@@ -175,8 +176,8 @@
       "allowlisted": true,
       "source_exists": true,
       "source_sha256": "89670d6feb7988cd70276caead344b5ef74b4eb8f324acb5fbe5d3b73dcfad7f",
-      "target_exists_before": false,
-      "target_action": "copied",
+      "target_exists_before": true,
+      "target_action": "already_present_same_hash",
       "target_exists_after": true,
       "target_sha256": "89670d6feb7988cd70276caead344b5ef74b4eb8f324acb5fbe5d3b73dcfad7f"
     },
@@ -246,7 +247,7 @@
       "name": "source_root_present",
       "ok": true,
       "value": {
-        "source_label": "old_local_d_projects_jiaoyan",
+        "source_label": "explicit_controlled_source",
         "present": true
       }
     },
