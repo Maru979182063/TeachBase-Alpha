@@ -17,11 +17,26 @@ def read_json(path: Path) -> Any:
 
 
 def write_json(path: Path, payload: Any) -> None:
-    _atomic_write_text(path, json.dumps(payload, ensure_ascii=False, indent=2))
+    content = json.dumps(payload, ensure_ascii=False, indent=2)
+    if _matches_existing_json_text(path, content):
+        # 受版本控制的 manifest 可能带 LF/CRLF 或末尾换行；内容未变时保留原始字节，
+        # 避免只因运行平台不同就把安全门禁误报为业务配置变更。
+        return
+    _atomic_write_text(path, content)
 
 
 def write_text(path: Path, content: str) -> None:
     _atomic_write_text(path, content)
+
+
+def _matches_existing_json_text(path: Path, content: str) -> bool:
+    if not path.is_file():
+        return False
+    try:
+        existing = path.read_text(encoding="utf-8-sig").replace("\r\n", "\n")
+    except (OSError, UnicodeError):
+        return False
+    return existing == content or existing == f"{content}\n"
 
 
 def _atomic_write_text(path: Path, content: str, *, replace: Callable[[Path, Path], None] | None = None) -> None:
@@ -32,6 +47,7 @@ def _atomic_write_text(path: Path, content: str, *, replace: Callable[[Path, Pat
         with tempfile.NamedTemporaryFile(
             "w",
             encoding="utf-8",
+            newline="",
             dir=path.parent,
             prefix=f".{path.name}.",
             suffix=".tmp",

@@ -26,6 +26,27 @@ def test_write_json_preserves_existing_encoding_and_format(tmp_path: Path) -> No
     assert temp_files_for(target) == []
 
 
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_write_json_keeps_equivalent_manifest_bytes(newline: str, tmp_path: Path) -> None:
+    target = tmp_path / "active_manifest.json"
+    payload = {"status": "ready", "items": [1, 2]}
+    original = (json.dumps(payload, ensure_ascii=False, indent=2) + "\n").replace("\n", newline).encode("utf-8")
+    target.write_bytes(original)
+
+    write_json(target, payload)
+
+    assert target.read_bytes() == original
+    assert temp_files_for(target) == []
+
+
+def test_new_json_uses_portable_lf_bytes(tmp_path: Path) -> None:
+    target = tmp_path / "payload.json"
+
+    write_json(target, {"lines": ["a", "b"]})
+
+    assert b"\r\n" not in target.read_bytes()
+
+
 def test_write_text_preserves_existing_contract(tmp_path: Path) -> None:
     target = tmp_path / "note.txt"
     content = "alpha\nbeta"
