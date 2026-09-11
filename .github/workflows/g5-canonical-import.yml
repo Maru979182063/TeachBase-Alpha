@@ -29,6 +29,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # final-chain foundation 会核对基线与固定 inventory commit，浅克隆无法完成历史差异门禁。
+          fetch-depth: 0
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v7

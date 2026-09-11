@@ -28,6 +28,7 @@ def test_g5_workflow_is_cross_platform_and_runs_every_aggregate_gate_step() -> N
     ):
         assert command in rendered
     assert "cancel-in-progress: true" in rendered
+    assert "fetch-depth: 0" in rendered
     assert "python-version: \"3.12\"" in rendered
     assert "node-version: \"20\"" in rendered
     assert "java-version: \"21\"" in rendered
