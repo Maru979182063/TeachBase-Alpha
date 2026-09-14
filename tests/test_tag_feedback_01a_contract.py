@@ -63,8 +63,7 @@ def test_real_model_excerpt_is_traceable_and_path_portable() -> None:
 
 
 def test_g5_contract_and_historical_migrations_are_untouched_by_01a() -> None:
-    migrations = sorted(MIGRATION.parent.glob("V*.sql"))
-    assert migrations[-1].name == MIGRATION.name
+    assert MIGRATION.exists()
     assert (ROOT / "config" / "canonical_import" / "canonical_content_import_v1.schema.json").exists()
     assert "canonical_import" not in MIGRATION.read_text(encoding="utf-8").lower().replace(
         "canonical_import_request", ""

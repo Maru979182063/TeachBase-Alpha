@@ -81,8 +81,9 @@ async function preservedState(pool, ids) {
 }
 
 async function main() {
-  const files = await migrationFiles();
-  expect(files.length === 11 && files.at(-1).startsWith("V011__"), `migration_set_invalid:${files.join(",")}`);
+  const discovered = await migrationFiles();
+  const files = discovered.filter((name) => Number(name.slice(1, 4)) <= 11);
+  expect(files.length === 11 && files.at(-1).startsWith("V011__"), `v011_migration_set_invalid:${discovered.join(",")}`);
   const cluster = await startEmbeddedPostgresCluster("tag_feedback_v011_migration_gate");
   let fresh;
   let upgrade;
