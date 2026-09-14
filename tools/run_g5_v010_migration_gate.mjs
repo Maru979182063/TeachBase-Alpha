@@ -50,8 +50,9 @@ async function snapshot(pool, ids) {
 }
 
 async function main() {
-  const files = await migrationFiles();
-  expect(files.length === 10 && files.at(-1).startsWith("V010__"), `migration_set_invalid:${files.join(",")}`);
+  const discovered = await migrationFiles();
+  const files = discovered.filter((name) => Number(name.slice(1, 4)) <= 10);
+  expect(files.length === 10 && files.at(-1).startsWith("V010__"), `v010_migration_set_invalid:${discovered.join(",")}`);
   const cluster = await startEmbeddedPostgresCluster("g5_v010_migration_gate");
   let fresh;
   let upgrade;

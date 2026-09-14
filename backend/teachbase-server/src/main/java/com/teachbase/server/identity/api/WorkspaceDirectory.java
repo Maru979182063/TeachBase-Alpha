@@ -1,5 +1,6 @@
 package com.teachbase.server.identity.api;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -12,4 +13,8 @@ public interface WorkspaceDirectory {
     boolean exists(UUID workspaceId);
 
     boolean isActiveMember(UUID workspaceId, UUID userId);
+
+    Optional<String> activeMemberRole(UUID workspaceId, UUID userId);
+
+    boolean hasTeachingScope(UUID workspaceId, UUID userId, String subject, String stage);
 }

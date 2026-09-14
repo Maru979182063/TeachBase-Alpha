@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "fixtureKind": "REAL_MODEL_RESULT_EXCERPT",
+  "sourceEvidence": {
+    "logicalArtifact": "knowledge_tagging_v0_1/math_200_manual_gold_trial/model_trace_case054_confidence_v02/case_054.tagging_trace.json",
+    "sourceArtifactSha256": "7d5d678433edd46f4a1cc3d71a6c64489584663bb87e51eee806e9b3cd1579c9",
+    "extractionPolicy": "verbatim selected fields; encrypted reasoning and machine-local paths omitted"
+  },
+  "run": {
+    "externalRunKey": "math-200-manual-gold:case-054:confidence-v02",
+    "modelProvider": "volcengine-ark",
+    "modelName": "doubao-seed-2-0-lite-260428",
+    "modelVersion": "doubao-seed-2-0-lite-260428",
+    "promptProfileVersion": "legacy-unversioned:model_trace_case054_confidence_v02",
+    "candidatePackageKey": "math-200-manual-gold:case-054:candidates",
+    "candidatePackageVersion": "model_trace_case054_confidence_v02",
+    "candidatePackageHash": "7d5d678433edd46f4a1cc3d71a6c64489584663bb87e51eee806e9b3cd1579c9",
+    "producerVersion": "knowledge_tagging_result_v0.2",
+    "runtimeVersion": "knowledge_tagging_v0_1",
+    "status": "completed",
+    "startedAt": "2026-09-01T05:48:56Z",
+    "completedAt": "2026-09-01T05:48:56Z",
+    "parameters": {
+      "questionId": "case_054",
+      "candidateCount": 20,
+      "resultSchema": "knowledge_tagging_result_v0.2"
+    }
+  },
+  "suggestion": {
+    "taxonomyKey": "senior-math-knowledge",
+    "primary": {
+      "externalNodeKey": "jingyou:高中:数学:322111",
+      "path": "函数 > 函数概念与性质 > 函数概念及其表示 > 函数的概念及其构成要素",
+      "confidence": 0.82,
+      "candidateRank": 9
+    },
+    "secondary": [],
+    "modelOutputContext": {
+      "resultSchema": "knowledge_tagging_result_v0.2",
+      "overallConfidence": "medium",
+      "overallScore": 0.78,
+      "mainFit": "acceptable_parent",
+      "unmappedConcepts": ["判断对应关系是否为函数"]
+    }
+  }
+}
