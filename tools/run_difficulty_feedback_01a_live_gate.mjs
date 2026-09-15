@@ -368,7 +368,7 @@ async function main() {
         },
       },
       identityBoundary: "business actor authorization and teaching-scope validation only; production authentication remains open",
-      searchProjection: "deferred; question_revision.difficulty_stars remains legacy import evidence",
+      searchProjection: "governance projection is a separate read model; legacy question search still reads question_revision.difficulty_stars",
       cleanup: "pending",
     };
   } finally {
