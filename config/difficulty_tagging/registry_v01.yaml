@@ -1,0 +1,152 @@
+schema: difficulty_pipeline_registry_v1
+version: difficulty-registry-2026-09-15-v06
+
+policies:
+  no_route: manual_review
+  ambiguous_route: fail_closed
+  require_upstream_release: true
+  require_few_shot_for_active_route: true
+
+providers:
+  - provider_id: doubao_ark_single
+    api_url: https://ark.cn-beijing.volces.com/api/v3/chat/completions
+    api_key_env: ARK_API_KEY
+    model: doubao-seed-2-0-pro-260215
+    reasoning_effort: medium
+    max_tokens: 7000
+    timeout_seconds: 180
+    retry_attempts: 3
+    max_connections: 4
+    max_keepalive_connections: 4
+    requests_per_second: 1
+    burst: 2
+    retry_base_seconds: 1
+    retry_max_seconds: 20
+    circuit_breaker_failures: 6
+    circuit_breaker_cooldown_seconds: 30
+
+label_schemes:
+  - scheme_id: five_band.v1
+    bands:
+      - {level: 1, label: 易}
+      - {level: 2, label: 较易}
+      - {level: 3, label: 中档}
+      - {level: 4, label: 较难}
+      - {level: 5, label: 困难}
+
+routes:
+  - route_id: math.senior.default.v1
+    status: trial
+    enabled: true
+    priority: 100
+    match:
+      subject: 数学
+      stage: 高中
+    provider_id: doubao_ark_single
+    prompt_bundle: config/difficulty_tagging/prompts/math_senior_six_dimension_v01.yaml
+    result_adapter: math_canonical_projection_v01
+    difficulty_scheme: difficulty.math.senior.v2
+    rubric_version: six_dimension_100_point_v0.1
+    label_scheme: five_band.v1
+    reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+    minimum_publish_confidence: 0.75
+    boundary_review_margin_points: 2
+
+  # 英语路由先登记、不启用。收到三档样例文档并形成五档锚点后逐项转 trial。
+  - route_id: english.senior.grammar_choice.v1
+    status: draft
+    enabled: false
+    priority: 50
+    match: {subject: 英语, stage: 高中, question_type: 语法单选}
+    provider_id: doubao_ark_single
+    prompt_bundle: config/difficulty_tagging/prompts/english_senior_three_to_five_draft_v01.yaml
+    result_adapter: generic_five_band_v01
+    difficulty_scheme: difficulty.english.senior.grammar_choice.v1
+    rubric_version: english_three_to_five_draft_v0.1
+    label_scheme: five_band.v1
+    reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+    minimum_publish_confidence: 0.75
+
+  - route_id: english.senior.grammar_fill.v1
+    status: draft
+    enabled: false
+    priority: 50
+    match: {subject: 英语, stage: 高中, question_type: 语法填空}
+    provider_id: doubao_ark_single
+    prompt_bundle: config/difficulty_tagging/prompts/english_senior_three_to_five_draft_v01.yaml
+    result_adapter: generic_five_band_v01
+    difficulty_scheme: difficulty.english.senior.grammar_fill.v1
+    rubric_version: english_three_to_five_draft_v0.1
+    label_scheme: five_band.v1
+    reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+    minimum_publish_confidence: 0.75
+
+  - route_id: english.senior.translation.v1
+    status: draft
+    enabled: false
+    priority: 50
+    match: {subject: 英语, stage: 高中, question_type: 句子翻译}
+    provider_id: doubao_ark_single
+    prompt_bundle: config/difficulty_tagging/prompts/english_senior_three_to_five_draft_v01.yaml
+    result_adapter: generic_five_band_v01
+    difficulty_scheme: difficulty.english.senior.translation.v1
+    rubric_version: english_three_to_five_draft_v0.1
+    label_scheme: five_band.v1
+    reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+    minimum_publish_confidence: 0.75
+
+  - route_id: english.senior.cloze.v1
+    status: draft
+    enabled: false
+    priority: 50
+    match: {subject: 英语, stage: 高中, question_type: 完形填空}
+    provider_id: doubao_ark_single
+    prompt_bundle: config/difficulty_tagging/prompts/english_senior_three_to_five_draft_v01.yaml
+    result_adapter: generic_five_band_v01
+    difficulty_scheme: difficulty.english.senior.cloze.v1
+    rubric_version: english_three_to_five_draft_v0.1
+    label_scheme: five_band.v1
+    reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+    minimum_publish_confidence: 0.75
+
+  - route_id: english.senior.reading.v1
+    status: draft
+    enabled: false
+    priority: 50
+    match: {subject: 英语, stage: 高中, question_type: 阅读理解}
+    provider_id: doubao_ark_single
+    prompt_bundle: config/difficulty_tagging/prompts/english_senior_three_to_five_draft_v01.yaml
+    result_adapter: generic_five_band_v01
+    difficulty_scheme: difficulty.english.senior.reading.v1
+    rubric_version: english_three_to_five_draft_v0.1
+    label_scheme: five_band.v1
+    reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+    minimum_publish_confidence: 0.75
+
+  - route_id: english.senior.application_writing.v1
+    status: draft
+    enabled: false
+    priority: 50
+    match: {subject: 英语, stage: 高中, question_type: 应用文写作}
+    provider_id: doubao_ark_single
+    prompt_bundle: config/difficulty_tagging/prompts/english_senior_three_to_five_draft_v01.yaml
+    result_adapter: generic_five_band_v01
+    difficulty_scheme: difficulty.english.senior.application_writing.v1
+    rubric_version: english_three_to_five_draft_v0.1
+    label_scheme: five_band.v1
+    reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+    minimum_publish_confidence: 0.75
+
+  - route_id: english.senior.continuation_writing.v1
+    status: draft
+    enabled: false
+    priority: 50
+    match: {subject: 英语, stage: 高中, question_type: 读后续写}
+    provider_id: doubao_ark_single
+    prompt_bundle: config/difficulty_tagging/prompts/english_senior_three_to_five_draft_v01.yaml
+    result_adapter: generic_five_band_v01
+    difficulty_scheme: difficulty.english.senior.continuation_writing.v1
+    rubric_version: english_three_to_five_draft_v0.1
+    label_scheme: five_band.v1
+    reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+    minimum_publish_confidence: 0.75

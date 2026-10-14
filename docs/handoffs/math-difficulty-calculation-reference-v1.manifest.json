@@ -1,0 +1,49 @@
+{
+  "schema": "math_difficulty_reference_manifest_v1",
+  "package_id": "math-difficulty-calculation-reference-v1",
+  "created_on": "2026-10-14",
+  "source_scope": "current math difficulty calculation chain only",
+  "base_commit": "b80961320a5de84549fbac195676c68708c4df9f",
+  "branch": "codex/math-difficulty-reference-v1",
+  "pipeline_id": "difficulty_tagging_registered_v01",
+  "registry_version": "difficulty-registry-2026-09-15-v06",
+  "route_id": "math.senior.default.v1",
+  "prompt_id": "math_senior_six_dimension_v01",
+  "prompt_version": "2026-09-18.13-contract-clarified",
+  "rubric_version": "six_dimension_100_point_v0.1",
+  "label_scheme": "five_band.v1",
+  "release_status": "trial_reference_not_production_release",
+  "engineering_policy": {
+    "suite_id": "teachbase-engineering-kit",
+    "suite_version": "1.1.0",
+    "context_sha256": "e10db7d76008fd69def71252b75221d538830c916bd66b42e3900f7a393aaea5",
+    "development_sha256": "501d8f385554bab50feca0752373e5f30b2d8d0026dcddf2b0a87b84b11be7ab",
+    "pipelines_sha256": "caa3ac04052cb987abe8bc64c329eb5c40fd01466adfd0f6c9b57532468867d4",
+    "collaboration_sha256": "ef896afacbddc2a0b8426d8fb6e8417ea6ad8382390be3bc306ef04cf7f1c6a2"
+  },
+  "files": [
+    {"path": "config/difficulty_tagging/registry_v01.yaml", "sha256": "4fe5d5de933817f62cf9738303b139d1fe9b4632ca80b9c4539953820cf5f66d"},
+    {"path": "config/difficulty_tagging/prompts/math_senior_six_dimension_v01.yaml", "sha256": "8007a4cad70fb62e76ec3fd70c944093c4f122fe5dfe19974defc2a8cf8d07f2"},
+    {"path": "config/difficulty_tagging/prompts/english_senior_three_to_five_draft_v01.yaml", "sha256": "3dff4cc616e9a36943fcfa0adfd699da4daf5565297a1274770fc6bbea7011f2"},
+    {"path": "tools/difficulty_tagging/contracts.py", "sha256": "c403fd55e6aeb7c4d5dbd0c7d519b76c5a02c875fa08dfbeb059c970b2040547"},
+    {"path": "tools/difficulty_tagging/prompt_bundle.py", "sha256": "818c561bbdbdfc37f3a23735cf321d3be226778e69692dbb4cf6e15a02167704"},
+    {"path": "tools/difficulty_tagging/registry.py", "sha256": "0fa16a08826470ef968c87565b13cefbaf5875a8c7860e030c6acdf2d1daee7a"},
+    {"path": "tools/difficulty_tagging/result_adapters.py", "sha256": "7606c4681c9b66b5a29342969026147b4c6785c46c252118b5dac26b86e11b88"},
+    {"path": "tools/difficulty_tagging/tag_difficulty_v01.py", "sha256": "a64a6994f65cbf6d2c26fe2553793fc47e3a301fafa0d880119664a3e9186796"},
+    {"path": "tools/difficulty_tagging/run_registered_batch_v01.py", "sha256": "add8f2158daa5e2464ed8d74c61dfbc9848802b8797ad5c08257f28233f489ba"},
+    {"path": "tools/difficulty_tagging/build_staged_eval_plan_v01.py", "sha256": "e0cb926c26f029e7e71cbb6b86a45ecd2a9151c1e590e3588aee4470af471f64"},
+    {"path": "tools/difficulty_tagging/evaluate_pdf_gold_holdout_v01.py", "sha256": "0827978f147ccc9e973a459c47bdea286bf7b4a5a94c0c2259761fc299088deb"},
+    {"path": "tools/difficulty_tagging/evaluate_repeatability_v01.py", "sha256": "0efab23e9629d1746805a547c9ffe5cbf5bd6784ae7cc45624eec9d6ab17ad1b"},
+    {"path": "tools/knowledge_tagging/common.py", "sha256": "899c9e0bb4ba380ec1d013e579f86af1e69a29e273e9a45a5ea27736f40768db"},
+    {"path": "tools/knowledge_tagging/model_api.py", "sha256": "3402065b63c9829c205c391266115b80f72b77fa53ba7220c21c173fff1d7788"},
+    {"path": "tests/test_difficulty_registry_runtime.py", "sha256": "7232ac72d701c35d2c6bdd8d72f173f4fcf72264564a888a4295ef06720224d6"}
+  ],
+  "excluded": [
+    "secrets",
+    "private gold items",
+    "historical failed prompts",
+    "queue and database runtime",
+    "unregistered three-node adjudication experiment",
+    "stale active manifest"
+  ]
+}
