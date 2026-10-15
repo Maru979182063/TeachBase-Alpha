@@ -11,6 +11,14 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 MATCH_FIELDS = ("subject", "stage", "question_type")
 RUNNABLE_STATUSES = {"trial", "active"}
+MATH_DIMENSION_IDS = (
+    "knowledge_complexity",
+    "calculation_complexity",
+    "thinking_complexity",
+    "reading_conversion_complexity",
+    "method_complexity",
+    "innovation_complexity",
+)
 
 
 class StrictModel(BaseModel):
@@ -66,6 +74,20 @@ class RouteMatch(StrictModel):
         return {key: str(values[key]) for key in MATCH_FIELDS if key in values}
 
 
+class DimensionNodeSettings(StrictModel):
+    node_id: str = Field(min_length=1)
+    dimension_id: Literal[
+        "knowledge_complexity",
+        "calculation_complexity",
+        "thinking_complexity",
+        "reading_conversion_complexity",
+        "method_complexity",
+        "innovation_complexity",
+    ]
+    prompt_bundle: str = Field(min_length=1)
+    max_tokens: int = Field(default=2400, ge=256, le=12000)
+
+
 class DifficultyRoute(StrictModel):
     route_id: str = Field(min_length=1)
     status: Literal["draft", "trial", "active", "disabled"]
@@ -74,12 +96,17 @@ class DifficultyRoute(StrictModel):
     match: RouteMatch
     provider_id: str = Field(min_length=1)
     prompt_bundle: str = Field(min_length=1)
+    execution_mode: Literal[
+        "single_model_projection_v1", "parallel_dimension_nodes_v1"
+    ] = "single_model_projection_v1"
+    dimension_nodes: list[DimensionNodeSettings] = Field(default_factory=list, max_length=6)
     result_adapter: Literal[
         "math_six_dimension_v01",
         "math_six_dimension_semantic_v02",
         "math_six_dimension_semantic_v03",
         "math_six_dimension_semantic_v04",
         "math_canonical_projection_v01",
+        "math_parallel_dimension_projection_v1",
         "generic_five_band_v01",
     ]
     difficulty_scheme: str = Field(min_length=1)
@@ -93,6 +120,17 @@ class DifficultyRoute(StrictModel):
     def validate_enabled_status(self) -> "DifficultyRoute":
         if self.enabled and self.status not in RUNNABLE_STATUSES:
             raise ValueError("只有 trial 或 active 路由可以启用")
+        if self.execution_mode == "parallel_dimension_nodes_v1":
+            observed = [item.dimension_id for item in self.dimension_nodes]
+            if sorted(observed) != sorted(MATH_DIMENSION_IDS):
+                raise ValueError("六维并行路由必须且只能配置六个完整维度节点")
+            node_ids = [item.node_id for item in self.dimension_nodes]
+            if len(node_ids) != len(set(node_ids)):
+                raise ValueError("六维并行路由的 node_id 不得重复")
+            if self.result_adapter != "math_parallel_dimension_projection_v1":
+                raise ValueError("六维并行路由必须使用 math_parallel_dimension_projection_v1")
+        elif self.dimension_nodes:
+            raise ValueError("单节点路由不得配置 dimension_nodes")
         return self
 
 
@@ -175,6 +213,12 @@ def load_registry(path: Path, workspace_root: Path) -> LoadedRegistry:
         prompt_path = _workspace_child(workspace_root, route.prompt_bundle)
         if not prompt_path.is_file():
             raise ValueError(f"路由提示词不存在：{route.route_id} -> {route.prompt_bundle}")
+        for node in route.dimension_nodes:
+            node_prompt_path = _workspace_child(workspace_root, node.prompt_bundle)
+            if not node_prompt_path.is_file():
+                raise ValueError(
+                    f"维度节点提示词不存在：{route.route_id}/{node.node_id} -> {node.prompt_bundle}"
+                )
     return LoadedRegistry(path=path.resolve(), sha256=hashlib.sha256(payload_bytes).hexdigest(), value=value)
 
 

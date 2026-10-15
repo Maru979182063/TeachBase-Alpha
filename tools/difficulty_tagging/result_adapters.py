@@ -62,6 +62,9 @@ VALIDATORS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "math_six_dimension_semantic_v03": validate_semantic_difficulty_decision_v04,
     "math_six_dimension_semantic_v04": validate_semantic_judgment_v1,
     "math_canonical_projection_v01": validate_canonical_projection_shape,
+    # 六维并行模式由 parallel_dimensions 分别校验并汇总，不走单结果 validator。
+    # 并行节点的六份原始输出由运行器分别验证；适配器面对的是聚合后的最终结果。
+    "math_parallel_dimension_projection_v1": validate_difficulty_decision,
     "generic_five_band_v01": validate_generic_five_band,
 }
 

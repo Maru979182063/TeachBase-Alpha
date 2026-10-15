@@ -55,7 +55,16 @@ def test_registry_resolves_enabled_math_route_exactly() -> None:
     )
     assert route.route_id == "math.senior.default.v1"
     assert route.label_scheme == "five_band.v1"
-    assert route.result_adapter == "math_canonical_projection_v01"
+    assert route.execution_mode == "parallel_dimension_nodes_v1"
+    assert route.result_adapter == "math_parallel_dimension_projection_v1"
+    assert [node.dimension_id for node in route.dimension_nodes] == [
+        "knowledge_complexity",
+        "calculation_complexity",
+        "thinking_complexity",
+        "reading_conversion_complexity",
+        "method_complexity",
+        "innovation_complexity",
+    ]
     assert route.boundary_review_margin_points == 2
 
 
@@ -96,6 +105,14 @@ def test_math_prompt_is_yaml_and_has_a_reviewed_few_shot() -> None:
     assert prompt.value.few_shots[0].provenance["review_status"] == "expert_seed"
     result = normalize_prompt_example(prompt.value.few_shots[0])
     validate_knowledge_point_provenance(result, prompt.value.few_shots[0].input)
+
+    assert len(route.dimension_nodes) == 6
+    for node in route.dimension_nodes:
+        dimension_prompt = load_prompt_bundle(ROOT / node.prompt_bundle)
+        assert dimension_prompt.value.status == "trial"
+        assert [item.provenance["review_status"] for item in dimension_prompt.value.few_shots] == [
+            "expert_seed"
+        ]
 
 
 def test_compact_knowledge_result_exposes_level3_unit_and_level1_module() -> None:
@@ -337,6 +354,8 @@ def test_dry_run_writes_resumable_trace_and_summary(tmp_path: Path) -> None:
     trace = json.loads(trace_paths[0].read_text(encoding="utf-8"))
     assert trace["route_id"] == "math.senior.default.v1"
     assert trace["provenance"]["few_shot_ids"] == ["math_easy_direct_chain_seed_002"]
+    assert trace["provenance"]["execution_mode"] == "parallel_dimension_nodes_v1"
+    assert len(trace["provenance"]["dimension_prompts"]) == 6
     assert trace["provenance"]["canonical_solution_source"] == "frozen_upstream_task_evidence"
     assert trace["provenance"]["canonical_solution_quality"] == "provisional_model_extracted_evidence"
     assert len(trace["provenance"]["canonical_solution_sha256"]) == 64

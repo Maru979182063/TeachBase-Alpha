@@ -1,5 +1,5 @@
 schema: difficulty_pipeline_registry_v1
-version: difficulty-registry-2026-09-15-v06
+version: difficulty-registry-2026-10-15-v07
 
 policies:
   no_route: manual_review
@@ -16,10 +16,10 @@ providers:
     max_tokens: 7000
     timeout_seconds: 180
     retry_attempts: 3
-    max_connections: 4
-    max_keepalive_connections: 4
-    requests_per_second: 1
-    burst: 2
+    max_connections: 6
+    max_keepalive_connections: 6
+    requests_per_second: 2
+    burst: 6
     retry_base_seconds: 1
     retry_max_seconds: 20
     circuit_breaker_failures: 6
@@ -43,8 +43,35 @@ routes:
       subject: 数学
       stage: 高中
     provider_id: doubao_ark_single
+    execution_mode: parallel_dimension_nodes_v1
+    # 旧综合提示词仅保留为可追溯回退基线；parallel 模式默认不调用它。
     prompt_bundle: config/difficulty_tagging/prompts/math_senior_six_dimension_v01.yaml
-    result_adapter: math_canonical_projection_v01
+    dimension_nodes:
+      - node_id: math.knowledge_complexity.v1
+        dimension_id: knowledge_complexity
+        prompt_bundle: config/difficulty_tagging/prompts/math_senior_knowledge_complexity_v01.yaml
+        max_tokens: 2400
+      - node_id: math.calculation_complexity.v1
+        dimension_id: calculation_complexity
+        prompt_bundle: config/difficulty_tagging/prompts/math_senior_calculation_complexity_v01.yaml
+        max_tokens: 2400
+      - node_id: math.thinking_complexity.v1
+        dimension_id: thinking_complexity
+        prompt_bundle: config/difficulty_tagging/prompts/math_senior_thinking_complexity_v01.yaml
+        max_tokens: 2600
+      - node_id: math.reading_conversion_complexity.v1
+        dimension_id: reading_conversion_complexity
+        prompt_bundle: config/difficulty_tagging/prompts/math_senior_reading_conversion_v01.yaml
+        max_tokens: 2200
+      - node_id: math.method_complexity.v1
+        dimension_id: method_complexity
+        prompt_bundle: config/difficulty_tagging/prompts/math_senior_method_complexity_v01.yaml
+        max_tokens: 2400
+      - node_id: math.innovation_complexity.v1
+        dimension_id: innovation_complexity
+        prompt_bundle: config/difficulty_tagging/prompts/math_senior_innovation_complexity_v01.yaml
+        max_tokens: 2400
+    result_adapter: math_parallel_dimension_projection_v1
     difficulty_scheme: difficulty.math.senior.v2
     rubric_version: six_dimension_100_point_v0.1
     label_scheme: five_band.v1

@@ -1,0 +1,36 @@
+schema: difficulty_prompt_bundle_v1
+prompt_id: math_senior_method_complexity_v01
+version: 2026-10-15.1
+status: trial
+system_prompt: |-
+  你只负责高中数学难度量表中的“方法复杂度”，一次只判断一道题。禁止判断知识、计算、思维、阅读、创新、总分或最终难度。
+  按学生作答前发现 canonical_solution 入口的难度判断：1=直接套公式或定义；2=固定模板且方法不超过两种；3=两至三种方法任选；4=多种相关方法中需选唯一适配路线；5=无明显入口、需创造路径。
+  多条公式不等于多种方法；解析写出了入口不代表学生自然可见。不得按题型名称或关键词机械判档。entry_node_ids 只能引用冻结图节点。
+  只输出 JSON：schema=math_difficulty_dimension_judgment_v1，dimension_id=method_complexity；原样复制公共身份字段；输出 method_entry、confidence、confidence_reason、review_flags、release_recommendation。
+few_shots:
+  - example_id: math_method_direct_chain_seed_001
+    provenance: {source: synthetic_contract_seed, review_status: expert_seed}
+    input:
+      question_id: EX-M
+      difficulty_scheme: difficulty.math.senior.v2
+      rubric_version: six_dimension_100_point_v0.1
+      reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+      dimension_id: method_complexity
+      question: {stem: 求曲线在给定点处的切线方程}
+      canonical_solution:
+        shortest_solution_graph:
+          nodes:
+            - {node_id: E1, node_type: frozen_step, statement: 求导并代入切点, depends_on: [], student_visibility: canonical_path_not_a_student_hint}
+          final_node_id: E1
+    output:
+      schema: math_difficulty_dimension_judgment_v1
+      question_id: EX-M
+      difficulty_scheme: difficulty.math.senior.v2
+      rubric_version: six_dimension_100_point_v0.1
+      reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+      dimension_id: method_complexity
+      method_entry: {entry_type: direct_standard_recall, recommended_band: 1, entry_node_ids: [E1], student_visible_cues: [题面直接要求切线方程], unstated_key_moves: [], rationale: 设问直接触发唯一标准公式链}
+      confidence: 0.98
+      confidence_reason: 方法入口由设问直接给出。
+      review_flags: []
+      release_recommendation: accept_provisional

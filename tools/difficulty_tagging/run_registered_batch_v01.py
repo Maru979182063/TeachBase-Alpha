@@ -6,7 +6,7 @@ import json
 import os
 import sys
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -15,7 +15,16 @@ if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from difficulty_tagging.prompt_bundle import load_prompt_bundle
-from difficulty_tagging.contracts import ShortestSolutionGraph, normalize_canonical_projection
+from difficulty_tagging.contracts import (
+    ShortestSolutionGraph,
+    normalize_canonical_projection,
+    validate_difficulty_decision,
+)
+from difficulty_tagging.parallel_dimensions import (
+    aggregate_dimension_judgments,
+    validate_dimension_identity,
+    validator_for_dimension,
+)
 from difficulty_tagging.registry import (
     AmbiguousRouteError,
     DifficultyRoute,
@@ -247,7 +256,10 @@ def build_payload(record: dict[str, Any], route: DifficultyRoute) -> dict[str, A
             "不得重新解题或选择其他解法；只能使用 canonical_solution 中冻结的路径。"
         ),
     }
-    if route.result_adapter == "math_canonical_projection_v01":
+    if route.result_adapter in {
+        "math_canonical_projection_v01",
+        "math_parallel_dimension_projection_v1",
+    }:
         payload["canonical_solution"] = build_canonical_solution(record)
     return payload
 
@@ -416,6 +428,131 @@ def configure_provider(provider: Any) -> None:
     )
 
 
+def dimension_prompt_provenance(route: DifficultyRoute) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for node in route.dimension_nodes:
+        prompt = load_prompt_bundle(workspace_child(node.prompt_bundle))
+        rows.append(
+            {
+                "node_id": node.node_id,
+                "dimension_id": node.dimension_id,
+                "prompt_id": prompt.value.prompt_id,
+                "prompt_version": prompt.value.version,
+                "prompt_sha256": prompt.sha256,
+                "few_shot_ids": [item.example_id for item in prompt.value.few_shots],
+            }
+        )
+    return rows
+
+
+def run_parallel_dimension_nodes(
+    *,
+    payload: dict[str, Any],
+    route: DifficultyRoute,
+    provider: Any,
+    api_key: str,
+    prior_trace: dict[str, Any] | None,
+) -> tuple[dict[str, dict[str, Any]], dict[str, Any] | None]:
+    """并行执行六个独立维度节点；已成功且版本未变的节点可在重试时复用。"""
+    prior_nodes = (
+        prior_trace.get("dimension_nodes")
+        if isinstance(prior_trace, dict) and isinstance(prior_trace.get("dimension_nodes"), dict)
+        else {}
+    )
+    images = image_paths_from_payload(payload)
+    node_traces: dict[str, dict[str, Any]] = {}
+
+    def execute(node: Any) -> tuple[str, dict[str, Any]]:
+        prompt = load_prompt_bundle(workspace_child(node.prompt_bundle))
+        validator = validator_for_dimension(node.dimension_id)
+        previous = prior_nodes.get(node.node_id) if isinstance(prior_nodes, dict) else None
+        if isinstance(previous, dict) and previous.get("prompt_sha256") == prompt.sha256:
+            previous_call = previous.get("model_call")
+            previous_parsed = previous_call.get("parsed") if isinstance(previous_call, dict) else None
+            if isinstance(previous_call, dict) and previous_call.get("ok") and isinstance(previous_parsed, dict):
+                parsed = validate_dimension_identity(
+                    validator(previous_parsed), dimension_id=node.dimension_id, payload=payload
+                )
+                return node.node_id, {
+                    **previous,
+                    "model_call": {**previous_call, "parsed": parsed},
+                    "reused_from_prior_trace": True,
+                }
+
+        node_payload = {
+            **payload,
+            "dimension_id": node.dimension_id,
+            "dimension_boundary": (
+                "只判断 dimension_id 指定的一个维度；不得输出其他维度、总分或难度标签。"
+            ),
+        }
+
+        def validate(raw: dict[str, Any]) -> dict[str, Any]:
+            return validate_dimension_identity(
+                validator(raw), dimension_id=node.dimension_id, payload=payload
+            )
+
+        model_call = call_json_model(
+            api_key=api_key,
+            system_prompt=prompt.value.system_prompt,
+            user_payload=node_payload,
+            image_paths=images,
+            model=provider.model,
+            api_url=provider.api_url,
+            timeout=provider.timeout_seconds,
+            max_tokens=node.max_tokens,
+            retries=provider.retry_attempts - 1,
+            reasoning_effort=provider.reasoning_effort,
+            validator=validate,
+            few_shots=prompt.value.few_shot_pairs(),
+            repair_invalid_output=True,
+        )
+        return node.node_id, {
+            "node_id": node.node_id,
+            "dimension_id": node.dimension_id,
+            "prompt_id": prompt.value.prompt_id,
+            "prompt_version": prompt.value.version,
+            "prompt_sha256": prompt.sha256,
+            "few_shot_ids": [item.example_id for item in prompt.value.few_shots],
+            "model_call": model_call,
+            "reused_from_prior_trace": False,
+        }
+
+    # 这里的并发单位是同一道题的六个维度，不是六道题。
+    with ThreadPoolExecutor(max_workers=len(route.dimension_nodes)) as executor:
+        futures = {executor.submit(execute, node): node for node in route.dimension_nodes}
+        for future in as_completed(futures):
+            node = futures[future]
+            try:
+                node_id, trace = future.result()
+            except Exception as exc:
+                node_id = node.node_id
+                trace = {
+                    "node_id": node.node_id,
+                    "dimension_id": node.dimension_id,
+                    "model_call": {
+                        "called": True,
+                        "ok": False,
+                        "error": f"dimension_node_exception:{type(exc).__name__}:{exc}",
+                        "attempts": [],
+                    },
+                    "reused_from_prior_trace": False,
+                }
+            node_traces[node_id] = trace
+
+    parsed_by_dimension: dict[str, dict[str, Any]] = {}
+    for node in route.dimension_nodes:
+        trace = node_traces[node.node_id]
+        model_call = trace.get("model_call")
+        parsed = model_call.get("parsed") if isinstance(model_call, dict) else None
+        if isinstance(model_call, dict) and model_call.get("ok") and isinstance(parsed, dict):
+            parsed_by_dimension[node.dimension_id] = parsed
+
+    if len(parsed_by_dimension) != len(route.dimension_nodes):
+        return node_traces, None
+    return node_traces, aggregate_dimension_judgments(parsed_by_dimension, payload=payload)
+
+
 def gate_model_result(result: dict[str, Any], route: DifficultyRoute, *, live: bool) -> tuple[str, list[str]]:
     errors: list[str] = []
     if result.get("difficulty_scheme") != route.difficulty_scheme:
@@ -453,6 +590,7 @@ def process_record(
     loaded_registry: LoadedRegistry,
     use_model: bool,
     offline_results: dict[str, dict[str, Any]],
+    prior_trace: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     qid = question_id(record)
     record_sha256 = sha256_json(record)
@@ -490,10 +628,16 @@ def process_record(
         }
 
     prompt_loaded = load_prompt_bundle(workspace_child(route.prompt_bundle))
+    active_prompts = [prompt_loaded]
+    if route.execution_mode == "parallel_dimension_nodes_v1":
+        active_prompts = [
+            load_prompt_bundle(workspace_child(node.prompt_bundle))
+            for node in route.dimension_nodes
+        ]
     if (
         route.status == "active"
         and loaded_registry.value.policies.require_few_shot_for_active_route
-        and not prompt_loaded.value.few_shots
+        and any(not prompt.value.few_shots for prompt in active_prompts)
     ):
         return {
             **base,
@@ -525,7 +669,10 @@ def process_record(
         "few_shot_ids": [item.example_id for item in prompt_loaded.value.few_shots],
         "result_adapter": route.result_adapter,
         "label_scheme": route.label_scheme,
+        "execution_mode": route.execution_mode,
     }
+    if route.execution_mode == "parallel_dimension_nodes_v1":
+        provenance["dimension_prompts"] = dimension_prompt_provenance(route)
     canonical = payload.get("canonical_solution")
     if isinstance(canonical, dict):
         provenance.update(
@@ -536,8 +683,12 @@ def process_record(
             }
         )
     if qid in offline_results:
-        validator = result_validator_for(route, payload)
-        result = validator(offline_results[qid])
+        if route.execution_mode == "parallel_dimension_nodes_v1":
+            result = validate_difficulty_decision(offline_results[qid])
+            result = validate_knowledge_point_provenance(result, payload)
+        else:
+            validator = result_validator_for(route, payload)
+            result = validator(offline_results[qid])
         if result.get("question_id") != qid:
             return {
                 **base,
@@ -578,6 +729,59 @@ def process_record(
             "route_id": route.route_id,
             "provenance": provenance,
         }
+    if route.execution_mode == "parallel_dimension_nodes_v1":
+        node_traces, result = run_parallel_dimension_nodes(
+            payload=payload,
+            route=route,
+            provider=provider,
+            api_key=api_key,
+            prior_trace=prior_trace,
+        )
+        if result is None:
+            failed_nodes = [
+                node_id
+                for node_id, trace in node_traces.items()
+                if not isinstance(trace.get("model_call"), dict)
+                or not trace["model_call"].get("ok")
+            ]
+            return {
+                **base,
+                "status": "failed",
+                "retryable": True,
+                "error_code": "dimension_nodes_incomplete",
+                "failed_dimension_nodes": sorted(failed_nodes),
+                "route_id": route.route_id,
+                "model_payload": payload,
+                "dimension_nodes": node_traces,
+                "model_call": {
+                    "called": True,
+                    "ok": False,
+                    "mode": "parallel_dimension_nodes_v1",
+                },
+                "provenance": provenance,
+            }
+        result = validate_knowledge_point_provenance(result, payload)
+        status, gate_errors = gate_model_result(result, route, live=True)
+        return {
+            **base,
+            "status": status,
+            "route_id": route.route_id,
+            "difficulty": common_projection(result),
+            "subject_result": result,
+            "gate_errors": gate_errors,
+            "dimension_nodes": node_traces,
+            "model_call": {
+                "called": True,
+                "ok": True,
+                "mode": "parallel_dimension_nodes_v1",
+                "call_count": sum(
+                    0 if trace.get("reused_from_prior_trace") else 1
+                    for trace in node_traces.values()
+                ),
+            },
+            "provenance": provenance,
+        }
+
     validator = result_validator_for(route, payload)
     model_call = call_json_model(
         api_key=api_key,
@@ -669,6 +873,7 @@ def run_batch(
     def process_and_persist(record: dict[str, Any]) -> dict[str, Any]:
         qid = question_id(record)
         trace_path = traces_dir / trace_name(qid)
+        previous_for_retry: dict[str, Any] | None = None
         if resume and trace_path.is_file():
             previous = json.loads(trace_path.read_text(encoding="utf-8"))
             prompt_is_current = True
@@ -682,18 +887,37 @@ def run_batch(
                     previous["provenance"].get("prompt_sha256")
                     == load_prompt_bundle(workspace_child(route.prompt_bundle)).sha256
                 )
-            if (
-                previous.get("status") in TERMINAL_ITEM_STATUSES
-                and previous.get("input_record_sha256") == sha256_json(record)
+                if prompt_is_current and route.execution_mode == "parallel_dimension_nodes_v1":
+                    observed = {
+                        item.get("node_id"): item.get("prompt_sha256")
+                        for item in previous["provenance"].get("dimension_prompts", [])
+                        if isinstance(item, dict)
+                    }
+                    expected = {
+                        node.node_id: load_prompt_bundle(
+                            workspace_child(node.prompt_bundle)
+                        ).sha256
+                        for node in route.dimension_nodes
+                    }
+                    prompt_is_current = observed == expected
+            same_input_and_registry = (
+                previous.get("input_record_sha256") == sha256_json(record)
                 and previous.get("registry_sha256") == loaded_registry.sha256
                 and prompt_is_current
+            )
+            if (
+                previous.get("status") in TERMINAL_ITEM_STATUSES
+                and same_input_and_registry
             ):
                 return previous
+            if same_input_and_registry:
+                previous_for_retry = previous
         result = process_record(
             record,
             loaded_registry=loaded_registry,
             use_model=use_model,
             offline_results=offline_results,
+            prior_trace=previous_for_retry,
         )
         atomic_write(trace_path, json.dumps(result, ensure_ascii=False, indent=2) + "\n")
         print(

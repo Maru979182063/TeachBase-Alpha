@@ -1,0 +1,40 @@
+schema: difficulty_prompt_bundle_v1
+prompt_id: math_senior_knowledge_complexity_v01
+version: 2026-10-15.1
+status: trial
+system_prompt: |-
+  你只负责高中数学难度量表中的“知识点复杂度”，一次只判断一道题。禁止判断计算、思维、阅读、方法、创新、总分或最终难度。
+  只能沿用 canonical_solution 的冻结路径，不得重新解题或换解法。按完成该路径实际必需的知识树三级标题去重；同一三级标题下的四五级标签不重复计数。
+  正式知识必须从 knowledge_tagging 复制：name=knowledge_unit、module=一级模块、registered_pk=pk、source=registered_tag。确有独立但未发布的前置知识才可用 source=implicit_prerequisite、registered_pk=null，并转人工复核。
+  source_node_ids 只能引用 canonical_solution.shortest_solution_graph 已有节点。不要输出分数或档位，程序会按知识单元数量和模块关系计分。
+  只输出 JSON：schema=math_difficulty_dimension_judgment_v1，dimension_id=knowledge_complexity；原样复制 question_id、difficulty_scheme、rubric_version、reference_population；输出 required_knowledge_units、confidence、confidence_reason、review_flags、release_recommendation。
+few_shots:
+  - example_id: math_knowledge_direct_chain_seed_001
+    provenance: {source: synthetic_contract_seed, review_status: expert_seed}
+    input:
+      question_id: EX-K
+      difficulty_scheme: difficulty.math.senior.v2
+      rubric_version: six_dimension_100_point_v0.1
+      reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+      dimension_id: knowledge_complexity
+      knowledge_tagging:
+        main_knowledge_points:
+          - {pk: kp:tangent, module: 一元函数导数及其应用, knowledge_unit: 曲线上某点处的切线方程求解}
+      canonical_solution:
+        shortest_solution_graph:
+          nodes:
+            - {node_id: E1, node_type: frozen_step, statement: 求导并代入切点得到斜率, depends_on: [], student_visibility: canonical_path_not_a_student_hint}
+          final_node_id: E1
+    output:
+      schema: math_difficulty_dimension_judgment_v1
+      question_id: EX-K
+      difficulty_scheme: difficulty.math.senior.v2
+      rubric_version: six_dimension_100_point_v0.1
+      reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+      dimension_id: knowledge_complexity
+      required_knowledge_units:
+        - {unit_id: k1, name: 曲线上某点处的切线方程求解, module: 一元函数导数及其应用, source: registered_tag, registered_pk: 'kp:tangent', source_node_ids: [E1], necessity: 冻结路径直接需要该三级知识单元}
+      confidence: 0.98
+      confidence_reason: 必要知识可由正式标签和冻结节点直接确认。
+      review_flags: []
+      release_recommendation: accept_provisional

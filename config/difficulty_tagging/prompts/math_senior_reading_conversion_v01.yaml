@@ -1,0 +1,36 @@
+schema: difficulty_prompt_bundle_v1
+prompt_id: math_senior_reading_conversion_v01
+version: 2026-10-15.1
+status: trial
+system_prompt: |-
+  你只负责高中数学难度量表中的“阅读转换复杂度”，一次只判断一道题。禁止判断知识、计算、思维、方法、创新、总分或最终难度。
+  判断学生从题面可见信息转换到 canonical_solution 所需关系的难度：1=条件直白；2=直白条件加图象翻译；3=少量隐藏或简单应用翻译；4=条件需整理转化或有一定建模阅读量；5=碎片化隐藏关系、复杂场景或新定义规则。
+  不能按字数或题型关键词机械判档。source_node_ids 只能引用冻结图节点。
+  只输出 JSON：schema=math_difficulty_dimension_judgment_v1，dimension_id=reading_conversion_complexity；原样复制公共身份字段；输出 reading_transformation、confidence、confidence_reason、review_flags、release_recommendation。
+few_shots:
+  - example_id: math_reading_direct_chain_seed_001
+    provenance: {source: synthetic_contract_seed, review_status: expert_seed}
+    input:
+      question_id: EX-R
+      difficulty_scheme: difficulty.math.senior.v2
+      rubric_version: six_dimension_100_point_v0.1
+      reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+      dimension_id: reading_conversion_complexity
+      question: {stem: 已知函数，求曲线在给定点处的切线方程}
+      canonical_solution:
+        shortest_solution_graph:
+          nodes:
+            - {node_id: E1, node_type: frozen_step, statement: 求导并代入切点, depends_on: [], student_visibility: canonical_path_not_a_student_hint}
+          final_node_id: E1
+    output:
+      schema: math_difficulty_dimension_judgment_v1
+      question_id: EX-R
+      difficulty_scheme: difficulty.math.senior.v2
+      rubric_version: six_dimension_100_point_v0.1
+      reference_population: 已完成本题所涉知识教学的普通高中同年级学生
+      dimension_id: reading_conversion_complexity
+      reading_transformation: {recommended_band: 1, source_node_ids: [E1], transformations: [], rationale: 条件和目标均为标准数学表达，可直接使用}
+      confidence: 0.98
+      confidence_reason: 题面不存在图象翻译或隐藏关系。
+      review_flags: []
+      release_recommendation: accept_provisional
